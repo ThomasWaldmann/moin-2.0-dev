@@ -18,7 +18,7 @@ from MoinMoin import user
 from MoinMoin import wikiutil
 
 # TODO: Convert this into Jinja Template and remove use of functions deprecated in ThemeBase
-    
+
 def show_form(pagename, request):
     _ = request.getText
     request.theme.send_title(_("Subscribe users to the page %s") % pagename, pagename=pagename)

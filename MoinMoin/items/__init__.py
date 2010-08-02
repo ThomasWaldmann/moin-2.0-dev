@@ -1010,7 +1010,7 @@ class Text(Binary):
         return diff_html.diff(self.request,
                               self.data_storage_to_internal(oldrev.read()),
                               self.data_storage_to_internal(newrev.read()))
-    
+
     def _render_data_diff_text(self, oldrev, newrev):
         from MoinMoin.util import diff_text
         oldlines = self.data_storage_to_internal(oldrev.read()).split('\n')
@@ -1062,7 +1062,7 @@ class MarkupItem(Text):
         doc = input_conv(self.data_storage_to_internal(data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
         doc = itemlinks_conv(doc)
-        newrev[ITEMLINKS] = itemlinks_conv.get_links() 
+        newrev[ITEMLINKS] = itemlinks_conv.get_links()
 
 
 class MoinWiki(MarkupItem):
@@ -1356,6 +1356,4 @@ class SvgDraw(TarMixin, Image):
         drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
         return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
-
-
 

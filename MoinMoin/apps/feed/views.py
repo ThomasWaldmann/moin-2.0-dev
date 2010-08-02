@@ -1,7 +1,7 @@
 # -*- coding: ascii -*-
 """
     MoinMoin - feed views
-    
+
     This contains all sort of feeds.
 
     @copyright: 2010 MoinMoin:ThomasWaldmann

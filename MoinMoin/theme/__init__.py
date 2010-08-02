@@ -98,7 +98,7 @@ class ThemeBase(object):
     def item_exists(self, item_name):
         """
         Get a boolean indicating whether an item_name exists or not.
-        
+
         @param item_name: unicode
         @rtype: boolean
         """
@@ -107,7 +107,7 @@ class ThemeBase(object):
     def item_readable(self, item_name):
         """
         Get a boolean indicating whether the user in request can read in item_name.
-        
+
         @param item_name: unicode
         @rtype: boolean
         """
@@ -116,7 +116,7 @@ class ThemeBase(object):
     def item_writable(self, item_name):
         """
         Get a boolean indicating whether the user in request can write in item_name.
-        
+
         @param item_name: unicode
         @rtype: boolean
         """
@@ -196,7 +196,7 @@ class ThemeBase(object):
     def userhome(self):
         """
         Assemble arguments used to build user homepage link
-        
+
         @rtype: tuple
         @return: arguments of user homepage link in tuple (wiki_href, aliasname, title, exists)
         """
@@ -397,7 +397,7 @@ class ThemeBase(object):
     def login_url(self):
         """
         Return URL usable for user login
-        
+
         @rtype: unicode
         @return: url for user login
         """
