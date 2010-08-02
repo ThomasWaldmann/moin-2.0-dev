@@ -39,6 +39,27 @@ class Converter(object):
         docbook.namespace: 'docbook'
     }
 
+    # DocBook elements which are completely ignored by our converter
+    # We even do not process children of these elements
+    # "Info" elements are the biggest part of this set
+    ignored_tags = set([#Info element
+                       'abstract', 'address', 'artpagenums', 'annotation',
+                       'artpagenums', 'author', 'authorgroup',
+                       'authorinitials', 'bibliocoverage', 'biblioid',
+                       'bibliomisc', 'bibliomset', 'bibliorelation',
+                       'biblioset', 'bibliosource', 'collab', 'confgroup',
+                       'contractnum', 'contractsponsor', 'copyright',
+                       'cover', 'date', 'edition', 'editor',
+                       'extendedlink', 'issuenum', 'itermset',
+                       'keywordset', 'legalnotice', 'mediaobject',
+                       'org', 'orgname', 'othercredit', 'pagenums',
+                       'printhistory', 'productname', 'productnumber',
+                       'pubdate', 'publisher', 'publishername',
+                       'releaseinfo', 'revhistory', 'seriesvolnums',
+                       'subjectset', 'volumenum',
+                       # Other elements
+                       'info'])
+
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
     heading_level = 0
@@ -149,6 +170,13 @@ class Converter(object):
             result.append(self.visit_docbook_sect(element, depth))
             result.extend(self.do_children(element, depth))
             return result
+
+        # We should ignore this element
+        if element.tag.name in self.ignored_tags:
+            logging.warning("Ignored tag:%s" % element.tag.name)
+            return
+
+        # We will find the correct method to handle our tag
         method_name = 'visit_docbook_' + element.tag.name
         method = getattr(self, method_name, None)
         if method:
