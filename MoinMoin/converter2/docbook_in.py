@@ -62,19 +62,22 @@ class Converter(object):
         try:
             tree = ET.XML(docbook_str.encode('utf-8'))
         except ET.ParseError as detail:
-            error = self.new(moin_page('error'), attrib={}, children=[str(detail)])
-            part = self.new(moin_page('part'), attrib={}, children=[error])
-            body = self.new(moin_page('body'), attrib={}, children=[part])
-            return self.new(moin_page('page'), attrib={}, children=[body])
+            return error(str(detail))
 
         try:
             result = self.visit(tree, 0)
         except NameSpaceError as detail:
-            error = self.new(moin_page('error'), attrib={}, children=[str(detail)])
-            part = self.new(moin_page('part'), attrib={}, children=[error])
-            body = self.new(moin_page('body'), attrib={}, children=[part])
-            return self.new(moin_page('page'), attrib={}, children=[body])
+            return error(str(detail))
         return result
+
+    def error(self, message):
+        """
+        Return a DOM Tree containing an error message.
+        """
+        error = self.new(moin_page('error'), attrib={}, children=[message])
+        part = self.new(moin_page('part'), attrib={}, children=[error])
+        body = self.new(moin_page('body'), attrib={}, children=[part])
+        return self.new(moin_page('page'), attrib={}, children=[body])
 
     def do_children(self, element, depth):
         """
