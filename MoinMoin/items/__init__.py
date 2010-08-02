@@ -23,7 +23,7 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import g, request, url_for, send_file, render_template, Response, abort
+from flask import g, request, url_for, send_file, render_template, Response, abort, escape
 from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
@@ -96,7 +96,7 @@ class DummyItem(object):
 class Item(object):
     """ Highlevel (not storage) Item """
     @classmethod
-    def create(cls, request, name=u'', mimetype=None, rev_no=None, formatter=None, item=None):
+    def create(cls, request, name=u'', mimetype=None, rev_no=None, item=None):
         if rev_no is None:
             rev_no = -1
         if mimetype is None:
@@ -147,17 +147,13 @@ class Item(object):
 
         ItemClass = _find_item_class(mimetype, cls)[1]
         logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
-        return ItemClass(request, name=name, rev=rev, mimetype=mimetype, formatter=formatter)
+        return ItemClass(request, name=name, rev=rev, mimetype=mimetype)
 
-    def __init__(self, request, name, rev=None, mimetype=None, formatter=None):
+    def __init__(self, request, name, rev=None, mimetype=None):
         self.request = request
         self.name = name
         self.rev = rev
         self.mimetype = mimetype
-        if formatter is None:
-            from MoinMoin.formatter.text_html import Formatter
-            formatter = Formatter(request)
-        self.formatter = formatter
 
     def get_meta(self):
         return self.rev or {}
@@ -978,7 +974,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             outfile.close()
             cache.put(None, content_type=content_type)
         url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
-        return self.formatter.image(src=url)
+        return '<img src="%s" />' % escape(url)
 
     def _render_data_diff_text(self, oldrev, newrev):
         return super(TransformableBitmapImage, self)._render_data_diff_text(oldrev, newrev)
