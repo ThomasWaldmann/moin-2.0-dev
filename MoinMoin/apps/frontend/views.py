@@ -74,6 +74,7 @@ def show_item(item_name, rev):
                            last_rev_no=last_rev,
                            meta_rendered=item._render_meta(),
                            data_rendered=item._render_data(),
+                           show_navigation=True if rev>-1 else False,
                           )
 
 @frontend.route('/+show/<itemname:item_name>')
