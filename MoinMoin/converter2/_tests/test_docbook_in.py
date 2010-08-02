@@ -249,3 +249,12 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_error(self):
+        data = [
+            # Error : Xml not correctly formatted
+            ('<article><para>Text</para>',
+             '/page/body/error'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
