@@ -34,15 +34,19 @@
     </div>
     {% endif %}
     {% if show_navigation %}
-    <div id="moin-diff-navigation">
+    <ul id="moin-rev-navigation">
+        <li class="moin-rev-navigation-older">
         {% if rev.revno > 0 -%}
             <a href="{{ url_for('frontend.show_item', rev=rev.revno-1, item_name=item_name)|e }}"><-- older</a>
         {% else %} no older revs {%- endif %}
-        rev {{ rev.revno }}
-        {% if rev.revno < last_rev_no %}
-        <a href="{{ url_for('frontend.show_item', rev=rev.revno+1, item_name=item_name)|e }}">new --></a>
-        {% else %} no newer revs{% endif %}
-    </div>
+        </li>
+        <li class="moin-rev-navigation-current">rev {{ rev.revno }}</li>
+        <li class="moin-rev-navigation-newer">
+            {% if rev.revno < last_rev_no -%}
+            <a href="{{ url_for('frontend.show_item', rev=rev.revno+1, item_name=item_name)|e }}">new --></a>
+            {% else %} no newer revs{% endif %}
+        </li>
+    </ul>
     {% endif %}
     {% endif %}
 {% endblock %}
@@ -53,7 +57,8 @@
     <div id="moin-pagebottom">
         <p id="moin-pageinfo" class="moin-info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ item_name }} (rev {{rev.revno}})
+            {{ item_name }}
+            (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
             {{ _("was edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }}
         </p>
     </div>

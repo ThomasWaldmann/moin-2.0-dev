@@ -196,6 +196,16 @@ table.navigation {
 
 #moin-pagebottom {clear: both;}
 
+/* revision navigation */
+#moin-rev-navigation {
+    list-style:none;
+}
+
+#moin-rev-navigation li {
+    display:inline;
+}
+
+
 /* standard rule ---- */
 hr {
     height: 1pt;
