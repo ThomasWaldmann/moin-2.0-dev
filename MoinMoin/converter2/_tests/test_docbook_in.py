@@ -42,7 +42,7 @@ class Base(object):
         return self.input_re.sub(r'\1 ' + self.input_namespaces, input)
 
     def handle_output(self, input, **args):
-        if not 'nonamespace' in args:
+        if 'nonamespace' not in args:
             to_conv = self.handle_input(input)
         elif args['nonamespace']:
             to_conv = input
@@ -179,6 +179,9 @@ class TestConverter(Base):
             ('<article><para>Text Para<footnote><para>Text Footnote</para></footnote></para></article>',
             # <page><body><p>Text Para<note note-class="footnote"><note-body><p>Text Footnote</p></note-body></note></p></body></page>
              '/page/body/p[text()="Text Para"]/note[@note-class="footnote"]/note-body/p[text()="Text Footnote"]'),
+            ('<article><para><quote>text</quote></para></article>',
+            # <page><body><p><quote>text</quote></para></article>
+            '/page/body/p[quote="text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
