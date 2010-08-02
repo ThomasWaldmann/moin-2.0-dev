@@ -1,6 +1,7 @@
 /*  common.css - MoinMoin Default Styles
 
 Copyright (c) 2001, 2002, 2003 by Juergen Hermann
+              2010 MoinMoin:DiogenesAugusto
 */
 
 /* content styles */
@@ -179,13 +180,13 @@ table.navigation {
 .footnotes li {
 }
 
-.info {
+.moin-info {
     float: right;
     font-size: 0.7em;
     color: gray;
 }
 
-#pageinfo {
+#moin-pageinfo {
     margin-top: 2em;
 }
 
@@ -193,7 +194,7 @@ table.navigation {
     color: gray;
 }
 
-#pagebottom {clear: both;}
+#moin-pagebottom {clear: both;}
 
 /* standard rule ---- */
 hr {
@@ -513,23 +514,25 @@ TD.tip {
 
 /* end MonthCalendar stuff */
 
-#message .hint {font-style: italic;}
-#message .info {
+/* Flash messages used by Flask */
+
+.moin-flash-hint {font-style: italic;}
+.moin-flash-info {
     float: none;
     font-size: 1em;
     color: black;
 }
-#message .info:before {content: url('../img/icon-info.png'); margin: 0 0.2em;}
-#message .warning:before {content: url('../img/alert.png'); margin: 0 0.2em;}
-#message .error:before {content: url('../img/icon-error.png'); margin: 0 0.2em;}
+.moin-flash-info:before {content: url('../img/icon-info.png'); margin: 0 0.2em;}
+.moin-flash-warning:before {content: url('../img/alert.png'); margin: 0 0.2em;}
+.moin-flash-error:before {content: url('../img/icon-error.png'); margin: 0 0.2em;}
 
 
 /* admonition start */
-#content div.caution, 
-#content div.important, 
-#content div.note, 
-#content div.tip, 
-#content div.warning {
+#moin-content div.caution, 
+#moin-content div.important, 
+#moin-content div.note, 
+#moin-content div.tip, 
+#moin-content div.warning {
     border: 1pt solid #E5E5E5;
     background-color: #F9F9FF;
     color: black;
@@ -541,22 +544,22 @@ TD.tip {
     padding-left: 64px;
 }
 
-#content div.caution p, 
-#content div.important p, 
-#content div.note p, 
-#content div.tip p, 
-#content div.warning p {
+#moin-content div.caution p, 
+#moin-content div.important p, 
+#moin-content div.note p, 
+#moin-content div.tip p, 
+#moin-content div.warning p {
     margin-top: 8px; /*to align text with bg graphic*/
 }
 
-#content div.tip { background-image: url("../img/admon-tip.png"); }
-#content div.note { background-image: url("../img/admon-note.png"); }
-#content div.important { background-image: url("../img/admon-important.png"); }
-#content div.caution { background-image: url("../img/admon-caution.png"); }
-#content div.warning { background-image: url("../img/admon-warning.png"); }
+#moin-content div.tip { background-image: url("../img/admon-tip.png"); }
+#moin-content div.note { background-image: url("../img/admon-note.png"); }
+#moin-content div.important { background-image: url("../img/admon-important.png"); }
+#moin-content div.caution { background-image: url("../img/admon-caution.png"); }
+#moin-content div.warning { background-image: url("../img/admon-warning.png"); }
 
 /* remove borders of fieldset in copy/rename/delete/revert/modify actions */
-#content form fieldset {
+#moin-content form fieldset {
     border: none;
     padding: 0;
 }

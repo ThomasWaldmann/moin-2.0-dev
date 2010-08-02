@@ -11,7 +11,8 @@
 
 {% import "editbar.html" as editbar with context %}
 
-{% block extra_header %}
+{% block header %}
+    {{ super() }}
     {{ editbar }}
 {% endblock %}
 
@@ -20,28 +21,37 @@
     This item exists, but not this revision.
     {% else %}
     {% block headline %}
-    <h1>Item: {{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1>
+    {# <h1>{{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1> #}
     {% endblock %}
-    Data:
-    {{ data_rendered }}
-    <hr />
-    Meta:
-    {{ meta_rendered }}
+    {% if data_rendered %}
+    <div id="moin-content-data">
+        {{ data_rendered }}
+    </div>
+    {% endif %}
+    {% if meta_rendered %}
+    <div id="moin-content-meta">
+        {{ meta_rendered }}
+    </div>
+    {% endif %}
     {% endif %}
 {% endblock %}
 
 {% block item %}
     {{ super() }}
     {% if rev %}
-    <div id="pagebottom">
-        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+    <div id="moin-pagebottom">
+        <p id="moin-pageinfo" class="moin-info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ item_name }} ({{ _("edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }})
+            {{ item_name }} (rev {{rev.revno}})
+            {{ _("was edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }}
         </p>
     </div>
     {% endif %}
 {% endblock %}
 
-{% block extra_footer %}
+{% block footer_hr %}{% endblock %}
+
+{% block footer %}
     {{ editbar }}
+    {{ super() }}
 {% endblock %}

@@ -44,7 +44,7 @@ function actionsMenuInit(title) {
     // Initialize action menu
     for (i = 0; i < document.forms.length; i++) {
         var form = document.forms[i];
-        if (form.className == 'actionsmenu') {
+        if (form.className == 'moin-actionsmenu') {
             // Check if this form needs update
             var div = form.getElementsByTagName('div')[0];
             var label = div.getElementsByTagName('label')[0];
