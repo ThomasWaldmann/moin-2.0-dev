@@ -152,7 +152,7 @@ class ConverterItemLinks(ConverterBase):
         path = input.path
 
         if path[0] == '':
-            p = page.path[1:] 
+            p = page.path[1:]
             p.extend(path[1:])
             path = p
         elif path[0] == '..':

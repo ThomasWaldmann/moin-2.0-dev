@@ -1,7 +1,7 @@
 # -*- coding: ascii -*-
 """
     MoinMoin - admin views
-    
+
     This shows the user interface for wiki admins.
 
     @copyright: 2008-2010 MoinMoin:ThomasWaldmann,
