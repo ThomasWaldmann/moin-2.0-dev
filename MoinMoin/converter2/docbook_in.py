@@ -27,6 +27,9 @@ from MoinMoin.util.tree import moin_page, xlink, docbook
 
 from ._wiki_macro import ConverterMacro
 
+class NameSpaceError(Exception):
+    pass
+
 class Converter(object):
     """
     Converter application/docbook+xml -> x.moin.document
@@ -56,9 +59,25 @@ class Converter(object):
         docbook_str = u''
         docbook_str = docbook_str.join(content)
         # TODO : Check why the XML parser from Element Tree need ByteString
-        tree = ET.XML(docbook_str.encode('utf-8'))
+        try:
+            tree = ET.XML(docbook_str.encode('utf-8'))
+        except ET.ParseError as detail:
+            return self.error(str(detail))
 
-        return self.visit(tree, 0)
+        try:
+            result = self.visit(tree, 0)
+        except NameSpaceError as detail:
+            return self.error(str(detail))
+        return result
+
+    def error(self, message):
+        """
+        Return a DOM Tree containing an error message.
+        """
+        error = self.new(moin_page('error'), attrib={}, children=[message])
+        part = self.new(moin_page('part'), attrib={}, children=[error])
+        body = self.new(moin_page('body'), attrib={}, children=[part])
+        return self.new(moin_page('page'), attrib={}, children=[body])
 
     def do_children(self, element, depth):
         """
@@ -113,6 +132,8 @@ class Converter(object):
 
             # We process children of the unknown element
             return self.do_children(element, depth)
+        else:
+            raise NameSpaceError("Unknown namespace")
 
     def visit_docbook(self, element, depth):
         """

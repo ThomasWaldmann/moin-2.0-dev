@@ -196,7 +196,7 @@ class Item(object):
         doc = input_conv(input)
         doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
-        #doc = smiley_conv(doc) # XXX kills hrefs!
+        doc = smiley_conv(doc)
         doc = link_conv(doc)
         return doc
 
@@ -1077,12 +1077,6 @@ class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
 
-
-class DocBook(Text):
-    """ DocBook Document """
-    supported_mimetypes = ['application/docbook+xml']
-
-
 class HTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/html']
@@ -1106,6 +1100,13 @@ class HTML(Text):
                                help=self.modify_help,
                               )
 
+class SafeHTML(HTML):
+    """ Safe HTML markup - we'll filter dangerous stuff """
+    supported_mimetypes = ['text/x-safe-html']
+
+class DocBook(Text):
+    """ DocBook Document """
+    supported_mimetypes = ['application/docbook+xml']
 
     def _convert(self, doc):
         from emeraldtree import ElementTree as ET
@@ -1153,12 +1154,6 @@ class HTML(Text):
                          cache_timeout=10, # wiki data can change rapidly
                          add_etags=False, etag=None,
                          conditional=True)
-
-
-class SafeHTML(HTML):
-    """ Safe HTML markup - we'll filter dangerous stuff """
-    supported_mimetypes = ['text/x-safe-html']
-
 
 class TWikiDraw(TarMixin, Image):
     """

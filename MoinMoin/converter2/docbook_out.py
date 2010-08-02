@@ -180,7 +180,7 @@ class Converter(object):
 
         # We will close a section before starting a new one
         # Need more test
-        elif  depth < current_depth:
+        elif  depth < self.current_section:
             if self.parent_section != 0:
                 section_tag = 'sect%d' % self.parent_section
                 section = ET.Element(docbook(section_tag), attrib={},
