@@ -79,6 +79,10 @@ class TestConverter(Base):
             (u'<article><para>안녕 유빈</para></article>',
             # <page><body><p>안녕 유빈</p></body></page>
              u'/page/body[p="안녕 유빈"]'),
+            # Ignored tags
+            ('<article><info><title>Title</title><author>Author</author></info><para>text</para></article>',
+            # <page><body><p>text</p></body></page>
+            '/page/body[p="text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
