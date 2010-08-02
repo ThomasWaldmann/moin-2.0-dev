@@ -167,6 +167,22 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_blockquote(self, element, depth):
+        # TODO:Translate
+        source = u"Unknow"
+        children = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == "attribution":
+                    source = self.do_children(child, depth+1)
+                else:
+                    children.extend(self.do_children(child, depth+1))
+            else:
+                children.append(child)
+        attrib = {}
+        attrib[moin_page('source')] = source[0]
+        return self.new(moin_page.blockquote, attrib=attrib, children=children)
+
     def visit_docbook_emphasis(self, element, depth):
         """
         emphasis element, is the only way to apply some style
