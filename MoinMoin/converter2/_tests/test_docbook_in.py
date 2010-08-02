@@ -41,16 +41,24 @@ class Base(object):
     def handle_input(self, input):
         return self.input_re.sub(r'\1 ' + self.input_namespaces, input)
 
-    def handle_output(self, input, args):
-        to_conv = self.handle_input(input)
-        out = self.conv(to_conv, **args)
+    def handle_output(self, input, **args):
+        if not 'nonamespace' in args:
+            to_conv = self.handle_input(input)
+        elif args['nonamespace']:
+            to_conv = input
+        out = self.conv(to_conv)
         f = StringIO.StringIO()
         out.write(f.write, namespaces=self.output_namespaces, )
         return self.output_re.sub(u'', f.getvalue())
 
-
     def do(self, input, xpath_query):
-        string_to_parse = self.handle_output(input, args={})
+        string_to_parse = self.handle_output(input)
+        logging.debug(u"After the DOCBOOK_IN conversion : %s" % string_to_parse)
+        tree = etree.parse(StringIO.StringIO(string_to_parse))
+        assert (tree.xpath(xpath_query, namespaces=self.namespaces_xpath))
+
+    def do_nonamespace(self, input, xpath_query):
+        string_to_parse = self.handle_output(input, nonamespace=True)
         logging.debug(u"After the DOCBOOK_IN conversion : %s" % string_to_parse)
         tree = etree.parse(StringIO.StringIO(string_to_parse))
         assert (tree.xpath(xpath_query, namespaces=self.namespaces_xpath))
@@ -257,4 +265,13 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_namespace(self):
+        data = [
+            # Error : Missing namespace
+            ('<article><para>Text</para></article>',
+             '/page/body/part/error'),
+        ]
+        for i in data:
+            yield (self.do_nonamespace, ) + i
 
