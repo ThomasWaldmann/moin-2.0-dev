@@ -50,14 +50,14 @@ textarea {
 
 /* user interface styles */
 
-#header {
+#moin-header {
     margin: 1px;
     padding: 1px;
     background: #e6eaf0;
     line-height: 1.1em;
 }
 
-#logo {
+#moin-logo {
     float: left;
     margin: 5px 10px;
     padding: 0;
@@ -67,32 +67,32 @@ textarea {
     font-weight: bold;
 }
 
-*[dir="rtl"] #logo {
+*[dir="rtl"] #moin-logo {
     float: right;
 }
 
-#logo img {
+#moin-logo img {
     vertical-align: middle;
 }
 
-#logo a {
+#moin-logo a {
     color: black;
     text-decoration: none;
 }
 
 
-#username {
+#moin-username {
     display: block;
     margin: 8px 12px 4px 12px;
     padding: 0;
     font-size: 0.82em;
 }
 
-#username form {
+#moin-username form {
     display: inline;
 }
 
-#username input {
+#moin-username input {
     display: inline;
     padding: 0;
     margin: 0;
@@ -103,7 +103,7 @@ textarea {
     cursor: pointer;
 }
 
-#username input:hover {
+#moin-username input:hover {
     color: red;
 }
 
@@ -124,7 +124,7 @@ textarea {
     font-size: 100%;
     vertical-align: middle;
 }
-#pagetrail {
+#moin-pagetrail {
     clear: right;
     display: inline;
     margin: 0 0.88em 0.25em 0.88em;
@@ -132,39 +132,39 @@ textarea {
     font-size: 0.88em;
 }
 
-*[dir="rtl"] #pagetrail {
+*[dir="rtl"] #moin-pagetrail {
     clear: left;
 }
 
-#interwiki {
+#moin-interwiki {
     font-size: 1em;
 }
 
-#locationline {
+#moin-locationline {
     padding: 0;
     font-size: 100%;
     font-weight: normal;
     margin: 0.25em 12px 5px 12px;
     clear: right;
 }
-*[dir="rtl"] #locationline {
+*[dir="rtl"] #moin-locationline {
     clear: left;
 }
 
-#pagelocation {
+#moin-pagelocation {
     font-size: 1.5em;
     letter-spacing: 0.05em;
 }
 
 
-*[dir="rtl"] #pagetrail span.sep {
+*[dir="rtl"] #moin-pagetrail span.sep {
     visibility: hidden;
 }
-*[dir="rtl"] #pagetrail span.sep:after {
+*[dir="rtl"] #moin-pagetrail span.sep:after {
     content: " « ";
 }
 
-#navibar {
+#moin-navibar {
     clear: both;  /* problem: clear: right; aligns nicely right of logo,
                     but lets it float high in the header, disconnected from ground */
     display: block;
@@ -174,7 +174,7 @@ textarea {
     zoom: 1; /* for avoiding a gap between navibar and pageline on IE */
 }
 
-#navibar li {
+#moin-navibar li {
     float: left;
     display: inline;
     margin: 0 2px;
@@ -184,39 +184,39 @@ textarea {
     white-space: nowrap;
 }
 
-*[dir="rtl"] #navibar li {
+*[dir="rtl"] #moin-navibar li {
     float: right;
 }
 
-#navibar li.wikilink {
+#moin-navibar li.wikilink {
     background: white; /*url(../img/tab-wiki.png) repeat-x;*/
 }
 
-#navibar li.userlink {
+#moin-navibar li.userlink {
     background: #E6EAF0; /*url(../img/tab-user.png) repeat-x;*/
 }
 
-#navibar a, #navibar a:visited {
+#moin-navibar a, #moin-navibar a:visited {
     color: black;
     text-decoration: none;    
 }
 
-#navibar li.current a {
+#moin-navibar li.current a {
     font-weight: bold;
 }
 
-#navibar li:hover {
+#moin-navibar li:hover {
     background: #d6e4f9;
 }
 
-#navibar li.current, #navibar li.current:hover {
+#moin-navibar li.current, #moin-navibar li.current:hover {
     background: #81BBF2; /* url(../img/tab-selected.png) repeat-x; */
     border: 1px solid #4d7da9;
     border-bottom: 1px solid #81bbf2;
     margin-bottom: -1px;
 }
 
-#pageline {
+#moin-pageline {
     clear: both;
     margin: 0;
     padding: 0;
@@ -229,7 +229,7 @@ textarea {
     background: #81BBF2;
 }
 
-.editbar {
+.moin-editbar {
     clear: both;
     display: block;
     margin: 0;
@@ -241,41 +241,23 @@ textarea {
     margin-top: -1px;
 }
 
-.editbar form, .editbar form div {
+.moin-editbar form, .moin-editbar form div {
     display: inline;
     margin: 0;
 }
 
-.editbar select {
+.moin-editbar select {
     font-size: 100%;
     vertical-align: middle;
 }
 
-.editbar li {
+.moin-editbar li {
     display: inline;
     padding: 0;
     margin: 4px 6px;
 }
 
-.editbar a, .editbar a:visited { color: #0044B3; }
-
-#message {
-    clear: both;
-    margin: 0;
-    padding: 5px 10px;
-    border-bottom: 1px solid #c9c9c9;
-    background: #E6EAF0;
-}
-
-#message p {
-    margin: 5px 0;
-    padding: 0;
-    /* font-weight: bold; */
-}
-
-#message div.buttons {
-    font-weight: normal;
-}
+.moin-editbar a, .moin-editbar a:visited { color: #0044B3; }
 
 .dialog form {
     margin: 0 15px;
@@ -300,7 +282,7 @@ textarea {
     width: 100%;
 }
 
-#page {
+#moin-page {
     background-color: white;
     margin: 0;
     padding: 2px 20px 20px 20px;
@@ -377,13 +359,13 @@ input.button {
     */
 }
 
-#footer {
+#moin-footer {
     clear: both;
     margin: 0;
     padding: 0;
 }
 
-#credits, #version, #timings{
+#moin-credits, #version, #moin-timings{
     margin: 5px 10px;
     padding: 0;
     text-align: center;
@@ -391,13 +373,13 @@ input.button {
     color: #6C7680;
 }
 
-#credits li, #timings li {
+#moin-credits li, #moin-timings li {
     display: inline;
     padding: 0 2px;
     margin: 0 4px;
 }
 
-#credits img {
+#moin-credits img {
     vertical-align: middle;
 }
 
