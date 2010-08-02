@@ -81,9 +81,9 @@ class Converter(object):
         new_children = []
 
         # If we do not want smiley conversion for the children of
-        # a specific element, we just stop the recursion.
+        # a specific element, we do not process the conversion.
         if element.tag.name in self.tags_to_ignore:
-            return
+            return element
         for child in element:
             if isinstance(child, ET.Element):
                 # We have an ET.Element, so we continue the recursion
