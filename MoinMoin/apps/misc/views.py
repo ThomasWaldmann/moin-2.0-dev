@@ -10,7 +10,8 @@
 
 import time
 
-from flask import g, render_template, Response
+from flask import render_template, Response
+from flask import flaskg
 
 from MoinMoin.apps.misc import misc
 
@@ -27,7 +28,7 @@ def sitemap():
     def format_timestamp(ts):
         return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts))
 
-    request = g.context
+    request = flaskg.context
     storage = request.storage
     sitemap = []
     for item in storage.iteritems():
@@ -66,7 +67,7 @@ def urls_names():
     can implement SisterWiki functionality easily.
     See: http://usemod.com/cgi-bin/mb.pl?SisterSitesImplementationGuide
     """
-    request = g.context
+    request = flaskg.context
     # XXX we currently also get user items, fix this
     item_names = [item.name for item in request.storage.iteritems()]
     item_names.sort()

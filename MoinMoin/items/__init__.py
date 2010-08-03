@@ -23,7 +23,8 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import g, request, url_for, send_file, render_template, Response, abort, escape
+from flask import request, url_for, send_file, render_template, Response, abort, escape
+from flask import flaskg
 from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
@@ -607,7 +608,7 @@ There is no help, you're doomed!
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
 
     def do_get(self):
-        hash = self.rev.get(g.context.cfg.hash_algorithm)
+        hash = self.rev.get(flaskg.context.cfg.hash_algorithm)
         if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
         else:
@@ -1010,7 +1011,7 @@ class Text(Binary):
         return diff_html.diff(self.request,
                               self.data_storage_to_internal(oldrev.read()),
                               self.data_storage_to_internal(newrev.read()))
-    
+
     def _render_data_diff_text(self, oldrev, newrev):
         from MoinMoin.util import diff_text
         oldlines = self.data_storage_to_internal(oldrev.read()).split('\n')
@@ -1062,7 +1063,7 @@ class MarkupItem(Text):
         doc = input_conv(self.data_storage_to_internal(data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
         doc = itemlinks_conv(doc)
-        newrev[ITEMLINKS] = itemlinks_conv.get_links() 
+        newrev[ITEMLINKS] = itemlinks_conv.get_links()
 
 
 class MoinWiki(MarkupItem):
@@ -1356,6 +1357,4 @@ class SvgDraw(TarMixin, Image):
         drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
         return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
-
-
 
