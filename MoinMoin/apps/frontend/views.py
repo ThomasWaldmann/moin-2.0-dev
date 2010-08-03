@@ -279,8 +279,9 @@ def index(item_name):
 def global_index():
     item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
     index = item.flat_index()
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_index.html',
-                           # XXX no item, no item_name
+                           item_name=item_name, # XXX no item
                            index=index,
                           )
 
@@ -311,8 +312,9 @@ def history(item_name):
 @frontend.route('/+history')
 def global_history():
     history = flaskg.context.storage.history(item_name='')
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_history.html',
-                           # XXX no item, no item_name
+                           item_name=item_name, # XXX no item
                            history=history,
                           )
 
