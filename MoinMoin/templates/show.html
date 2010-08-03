@@ -17,17 +17,6 @@
 {% endblock %}
 
 {% block content %}
-    {% if not rev %}
-    This item exists, but not this revision.
-    {% else %}
-    {% block headline %}
-    {# <h1>{{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1> #}
-    {% endblock %}
-    {% if data_rendered %}
-    <div id="moin-content-data">
-        {{ data_rendered }}
-    </div>
-    {% endif %}
     {% if show_navigation %}
     <ul id="moin-rev-navigation">
         <li class="moin-rev-navigation-older">
@@ -42,6 +31,17 @@
             {% else %} no newer revs{% endif %}
         </li>
     </ul>
+    {% endif %}
+    {% if not rev %}
+    This item exists, but not this revision.
+    {% else %}
+    {% block headline %}
+    {# <h1>{{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1> #}
+    {% endblock %}
+    {% if data_rendered %}
+    <div id="moin-content-data">
+        {{ data_rendered }}
+    </div>
     {% endif %}
     {% endif %}
 {% endblock %}
