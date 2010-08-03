@@ -279,7 +279,7 @@ def index(item_name):
 def global_index():
     item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
     index = item.flat_index()
-    return render_template(item.index_template,
+    return render_template('global_index.html',
                            # XXX no item, no item_name
                            index=index,
                           )
