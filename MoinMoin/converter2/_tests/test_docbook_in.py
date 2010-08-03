@@ -271,6 +271,33 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_admonition(self):
+        data = [
+            # Test for caution admonition
+            ('<article><caution><para>text</para></caution></article>',
+            # <page><body><admonition type='caution'><p>text<p></admonition></body></page>
+            '/page/body/admonition[@type="caution"][p="text"]'),
+            # Test for important admonition
+            ('<article><important><para>text</para></important></article>',
+            # <page><body><admonition type='important'><p>text<p></admonition></body></page>
+            '/page/body/admonition[@type="important"][p="text"]'),
+            # Test for note admonition
+            ('<article><note><para>text</para></note></article>',
+            # <page><body><admonition type='note'><p>text<p></admonition></body></page>
+            '/page/body/admonition[@type="note"][p="text"]'),
+            # Test for tip admonition
+            ('<article><tip><para>text</para></tip></article>',
+            # <page><body><admonition type='tip'><p>text<p></admonition></body></page>
+            '/page/body/admonition[@type="tip"][p="text"]'),
+            # Test for warning admonition
+            ('<article><warning><para>text</para></warning></article>',
+            # <page><body><admonition type='warning'><p>text<p></admonition></body></page>
+            '/page/body/admonition[@type="warning"][p="text"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+
     def test_error(self):
         data = [
             # Error : Xml not correctly formatted
