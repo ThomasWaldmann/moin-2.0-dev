@@ -43,7 +43,7 @@ class TestConverter(object):
             (u"'''strong'''\n", "'''strong'''\n"),
             (u"''emphasis''\n", "''emphasis''\n"),
             (u"{{{\nblockcode\n}}}\n", "{{{\nblockcode\n}}}\n"),
-            (u"`monospace`\n",'`monospace`\n'),
+            (u"`monospace`\n", '`monospace`\n'),
             (u"--(stroke)--\n", '--(stroke)--\n'),
             (u"__underline__\n", '__underline__\n'),
             (u"~+larger+~\n", '~+larger+~\n'),
@@ -97,7 +97,7 @@ class TestConverter(object):
             (u'[[http://moinmo.in/|MoinMoin Wiki|class=green dotted, accesskey=1]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]\n'),
             (u'[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]', '[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]\n'),
             (u'[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]', '[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]\n'),
-            (u'[[attachment:filename.txt]]','[[attachment:filename.txt]]\n')
+            (u'[[attachment:filename.txt]]', '[[attachment:filename.txt]]\n')
         ]
         for i in data:
             yield (self.do, ) + i
@@ -509,7 +509,7 @@ Its visibility gets toggled the same way.
 
     def handle_output(self, elem, **options):
         return elem
-    
+
     def serialize(self, elem, **options):
         from StringIO import StringIO
         buffer = StringIO()
