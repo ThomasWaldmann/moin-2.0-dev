@@ -31,6 +31,7 @@
                 <td>{{ rev.mimetype|e }}</td>
                 <td>{{ rev.edit_log_comment|e }}</td>
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
+                <td><a href="{{ url_for('frontend.show_item_meta', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('meta') }}</a></td>
                 <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('download') }}</a></td>
                 <td><a href="{{ url_for('frontend.highlight_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{_('highlight') }}</a></td>
                 <td><a href="{{ url_for('frontend.revert_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('revert') }}</a></td>
