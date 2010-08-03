@@ -43,7 +43,7 @@ class Converter(object):
     # We even do not process children of these elements
     # "Info" elements are the biggest part of this set
     ignored_tags = set([#Info elements
-                       'abstract', 'address', 'artpagenums', 'annotation',
+                       'abstract', 'artpagenums', 'annotation',
                        'artpagenums', 'author', 'authorgroup',
                        'authorinitials', 'bibliocoverage', 'biblioid',
                        'bibliomisc', 'bibliomset', 'bibliorelation',
@@ -83,10 +83,10 @@ class Converter(object):
 
     # DocBook inline elements which does not have equivalence in the DOM
     # tree, but we keep the information using <span element='tag.name'>
-    inline_tags = set(['abbrev', 'accel', 'acronym', 'affiliation'
-                       'city', 'command', 'constant', 'country',
-                       'database', 'date', 'fax', 'filename', 'firstname',
-                       'foreignphrase', 'hardware', 'holder',
+    inline_tags = set(['abbrev', 'address', 'accel', 'acronym',
+                       'affiliation', 'city', 'command', 'constant',
+                       'country', 'database', 'date', 'fax', 'filename',
+                       'firstname', 'foreignphrase', 'hardware', 'holder',
                        'honorific'])
 
     sect_re = re.compile('sect[1-5]')
