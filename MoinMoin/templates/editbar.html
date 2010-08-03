@@ -1,4 +1,9 @@
 <ul class="moin-editbar">
+    {% if 'Show' in cfg.edit_bar and 'show' not in cfg.actions_excluded -%}
+        <li>
+        <a href="{{ url_for('frontend.show_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Show') }}</a>
+        </li>
+    {%- endif %}
     {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
         {% if theme.item_writable %}
