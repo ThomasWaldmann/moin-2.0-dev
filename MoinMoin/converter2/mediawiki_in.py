@@ -642,27 +642,45 @@ class Converter(ConverterMacro):
     inline_nowiki = r"""
         (?P<nowiki>
             <nowiki>
-            (?P<nowiki_text>.*?)
+            (?P<nowiki_text> .*? )
             </nowiki>
             |
-            \<pre\>
+            <pre>
             (?P<nowiki_text_pre> .*? )
-            \<\/pre>
+            </pre>
+            |
+            <code>
+            (?P<nowiki_text_code> .*? )
+            </code>
+            |
+            <tt>
+            (?P<nowiki_text_tt> .*? )
+            </tt>
         )
     """
 
     def inline_nowiki_repl(self, stack, nowiki, nowiki_text=None,
-            nowiki_text_backtick=None):
+            nowiki_text_pre=None, pre_args='',
+            nowiki_text_code=None, nowiki_text_tt=None):
         text = None
+
+        print (nowiki, nowiki_text, nowiki_text_pre, pre_args, nowiki_text_code, nowiki_text_tt)
         if nowiki_text is not None:
             text = nowiki_text
+            stack.top_append(moin_page.code(children=[text]))
+        elif nowiki_text_code is not None:
+            text = nowiki_text_code
+            stack.top_append(moin_page.code(children=[text]))
+        elif nowiki_text_tt is not None:
+            text = nowiki_text_tt
+            stack.top_append(moin_page.code(children=[text]))
         # Remove empty backtick nowiki samples
         elif nowiki_text_pre:
+            # TODO: pre_args parsing
             text = nowiki_text_pre
+            stack.top_append(moin_page.blockcode(children=[text]))
         else:
             return
-
-        stack.top_append(moin_page.code(children=[text]))
 
     inline_object = r"""
         (?P<object>
