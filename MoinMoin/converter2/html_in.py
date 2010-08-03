@@ -53,7 +53,7 @@ class Converter(object):
                   }
 
     # HTML Tag which does not have equivalence in the DOM Tree
-    # But we keep the information using <span html-element>
+    # But we keep the information using <span element>
     inline_tags = set(['abbr', 'acronym', 'address', 'dfn', 'kbd'])
 
     # HTML tags which are completely ignored by our converter.
@@ -383,7 +383,7 @@ class Converter(object):
     def visit_xhtml_inline(self, element):
         """
         For some specific inline tags (defined in inline_tags)
-        We just return <span html-element="tag.name">
+        We just return <span element="tag.name">
         """
         key = moin_page('element')
         attrib = {}
