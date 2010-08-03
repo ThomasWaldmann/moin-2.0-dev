@@ -30,8 +30,6 @@ moindir = rootdir.join("..")
 sys.path.insert(0, str(moindir))
 
 from MoinMoin.web.request import TestRequest
-from MoinMoin.web.contexts import AllContext
-#from MoinMoin.wsgiapp import Application, init, init_unprotected_backends, protect_backends
 from . import app, protect_backends, before, flaskg
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
@@ -68,22 +66,17 @@ except ImportError:
 
 
 def init_test_request(given_config):
-    #request = TestRequest()
-    #content_acl = given_config.content_acl
-    #given_config.namespace_mapping, given_config.router_index_uri = \
-    #    create_simple_mapping("memory:", content_acl)
-    #request.given_config = given_config
-    #request = init(request)
-    #protect_backends(request)
     with app.test_client() as c:
-        rv = c.get('/')
-        request = TestRequest()
+        rv = c.get('/') #Create a request for test in flask
+        request = TestRequest() #Same thing for moin
+        # XXX: We need a way to merge the two requests
+        #      or see which one is the best.
         content_acl = given_config.content_acl
         given_config.namespace_mapping, given_config.router_index_uri = \
             create_simple_mapping("memory:", content_acl)
         request.given_config = given_config
         before()
-        request.cfg = flaskg.context.cfg
+        request.cfg = flaskg.context.cfg #XXX: Should not be set up manually normally.
         return request
 
 # py.test customization starts here
@@ -115,7 +108,8 @@ class MoinClassCollector(py.test.collect.Class):
         else:
             given_config = wikiconfig.Config
         cls.request = init_test_request(given_config)
-        # XXX: cls client
+        # XXX: We probably need a cls.client
+
         # In order to provide fresh backends for each and every testcase,
         # we wrap the setup_method in a decorator that performs the freshening
         # operation. setup_method is invoked by py.test automatically prior to
