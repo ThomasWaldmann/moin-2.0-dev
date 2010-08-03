@@ -523,7 +523,6 @@ Its visibility gets toggled the same way.
         if skip:
             py.test.skip(skip)
         out = self.conv_in(input.split(u'\n'), **args)
-        print self.serialize(out)
         out = self.conv_out(self.handle_input(self.serialize(out)), **args)
         assert self.handle_output(out) == output
 

@@ -35,9 +35,6 @@ class Base(object):
 
     def do(self, input, output, args={}):
         out = self.conv(self.handle_input(input), **args)
-        print [self.handle_output(out)]
-        print self.handle_output(out)
-        print input
         assert self.handle_output(out) == output
 
 
