@@ -73,7 +73,6 @@ def show_item(item_name, rev):
                            mimetype=item.mimetype,
                            first_rev_no=first_rev,
                            last_rev_no=last_rev,
-                           meta_rendered=item._render_meta(),
                            data_rendered=item._render_data(),
                            show_navigation=True if rev>-1 else False,
                           )
@@ -81,6 +80,30 @@ def show_item(item_name, rev):
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
     return redirect(url_for('show_item', item_name=item_name))
+
+
+@frontend.route('/+meta/<itemname:item_name>', defaults=dict(rev=-1))
+@frontend.route('/+meta/<int:rev>/<itemname:item_name>')
+def show_item_meta(item_name, rev):
+    flaskg.context.user.addTrail(item_name)
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    rev_nos = item.rev.item.list_revisions()
+    if rev_nos:
+        first_rev = rev_nos[0]
+        last_rev = rev_nos[-1]
+    else:
+        # Note: rev.revno of DummyRev is None
+        first_rev = None
+        last_rev = None
+    return render_template('meta.html',
+                           item_name=item.name,
+                           rev=item.rev,
+                           mimetype=item.mimetype,
+                           first_rev_no=first_rev,
+                           last_rev_no=last_rev,
+                           meta_rendered=item._render_meta(),
+                           show_navigation=True if rev>-1 else False,
+                          )
 
 
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
