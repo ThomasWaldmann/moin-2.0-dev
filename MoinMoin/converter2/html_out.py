@@ -98,6 +98,9 @@ class Converter(object):
         moin_page: 'moinpage',
     }
 
+    # Inline tags which can be directly converted into an HTML element
+    direct_inline_tags = set(['abbr', 'address', 'dfn', 'kbd'])
+
     def __init__(self, request):
         self.request = request
 
@@ -370,9 +373,15 @@ class Converter(object):
                 key = html('class')
                 attribute[key] = 'big'
                 return self.new_copy(html.span, elem, attribute)
-        generate = attrib.get('html-element')
+        generate = attrib.get('element')
         if generate:
-            return self.new_copy(html(generate), elem)
+            if generate in self.direct_inline_tags:
+                return self.new_copy(html(generate), elem)
+            else:
+                attribute = {}
+                key = html('class')
+                attribute[key] = "element-%s" % generate
+                return self.new_copy(html.span, elem, attribute)
         # If no any attributes is handled by our converter, just return span
         return self.new_copy(html.span, elem)
 
