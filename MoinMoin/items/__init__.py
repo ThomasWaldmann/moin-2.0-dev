@@ -497,25 +497,15 @@ class NonExistent(Item):
             ('image/svg+xml', 'SVG'),
         ]),
         ('audio items', [
-            ('audio/midi', 'MIDI'),
-            ('audio/mpeg', 'MP3'),
+            ('audio/wave', 'WAV'),
             ('audio/ogg', 'OGG'),
-            ('audio/x-aiff', 'AIF'),
-            ('audio/x-ms-wma', 'WMA'),
-            ('audio/x-pn-realaudio', 'RA'),
-            ('audio/x-wav', 'WAV'),
+            ('audio/mpeg', 'MP3'),
+            ('audio/webm', 'WebM'),
         ]),
         ('video items', [
-            ('video/mpg', 'MPG'),
-            ('video/fli', 'FLI'),
-            ('video/mp4', 'MP4'),
-            ('video/quicktime', 'QuickTime'),
             ('video/ogg', 'OGG'),
-            ('video/x-flv', 'FLV'),
-            ('video/x-ms-asf', 'ASF'),
-            ('video/x-ms-wm', 'WM'),
-            ('video/x-ms-wmv', 'WMV'),
-            ('video/x-msvideo', 'AVI'),
+            ('video/webm', 'WebM'),
+            ('video/mp4', 'MP4'),
         ]),
         ('drawing items', [
             ('application/x-twikidraw', 'TDRAW'),
@@ -525,7 +515,6 @@ class NonExistent(Item):
 
         ('other items', [
             ('application/pdf', 'PDF'),
-            ('application/x-shockwave-flash', 'SWF'),
             ('application/zip', 'ZIP'),
             ('application/x-tar', 'TAR'),
             ('application/x-gtar', 'TGZ'),
