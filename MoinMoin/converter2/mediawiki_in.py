@@ -29,12 +29,6 @@ from ._wiki_macro import ConverterMacro
 class _TableArguments(object):
     rules = r'''
     (?:
-        -
-        (?P<number_columns_spanned> \d+)
-        |
-        \|
-        (?P<number_rows_spanned> \d+)
-        |
         (?P<arg>
             (?:
                 (?P<key> [-\w]+)
@@ -146,8 +140,9 @@ class Converter(ConverterMacro):
     block_table = r"""
         ^
         (?P<table>
-        \{\|
-        \s*
+            \{\|
+            \s*
+            (?P<table_args> .*?)
         )
         $
     """
@@ -169,11 +164,18 @@ class Converter(ConverterMacro):
                 return
             yield line
 
-    def block_table_repl(self, iter_content, stack, table):
+    def block_table_repl(self, iter_content, stack, table, table_args=''):
         stack.clear()
         # TODO: table attributes
         elem = moin_page.table()
         stack.push(elem)
+        if table_args:
+            table_args = _TableArguments()(table_args)
+            for key, value in table_args.keyword.iteritems():
+                attrib = elem.attrib
+                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
+                    attrib[moin_page(key)] = value
+
         element = moin_page.table_body()
         stack.push(element)
         lines = _Iter(self.block_table_lines(iter_content))
@@ -184,23 +186,32 @@ class Converter(ConverterMacro):
             if not m:
                 return
             if m.group('newrow'):
-                stack.pop()
+                stack.pop_name('table-row')
                 element = moin_page.table_row()
                 stack.push(element)
             cells = m.group('cells')
             if cells:
                 cells = cells.split('||')
                 for cell in cells:
-                    cell = cell.split('|')
+                    if stack.top_check('table-cell'):
+                        stack.pop()
+
+                    cell = re.split(r'\s*\|\s*', cell)
+                    element = moin_page.table_cell()
                     if len(cell) > 1:
-                        cell_args = _TableArguments(cell[0])
+                        cell_args = _TableArguments()(cell[0])
+                        print cell[0],  cell_args
+                        for key, value in cell_args.keyword.iteritems():
+                            attrib = element.attrib
+                            if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
+                                attrib[moin_page(key)] = value
                         cell = cell[1]
                     else:
                         cell = cell[0]
-                    element = moin_page.table_cell()
                     stack.push(element)
                     self.parse_inline(cell, stack, self.inline_re)
-                    stack.pop_name('table-cell')
+            elif m.group('text'):
+                self.parse_inline(m.group('text'), stack, self.inline_re)
         stack.pop_name('table')
 
     block_text = r'(?P<text> .+ )'
@@ -678,6 +689,8 @@ class Converter(ConverterMacro):
             |
             (?P<cells> .* )
         )
+        |
+        (?P<text> .* )
         $
     """
     '''
