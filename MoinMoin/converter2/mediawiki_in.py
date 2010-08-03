@@ -5,6 +5,7 @@ MoinMoin - Media Wiki input converter
             2006-2008 MoinMoin:ThomasWaldmann,
             2007 MoinMoin:ReimarBauer,
             2008-2010 MoinMoin:BastianBlank
+            2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -200,7 +201,6 @@ class Converter(ConverterMacro):
                     element = moin_page.table_cell()
                     if len(cell) > 1:
                         cell_args = _TableArguments()(cell[0])
-                        print cell[0],  cell_args
                         for key, value in cell_args.keyword.iteritems():
                             attrib = element.attrib
                             if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
@@ -211,7 +211,7 @@ class Converter(ConverterMacro):
                     stack.push(element)
                     self.parse_inline(cell, stack, self.inline_re)
             elif m.group('text'):
-                self.parse_inline(m.group('text'), stack, self.inline_re)
+                self.parse_inline('\n%s' % m.group('text'), stack, self.inline_re)
         stack.pop_name('table')
 
     block_text = r'(?P<text> .+ )'
