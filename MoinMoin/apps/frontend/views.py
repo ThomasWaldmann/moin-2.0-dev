@@ -13,7 +13,8 @@
 import re
 import difflib
 
-from flask import request, g, url_for, flash, render_template, Response, redirect
+from flask import request, url_for, flash, render_template, Response, redirect
+from flask import flaskg
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, MIMETYPE, ITEMLINKS
@@ -22,7 +23,7 @@ from MoinMoin import config, user, wikiutil
 
 @frontend.route('/')
 def show_root():
-    location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(g.context)
+    location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(flaskg.context)
     return redirect(location)
 
 @frontend.route('/robots.txt')
@@ -56,8 +57,8 @@ Allow: /
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
-    g.context.user.addTrail(item_name)
-    item = Item.create(g.context, item_name, rev_no=rev)
+    flaskg.context.user.addTrail(item_name)
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -84,7 +85,7 @@ def redirect_show_item(item_name):
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
 @frontend.route('/+get/<itemname:item_name>', defaults=dict(rev=-1))
 def get_item(item_name, rev):
-    item = Item.create(g.context, item_name, rev_no=rev)
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
     return item.do_get()
 
 @frontend.route('/+convert/<itemname:item_name>')
@@ -99,30 +100,30 @@ def convert_item(item_name):
     with the internal representation of the item.
     """
     mimetype = request.values.get('mimetype')
-    item = Item.create(g.context, item_name, rev_no=-1)
+    item = Item.create(flaskg.context, item_name, rev_no=-1)
     # We don't care about the name of the converted object
     # It should just be a name which does not exist.
     # XXX Maybe use a random name to be sure it does not exist
     item_name_converted = item_name + 'converted'
-    converted_item = Item.create(g.context, item_name_converted, mimetype=mimetype)
+    converted_item = Item.create(flaskg.context, item_name_converted, mimetype=mimetype)
     return converted_item._convert(item.internal_representation())
 
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
 @frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
-    item = Item.create(g.context, item_name, rev_no=rev)
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         data_text = item.data_storage_to_internal(item.data)
         # TODO: use registry as soon as it is in there
         from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
-        pygments_conv = PygmentsConverter(g.context, mimetype=item.mimetype)
+        pygments_conv = PygmentsConverter(flaskg.context, mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=g.context)
+                Type('application/x-xhtml-moin-page'), request=flaskg.context)
         doc = html_conv(doc)
         from array import array
         out = array('u')
@@ -144,14 +145,14 @@ def modify_item(item_name):
     On POST, saves the new page (unless there's an error in input, or cancelled).
     After successful POST, redirects to the page.
     """
-    mimetype = g.context.values.get('mimetype')
-    template_name = g.context.values.get('template')
-    item = Item.create(g.context, item_name, mimetype=mimetype)
+    mimetype = flaskg.context.values.get('mimetype')
+    template_name = flaskg.context.values.get('template')
+    item = Item.create(flaskg.context, item_name, mimetype=mimetype)
     if request.method == 'GET':
         content = item.do_modify(template_name)
         return content
-    elif g.context.method == 'POST':
-        cancelled = 'button_cancel' in g.context.form
+    elif flaskg.context.method == 'POST':
+        cancelled = 'button_cancel' in flaskg.context.form
         if not cancelled:
             item.modify()
         if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
@@ -162,7 +163,7 @@ def modify_item(item_name):
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
 def revert_item(item_name, rev):
-    item = Item.create(g.context, item_name, rev_no=rev)
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
     if request.method == 'GET':
         return render_template(item.revert_template, item=item)
     elif request.method == 'POST':
@@ -173,7 +174,7 @@ def revert_item(item_name, rev):
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
 def copy_item(item_name):
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
         return render_template(item.copy_template, item=item)
     if request.method == 'POST':
@@ -189,7 +190,7 @@ def copy_item(item_name):
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
 def rename_item(item_name):
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
         return render_template(item.rename_template, item=item)
     if request.method == 'POST':
@@ -205,7 +206,7 @@ def rename_item(item_name):
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
 def delete_item(item_name):
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
         return render_template(item.delete_template, item=item)
     elif request.method == 'POST':
@@ -217,7 +218,7 @@ def delete_item(item_name):
 
 @frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
 def destroy_item(item_name):
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
         return render_template(item.destroy_template, item=item)
     if request.method == 'POST':
@@ -229,14 +230,14 @@ def destroy_item(item_name):
 
 @frontend.route('/+index/<itemname:item_name>')
 def index(item_name):
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     return render_template(item.index_template, item=item)
 
 
 @frontend.route('/+index')
 def global_index():
     item_name = ''
-    item = Item.create(g.context, item_name)
+    item = Item.create(flaskg.context, item_name)
     return render_template(item.index_template, item=item)
 
 
@@ -256,20 +257,20 @@ def _search(**args):
 
 @frontend.route('/+history/<itemname:item_name>')
 def history(item_name):
-    history = g.context.storage.history(item_name=item_name)
+    history = flaskg.context.storage.history(item_name=item_name)
     return render_template('history.html', item_name=item_name, history=history)
 
 
 @frontend.route('/+history')
 def global_history():
-    history = g.context.storage.history(item_name='')
+    history = flaskg.context.storage.history(item_name='')
     return render_template('global_history.html', history=history)
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')
 def quicklink_item(item_name):
     """ Add/Remove the current wiki page to/from the user quicklinks """
-    request = g.context
+    request = flaskg.context
     _ = request.getText
     u = request.user
     msg = None
@@ -289,7 +290,7 @@ def quicklink_item(item_name):
 @frontend.route('/+subscribe/<itemname:item_name>')
 def subscribe_item(item_name):
     """ Add/Remove the current wiki item to/from the user's subscriptions """
-    request = g.context
+    request = flaskg.context
     _ = request.getText
     u = request.user
     cfg = request.cfg
@@ -319,7 +320,7 @@ def subscribe_item(item_name):
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    request = g.context
+    request = flaskg.context
     _ = request.getText
     cfg = request.cfg
     item_name = 'Register' # XXX
@@ -381,7 +382,7 @@ def userprefs():
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'LoggedIn' # XXX
-    request = g.context
+    request = flaskg.context
     _ = request.getText
     if request.method == 'GET':
         for authmethod in request.cfg.auth:
@@ -403,7 +404,7 @@ def login():
 @frontend.route('/+logout')
 def logout():
     item_name = 'LoggedOut' # XXX
-    request = g.context
+    request = flaskg.context
     _ = request.getText
     # if the user really was logged out say so,
     # but if the user manually added ?do=logout
@@ -421,7 +422,7 @@ def diffsince(item_name, timestamp):
     date = timestamp
     # this is how we get called from "recent changes"
     # try to find the latest rev1 before bookmark <date>
-    item = g.context.storage.get_item(item_name)
+    item = flaskg.context.storage.get_item(item_name)
     revnos = item.list_revisions()
     revnos.reverse()  # begin with latest rev
     for revno in revnos:
@@ -440,9 +441,9 @@ def diff(item_name):
     # TODO get_item and get_revision calls may raise an AccessDeniedError.
     #      If this happens for get_item, don't show the diff at all
     #      If it happens for get_revision, we may just want to skip that rev in the list
-    item = g.context.storage.get_item(item_name)
-    rev1 = g.context.values.get('rev1')
-    rev2 = g.context.values.get('rev2')
+    item = flaskg.context.storage.get_item(item_name)
+    rev1 = flaskg.context.values.get('rev1')
+    rev2 = flaskg.context.values.get('rev2')
     return _diff(item, rev1, rev2)
 
 
@@ -489,7 +490,7 @@ def _diff(item, revno1, revno2):
             # nothing in common
             commonmt = ''
 
-    item = Item.create(g.context, item_name, mimetype=commonmt, rev_no=newrevno)
+    item = Item.create(flaskg.context, item_name, mimetype=commonmt, rev_no=newrevno)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
                            item=item,
@@ -511,7 +512,7 @@ def similar_names(item_name):
                 2001 Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
     """
-    _ = g.context.getText
+    _ = flaskg.context.getText
     start, end, matches = findMatches(item_name)
     keys = matches.keys()
     keys.sort()
@@ -542,7 +543,7 @@ def findMatches(item_name, s_re=None, e_re=None):
     @rtype: tuple
     @return: start word, end word, matches dict
     """
-    request = g.context
+    request = flaskg.context
     item_names = [item.name for item in request.storage.iteritems()]
     if item_name in item_names:
         item_names.remove(item_name)
@@ -663,7 +664,7 @@ def sitemap(item_name):
     """
     sitemap view shows item link structure, relative to current item
     """
-    sitemap = NestedItemListBuilder(g.context).recurse_build([item_name])
+    sitemap = NestedItemListBuilder(flaskg.context).recurse_build([item_name])
     del sitemap[0] # don't show current item name as sole toplevel list item
     return render_template('sitemap.html', item_name=item_name, sitemap=sitemap)
 

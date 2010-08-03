@@ -23,7 +23,8 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import g, request, url_for, send_file, render_template, Response, abort, escape
+from flask import request, url_for, send_file, render_template, Response, abort, escape
+from flask import flaskg
 from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
@@ -607,7 +608,7 @@ There is no help, you're doomed!
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
 
     def do_get(self):
-        hash = self.rev.get(g.context.cfg.hash_algorithm)
+        hash = self.rev.get(flaskg.context.cfg.hash_algorithm)
         if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
         else:

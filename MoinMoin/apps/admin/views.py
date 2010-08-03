@@ -10,7 +10,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from flask import request, g, url_for, render_template, flash, redirect
+from flask import request, url_for, render_template, flash, redirect
+from flask import flaskg
 
 from MoinMoin.apps.admin import admin
 from MoinMoin import user, wikiutil
@@ -26,12 +27,12 @@ def userbrowser():
     User Account Browser
     """
     # XXX add superuser check
-    #isgroup = g.context.cfg.cache.page_group_regexact.search
-    #groupnames = list(g.context.rootpage.getPageList(user='', filter=isgroup))
+    #isgroup = flaskg.context.cfg.cache.page_group_regexact.search
+    #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
-    for uid in user.getUserList(g.context):
-        u = user.User(g.context, uid)
-        #groups = [groupname for groupname in groupnames if g.context.dicts.has_member(groupname, account.name)])
+    for uid in user.getUserList(flaskg.context):
+        u = user.User(flaskg.context, uid)
+        #groups = [groupname for groupname in groupnames if flaskg.context.dicts.has_member(groupname, account.name)])
         user_accounts.append(dict(
             uid=uid,
             name=u.name,
@@ -49,16 +50,16 @@ def userprofile(user_name):
     Set values in user profile
     """
     # XXX add superuser check
-    uid = user.getUserId(g.context, user_name)
-    u = user.User(g.context, uid)
+    uid = user.getUserId(flaskg.context, user_name)
+    u = user.User(flaskg.context, uid)
     if request.method == 'GET':
         return "userprofile of %s: %r" % (user_name, (u.email, u.jid, u.disabled))
 
     if request.method == 'POST':
-        if wikiutil.checkTicket(g.context, request.form.get('ticket', '')):
+        if wikiutil.checkTicket(flaskg.context, request.form.get('ticket', '')):
             key = request.form.get('key', '')
             val = request.form.get('val', '')
-            if key in g.context.cfg.user_checkbox_fields:
+            if key in flaskg.context.cfg.user_checkbox_fields:
                 val = int(val)
             oldval = getattr(u, key)
             setattr(u, key, val)
