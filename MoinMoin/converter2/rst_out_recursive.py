@@ -315,7 +315,6 @@ class Converter(object):
         for child in elem:
             if isinstance(child, ET.Element):
                 childs_output = self.open(child)
-                print self.delete_newlines, delete_newlines
                 if self.delete_newlines:
                     while childrens_output and re.match(r'(\n*)\Z', childrens_output[-1]):
                         childrens_output.pop()

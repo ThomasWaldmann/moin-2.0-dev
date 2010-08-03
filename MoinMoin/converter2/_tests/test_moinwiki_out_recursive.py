@@ -33,10 +33,7 @@ class Base(object):
 
     def do(self, input, output, args={}):
         out = self.conv(self.handle_input(input), **args)
-        x = self.handle_output(out)
-        print x
-        assert x == output
-
+        assert self.handle_output(out) == output
 
 class TestConverter(Base):
     def setup_class(self):

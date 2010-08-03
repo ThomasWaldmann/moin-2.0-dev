@@ -150,6 +150,5 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
 
     def do(self, input, output, args={}, skip=None):
         out = self.conv(input, **args)
-        print self.serialize(out) # delete this
         assert self.serialize(out) == output
 

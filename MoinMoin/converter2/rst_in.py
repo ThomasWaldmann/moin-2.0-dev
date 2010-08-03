@@ -356,7 +356,6 @@ class NodeVisitor():
         if parser:
             named_args = re.findall(r"(\w+)=(\w+)", parser)
             simple_args = re.findall(r"(?:\s)\w+(?:\s|$)", parser)
-            print named_args, simple_args
             args = []
             for value in simple_args:
                 args.append(moin_page.argument(children=[value]))
