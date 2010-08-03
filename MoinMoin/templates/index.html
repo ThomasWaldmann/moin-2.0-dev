@@ -2,13 +2,12 @@
 
 {% block item %}
     <h1>
-        {% if item.name %}
+        {% if item and item.name %}
         Index of sub items of '{{ item.name|e }}'
         {% else %}
         Global Index
         {% endif %}
     </h1>
-    {% set index = item.flat_index() %}
     {% if index %}
         <ul>
         {% for fullname, relname, mimetype in index %}

@@ -68,7 +68,7 @@ def show_item(item_name, rev):
         first_rev = None
         last_rev = None
     return render_template('show.html',
-                           item_name=item.name,
+                           item=item, item_name=item.name,
                            rev=item.rev,
                            mimetype=item.mimetype,
                            first_rev_no=first_rev,
@@ -96,7 +96,7 @@ def show_item_meta(item_name, rev):
         first_rev = None
         last_rev = None
     return render_template('meta.html',
-                           item_name=item.name,
+                           item=item, item_name=item.name,
                            rev=item.rev,
                            mimetype=item.mimetype,
                            first_rev_no=first_rev,
@@ -158,7 +158,10 @@ def highlight_item(item_name, rev):
         return redirect(url_for('frontend.show_item', item_name=item_name))
     else:
         content = u"highlighting not supported"
-    return render_template('highlight.html', item_name=item.name, data_text=content)
+    return render_template('highlight.html',
+                           item=item, item_name=item.name,
+                           data_text=content,
+                          )
 
 
 @frontend.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])
@@ -189,7 +192,9 @@ def modify_item(item_name):
 def revert_item(item_name, rev):
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     if request.method == 'GET':
-        return render_template(item.revert_template, item=item)
+        return render_template(item.revert_template,
+                               item=item, item_name=item_name,
+                              )
     elif request.method == 'POST':
         if 'button_ok' in request.form:
             item.revert()
@@ -200,7 +205,9 @@ def revert_item(item_name, rev):
 def copy_item(item_name):
     item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
-        return render_template(item.copy_template, item=item)
+        return render_template(item.copy_template,
+                               item=item, item_name=item_name,
+                              )
     if request.method == 'POST':
         if 'button_ok' in request.form:
             target = request.form.get('target')
@@ -216,7 +223,9 @@ def copy_item(item_name):
 def rename_item(item_name):
     item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
-        return render_template(item.rename_template, item=item)
+        return render_template(item.rename_template,
+                               item=item, item_name=item_name,
+                              )
     if request.method == 'POST':
         if 'button_ok' in request.form:
             target = request.form.get('target')
@@ -232,7 +241,9 @@ def rename_item(item_name):
 def delete_item(item_name):
     item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
-        return render_template(item.delete_template, item=item)
+        return render_template(item.delete_template,
+                               item=item, item_name=item_name,
+                              )
     elif request.method == 'POST':
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
@@ -244,7 +255,9 @@ def delete_item(item_name):
 def destroy_item(item_name):
     item = Item.create(flaskg.context, item_name)
     if request.method == 'GET':
-        return render_template(item.destroy_template, item=item)
+        return render_template(item.destroy_template,
+                               item=item, item_name=item_name,
+                              )
     if request.method == 'POST':
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
@@ -255,14 +268,21 @@ def destroy_item(item_name):
 @frontend.route('/+index/<itemname:item_name>')
 def index(item_name):
     item = Item.create(flaskg.context, item_name)
-    return render_template(item.index_template, item=item)
+    index = item.flat_index()
+    return render_template(item.index_template,
+                           item=item, item_name=item_name,
+                           index=index,
+                          )
 
 
 @frontend.route('/+index')
 def global_index():
-    item_name = ''
-    item = Item.create(flaskg.context, item_name)
-    return render_template(item.index_template, item=item)
+    item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
+    index = item.flat_index()
+    return render_template(item.index_template,
+                           # XXX no item, no item_name
+                           index=index,
+                          )
 
 
 @frontend.route('/+backlinks/<itemname:item_name>')
@@ -282,13 +302,19 @@ def _search(**args):
 @frontend.route('/+history/<itemname:item_name>')
 def history(item_name):
     history = flaskg.context.storage.history(item_name=item_name)
-    return render_template('history.html', item_name=item_name, history=history)
+    return render_template('history.html',
+                           item_name=item_name, # XXX no item here
+                           history=history,
+                          )
 
 
 @frontend.route('/+history')
 def global_history():
     history = flaskg.context.storage.history(item_name='')
-    return render_template('global_history.html', history=history)
+    return render_template('global_history.html',
+                           # XXX no item, no item_name
+                           history=history,
+                          )
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')
@@ -517,8 +543,7 @@ def _diff(item, revno1, revno2):
     item = Item.create(flaskg.context, item_name, mimetype=commonmt, rev_no=newrevno)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
-                           item=item,
-                           item_name=item.name,
+                           item=item, item_name=item.name,
                            rev=item.rev,
                            first_rev_no=rev_nos[0],
                            last_rev_no=rev_nos[-1],
@@ -548,12 +573,13 @@ def similar_names(item_name):
     # 2 "...%s" % (end, )
     item_names = []
     for wanted_rank in [8, 4, 3, 1, 2, ]:
-        for item_name in keys:
-            item_rank = matches[item_name]
-            if item_rank == wanted_rank:
-                item_names.append(item_name)
+        for name in keys:
+            rank = matches[name]
+            if rank == wanted_rank:
+                item_names.append(name)
     return render_template("item_link_list.html",
                            headline=_("Items with similar names"),
+                           item_name=item_name, # XXX no item
                            item_names=item_names)
 
 
@@ -690,7 +716,10 @@ def sitemap(item_name):
     """
     sitemap = NestedItemListBuilder(flaskg.context).recurse_build([item_name])
     del sitemap[0] # don't show current item name as sole toplevel list item
-    return render_template('sitemap.html', item_name=item_name, sitemap=sitemap)
+    return render_template('sitemap.html',
+                           item_name=item_name, # XXX no item
+                           sitemap=sitemap,
+                          )
 
 
 class NestedItemListBuilder(object):
