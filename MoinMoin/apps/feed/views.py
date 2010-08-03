@@ -1,7 +1,7 @@
 # -*- coding: ascii -*-
 """
     MoinMoin - feed views
-    
+
     This contains all sort of feeds.
 
     @copyright: 2010 MoinMoin:ThomasWaldmann
@@ -11,7 +11,9 @@
 
 from datetime import datetime
 
-from flask import g, url_for
+from flask import url_for
+from flask import flaskg
+
 from werkzeug.contrib.atom import AtomFeed
 
 from MoinMoin import log
@@ -33,7 +35,7 @@ def atom(item_name):
     # - full item in html is nice
     # - diffs in textmode are OK, but look very simple
     # - full-item content in textmode is OK, but looks very simple
-    request = g.context
+    request = flaskg.context
     title = request.cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
     for rev in request.storage.history(item_name=item_name):

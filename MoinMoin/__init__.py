@@ -11,7 +11,15 @@ This creates the WSGI application (using Flask) as "app".
 @license: GNU GPL, see COPYING for details.
 """
 
-from flask import Flask, request, g, url_for, render_template, flash
+from flask import Flask, request, url_for, render_template, flash
+
+# HACK: creating a custom alias for the single-letter "g"
+# Note: this should be done with a *standard* longer name in flask and
+#       documented as an official alternative to g, but Armin likes g and g only.
+import flask
+flask.flaskg = flaskg = flask.g
+del flask
+
 from werkzeug import ImmutableDict
 
 class MoinFlask(Flask):
@@ -270,13 +278,13 @@ def before():
 
     setup_jinja_env(context)
 
-    g.context = context
+    flaskg.context = context
     # if return value is not None, it is the final response
 
 
 @app.after_request
 def after(response):
-    context = g.context
+    context = flaskg.context
     context.cfg.session_service.finalize(context, context.session)
     context.finish()
     return response
