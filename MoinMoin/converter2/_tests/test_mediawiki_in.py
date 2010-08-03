@@ -116,9 +116,9 @@ Apple
 
     def serialize(self, elem, **options):
         from StringIO import StringIO
-        file = StringIO()
-        elem.write(file.write, namespaces=self.namespaces, **options)
-        return self.output_re.sub(u'', file.getvalue())
+        buffer = StringIO()
+        elem.write(buffer.write, namespaces=self.namespaces, **options)
+        return self.output_re.sub(u'', buffer.getvalue())
 
     def do(self, input, output, args={}, skip=None):
         out = self.conv(input.split(u'\n'), **args)

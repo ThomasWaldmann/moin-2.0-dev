@@ -28,9 +28,6 @@ class Base(object):
         return ET.XML(i)
 
     def handle_output(self, elem, **options):
-        from cStringIO import StringIO
-        file = StringIO()
-        file.write(elem)
         return elem
 
     def do(self, input, output, args={}):
