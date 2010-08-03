@@ -323,7 +323,7 @@ class Converter(ConverterMacro):
         $
     """
 
-    def indent_iter(self, iter_content, line, level):
+    def indent_iter(self, iter_content, line, level, is_list):
         yield line
 
         while True:
@@ -333,7 +333,13 @@ class Converter(ConverterMacro):
 
             new_level = 0
             if not match:
-                return
+                if is_list:
+                    iter_content.push(line)
+                    return
+                else:
+                    yield line
+                    break
+
             if match.group('indent'):
                 new_level = len(match.group('indent'))
 
@@ -407,8 +413,10 @@ class Converter(ConverterMacro):
             new_stack = _Stack(element_body)
         else:
             new_stack = stack
+            level = 0
 
-        iter = _Iter(self.indent_iter(iter_content, text, level))
+        is_list = list_begin
+        iter = _Iter(self.indent_iter(iter_content, text, level, is_list))
         for line in iter:
             match = self.block_re.match(line)
             it = iter
@@ -664,7 +672,6 @@ class Converter(ConverterMacro):
             nowiki_text_code=None, nowiki_text_tt=None):
         text = None
 
-        print (nowiki, nowiki_text, nowiki_text_pre, pre_args, nowiki_text_code, nowiki_text_tt)
         if nowiki_text is not None:
             text = nowiki_text
             stack.top_append(moin_page.code(children=[text]))
