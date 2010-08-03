@@ -67,7 +67,7 @@ except ImportError:
 
 def init_test_request(given_config):
     with app.test_client() as c:
-        rv = c.get('/') #Create a request for test in flask
+        rv = c.get('/') #Run a test request in flask
         request = TestRequest() #Same thing for moin
         # XXX: We need a way to merge the two requests
         #      or see which one is the best.
