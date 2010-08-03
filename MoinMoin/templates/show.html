@@ -22,13 +22,13 @@
         <li class="moin-rev-navigation-older">
         {% if rev.revno > 0 -%}
             <a href="{{ url_for('frontend.show_item', rev=rev.revno-1, item_name=item_name)|e }}"><-- older</a>
-        {% else %} no older revs {%- endif %}
+        {% else %}<span class="moin-disabled"><-- older</span>{%- endif %}
         </li>
         <li class="moin-rev-navigation-current">rev {{ rev.revno }}</li>
         <li class="moin-rev-navigation-newer">
             {% if rev.revno < last_rev_no -%}
             <a href="{{ url_for('frontend.show_item', rev=rev.revno+1, item_name=item_name)|e }}">new --></a>
-            {% else %} no newer revs{% endif %}
+            {% else %}<span class="moin-disabled">new --></span>{% endif %}
         </li>
     </ul>
     {% endif %}

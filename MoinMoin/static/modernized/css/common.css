@@ -197,12 +197,27 @@ table.navigation {
 #moin-pagebottom {clear: both;}
 
 /* revision navigation */
+
 #moin-rev-navigation {
     list-style:none;
+    text-align:center;
 }
 
 #moin-rev-navigation li {
     display:inline;
+}
+
+.moin-disabled {
+    color:gray;
+}
+
+.moin-rev-navigation-current {
+    font-size:18pt;
+    text-transform:uppercase;
+}
+
+.moin-rev-navigation-older, .moin-rev-navigation-newer {
+    padding: 0 20px 0 20px;
 }
 
 
