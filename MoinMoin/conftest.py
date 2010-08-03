@@ -33,6 +33,7 @@ sys.path.insert(0, str(moindir))
 
 from MoinMoin.web.request import TestRequest, Client
 #from MoinMoin.wsgiapp import Application, init, init_unprotected_backends, protect_backends
+from . import app
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -75,8 +76,11 @@ def init_test_request(given_config):
     #request.given_config = given_config
     #request = init(request)
     #protect_backends(request)
-    app = flask.Flask('MoinMoin')
     with app.test_request_context('/'):
+        content_acl = given_config.content_acl
+        given_config.namespace_mapping, given_config.router_index_uri = \
+            create_simple_mapping("memory:", content_acl)
+        flask.request.given_config = given_config
         return flask.request
 
 # py.test customization starts here
