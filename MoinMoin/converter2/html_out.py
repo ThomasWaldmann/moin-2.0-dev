@@ -280,7 +280,9 @@ class Converter(object):
                 h = href.path[-1]
         attrib = {}
         mimetype = elem.get(moin_page.type_, None)
-        if Type('image/').issupertype(mimetype):
+        if Type('image/').issupertype(mimetype) and not Type('image/svg+xml').issupertype(mimetype):
+            # Firefox fails completely to show svg in img tags (displays: nothing).
+            # Firefox display them with on object tag (but sometimes displays scrollbars without need).
             if href is not None:
                 attrib[html.src] = href
             alt = ''.join(str(e) for e in elem) # XXX handle non-text e
