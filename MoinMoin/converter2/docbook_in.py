@@ -202,7 +202,7 @@ class Converter(object):
 
         # We have an inline element without equivalence
         if element.tag.name in self.inline_tags:
-            return self.visit_docbook_inline(element)
+            return self.visit_docbook_inline(element, depth)
 
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
@@ -299,7 +299,8 @@ class Converter(object):
         key = moin_page('element')
         attrib = {}
         attrib[key] = element.tag.name
-        return self.new_copy(moin_page.span, element, depth, attrib={})
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
