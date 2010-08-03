@@ -437,6 +437,7 @@ class ThemeBase(object):
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
             (_('Local Site Map'), 'sitemap', 'frontend.sitemap', False, ),
+            (_('Items with similar names'), 'similar_names', 'frontend.similar_names', False, ),
             (_('Copy Item'), 'copy', 'frontend.copy_item', False, ),
             (_('Rename Item'), 'rename', 'frontend.rename_item', False, ),
             (_('Delete Item'), 'delete', 'frontend.delete_item', False, ),
