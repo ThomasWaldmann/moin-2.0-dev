@@ -125,7 +125,7 @@ class TestConverter(Base):
             ('<html><p><abbr>Text</abbr></p></html>',
              '/div/p[abbr="Text"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             '/div/p[acronym="Text"]'),
+             '/div/p/span[@class="element-acronym"][text()="Text"]'),
             ('<html><p><address>Text</address></p></html>',
              '/div/p[address="Text"]'),
             ('<html><p><dfn>Text</dfn></p></html>',

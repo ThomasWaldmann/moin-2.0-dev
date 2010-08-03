@@ -39,6 +39,56 @@ class Converter(object):
         docbook.namespace: 'docbook'
     }
 
+    # DocBook elements which are completely ignored by our converter
+    # We even do not process children of these elements
+    # "Info" elements are the biggest part of this set
+    ignored_tags = set([#Info elements
+                       'abstract', 'artpagenums', 'annotation',
+                       'artpagenums', 'author', 'authorgroup',
+                       'authorinitials', 'bibliocoverage', 'biblioid',
+                       'bibliomisc', 'bibliomset', 'bibliorelation',
+                       'biblioset', 'bibliosource', 'collab', 'confdates',
+                       'confgroup', 'confnum', 'confsponsor', 'conftitle',
+                       'contractnum', 'contractsponsor', 'copyright',
+                       'contrib', 'cover', 'edition', 'editor',
+                       'extendedlink', 'issuenum', 'itermset',
+                       'keywordset', 'legalnotice', 'org', 'orgname',
+                       'othercredit', 'pagenums', 'printhistory',
+                       'productname', 'productnumber', 'pubdate',
+                       'publisher', 'publishername', 'releaseinfo',
+                       'revhistory', 'seriesvolnums',
+                       'subjectset', 'volumenum',
+                       # Other bibliography elements
+                       'bibliodiv', 'biblioentry', 'bibliography',
+                       'bibliolist', 'bibliomixed', 'biblioref',
+                       'bibliorelation', 'citation', 'citerefentry',
+                       'citetitle',
+                       # Callout elements
+                       'callout', 'calloutlist', 'area', 'areaset',
+                       'areaspec', 'co'
+                       # Class information
+                       'classname', 'classsynopsis', 'classsynopsisinfo',
+                       'constructorsynopsis', 'destructorsynopsis',
+                       'fieldsynopsis', 'funcdef', 'funcparams',
+                       'funcprototype', 'funcsynopsis',
+                       'funcsynopsisinfo', 'function', 'group',
+                       'initializer', 'interfacename',
+                       # GUI elements
+                       'guibutton', 'guiicon', 'guilabel',
+                       'guimenu', 'guimenuitem', 'guisubmenu',
+                       # EBNF Elements
+                       'constraint', 'constraintdef',
+                       # Other elements
+                       'info', 'bridgehead'])
+
+    # DocBook inline elements which does not have equivalence in the DOM
+    # tree, but we keep the information using <span element='tag.name'>
+    inline_tags = set(['abbrev', 'address', 'accel', 'acronym',
+                       'affiliation', 'city', 'command', 'constant',
+                       'country', 'database', 'date', 'fax', 'filename',
+                       'firstname', 'foreignphrase', 'hardware', 'holder',
+                       'honorific'])
+
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
     heading_level = 0
@@ -149,6 +199,17 @@ class Converter(object):
             result.append(self.visit_docbook_sect(element, depth))
             result.extend(self.do_children(element, depth))
             return result
+
+        # We have an inline element without equivalence
+        if element.tag.name in self.inline_tags:
+            return self.visit_docbook_inline(element, depth)
+
+        # We should ignore this element
+        if element.tag.name in self.ignored_tags:
+            logging.warning("Ignored tag:%s" % element.tag.name)
+            return
+
+        # We will find the correct method to handle our tag
         method_name = 'visit_docbook_' + element.tag.name
         method = getattr(self, method_name, None)
         if method:
@@ -166,6 +227,22 @@ class Converter(object):
 
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
+
+    def visit_docbook_blockquote(self, element, depth):
+        # TODO:Translate
+        source = u"Unknow"
+        children = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == "attribution":
+                    source = self.do_children(child, depth+1)
+                else:
+                    children.extend(self.do_children(child, depth+1))
+            else:
+                children.append(child)
+        attrib = {}
+        attrib[moin_page('source')] = source[0]
+        return self.new(moin_page.blockquote, attrib=attrib, children=children)
 
     def visit_docbook_emphasis(self, element, depth):
         """
@@ -213,6 +290,17 @@ class Converter(object):
         key = xlink.href
         attrib[key] = href
         return ET.Element(moin_page.object, attrib=attrib)
+
+    def visit_docbook_inline(self, element, depth):
+        """
+        For some specific tags (defined in inline_tags)
+        We just return <span element="tag.name">
+        """
+        key = moin_page('element')
+        attrib = {}
+        attrib[key] = element.tag.name
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
@@ -267,6 +355,9 @@ class Converter(object):
 
     def visit_docbook_programlisting(self, element, depth):
         return self.new_copy(moin_page.blockcode, element, depth, attrib={})
+
+    def visit_docbook_quote(self, element, depth):
+        return self.new_copy(moin_page.quote, element, depth, attrib={})
 
     def visit_docbook_screen(self, element, depth):
         return self.new_copy(moin_page.blockcode, element, depth, attrib={})
