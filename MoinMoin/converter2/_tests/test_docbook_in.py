@@ -176,7 +176,7 @@ class TestConverter(Base):
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
         ]
         for i in data:
-            yield (self.do, ) + i 
+            yield (self.do, ) + i
 
     def test_misc(self):
         data = [
