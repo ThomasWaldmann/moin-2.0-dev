@@ -81,6 +81,14 @@ class Converter(object):
                        # Other elements
                        'info', 'bridgehead'])
 
+    # DocBook inline elements which does not have equivalence in the DOM
+    # tree, but we keep the information using <span element='tag.name'>
+    inline_tags = set(['abbrev', 'accel', 'acronym', 'affiliation'
+                       'city', 'command', 'constant', 'country',
+                       'database', 'date', 'fax', 'filename', 'firstname',
+                       'foreignphrase', 'hardware', 'holder',
+                       'honorific'])
+
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
     heading_level = 0
@@ -192,6 +200,10 @@ class Converter(object):
             result.extend(self.do_children(element, depth))
             return result
 
+        # We have an inline element without equivalence
+        if element.tag.name in self.inline_tags:
+            return self.visit_docbook_inline(element)
+
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
             logging.warning("Ignored tag:%s" % element.tag.name)
@@ -278,6 +290,16 @@ class Converter(object):
         key = xlink.href
         attrib[key] = href
         return ET.Element(moin_page.object, attrib=attrib)
+
+    def visit_docbook_inline(self, element, depth):
+        """
+        For some specific tags (defined in inline_tags)
+        We just return <span element="tag.name">
+        """
+        key = moin_page('element')
+        attrib = {}
+        attrib[key] = element.tag.name
+        return self.new_copy(moin_page.span, element, depth, attrib={})
 
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
