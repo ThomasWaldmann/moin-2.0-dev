@@ -483,8 +483,7 @@ class Converter(object):
                    + u' '\
                      * (len(u''.join(self.list_item_labels))\
                         + len(self.list_item_labels))
-        if self.last_closed == 'p':
-            return u'\n'
+        self.last_closed = 'line_break'
         return ReST.linebreak
 
     def close_moinpage_line_break(self, elem):
