@@ -42,7 +42,7 @@ class Base(object):
         return self.input_re.sub(r'\1 ' + self.input_namespaces, input)
 
     def handle_output(self, input, **args):
-        if not 'nonamespace' in args:
+        if 'nonamespace' not in args:
             to_conv = self.handle_input(input)
         elif args['nonamespace']:
             to_conv = input
@@ -79,6 +79,10 @@ class TestConverter(Base):
             (u'<article><para>안녕 유빈</para></article>',
             # <page><body><p>안녕 유빈</p></body></page>
              u'/page/body[p="안녕 유빈"]'),
+            # Ignored tags
+            ('<article><info><title>Title</title><author>Author</author></info><para>text</para></article>',
+            # <page><body><p>text</p></body></page>
+            '/page/body[p="text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -179,6 +183,13 @@ class TestConverter(Base):
             ('<article><para>Text Para<footnote><para>Text Footnote</para></footnote></para></article>',
             # <page><body><p>Text Para<note note-class="footnote"><note-body><p>Text Footnote</p></note-body></note></p></body></page>
              '/page/body/p[text()="Text Para"]/note[@note-class="footnote"]/note-body/p[text()="Text Footnote"]'),
+            ('<article><para><quote>text</quote></para></article>',
+            # <page><body><p><quote>text</quote></para></article>
+            '/page/body/p[quote="text"]'),
+            # Test span for inline element
+            ('<article><para><abbrev>ABBREV</abbrev></para></article>',
+            # <page><body><p><span element="abbrev">ABBREV</span></p></body></page>
+             '/page/body/p/span[@element="abbrev"][text()="ABBREV"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -217,6 +228,9 @@ class TestConverter(Base):
             ('<article><para>text<literal>literal</literal></para></article>',
             # <page><body><p>text<code>literal</code></p></body></page>
              '/page/body/p[text()="text"][code="literal"]'),
+            ('<article><blockquote><attribution>author</attribution>text</blockquote></article>',
+            # <page><body><blockquote source="author">text</blockquote></body></page>
+            '/page/body/blockquote[@source="author"][text()="text"]'),
         ]
         for i in data:
             yield (self.do, ) + i

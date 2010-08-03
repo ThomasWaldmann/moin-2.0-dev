@@ -147,20 +147,20 @@ class TestConverter(Base):
     def test_span_html_element(self):
         data = [
             ('<html><p><abbr>Text</abbr></p></html>',
-             # <page><body><span html-element="abbr">Text</span></body></page>
-             '/page/body/p/span[text()="Text"][@html-element="abbr"]'),
+             # <page><body><span element="abbr">Text</span></body></page>
+             '/page/body/p/span[text()="Text"][@element="abbr"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             # <page><body><span html-element="acronym">Text</span></body></page>
-             '/page/body/p/span[text()="Text"][@html-element="acronym"]'),
+             # <page><body><span element="acronym">Text</span></body></page>
+             '/page/body/p/span[text()="Text"][@element="acronym"]'),
             ('<html><p><address>Text</address></p></html>',
-             # <page><body><span html-element="address">Text</span></body></page>
-             '/page/body/p/span[text()="Text"][@html-element="address"]'),
+             # <page><body><span element="address">Text</span></body></page>
+             '/page/body/p/span[text()="Text"][@element="address"]'),
             ('<html><p><dfn>Text</dfn></p></html>',
-             # <page><body><span html-element="dfn">Text</span></body></page>
-             '/page/body/p/span[text()="Text"][@html-element="dfn"]'),
+             # <page><body><span element="dfn">Text</span></body></page>
+             '/page/body/p/span[text()="Text"][@element="dfn"]'),
             ('<html><p><kbd>Text</kbd></p></html>',
-             # <page><body><span html-element="kbd">Text</span></body></page>
-             '/page/body/p/span[text()="Text"][@html-element="kbd"]'),
+             # <page><body><span element="kbd">Text</span></body></page>
+             '/page/body/p/span[text()="Text"][@element="kbd"]'),
         ]
         for i in data:
             yield (self.do, ) + i
