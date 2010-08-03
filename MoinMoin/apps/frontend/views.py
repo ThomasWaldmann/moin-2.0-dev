@@ -21,6 +21,13 @@ from MoinMoin.items import Item, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 
 
+@frontend.route('/+dispatch', methods=['GET', ])
+def dispatch():
+    args = request.values.to_dict()
+    endpoint = str(args.pop('endpoint'))
+    return redirect(url_for(endpoint, **args))
+
+
 @frontend.route('/')
 def show_root():
     location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(flaskg.context)
@@ -39,6 +46,8 @@ Disallow: /+destroy/
 Disallow: /+rename/
 Disallow: /+revert/
 Disallow: /+index/
+Disallow: /+sitemap/
+Disallow: /+similar_names/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
 Disallow: /+backlinks/
@@ -49,6 +58,7 @@ Disallow: /+login
 Disallow: /+logout
 Disallow: /+diffsince/
 Disallow: /+diff/
+Disallow: /+dispatch/
 Disallow: /+admin/
 Allow: /
 """, mimetype='text/plain')
@@ -702,13 +712,6 @@ def closeMatches(item_name, item_names):
         matches.extend(lower[name])
 
     return matches
-
-
-@frontend.route('/+dispatch', methods=['GET', ])
-def dispatch():
-    args = request.values.to_dict()
-    endpoint = str(args.pop('endpoint'))
-    return redirect(url_for(endpoint, **args))
 
 
 @frontend.route('/+sitemap/<item_name>')
