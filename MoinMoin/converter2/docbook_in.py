@@ -47,9 +47,10 @@ class Converter(object):
                        'artpagenums', 'author', 'authorgroup',
                        'authorinitials', 'bibliocoverage', 'biblioid',
                        'bibliomisc', 'bibliomset', 'bibliorelation',
-                       'biblioset', 'bibliosource', 'collab', 'confgroup',
+                       'biblioset', 'bibliosource', 'collab', 'confdates',
+                       'confgroup', 'confnum', 'confsponsor', 'conftitle',
                        'contractnum', 'contractsponsor', 'copyright',
-                       'cover', 'date', 'edition', 'editor',
+                       'contrib', 'cover', 'edition', 'editor',
                        'extendedlink', 'issuenum', 'itermset',
                        'keywordset', 'legalnotice', 'org', 'orgname',
                        'othercredit', 'pagenums', 'printhistory',
@@ -60,11 +61,25 @@ class Converter(object):
                        # Other bibliography elements
                        'bibliodiv', 'biblioentry', 'bibliography',
                        'bibliolist', 'bibliomixed', 'biblioref',
-                       'bibliorelation',
+                       'bibliorelation', 'citation', 'citerefentry',
+                       'citetitle',
                        # Callout elements
-                       'callout', 'calloutlist',
+                       'callout', 'calloutlist', 'area', 'areaset',
+                       'areaspec', 'co'
+                       # Class information
+                       'classname', 'classsynopsis', 'classsynopsisinfo',
+                       'constructorsynopsis', 'destructorsynopsis',
+                       'fieldsynopsis', 'funcdef', 'funcparams',
+                       'funcprototype', 'funcsynopsis',
+                       'funcsynopsisinfo', 'function', 'group',
+                       'initializer', 'interfacename',
+                       # GUI elements
+                       'guibutton', 'guiicon', 'guilabel',
+                       'guimenu', 'guimenuitem', 'guisubmenu',
+                       # EBNF Elements
+                       'constraint', 'constraintdef',
                        # Other elements
-                       'info'])
+                       'info', 'bridgehead'])
 
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
