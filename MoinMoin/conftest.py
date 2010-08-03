@@ -25,15 +25,14 @@ import sys
 
 import py
 
-import flask
-
 rootdir = py.magic.autopath().dirpath()
 moindir = rootdir.join("..")
 sys.path.insert(0, str(moindir))
 
-from MoinMoin.web.request import TestRequest, Client
+from MoinMoin.web.request import TestRequest
+from MoinMoin.web.contexts import AllContext
 #from MoinMoin.wsgiapp import Application, init, init_unprotected_backends, protect_backends
-from . import app
+from . import app, protect_backends, before, flaskg
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -76,12 +75,16 @@ def init_test_request(given_config):
     #request.given_config = given_config
     #request = init(request)
     #protect_backends(request)
-    with app.test_request_context('/'):
+    with app.test_client() as c:
+        rv = c.get('/')
+        request = TestRequest()
         content_acl = given_config.content_acl
         given_config.namespace_mapping, given_config.router_index_uri = \
             create_simple_mapping("memory:", content_acl)
-        flask.request.given_config = given_config
-        return flask.request
+        request.given_config = given_config
+        before()
+        request.cfg = flaskg.context.cfg
+        return request
 
 # py.test customization starts here
 
@@ -112,8 +115,7 @@ class MoinClassCollector(py.test.collect.Class):
         else:
             given_config = wikiconfig.Config
         cls.request = init_test_request(given_config)
-        #cls.client = Client(Application(given_config))
-
+        # XXX: cls client
         # In order to provide fresh backends for each and every testcase,
         # we wrap the setup_method in a decorator that performs the freshening
         # operation. setup_method is invoked by py.test automatically prior to
