@@ -89,6 +89,11 @@ class Converter(object):
                        'firstname', 'foreignphrase', 'hardware', 'holder',
                        'honorific'])
 
+    # DocBook has admonition as individual element, but the DOM Tree
+    # has only one element for it, so we will convert all the DocBook
+    # admonitions in this list, into the admonition element of the DOM Tree.
+    admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
+
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
     heading_level = 0
@@ -209,6 +214,10 @@ class Converter(object):
             logging.warning("Ignored tag:%s" % element.tag.name)
             return
 
+        # We have an admonition element
+        if element.tag.name in self.admonition_tags:
+            return self.visit_docbook_admonition(element, depth)
+
         # We will find the correct method to handle our tag
         method_name = 'visit_docbook_' + element.tag.name
         method = getattr(self, method_name, None)
@@ -217,6 +226,13 @@ class Converter(object):
 
         # Otherwise we process children of the unknown element
         return self.do_children(element, depth)
+
+    def visit_docbook_admonition(self, element, depth):
+        attrib = {}
+        key = moin_page('type')
+        attrib[key] = element.tag.name
+        return self.new_copy(moin_page.admonition, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_article(self, element, depth):
         # TODO : Automatically add a ToC, need to see how to let
