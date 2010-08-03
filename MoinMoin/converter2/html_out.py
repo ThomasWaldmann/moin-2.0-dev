@@ -273,26 +273,32 @@ class Converter(object):
 
     def visit_moinpage_object(self, elem):
         href = elem.get(xlink.href, None)
-        attrib = {}
         if href:
             if isinstance(href, unicode): # XXX sometimes we get Iri, sometimes unicode - bug?
                 h = href
             else: # Iri
                 h = href.path[-1]
-            is_pic = wikiutil.isPicture(h)
-            # XXX should rather look into target item metadata for mimetype
-            # XXX otherwise a target "foo" jpeg image won't work, only "foo.jpg"
-            # XXX unclear: do this here or rather in the input converter?
-        else:
-            is_pic = False
-        if is_pic:
+        attrib = {}
+        mimetype = elem.get(moin_page.type_, None)
+        if Type('image/').issupertype(mimetype):
             if href is not None:
                 attrib[html.src] = href
             alt = ''.join(str(e) for e in elem) # XXX handle non-text e
             if alt:
                 attrib[html.alt] = alt
             return self.new(html.img, attrib)
+        elif Type('video/').issupertype(mimetype):
+            if href is not None:
+                attrib[html.src] = href
+            attrib[html.controls] = True
+            return self.new_copy(html.video, elem, attrib)
+        elif Type('audio/').issupertype(mimetype):
+            if href is not None:
+                attrib[html.src] = href
+            attrib[html.controls] = True
+            return self.new_copy(html.audio, elem, attrib)
         else:
+            # we feel lucky and try object element:
             if href is not None:
                 attrib[html.data] = href
             return self.new_copy(html.object, elem, attrib)
