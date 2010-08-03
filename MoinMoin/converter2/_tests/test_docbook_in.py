@@ -176,7 +176,7 @@ class TestConverter(Base):
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
         ]
         for i in data:
-            yield (self.do, ) + i
+            yield (self.do, ) + i 
 
     def test_misc(self):
         data = [
@@ -186,6 +186,10 @@ class TestConverter(Base):
             ('<article><para><quote>text</quote></para></article>',
             # <page><body><p><quote>text</quote></para></article>
             '/page/body/p[quote="text"]'),
+            # Test span for inline element
+            ('<article><para><abbrev>ABBREV</abbrev></para></article>',
+            # <page><body><p><span element="abbrev">ABBREV</span></p></body></page>
+             '/page/body/p/span[@element="abbrev"][text()="ABBREV"]'),
         ]
         for i in data:
             yield (self.do, ) + i
