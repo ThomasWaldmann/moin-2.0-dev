@@ -31,13 +31,9 @@
                 <td>{{ rev.mimetype|e }}</td>
                 <td>{{ rev.edit_log_comment|e }}</td>
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
-                <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('get') }}</a></td>
+                <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('download') }}</a></td>
                 <td><a href="{{ url_for('frontend.highlight_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{_('highlight') }}</a></td>
-                {% if rev.revno == last_rev_no %}
-                <td>current revision</td>
-                {% else %}
                 <td><a href="{{ url_for('frontend.revert_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('revert') }}</a></td>
-                {% endif %}
                 <td><a href="{{ url_for('frontend.destroy_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('destroy') }}</a></td>
             </tr>
             {% endfor %}
