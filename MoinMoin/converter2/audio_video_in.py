@@ -1,7 +1,9 @@
 """
-MoinMoin - Image converter
+MoinMoin - Audio/Video converter
 
-Convert image to <object> tag for the DOM Tree.
+Convert audio/video to <object> tag for the DOM Tree.
+
+Note: currently this is quite same as image_in.
 
 @copyright: 2010 MoinMoin:ThomasWaldmann
 @license: GNU GPL, see COPYING for details.
@@ -14,7 +16,7 @@ from MoinMoin.util.tree import moin_page, xlink
 
 class Converter(object):
     """
-    Convert an image to the corresponding <object> in the DOM Tree
+    Convert audio/video to the corresponding <object> in the DOM Tree
     """
     @classmethod
     def _factory(cls, input, output, **kw):
@@ -34,8 +36,8 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter._factory, Type('image/svg+xml'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/png'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/jpeg'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/gif'), type_moin_document)
+default_registry.register(Converter._factory, Type('video/ogg'), type_moin_document)
+default_registry.register(Converter._factory, Type('video/webm'), type_moin_document)
+default_registry.register(Converter._factory, Type('audio/ogg'), type_moin_document)
+default_registry.register(Converter._factory, Type('audio/wave'), type_moin_document)
 
