@@ -21,6 +21,13 @@ from MoinMoin.items import Item, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 
 
+@frontend.route('/+dispatch', methods=['GET', ])
+def dispatch():
+    args = request.values.to_dict()
+    endpoint = str(args.pop('endpoint'))
+    return redirect(url_for(endpoint, **args))
+
+
 @frontend.route('/')
 def show_root():
     location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(flaskg.context)
@@ -39,6 +46,8 @@ Disallow: /+destroy/
 Disallow: /+rename/
 Disallow: /+revert/
 Disallow: /+index/
+Disallow: /+sitemap/
+Disallow: /+similar_names/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
 Disallow: /+backlinks/
@@ -49,6 +58,7 @@ Disallow: /+login
 Disallow: /+logout
 Disallow: /+diffsince/
 Disallow: /+diff/
+Disallow: /+dispatch/
 Disallow: /+admin/
 Allow: /
 """, mimetype='text/plain')
@@ -136,6 +146,7 @@ def convert_item(item_name):
 @frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
+    from MoinMoin.util.tree import html
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
@@ -143,7 +154,7 @@ def highlight_item(item_name, rev):
         data_text = item.data_storage_to_internal(item.data)
         # TODO: use registry as soon as it is in there
         from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
-        pygments_conv = PygmentsConverter(flaskg.context, mimetype=item.mimetype)
+        pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
@@ -151,8 +162,7 @@ def highlight_item(item_name, rev):
         doc = html_conv(doc)
         from array import array
         out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
+        doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         content = out.tounicode()
     elif isinstance(item, NonExistent):
         return redirect(url_for('frontend.show_item', item_name=item_name))
@@ -279,8 +289,9 @@ def index(item_name):
 def global_index():
     item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
     index = item.flat_index()
-    return render_template(item.index_template,
-                           # XXX no item, no item_name
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
+    return render_template('global_index.html',
+                           item_name=item_name, # XXX no item
                            index=index,
                           )
 
@@ -311,8 +322,9 @@ def history(item_name):
 @frontend.route('/+history')
 def global_history():
     history = flaskg.context.storage.history(item_name='')
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_history.html',
-                           # XXX no item, no item_name
+                           item_name=item_name, # XXX no item
                            history=history,
                           )
 
@@ -700,13 +712,6 @@ def closeMatches(item_name, item_names):
         matches.extend(lower[name])
 
     return matches
-
-
-@frontend.route('/+dispatch', methods=['GET', ])
-def dispatch():
-    args = request.values.to_dict()
-    endpoint = str(args.pop('endpoint'))
-    return redirect(url_for(endpoint, **args))
 
 
 @frontend.route('/+sitemap/<item_name>')
