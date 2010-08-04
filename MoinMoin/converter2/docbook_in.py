@@ -51,12 +51,12 @@ class Converter(object):
                        'confgroup', 'confnum', 'confsponsor', 'conftitle',
                        'contractnum', 'contractsponsor', 'copyright',
                        'contrib', 'cover', 'edition', 'editor',
-                       'extendedlink', 'issuenum', 'itermset',
+                       'extendedlink', 'issuenum', 'itermset', 'keyword',
                        'keywordset', 'legalnotice', 'org', 'orgname',
-                       'othercredit', 'pagenums', 'printhistory',
-                       'productname', 'productnumber', 'pubdate',
-                       'publisher', 'publishername', 'releaseinfo',
-                       'revhistory', 'seriesvolnums',
+                       'orgdiv', 'otheraddr', 'othercredit', 'pagenums',
+                       'printhistory', 'productname', 'productnumber',
+                       'pubdate', 'publisher', 'publishername',
+                       'releaseinfo', 'revhistory', 'seriesvolnums',
                        'subjectset', 'volumenum',
                        # Other bibliography elements
                        'bibliodiv', 'biblioentry', 'bibliography',
@@ -73,11 +73,17 @@ class Converter(object):
                        'funcprototype', 'funcsynopsis',
                        'funcsynopsisinfo', 'function', 'group',
                        'initializer', 'interfacename',
+                       'methodname', 'methodparam', 'methodsynopsis',
+                       'ooclass', 'ooexception', 'oointerface',
                        # GUI elements
                        'guibutton', 'guiicon', 'guilabel',
                        'guimenu', 'guimenuitem', 'guisubmenu',
                        # EBNF Elements
-                       'constraint', 'constraintdef',
+                       'constraint', 'constraintdef', 'lhs',
+                       # msg elements
+                       'msg', 'msgaud', 'msgentry', 'msgexplan',
+                       'msginfo', 'msglevel', 'msgmain', 'msgorig',
+                       'msgrel', 'msgset', 'msgsub', 'msgtext',
                        # Other elements
                        'info', 'bridgehead'])
 
@@ -87,7 +93,8 @@ class Converter(object):
                        'affiliation', 'city', 'command', 'constant',
                        'country', 'database', 'date', 'fax', 'filename',
                        'firstname', 'foreignphrase', 'hardware', 'holder',
-                       'honorific'])
+                       'honorific', 'jobtitle', 'keycap', 'keycode',
+                       'keycombo', 'keysym', 'manvolnum', 'mousebutton'])
 
     # DocBook has admonition as individual element, but the DOM Tree
     # has only one element for it, so we will convert all the DocBook
