@@ -13,7 +13,6 @@ try:
     import pygments.formatter
     import pygments.lexers
     from pygments.token import Token
-    raise ImportError
 except ImportError:
     pygments = None
 
