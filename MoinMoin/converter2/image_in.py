@@ -18,11 +18,15 @@ class Converter(object):
     """
     @classmethod
     def _factory(cls, input, output, **kw):
-        return cls()
+        return cls(input_type=input)
+
+    def __init__(self, input_type):
+        self.input_type = input_type
 
     def __call__(self, content):
         item_name = content # we just give the name of the item in the content
         attrib = {
+            moin_page.type_: self.input_type,
             xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get'),
         }
         return moin_page.object_(attrib=attrib, children={})

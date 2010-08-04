@@ -116,12 +116,6 @@ shipped: 0.5
 minimum: 0.5
 
 
-htmlmarkup.py (safe html rendering)
-===================================
-shipped: copied from TRAC's trac.util.html, revision 3609, merged on 2006-08-20
-minimum: same(?)
-
-
 sqlalchemy
 ==========
 shipped: 0.5.8
