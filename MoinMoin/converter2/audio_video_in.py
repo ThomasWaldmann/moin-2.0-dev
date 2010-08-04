@@ -28,7 +28,7 @@ class Converter(object):
     def __call__(self, content):
         item_name = content # we just give the name of the item in the content
         attrib = {
-            moin_page.type_: self.input_type,
+            moin_page.type_: unicode(self.input_type),
             xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get'),
         }
         return moin_page.object_(attrib=attrib, children={})

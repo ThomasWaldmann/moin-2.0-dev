@@ -43,6 +43,7 @@ class Base(object):
     def handle_output(self, elem, **options):
         from cStringIO import StringIO
         file = StringIO()
+        a
         tree = ET.ElementTree(elem)
         tree.write(file, namespaces=self.output_namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
@@ -170,7 +171,7 @@ class TestConverter(Base):
         data = [
             ('<page><body><object xlink:href="href"/></body></page>',
                 '/div/object[@data="href"]'),
-            ('<page><body><object xlink:href="href.png"/></body></page>',
+            ('<page><body><object xlink:href="href.png" page:type="image/png"/></body></page>',
                 '/div/img[@src="href.png"]'),
         ]
         for i in data:
