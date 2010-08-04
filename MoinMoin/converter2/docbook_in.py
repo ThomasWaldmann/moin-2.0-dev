@@ -104,7 +104,13 @@ class Converter(object):
                        'country', 'database', 'date', 'fax', 'filename',
                        'firstname', 'foreignphrase', 'hardware', 'holder',
                        'honorific', 'jobtitle', 'keycap', 'keycode',
-                       'keycombo', 'keysym', 'manvolnum', 'mousebutton'])
+                       'keycombo', 'keysym', 'manvolnum', 'mousebutton',
+                       'option', 'optional', 'package', 'person',
+                       'personname', 'phone', 'pob', 'postcode', 'prompt'
+                       'remark', 'replaceable', 'returnvalue',
+                       'shortaffil', 'shortcut', 'state', 'street',
+                       'surname', 'symbol', 'systemitem', 'type',
+                       'userinput', 'wordasword'])
 
     # DocBook has admonition as individual element, but the DOM Tree
     # has only one element for it, so we will convert all the DocBook
