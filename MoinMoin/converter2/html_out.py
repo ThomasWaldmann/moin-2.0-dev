@@ -160,6 +160,13 @@ class Converter(object):
         # XXX should support more tag attrs
         return self.new_copy(_tag_html_a, elem, attrib)
 
+    def visit_moinpage_admonition(self, elem):
+        attrib = {}
+        key = html('class')
+        # XXX need to add some keyword to protect the class
+        attrib[key] = elem.get(moin_page.type)
+        return self.new_copy(html.div, elem, attrib)
+
     def visit_moinpage_blockcode(self, elem):
         pre = self.new_copy(html.pre, elem)
 
