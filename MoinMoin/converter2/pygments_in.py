@@ -12,7 +12,7 @@ try:
     import pygments
     import pygments.formatter
     import pygments.lexers
-    from pygments.token import Token
+    from pygments.token import Token, STANDARD_TYPES
 except ImportError:
     pygments = None
 
@@ -26,28 +26,8 @@ from MoinMoin.util.tree import moin_page
 
 if pygments:
     class TreeFormatter(pygments.formatter.Formatter):
-        classes = {
-                Token.Comment: 'Comment',
-                Token.Comment.Preproc: 'Preprc',
-                Token.Generic.Deleted: 'DiffRemoved',
-                Token.Generic.Heading: 'Comment',
-                Token.Generic.Inserted: 'DiffAdded',
-                Token.Generic.Strong: 'DiffChanged',
-                Token.Generic.Subheading: 'DiffSeparator',
-                Token.Keyword: 'ResWord',
-                Token.Keyword.Constant: 'ConsWord',
-                Token.Name.Builtin: 'ResWord',
-                Token.Name.Constant: 'ConsWord',
-                Token.Name: 'ID',
-                Token.Number: 'Number',
-                Token.Operator.Word: 'ResWord',
-                Token.String: 'String',
-                Token.String.Char: 'Char',
-                Token.String.Escape: 'SPChar',
-        }
-
         def _append(self, type, value, element):
-            class_ = self.classes.get(type)
+            class_ = STANDARD_TYPES.get(type)
             if class_:
                 value = moin_page.span(attrib={moin_page.class_: class_}, children=(value, ))
             element.append(value)
@@ -57,7 +37,7 @@ if pygments:
             lasttype = None
 
             for ttype, value in tokensource:
-                while ttype and ttype not in self.classes:
+                while ttype and ttype not in STANDARD_TYPES:
                     ttype = ttype.parent
                 if ttype == lasttype:
                     lastval += value
@@ -122,7 +102,7 @@ if pygments:
 
         def __call__(self, content, arguments=None):
             content = u'\n'.join(content)
-            blockcode = moin_page.blockcode(attrib={moin_page.class_: 'codearea'})
+            blockcode = moin_page.blockcode(attrib={moin_page.class_: 'highlight'})
             pygments.highlight(content, self.lexer, TreeFormatter(), blockcode)
             body = moin_page.body(children=(blockcode, ))
             return moin_page.page(children=(body, ))
