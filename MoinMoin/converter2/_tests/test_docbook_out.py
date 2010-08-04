@@ -66,6 +66,13 @@ class TestConverter(Base):
            ('<page><body><p>Test</p></body></page>',
             # <article><info><title>Untitled</title></info><para>Test</para></article>
               '/article[./info[title="Untitled"]][para="Test"]'),
+           # ADMONITION type --> type
+           ('<page><body><admonition page:type="warning"><p>Text</p></admonition></body></page>',
+            # <article><warning><para>Text</para></warning></article>
+            '/article/warning[para="Text"]'),
+           # Unknown admonition
+           ('<page><body><admonition page:type="none"><p>Text</p></admonition></body></page>',
+            '/article[para="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
