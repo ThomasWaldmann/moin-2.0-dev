@@ -1,13 +1,7 @@
-{% extends "layout.html" %}
+{% extends "show.html" %}
 
-{% block item %}
-    <h1>
-        {% if item and item.name %}
-        Index of sub items of '{{ item.name|e }}'
-        {% else %}
-        Global Index
-        {% endif %}
-    </h1>
+{% block content %}
+    <h1>{{ _("Index of subitems of '%(item_name)s'") % dict(item_name=item_name) }}</h1>
     {% if index %}
         <ul>
         {% for fullname, relname, mimetype in index %}
