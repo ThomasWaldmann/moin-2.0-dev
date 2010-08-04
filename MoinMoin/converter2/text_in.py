@@ -22,23 +22,20 @@ class Converter(object):
     Parse the raw text and create a document object
     that can be converted into output using Emitter.
     """
-
     @classmethod
     def _factory(cls, type_input, type_output, **kw):
         return cls()
 
     def __call__(self, content, arguments=None):
         """Parse the text and return DOM tree."""
-
         blockcode = moin_page.blockcode()
-
         for line in content:
             if len(blockcode):
                 blockcode.append('\n')
             blockcode.append(line.expandtabs())
-
         body = moin_page.body(children=(blockcode, ))
         return moin_page.page(children=(body, ))
+
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
