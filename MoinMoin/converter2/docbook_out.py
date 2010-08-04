@@ -26,6 +26,9 @@ class Converter(object):
 
     unsupported_tags = set(['separator', ])
 
+    # Only these admonitions are supported by DocBook 5
+    admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
+
     @classmethod
     def _factory(cls, input, output, request, **kw):
         return cls()
@@ -132,6 +135,15 @@ class Converter(object):
             if key.uri == xlink:
                 attrib[key] = value
         return self.new_copy(docbook.link, element, attrib=attrib)
+
+    def visit_moinpage_admonition(self, element):
+        tag = element.get(moin_page('type'))
+        if tag in self.admonition_tags:
+            # Our tag is valid for DocBook 5
+            return self.new_copy(docbook(tag), element, attrib={})
+        else:
+            # For the other situation, just ignore the element
+            return self.do_children(element)
 
     def visit_moinpage_blockcode(self, element):
         code_str = ''.join(element)
