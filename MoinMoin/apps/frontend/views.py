@@ -154,7 +154,7 @@ def highlight_item(item_name, rev):
         data_text = item.data_storage_to_internal(item.data)
         # TODO: use registry as soon as it is in there
         from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
-        pygments_conv = PygmentsConverter(flaskg.context, mimetype=item.mimetype)
+        pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
