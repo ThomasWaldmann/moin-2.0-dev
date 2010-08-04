@@ -211,6 +211,13 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_admonition(self):
+        data = [
+            ('<page><body><admonition page:type="warning"><p>text</p></admonition></body></page>',
+             '/div/div[@class="warning"][p="text"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
 
 class TestConverterPage(Base):
     def setup_class(self):
