@@ -54,16 +54,17 @@ class Converter(object):
                        'extendedlink', 'issuenum', 'itermset', 'keyword',
                        'keywordset', 'legalnotice', 'org', 'orgname',
                        'orgdiv', 'otheraddr', 'othercredit', 'pagenums',
-                       'printhistory', 'productname', 'productnumber',
-                       'pubdate', 'publisher', 'publishername',
-                       'releaseinfo', 'revhistory', 'seriesvolnums',
-                       'subjectset', 'volumenum',
+                       'personblurb', 'printhistory', 'productname',
+                       'productnumber', 'pubdate', 'publisher',
+                       'publishername', 'releaseinfo', 'revdescription',
+                       'revhistory', 'revision', 'revnumber', 'revremark',
+                       'seriesvolnums', 'subjectset', 'volumenum',
                        # Other bibliography elements
                        'bibliodiv', 'biblioentry', 'bibliography',
                        'bibliolist', 'bibliomixed', 'biblioref',
                        'bibliorelation', 'citation', 'citerefentry',
                        'citetitle',
-                       # Callout elements
+                       #J Callout elements
                        'callout', 'calloutlist', 'area', 'areaset',
                        'areaspec', 'co'
                        # Class information
@@ -79,11 +80,20 @@ class Converter(object):
                        'guibutton', 'guiicon', 'guilabel',
                        'guimenu', 'guimenuitem', 'guisubmenu',
                        # EBNF Elements
-                       'constraint', 'constraintdef', 'lhs',
+                       'constraint', 'constraintdef', 'lhs', 'rhs',
+                       'nonterminal',
                        # msg elements
                        'msg', 'msgaud', 'msgentry', 'msgexplan',
                        'msginfo', 'msglevel', 'msgmain', 'msgorig',
                        'msgrel', 'msgset', 'msgsub', 'msgtext',
+                       # REF entry
+                       'refclass', 'refdescriptor', 'refentry',
+                       'refentrytitle', 'reference', 'refmeta',
+                       'refmiscinfo', 'refname', 'refnamediv',
+                       'refpurpose', 'refsect1', 'refsect2', 'refsect3',
+                       'refsection', 'refsynopsisdiv'
+                       # TOC
+                       'toc', 'tocdiv', 'tocentry',
                        # Other elements
                        'info', 'bridgehead'])
 
