@@ -2,6 +2,7 @@
 MoinMoin - Tests for MoinMoin.converter2.html_out
 
 @copyright: 2007 MoinMoin:BastianBlank
+            2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
 """
 
