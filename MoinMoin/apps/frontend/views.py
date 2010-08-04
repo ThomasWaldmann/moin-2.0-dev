@@ -146,6 +146,7 @@ def convert_item(item_name):
 @frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
+    from MoinMoin.util.tree import html
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
@@ -153,7 +154,7 @@ def highlight_item(item_name, rev):
         data_text = item.data_storage_to_internal(item.data)
         # TODO: use registry as soon as it is in there
         from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
-        pygments_conv = PygmentsConverter(flaskg.context, mimetype=item.mimetype)
+        pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
@@ -161,8 +162,7 @@ def highlight_item(item_name, rev):
         doc = html_conv(doc)
         from array import array
         out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
+        doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         content = out.tounicode()
     elif isinstance(item, NonExistent):
         return redirect(url_for('frontend.show_item', item_name=item_name))
