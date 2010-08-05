@@ -22,7 +22,8 @@ You can use anything that speaks WSGI to moin:
  * apache with mod_wsgi (recommended for bigger/busier wikis), do not use
    mod_wsgi v2.3 (it has known problems), about any other version is fine.
  * other WSGI-compatible servers
- * cgi, fastcgi, scgi, ajp, ... also work via the "flup" middleware bundled with moin
+ * For cgi, fastcgi, scgi, ajp, ... you can use the "flup" middleware:
+   http://trac.saddi.com/flup
  * For IIS 6.0 on Windows 2003, you can use a ISAPI-WSGI gateway:
    http://code.google.com/p/isapi-wsgi/ v0.4.1 has been used successfully.
 
@@ -33,14 +34,6 @@ Requirements needed for some moin features
 GUI editor: python-xml (pyxml) - more precisely, this stuff is needed by the
             html to wiki markup converter invoked when the gui editor posts
             html on save. Status for python 2.5.x unknown.
-
-Docbook formatter: python-xml (pyxml).
-
-docbook parser: 4suite 1.0a4 or 1.0b1
-
-xslt parser: 4suite 1.0a4 or 1.0b1
-
-rst parser: docutils >= 0.3.10
 
 Xapian indexed search: xapian libs + python bindings >= 1.0.6
 
@@ -56,8 +49,6 @@ ldap_login auth: python-ldap >=2.0.0pre06
 mysql_group auth: MySQLdb python module
 
 openidrp auth: openid python module
-
-jabberbot: pyxmpp SVN revision 665 or release >= 1.0.1
 
 
 Bundled 3rd party code
@@ -79,12 +70,6 @@ Thanks to all 3rd party software authors!
 
 
 A) Stuff below MoinMoin/support/:
-
-flup (cgi/fastcgi/scgi/ajp to WSGI adapter)
-===========================================
-shipped: 1.0.2+, from repo: hg clone -r 3b07cc2b0c76 http://hg.saddi.com/flup-server
-minimum: 1.0.2
-
 
 pygments (highlighting for all sorts of source code and other text files)
 =========================================================================
@@ -177,3 +162,4 @@ svg-edit
 ========
 shipped: Version 2.5 slightly modified
 required see shipped
+

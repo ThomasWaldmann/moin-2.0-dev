@@ -335,8 +335,6 @@ class Page(object):
     def edit_info(self):
         """ Return timestamp/editor info for this Page object (can be an old revision).
 
-        This is used by MoinMoin/xmlrpc/__init__.py.
-
         @rtype: dict
         @return: timestamp and editor information
         """
