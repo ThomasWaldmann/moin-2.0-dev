@@ -250,6 +250,21 @@ class Converter(object):
         # Otherwise we process children of the unknown element
         return self.do_children(element, depth)
 
+    def visit_data_element(self, element, depth):
+        data_types = {'imagedata':'image/',
+                      'audiodata':'audio/',
+                      'videodata':'video/'}
+        attrib = {}
+        href = element.get('fileref')
+        if not href:
+            # We could probably try to use entityref,
+            # but at this time we won't support it.
+            return
+        attrib[xlink.href] = href
+        if element.tag.name in data_types:
+            attrib[moin_page('type')] = data_types[element.tag.name]
+        return ET.Element(moin_page.object, attrib=attrib)
+
     def visit_docbook_admonition(self, element, depth):
         attrib = {}
         key = moin_page('type')
@@ -268,13 +283,7 @@ class Converter(object):
         return moin_page.page(children=[body])
 
     def visit_docbook_audiodata(self, element, depth):
-        attrib = {}
-        href = element.get('fileref')
-        key = xlink.href
-        attrib[key] = href
-        key = moin_page.type
-        attrib[key] = 'audio/'
-        return ET.Element(moin_page.object, attrib=attrib)
+        return self.visit_data_element(element, depth)
 
     def visit_docbook_blockquote(self, element, depth):
         # TODO:Translate
@@ -333,13 +342,7 @@ class Converter(object):
                              element, depth, attrib={})
 
     def visit_docbook_imagedata(self, element, depth):
-        attrib = {}
-        href = element.get('fileref')
-        key = xlink.href
-        attrib[key] = href
-        key = moin_page.type
-        attrib[key] = 'image/'
-        return ET.Element(moin_page.object, attrib=attrib)
+        return self.visit_data_element(element, depth)
 
     def visit_docbook_inline(self, element, depth):
         """
@@ -574,6 +577,9 @@ class Converter(object):
         # NB : We need to be sure it is only called for a variablelist
         return self.new_copy(moin_page('list-item-body'),
                              element, depth, attrib={})
+
+    def visit_docbook_videodata(self, element, depth):
+        return self.visit_data_element(element, depth)
 
     def visit_docbook_procedure(self, element, depth):
         # TODO : See to add Procedure text (if needed)
