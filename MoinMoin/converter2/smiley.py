@@ -133,8 +133,9 @@ class Converter(object):
             # TODO: Retrieve the name of the theme used by the user
             #        to get the correct smiley image
             attrib[key] = Iri(url_for('static', filename="modernized/img/smileys/%s" % icon))
+            attrib[moin_page('type')] = "image/png"
             # We return an object element instead of the text
-            return ET.Element(moin_page('object'), attrib=attrib, children={})
+            return ET.Element(moin_page('object'), attrib=attrib, children=[smiley_text])
 
         # if the text was not a smiley, just return the text
         # without any transformations
