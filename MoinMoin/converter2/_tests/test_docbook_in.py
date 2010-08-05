@@ -23,17 +23,19 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter2.docbook_in import *
 
 class Base(object):
-    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
+    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (
         docbook.namespace,
         docbook.namespace,
-        xlink.namespace)
+        xlink.namespace,
+        xml.namespace,)
 
     output_namespaces = {
         moin_page.namespace: u'',
         xlink.namespace: u'xlink',
+        xml.namespace: u'xml',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')
@@ -83,6 +85,10 @@ class TestConverter(Base):
             ('<article><info><title>Title</title><author>Author</author></info><para>text</para></article>',
             # <page><body><p>text</p></body></page>
             '/page/body[p="text"]'),
+            # XML attributes: We support all the xml standard attributes
+            ('<article><para xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</para></article>',
+            # <page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
+            '/page/body/p[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
