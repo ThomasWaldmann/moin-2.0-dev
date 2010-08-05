@@ -5,7 +5,6 @@
         <th>{{ _("User name") }}</th>
         <th>{{ _("Member of Groups") }}</th>
         <th>{{ _("Email address") }}</th>
-        <th>{{ _("Jabber ID") }}</th>
         <th>{{ _("Actions") }}</th>
     </tr>
     {% for u in user_accounts %}
@@ -15,11 +14,6 @@
         <td>
             {% if u.email %}
             <a href="mailto:{{ u.email|urlquote }}" class="mailto">{{ u.email|e }}</a>
-            {% endif %}
-        </td>
-        <td>
-            {% if u.jid %}
-            <a href="xmpp:{{ u.jid|urlquote }}" class="mailto">{{ u.jid|e }}</a>
             {% endif %}
         </td>
         <td>

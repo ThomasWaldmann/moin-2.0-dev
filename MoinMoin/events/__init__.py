@@ -130,26 +130,6 @@ class SubscribedToPageEvent(PageEvent):
         self.username = username
 
 
-class JabberIDSetEvent(Event):
-    """ Sent when user changes her Jabber ID """
-
-    def __init__(self, request, jid):
-        Event.__init__(self, request)
-        self.jid = jid
-
-
-class JabberIDUnsetEvent(Event):
-    """ Sent when Jabber ID is no longer used
-
-    Obviously this will be usually sent along with JabberIDSetEvent,
-    because we require user's jabber id to be unique by default.
-
-    """
-    def __init__(self, request, jid):
-        Event.__init__(self, request)
-        self.jid = jid
-
-
 class UserCreatedEvent(Event):
     """ Sent when a new user has been created """
 

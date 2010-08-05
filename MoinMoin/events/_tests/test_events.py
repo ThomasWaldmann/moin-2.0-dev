@@ -11,7 +11,6 @@ py.test.skip("Needs Page -> Item refactoring. MoinMoin.items needs to call event
 
 import MoinMoin.events as events
 import MoinMoin.events.notification as notification
-import MoinMoin.events.jabbernotify as jabbernotify
 from MoinMoin.Page import Page
 from MoinMoin.user import User
 
@@ -49,48 +48,16 @@ def test_page_change_message(request):
     py.test.raises(notification.UnknownChangeType, notification.page_change_message,
                    "StupidType", request, page, "en", revisions=page.getRevList())
 
-def test_user_created_event(request):
-    py.test.skip("Test is wrong, because it assumes send_notification will be called - but if there is no superuser subscribed to UserCreatedEvent, then no notification needs to be sent.")
-    class server_dummy:
-        def __init__(self):
-            self.sent = False
-
-        def send_notification(self, *args):
-            self.sent = True
-
-    event = events.UserCreatedEvent(request, User(request))
-    request.cfg.notification_server = server_dummy()
-    request.cfg.secrets = "thisisnotsecret"
-
-    jabbernotify.handle_user_created(event)
-    assert request.cfg.notification_server.sent is True
-
 def test_filter_subscriber_list(request):
     user = User(request)
     event = events.Event(request)
-
-    print "User is subscribed to this event on jabber."
-    print "This means, that he should stay on the list."
-    user.jid = "user@example.com"
-    user.jabber_subscribed_events = [events.Event.__name__]
-    subscribers = {"en": [user]}
-    notification.filter_subscriber_list(event, subscribers, True)
-    assert subscribers["en"]
-
-    print "User is not subscribed to this event on jabber."
-    print "The list should be empty."
-    user.jid = "user@example.com"
-    user.jabber_subscribed_events = []
-    subscribers = {"en": [user]}
-    notification.filter_subscriber_list(event, subscribers, True)
-    assert not subscribers["en"]
 
     print "User is subscribed to this event on email."
     print "This means, that he should stay on the list."
     user.email = "user@example.com"
     user.email_subscribed_events = [events.Event.__name__]
     subscribers = {"en": [user]}
-    notification.filter_subscriber_list(event, subscribers, False)
+    notification.filter_subscriber_list(event, subscribers)
     assert subscribers["en"]
 
     print "User is not subscribed to this event on email."
@@ -98,7 +65,7 @@ def test_filter_subscriber_list(request):
     user.email = "user@example.com"
     user.email_subscribed_events = []
     subscribers = {"en": [user]}
-    notification.filter_subscriber_list(event, subscribers, False)
+    notification.filter_subscriber_list(event, subscribers)
     assert not subscribers["en"]
 
 coverage_modules = ["MoinMoin.events"]

@@ -25,7 +25,6 @@ import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
-from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
 
 _url_re_cache = None
@@ -218,20 +217,14 @@ class ConfigFunctionality(object):
     siteid = None
     cache = None
     mail_enabled = None
-    jabber_enabled = None
     auth_can_logout = None
     auth_have_login = None
     auth_login_inputs = None
     _site_plugin_lists = None
-    _iwid = None
-    _iwid_full = None
     xapian_searchers = None
     moinmoin_dir = None
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
-
-    # storage index configuration (used by indexed backend only)
-    indexes = ["name", "openids", "jid", "email"]
 
     def __init__(self, siteid):
         """ Init Config instance """
@@ -245,7 +238,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('cache', 'plugin', 'tmp', 'indexes'):
+        for dirname in ['cache', 'plugin', 'tmp', ]:
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -358,17 +351,7 @@ class ConfigFunctionality(object):
         self.mail_enabled = (self.mail_smarthost is not None or self.mail_sendmail is not None) and self.mail_from
         self.mail_enabled = self.mail_enabled and True or False
 
-        # check if jabber bot is available and set flag:
-        self.jabber_enabled = self.notification_bot_uri is not None
-
-        # if we are to use the jabber bot, instantiate a server object for future use
-        if self.jabber_enabled:
-            from xmlrpclib import Server
-            self.notification_server = Server(self.notification_bot_uri, )
-
         # Cache variables for the properties below
-        self._iwid = self._iwid_full = self._meta_dict = None
-
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
@@ -379,9 +362,7 @@ class ConfigFunctionality(object):
         if self.secrets is None:  # admin did not setup a real secret, so make up something
             self.secrets = self.calc_secrets()
 
-        secret_key_names = ['action/cache', 'wikiutil/tickets', 'xmlrpc/ProcessMail', 'xmlrpc/RemoteScript', ]
-        if self.jabber_enabled:
-            secret_key_names.append('jabberbot')
+        secret_key_names = ['action/cache', 'wikiutil/tickets', ]
 
         secret_min_length = 10
         if isinstance(self.secrets, str):
@@ -417,24 +398,6 @@ class ConfigFunctionality(object):
                 secret += repr(var)
         return secret
 
-    _meta_dict = None
-    def load_meta_dict(self):
-        """ The meta_dict contains meta data about the wiki instance. """
-        if self._meta_dict is None:
-            self._meta_dict = wikiutil.MetaDict(os.path.join(self.data_dir, 'meta'), self.cache_dir)
-        return self._meta_dict
-    meta_dict = property(load_meta_dict)
-
-    # lazily load iwid(_full)
-    def make_iwid_property(attr):
-        def getter(self):
-            if getattr(self, attr, None) is None:
-                self.load_IWID()
-            return getattr(self, attr)
-        return property(getter)
-    iwid = make_iwid_property("_iwid")
-    iwid_full = make_iwid_property("_iwid_full")
-
     # lazily create a list of event handlers
     _event_handlers = None
     def make_event_handlers_prop():
@@ -448,26 +411,6 @@ class ConfigFunctionality(object):
 
         return property(getter, setter)
     event_handlers = make_event_handlers_prop()
-
-    def load_IWID(self):
-        """ Loads the InterWikiID of this instance. It is used to identify the instance
-            globally.
-            The IWID is available as cfg.iwid
-            The full IWID containing the interwiki name is available as cfg.iwid_full
-            This method is called by the property.
-        """
-        try:
-            iwid = self.meta_dict['IWID']
-        except KeyError:
-            iwid = util.random_string(16).encode("hex") + "-" + str(int(time.time()))
-            self.meta_dict['IWID'] = iwid
-            self.meta_dict.sync()
-
-        self._iwid = iwid
-        if self.interwikiname is not None:
-            self._iwid_full = packLine([iwid, self.interwikiname])
-        else:
-            self._iwid_full = packLine([iwid])
 
     def _config_check(self):
         """ Check namespace and warn about unknown names
@@ -701,7 +644,7 @@ options_no_group_name = {
      "List of trusted user names with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
     ('auth', DefaultExpression('[MoinAuth()]'),
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
-    ('auth_methods_trusted', ['http', 'given', 'xmlrpc_applytoken'], # Note: 'http' auth method is currently just a redirect to 'given'
+    ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
     # use sha512 as soon as we require python2.5 because sha1 is weak:
@@ -713,9 +656,7 @@ options_no_group_name = {
      None,
      "Class object hook for implementing security restrictions or relaxations"),
     ('actions_excluded',
-     ['xmlrpc',  # we do not want wiki admins unknowingly offering xmlrpc service
-      'MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
-      'copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
+     ['copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
 
@@ -862,8 +803,6 @@ options_no_group_name = {
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
 
-    ('notification_bot_uri', None, "URI of the Jabber notification bot."),
-
     ('url_mappings', {},
      "lookup table to remap URL prefixes (dict of {{{'prefix': 'replacement'}}}); especially useful in intranets, when whole trees of externally hosted documents move around"),
 
@@ -904,7 +843,6 @@ options_no_group_name = {
         PageCopiedEvent.__name__,
         PageRevertedEvent.__name__,
      ], None),
-    ('jabber_subscribed_events_default', [], None),
 
     ('tz_offset', 0.0,
      "default time zone offset in hours from UTC"),
@@ -915,7 +853,6 @@ options_no_group_name = {
   # ==========================================================================
   'various': ('Various', None, (
     ('bang_meta', True, 'if True, enable {{{!NoWikiName}}} markup'),
-    ('caching_formats', ['text_html'], "output formats that are cached; set to [] to turn off caching (useful for development)"),
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
@@ -938,8 +875,6 @@ options_no_group_name = {
      "if True, log the remote IP address (and maybe hostname)."),
     ('log_reverse_dns_lookups', True,
      "if True, do a reverse DNS lookup on page SAVE. If your DNS is broken, set this to False to speed up SAVE."),
-    ('log_timing', False,
-     "if True, add timing infos to the log output to analyse load conditions"),
 
     # some dangerous mimetypes (we don't use "content-disposition: inline" for them when a user
     # downloads such data, because the browser might execute e.g. Javascript contained
@@ -1039,8 +974,6 @@ options = {
     'user': ('Users / User settings', None, (
       ('email_unique', True,
        "if True, check email addresses for uniqueness and don't accept duplicates."),
-      ('jid_unique', True,
-       "if True, check Jabber IDs for uniqueness and don't accept duplicates."),
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
@@ -1086,7 +1019,6 @@ options = {
         ('name', _('Name'), "text", "36", _("(Use FirstnameLastname)")),
         ('aliasname', _('Alias-Name'), "text", "36", ''),
         ('email', _('Email'), "text", "36", ''),
-        ('jid', _('Jabber ID'), "text", "36", ''),
         ('css_url', _('User CSS URL'), "text", "40", _('(Leave it empty for disabling user CSS)')),
         ('edit_rows', _('Editor size'), "text", "3", ''),
        ],
@@ -1099,7 +1031,6 @@ options = {
         'password': '',
         'password2': '',
         'email': '',
-        'jid': '',
         'css_url': '',
         'edit_rows': "20",
        },
@@ -1135,21 +1066,6 @@ options = {
       ('login', None, "'username userpass' for SMTP server authentication (None = don't use auth)."),
       ('smarthost', None, "Address of SMTP server to use for sending mail (None = don't use SMTP server)."),
       ('sendmail', None, "sendmail command to use for sending mail (None = don't use sendmail)"),
-
-      ('import_subpage_template', u"$from-$date-$subject", "Create subpages using this template when importing mail."),
-      ('import_pagename_search', ['subject', 'to', ], "Where to look for target pagename specification."),
-      ('import_pagename_envelope', u"%s", "Use this to add some fixed prefix/postfix to the generated target pagename."),
-      ('import_pagename_regex', r'\[\[([^\]]*)\]\]', "Regular expression used to search for target pagename specification."),
-      ('import_wiki_addrs', [], "Target mail addresses to consider when importing mail"),
-    )),
-
-    'backup': ('Backup settings',
-        'These settings control how the backup action works and who is allowed to use it.',
-    (
-      ('compression', 'gz', 'What compression to use for the backup ("gz" or "bz2").'),
-      ('users', [], 'List of trusted user names who are allowed to get a backup.'),
-      ('include', [], 'List of pathes to backup.'),
-      ('exclude', lambda self, filename: False, 'Function f(self, filename) that tells whether a file should be excluded from backup. By default, nothing is excluded.'),
     )),
 }
 

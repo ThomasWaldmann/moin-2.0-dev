@@ -41,7 +41,7 @@
         </li>
     {%- endif %}
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
-       and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) -%}
+       and theme.user.valid and cfg.mail_enabled -%}
         <li>
             <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isSubscribedTo([item_name]) %}
