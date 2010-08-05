@@ -22,18 +22,20 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter2.docbook_out import *
 
 class Base(object):
-    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
+    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (
         moin_page.namespace,
         moin_page.namespace,
         html.namespace,
-        xlink.namespace)
+        xlink.namespace,
+        xml.namespace,)
     output_namespaces = {
         docbook.namespace: '',
         moin_page.namespace: 'page',
-        xlink.namespace: 'xlink'
+        xlink.namespace: 'xlink',
+        xml.namespace: 'xml'
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')
@@ -73,6 +75,10 @@ class TestConverter(Base):
            # Unknown admonition
            ('<page><body><admonition page:type="none"><p>Text</p></admonition></body></page>',
             '/article[para="Text"]'),
+           # XML attributes: we support all the xml standard attributes
+           ('<page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>',
+            # <article><para xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
+            '/article/para[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
