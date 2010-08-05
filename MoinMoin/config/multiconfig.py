@@ -222,8 +222,6 @@ class ConfigFunctionality(object):
     auth_have_login = None
     auth_login_inputs = None
     _site_plugin_lists = None
-    _iwid = None
-    _iwid_full = None
     xapian_searchers = None
     moinmoin_dir = None
     # will be lazily loaded by interwiki code when needed (?)
@@ -358,8 +356,6 @@ class ConfigFunctionality(object):
         self.mail_enabled = self.mail_enabled and True or False
 
         # Cache variables for the properties below
-        self._iwid = self._iwid_full = self._meta_dict = None
-
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
@@ -406,24 +402,6 @@ class ConfigFunctionality(object):
                 secret += repr(var)
         return secret
 
-    _meta_dict = None
-    def load_meta_dict(self):
-        """ The meta_dict contains meta data about the wiki instance. """
-        if self._meta_dict is None:
-            self._meta_dict = wikiutil.MetaDict(os.path.join(self.data_dir, 'meta'), self.cache_dir)
-        return self._meta_dict
-    meta_dict = property(load_meta_dict)
-
-    # lazily load iwid(_full)
-    def make_iwid_property(attr):
-        def getter(self):
-            if getattr(self, attr, None) is None:
-                self.load_IWID()
-            return getattr(self, attr)
-        return property(getter)
-    iwid = make_iwid_property("_iwid")
-    iwid_full = make_iwid_property("_iwid_full")
-
     # lazily create a list of event handlers
     _event_handlers = None
     def make_event_handlers_prop():
@@ -437,26 +415,6 @@ class ConfigFunctionality(object):
 
         return property(getter, setter)
     event_handlers = make_event_handlers_prop()
-
-    def load_IWID(self):
-        """ Loads the InterWikiID of this instance. It is used to identify the instance
-            globally.
-            The IWID is available as cfg.iwid
-            The full IWID containing the interwiki name is available as cfg.iwid_full
-            This method is called by the property.
-        """
-        try:
-            iwid = self.meta_dict['IWID']
-        except KeyError:
-            iwid = util.random_string(16).encode("hex") + "-" + str(int(time.time()))
-            self.meta_dict['IWID'] = iwid
-            self.meta_dict.sync()
-
-        self._iwid = iwid
-        if self.interwikiname is not None:
-            self._iwid_full = packLine([iwid, self.interwikiname])
-        else:
-            self._iwid_full = packLine([iwid])
 
     def _config_check(self):
         """ Check namespace and warn about unknown names
@@ -1116,12 +1074,6 @@ options = {
       ('login', None, "'username userpass' for SMTP server authentication (None = don't use auth)."),
       ('smarthost', None, "Address of SMTP server to use for sending mail (None = don't use SMTP server)."),
       ('sendmail', None, "sendmail command to use for sending mail (None = don't use sendmail)"),
-
-      ('import_subpage_template', u"$from-$date-$subject", "Create subpages using this template when importing mail."),
-      ('import_pagename_search', ['subject', 'to', ], "Where to look for target pagename specification."),
-      ('import_pagename_envelope', u"%s", "Use this to add some fixed prefix/postfix to the generated target pagename."),
-      ('import_pagename_regex', r'\[\[([^\]]*)\]\]', "Regular expression used to search for target pagename specification."),
-      ('import_wiki_addrs', [], "Target mail addresses to consider when importing mail"),
     )),
 
     'backup': ('Backup settings',
