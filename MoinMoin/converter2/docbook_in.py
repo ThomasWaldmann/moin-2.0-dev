@@ -23,7 +23,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import moin_page, xlink, docbook
+from MoinMoin.util.tree import moin_page, xlink, docbook, xml
 
 from ._wiki_macro import ConverterMacro
 
@@ -189,8 +189,23 @@ class Converter(object):
         It first converts the child of the element,
         and the element itself.
         """
+        attrib_new = self.convert_attributes(element)
+        attrib.update(attrib_new)
         children = self.do_children(element, depth)
         return self.new(tag, attrib, children)
+
+    def convert_attributes(self, element):
+        """
+        Some attributes of the element can be used direct in
+        our DOM Tree.
+        Actually we support all the attributes from the
+        XML namespace (xml:id, xml:base, xml:lang).
+        """
+        result = {}
+        for key, value in element.attrib.iteritems():
+            if key.uri == xml:
+                result[key] = value
+        return result
 
     def visit(self, element, depth):
         """
