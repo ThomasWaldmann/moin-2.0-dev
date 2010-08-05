@@ -761,7 +761,7 @@ options_no_group_name = {
        '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
        '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
        '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
-       '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 4.01</a>',
+       '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
      ],
      'list with html fragments with logos or strings for crediting.'),
   )),
