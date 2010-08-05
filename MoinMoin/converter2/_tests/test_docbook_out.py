@@ -197,9 +197,15 @@ class TestConverter(Base):
 
     def test_object(self):
         data = [
-            ('<page><body><p><object xlink:href="pics.png" /></p></body></page>',
-             # <article><para><inlinemediaobject><imageobject><imagedata fileref="uri"></imageobject></inlinemediaobject></para></article>
+            ('<page><body><p><object xlink:href="pics.png" page:type="image/" /></p></body></page>',
+             # <article><para><inlinemediaobject><imageobject><imagedata fileref="pics.png"></imageobject></inlinemediaobject></para></article>
              '/article/para/inlinemediaobject/imageobject/imagedata[@fileref="pics.png"]'),
+            ('<page><body><p><object xlink:href="sound.wav" page:type="audio/" /></p></body></page>',
+             # <article><para><inlinemediaobject><audioobject><audiodata fileref="sound.wav"></audioobject></inlinemediaobject></para></article>
+             '/article/para/inlinemediaobject/audioobject/audiodata[@fileref="sound.wav"]'),
+            ('<page><body><p><object xlink:href="video.ogg" page:type="video/" /></p></body></page>',
+             # <article><para><inlinemediaobject><videoobject><videodata fileref="video.ogg"></videoobject></inlinemediaobject></para></article>
+             '/article/para/inlinemediaobject/videoobject/videodata[@fileref="video.ogg"]'),
         ]
         for i in data:
             yield (self.do, ) + i
