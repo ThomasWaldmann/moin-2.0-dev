@@ -1,35 +1,19 @@
 AttachFile is dead
 ------------------
 
-do=get is the new way for downloading or raw viewing of an item
-
-TODO: remove AttachFile usage from packages / PackagePages refactor
-
 TODO: replace AttachList(pagename=None, mime_type='*') macro (removed) by SubItems macro (todo)
 mig script?
 
 TODO: same for AttachInfo(pagename=None) ?
 
-TODO: moin maint mkpagepacks
 TODO: moin export dump
 
 TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
-
-Removed wiki xmlrpc attachment related parts.
-TODO: Check wikisync & co whether it works for any item type / fix xmlrpc accordingly.
 
 
 Page / Page*Editor is almost dead, stuff moving to new MoinMoin.items package
 -----------------------------------------------------------------------------
 
-send_page is not used any more - see MoinMoin.action.show.
-sendEditor is not used any more / action "edit" is "modify" now - see MoinMoin.action.modify.
-TODO: Both miss lots of functionality.
-
-Some actions like content/print/format were removed (all called do_show /
-send_page internally).
-
-Page / Page*Editor is deprecated.
 TODO: move functionality from there to MoinMoin.items.
 
 PageGraphicalEditor was removed, it contained only sending of FCKeditor and
@@ -45,20 +29,6 @@ Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
 Show nicer error pages than what we have at the moment.
 
 index pages: could filter by name (thus not displaying Trash/*, except if wanted)
-
-
-templating engine jinja used now
----------------------------------
-
-See MoinMoin.support.jinja.
-
-Used by some new actions, like modify, show, diff, ...
-
-Only used for content div right now, the theme is still rendered by "old"
-MoinMoin.theme code.
-
-Removed all theme code except "modernized" theme.
-TODO: create a jinja2 based theme.
 
 
 MercurialBackend

@@ -1,25 +1,36 @@
 * Moin Wiki input converter:
   - Support inline comments.
   - Support table attributes.
-  - Support smileys
+  - Use config.url_schemas.
 
-* Creole input converter: Parse interwiki the same way as Moin Wiki.
+* Creole input converter:
+  - Parse interwiki the same way as Moin Wiki.
+  - Support table headings.
+  - Use config.url_schemas.
 
 * Link converter:
   - Handle attachment and drawing links. Depends on the outcome of the storage
     merge.
 
-* Include converter: Handle URIs using the Uri class.
+* Include converter:
+  - Handle URIs using the Uri class.
 
 * Allow creation of unicode URIs for wiki links. This should also provide
   access to the query parameters.
 
-* Page: Support different output types again.
+* Macro converter:
+  - Move macro definitions into different namespace.
+  - Footnote placing.
+
+* HTML output converter:
+  - Footnote placing.
+
+* Item: Support different output types again.
 
 * i18n: Provide replacement for percent hack in getText.
   May work like % in logging.log.
 
-* Page: Converter-aware quickhelp.
+* Item: Converter-aware quickhelp.
   Possibilities:
   - Use help from converter $type -> application/x-moin-document.
   - Use a different converter $type -> application/x-moin-document;quickhelp
@@ -27,17 +38,6 @@
   - Use another registry for the quickhelps within the converter framework.
 
 * Support for per-instance converters.
-
-* Creole, Moin Wiki input converter: Use config.url_schemas.
-
-* Macro converter: Move macro definitions into different namespace.
-
-* Page, i18n: Return xml instead of html. The themes needs return xml then
-  also.
-
-* Creole input converter: Support table headings.
-
-* Macro converter, HTML output converter: Footnote placing.
 
 * Remove unused formatters. Only compatibility and text_html will survive.
 
