@@ -267,6 +267,15 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_audiodata(self, element, depth):
+        attrib = {}
+        href = element.get('fileref')
+        key = xlink.href
+        attrib[key] = href
+        key = moin_page.type
+        attrib[key] = 'audio/'
+        return ET.Element(moin_page.object, attrib=attrib)
+
     def visit_docbook_blockquote(self, element, depth):
         # TODO:Translate
         source = u"Unknow"
