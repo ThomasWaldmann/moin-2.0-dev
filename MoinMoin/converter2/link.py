@@ -158,13 +158,13 @@ class ConverterItemLinks(ConverterBase):
         elif path[0] == '..':
             path = page.path[1:] + path[1:]
 
-        self.links.add(path)
+        self.links.add(unicode(path))
 
     def get_links(self):
         """
         return a list of unicode link target item names
         """
-        return [unicode(link) for link in self.links]
+        return list(self.links)
 
 
 from . import default_registry
