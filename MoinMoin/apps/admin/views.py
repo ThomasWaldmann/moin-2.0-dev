@@ -37,7 +37,6 @@ def userbrowser():
             uid=uid,
             name=u.name,
             email=u.email,
-            jid=u.jid,
             disabled=u.disabled,
             groups=[], # TODO
             ))
@@ -53,7 +52,7 @@ def userprofile(user_name):
     uid = user.getUserId(flaskg.context, user_name)
     u = user.User(flaskg.context, uid)
     if request.method == 'GET':
-        return "userprofile of %s: %r" % (user_name, (u.email, u.jid, u.disabled))
+        return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))
 
     if request.method == 'POST':
         if wikiutil.checkTicket(flaskg.context, request.form.get('ticket', '')):

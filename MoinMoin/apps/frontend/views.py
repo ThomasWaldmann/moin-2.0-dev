@@ -361,10 +361,10 @@ def subscribe_item(item_name):
         msg = _("You must login to use this action: %(action)s.") % {"action": "subscribe/unsubscribe"}, "error"
     elif not u.may.read(item_name):
         msg = _("You are not allowed to subscribe to an item you may not read."), "error"
-    elif not cfg.mail_enabled and not cfg.jabber_enabled:
-        msg = _("This wiki is not enabled for mail/Jabber processing."), "error"
-    elif not u.email and not u.jid:
-        msg = _("Add your email address or Jabber ID in your user settings to use subscriptions."), "error"
+    elif not cfg.mail_enabled:
+        msg = _("This wiki is not enabled for mail processing."), "error"
+    elif not u.email:
+        msg = _("Add your email address in your user settings to use subscriptions."), "error"
     elif u.isSubscribedTo([item_name]):
         # Try to unsubscribe
         if not u.unsubscribe(item_name):

@@ -218,7 +218,6 @@ class ConfigFunctionality(object):
     siteid = None
     cache = None
     mail_enabled = None
-    jabber_enabled = None
     auth_can_logout = None
     auth_have_login = None
     auth_login_inputs = None
@@ -231,7 +230,7 @@ class ConfigFunctionality(object):
     shared_intermap_files = None
 
     # storage index configuration (used by indexed backend only)
-    indexes = ["name", "openids", "jid", "email"]
+    indexes = ["name", "openids", "email"]
 
     def __init__(self, siteid):
         """ Init Config instance """
@@ -358,14 +357,6 @@ class ConfigFunctionality(object):
         self.mail_enabled = (self.mail_smarthost is not None or self.mail_sendmail is not None) and self.mail_from
         self.mail_enabled = self.mail_enabled and True or False
 
-        # check if jabber bot is available and set flag:
-        self.jabber_enabled = self.notification_bot_uri is not None
-
-        # if we are to use the jabber bot, instantiate a server object for future use
-        if self.jabber_enabled:
-            from xmlrpclib import Server
-            self.notification_server = Server(self.notification_bot_uri, )
-
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
@@ -379,9 +370,7 @@ class ConfigFunctionality(object):
         if self.secrets is None:  # admin did not setup a real secret, so make up something
             self.secrets = self.calc_secrets()
 
-        secret_key_names = ['action/cache', 'wikiutil/tickets', 'xmlrpc/ProcessMail', 'xmlrpc/RemoteScript', ]
-        if self.jabber_enabled:
-            secret_key_names.append('jabberbot')
+        secret_key_names = ['action/cache', 'wikiutil/tickets', ]
 
         secret_min_length = 10
         if isinstance(self.secrets, str):
@@ -701,7 +690,7 @@ options_no_group_name = {
      "List of trusted user names with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
     ('auth', DefaultExpression('[MoinAuth()]'),
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
-    ('auth_methods_trusted', ['http', 'given', 'xmlrpc_applytoken'], # Note: 'http' auth method is currently just a redirect to 'given'
+    ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
     # use sha512 as soon as we require python2.5 because sha1 is weak:
@@ -713,8 +702,7 @@ options_no_group_name = {
      None,
      "Class object hook for implementing security restrictions or relaxations"),
     ('actions_excluded',
-     ['xmlrpc',  # we do not want wiki admins unknowingly offering xmlrpc service
-      'MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
+     ['MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
       'copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
@@ -862,8 +850,6 @@ options_no_group_name = {
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
 
-    ('notification_bot_uri', None, "URI of the Jabber notification bot."),
-
     ('url_mappings', {},
      "lookup table to remap URL prefixes (dict of {{{'prefix': 'replacement'}}}); especially useful in intranets, when whole trees of externally hosted documents move around"),
 
@@ -904,7 +890,6 @@ options_no_group_name = {
         PageCopiedEvent.__name__,
         PageRevertedEvent.__name__,
      ], None),
-    ('jabber_subscribed_events_default', [], None),
 
     ('tz_offset', 0.0,
      "default time zone offset in hours from UTC"),
@@ -1039,8 +1024,6 @@ options = {
     'user': ('Users / User settings', None, (
       ('email_unique', True,
        "if True, check email addresses for uniqueness and don't accept duplicates."),
-      ('jid_unique', True,
-       "if True, check Jabber IDs for uniqueness and don't accept duplicates."),
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
@@ -1086,7 +1069,6 @@ options = {
         ('name', _('Name'), "text", "36", _("(Use FirstnameLastname)")),
         ('aliasname', _('Alias-Name'), "text", "36", ''),
         ('email', _('Email'), "text", "36", ''),
-        ('jid', _('Jabber ID'), "text", "36", ''),
         ('css_url', _('User CSS URL'), "text", "40", _('(Leave it empty for disabling user CSS)')),
         ('edit_rows', _('Editor size'), "text", "3", ''),
        ],
@@ -1099,7 +1081,6 @@ options = {
         'password': '',
         'password2': '',
         'email': '',
-        'jid': '',
         'css_url': '',
         'edit_rows': "20",
        },

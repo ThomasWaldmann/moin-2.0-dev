@@ -127,13 +127,6 @@ def get_by_email_address(request, email_address):
         return users[0]
 
 
-def get_by_jabber_id(request, jabber_id):
-    """ Searches for an user with a perticular jabber id and returns it. """
-    users = get_by_filter(request, 'jid', jabber_id)
-    if len(users) > 0:
-        return users[0]
-
-
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
     from MoinMoin.search import term
@@ -377,7 +370,6 @@ class User:
         self.quicklinks = self._cfg.quicklinks_default
         self.subscribed_items = self._cfg.subscribed_items_default
         self.email_subscribed_events = self._cfg.email_subscribed_events_default
-        self.jabber_subscribed_events = self._cfg.jabber_subscribed_events_default
         self.theme_name = self._cfg.theme_default
         self.editor_default = self._cfg.editor_default
         self.editor_ui = self._cfg.editor_ui

@@ -39,7 +39,6 @@ def _user(request):
     user_params = dict(name=dict(param=u.name, title=_("Name"), comment=_("(Use FirstnameLastname)")),
                        aliasname=dict(param=u.aliasname, title=_("Alias-Name"), comment=""),
                        email=dict(param=u.email, title=_("Email"), comment=""),
-                       jid=dict(param=u.jid, title=_("Jabber ID"), comment=""),
                        css_url=dict(param=u.css_url, title=_("User CSS URL"), comment=_("(Leave it empty for disabling user CSS)")))
     return user_params
 
@@ -254,28 +253,6 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
             u.email = new_email
 
 
-        if not 'jid' in u.auth_attribs:
-            # try to get the jid
-            new_jid = wikiutil.clean_input(form.get('jid', '')).strip()
-
-            jid_changed = u.jid != new_jid
-            previous_jid = u.jid
-
-            if new_jid and request.cfg.user_jid_unique:
-                other = user.get_by_jabber_id(request, new_jid)
-                if other is not None and other.id != u.id:
-                    return 'error', _("This jabber id already belongs to somebody else.")
-
-            if jid_changed:
-                set_event = events.JabberIDSetEvent(request, new_jid)
-                unset_event = events.JabberIDUnsetEvent(request, previous_jid)
-                events.send_event(unset_event)
-                events.send_event(set_event)
-
-            # done checking the JID, set it
-            u.jid = new_jid
-
-
         if not 'aliasname' in u.auth_attribs:
             # aliasname
             u.aliasname = wikiutil.clean_input(form.get('aliasname', '')).strip()
@@ -325,7 +302,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         already_handled = ['name', 'email',
                            'aliasname', 'edit_rows', 'editor_default',
                            'editor_ui', 'tz_offset', 'datetime_fmt',
-                           'theme_name', 'language', 'real_language', 'jid']
+                           'theme_name', 'language', 'real_language']
         for field in self.cfg.user_form_fields:
             key = field[0]
             if ((key in self.cfg.user_form_disable)
