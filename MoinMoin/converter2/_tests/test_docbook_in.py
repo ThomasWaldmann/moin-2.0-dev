@@ -299,9 +299,15 @@ class TestConverter(Base):
 
     def test_trademark(self):
         data = [
-            ('<article><para><trademark class="copyright">MoinMoin</trademark></para></article>',
+            ('<article><para><trademark db:class="copyright">MoinMoin</trademark></para></article>',
              # <page><body><p><span element="trademark">MoinMoin&copy;</span></p></body></page>
              '/page/body/p/span[@element="trademark"][text()="MoinMoin&copy;"]'),
+            ('<article><para><trademark db:class="service">MoinMoin</trademark></para></article>',
+             # <page><body><p><span element="trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></body></page>
+             '/page/body/p/span[@element="trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
+            ('<article><para><trademark>MoinMoin</trademark></para></article>',
+             # <page><body><p><span element="trademark">MoinMoin</span></p></body></page>
+             '/page/body/p/span[@element="trademark"][text()="MoinMoin"]'),
         ]
         for i in data:
             yield(self.do, ) + i
