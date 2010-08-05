@@ -102,13 +102,12 @@ class Converter(object):
     # Inline tags which can be directly converted into an HTML element
     direct_inline_tags = set(['abbr', 'address', 'dfn', 'kbd'])
 
-    # Base URL extracted from xml:base
-    base_url = ''
-
     def __init__(self, request):
         self.request = request
 
     def __call__(self, element):
+        # Base URL extracted from xml:base
+        self.base_url = ''
         return self.visit(element)
 
     def do_children(self, element):
@@ -291,6 +290,8 @@ class Converter(object):
 
     def visit_moinpage_object(self, elem):
         href = elem.get(xlink.href, None)
+        if self.base_url:
+            href = ''.join([self.base_url, href])
         if href:
             if isinstance(href, unicode): # XXX sometimes we get Iri, sometimes unicode - bug?
                 h = href
