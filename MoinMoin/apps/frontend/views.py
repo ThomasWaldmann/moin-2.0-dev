@@ -30,7 +30,8 @@ def dispatch():
 
 @frontend.route('/')
 def show_root():
-    location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(flaskg.context)
+    item_name = flaskg.context.cfg.page_front_page
+    location = url_for('frontend.show_item', item_name=item_name)
     return redirect(location)
 
 @frontend.route('/robots.txt')
