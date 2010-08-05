@@ -290,12 +290,23 @@ class Converter(object):
     def visit_moinpage_object(self, element):
         href = element.get(xlink.href, None)
         attrib = {}
+        mimetype = Type(_type=element.get(moin_page.type_, 'application/x-nonexistent'))
         if href:
-            if wikiutil.isPicture(href):
-                attrib[docbook.fileref] = href
+            attrib[docbook.fileref] = href
+            if  Type('image/').issupertype(mimetype):
                 object_data = self.new(docbook.imagedata, attrib=attrib,
                                        children=[])
                 object_element = self.new(docbook.imageobject, attrib={},
+                                          children=[object_data])
+            elif Type('video/').issupertype(mimetype):
+                object_data = self.new(docbook.videodata, attrib=attrib,
+                                       children=[])
+                object_element = self.new(docbook.videoobject, attrib={},
+                                          children=[object_data])
+            elif Type('audio/').issupertype(mimetype):
+                object_data = self.new(docbook.audiodata, attrib=attrib,
+                                       children=[])
+                object_element = self.new(docbook.audioobject, attrib={},
                                           children=[object_data])
             else:
                 return
