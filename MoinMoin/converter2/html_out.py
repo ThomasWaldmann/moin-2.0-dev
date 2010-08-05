@@ -13,7 +13,7 @@ from __future__ import absolute_import
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.util.tree import html, moin_page, xlink, xml
 
 
 class ElementException(RuntimeError):
@@ -102,6 +102,9 @@ class Converter(object):
     # Inline tags which can be directly converted into an HTML element
     direct_inline_tags = set(['abbr', 'address', 'dfn', 'kbd'])
 
+    # Base URL extracted from xml:base
+    base_url = ''
+
     def __init__(self, request):
         self.request = request
 
@@ -144,6 +147,8 @@ class Converter(object):
         return self.new_copy(elem.tag, elem)
 
     def visit_moinpage(self, elem):
+        # Get base_url from xml:base
+        self.base_url = elem.get(xml.base) or self.base_url
         n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
         if f:
@@ -156,6 +161,8 @@ class Converter(object):
             _tag_html_a=html.a, _tag_html_href=html.href, _tag_xlink_href=xlink.href):
         attrib = {}
         href = elem.get(_tag_xlink_href)
+        if self.base_url:
+            href = ''.join([self.base_url, href])
         if href:
             attrib[_tag_html_href] = href
         # XXX should support more tag attrs
