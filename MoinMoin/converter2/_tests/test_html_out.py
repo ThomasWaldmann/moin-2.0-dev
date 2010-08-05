@@ -183,6 +183,8 @@ class TestConverter(Base):
                 '/div/object[@data="href"]'),
             ('<page><body><object xlink:href="href.png" page:type="image/png"/></body></page>',
                 '/div/img[@src="href.png"]'),
+            ('<page xml:base="http://base.tld/"><body><object xlink:href="href.png" page:type="image/png"/></body></page>',
+              '/div/img[@src="http://base.tld/href.png"]'),
         ]
         for i in data:
             yield (self.do, ) + i
