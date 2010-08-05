@@ -39,6 +39,11 @@ class Converter(object):
         docbook.namespace: 'docbook'
     }
 
+    # We store the standard attributes of an element.
+    # Once we have been able to put it into an output element,
+    # we clear this attribute.
+    standard_attribute = {}
+
     # DocBook elements which are completely ignored by our converter
     # We even do not process children of these elements
     # "Info" elements are the biggest part of this set
@@ -180,6 +185,9 @@ class Converter(object):
         """
         Return a new element for the DocBook Tree
         """
+        if self.standard_attribute:
+            attrib.update(self.standard_attribute)
+            self.standard_attribute = {}
         return ET.Element(tag, attrib=attrib, children=children)
 
     def new_copy(self, tag, element, depth, attrib):
@@ -189,23 +197,24 @@ class Converter(object):
         It first converts the child of the element,
         and the element itself.
         """
-        attrib_new = self.convert_attributes(element)
-        attrib.update(attrib_new)
         children = self.do_children(element, depth)
         return self.new(tag, attrib, children)
 
-    def convert_attributes(self, element):
+    def get_standard_attributes(self, element):
         """
-        Some attributes of the element can be used direct in
-        our DOM Tree.
-        Actually we support all the attributes from the
-        XML namespace (xml:id, xml:base, xml:lang).
+        We will extract the standart attributes of the element, if any.
+        We save the result in our standard attribute.
         """
         result = {}
         for key, value in element.attrib.iteritems():
-            if key.uri == xml:
+            if key.uri == xml \
+              and key.name in ['id', 'base', 'lang']:
                 result[key] = value
-        return result
+        if result:
+            # We clear standard_attribute, if ancestror attribute
+            # was stored and has not been written in to the output,
+            # anyway the new standard attributes will get higher priority
+            self.standard_attribute = result
 
     def visit(self, element, depth):
         """
@@ -236,6 +245,8 @@ class Converter(object):
         We will detect the name of the tag, and pick the correct method
         to convert it.
         """
+        # Save the standard attribute of the element
+        self.get_standard_attributes(element)
         # We have a section tag
         if self.sect_re.match(element.tag.name):
             result = []
