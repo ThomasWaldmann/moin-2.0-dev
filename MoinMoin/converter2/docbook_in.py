@@ -328,6 +328,8 @@ class Converter(object):
         href = element.get('fileref')
         key = xlink.href
         attrib[key] = href
+        key = moin_page.type
+        attrib[key] = 'image/'
         return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_inline(self, element, depth):
