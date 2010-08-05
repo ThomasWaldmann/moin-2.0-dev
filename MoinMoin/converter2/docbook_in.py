@@ -64,7 +64,7 @@ class Converter(object):
                        'bibliolist', 'bibliomixed', 'biblioref',
                        'bibliorelation', 'citation', 'citerefentry',
                        'citetitle',
-                       #J Callout elements
+                       # Callout elements
                        'callout', 'calloutlist', 'area', 'areaset',
                        'areaspec', 'co'
                        # Class information
