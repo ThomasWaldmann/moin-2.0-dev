@@ -17,7 +17,7 @@ from flask import request, url_for, flash, render_template, Response, redirect
 from flask import flaskg
 
 from MoinMoin.apps.frontend import frontend
-from MoinMoin.items import Item, MIMETYPE, ITEMLINKS
+from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 
 
@@ -78,15 +78,21 @@ def show_item(item_name, rev):
         # Note: rev.revno of DummyRev is None
         first_rev = None
         last_rev = None
-    return render_template('show.html',
-                           item=item, item_name=item.name,
-                           rev=item.rev,
-                           mimetype=item.mimetype,
-                           first_rev_no=first_rev,
-                           last_rev_no=last_rev,
-                           data_rendered=item._render_data(),
-                           show_navigation=True if rev>-1 else False,
-                          )
+    if isinstance(item, NonExistent):
+        status = 404
+    else:
+        status = 200
+    content = render_template('show.html',
+                              item=item, item_name=item.name,
+                              rev=item.rev,
+                              mimetype=item.mimetype,
+                              first_rev_no=first_rev,
+                              last_rev_no=last_rev,
+                              data_rendered=item._render_data(),
+                              show_navigation=True if rev>-1 else False,
+                             )
+    return Response(content, status)
+
 
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
