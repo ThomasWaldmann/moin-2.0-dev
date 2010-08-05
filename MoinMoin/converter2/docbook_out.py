@@ -14,7 +14,7 @@ from emeraldtree import ElementTree as ET
 from MoinMoin import log
 logging = log.getLogger(__name__)
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink, docbook
+from MoinMoin.util.tree import html, moin_page, xlink, docbook, xml
 
 class Converter(object):
     """
@@ -28,6 +28,11 @@ class Converter(object):
 
     # Only these admonitions are supported by DocBook 5
     admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
+
+    # We store the standard attributes of an element.
+    # Once we have been able to put it into an output element,
+    # we clear this attribute.
+    standard_attribute = {}
 
     @classmethod
     def _factory(cls, input, output, request, **kw):
@@ -66,6 +71,9 @@ class Converter(object):
         """
         Return a new element in the DocBook tree
         """
+        if self.standard_attribute:
+            attrib.update(self.standard_attribute)
+            self.standard_attribute = {}
         if self.current_section > 0:
             self.section_children[self.current_section].append(
                 ET.Element(tag, attrib=attrib, children=children))
@@ -81,6 +89,21 @@ class Converter(object):
         """
         children = self.do_children(element)
         return self.new(tag, attrib, children)
+
+    def get_standard_attributes(self, element):
+        """
+        We will extract the standart attributes of the element, if any.
+        We save the result in our standard attribute.
+        """
+        result = {}
+        for key, value in element.attrib.iteritems():
+            if key.uri == xml:
+                result[key] = value
+        if result:
+            # We clear standard_attribute, if ancestror attribute
+            # was stored and has not been written in to the output,
+            # anyway the new standard attributes will get higher priority
+            self.standard_attribute = result
 
     def visit(self, element):
         """
@@ -108,6 +131,8 @@ class Converter(object):
         We will choose the most appropriate procedure to convert
         the element according to his name
         """
+        # Save the standard attribute of the element
+        self.get_standard_attributes(element)
         # Check that the tag is supported
         if element.tag.name in self.unsupported_tags:
             logging.warning("Unsupported tag : %s" % element.tag.name)
