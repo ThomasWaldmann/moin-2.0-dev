@@ -18,8 +18,6 @@ def get_notify_info(request):
     types = []
     if request.cfg.mail_enabled and request.user.email:
         types.append(('email', _("Email")))
-    if request.cfg.jabber_enabled and request.user.jid:
-        types.append(('jabber', _("Jabber")))
     isSuperUser = request.user.isSuperUser()
     notify_infos = []
     event_list = events.get_subscribable_events()
@@ -84,10 +82,8 @@ class Settings(UserPrefBase):
         # subscription to various events
         available = events.get_subscribable_events()
         theuser.email_subscribed_events = []
-        theuser.jabber_subscribed_events = []
         types = {
             'email': theuser.email_subscribed_events,
-            'jabber': theuser.jabber_subscribed_events
         }
         for tp in types:
             for evt in available:
@@ -126,5 +122,4 @@ class Settings(UserPrefBase):
                                           ticket=wikiutil.createTicket(self.request))
 
     def allowed(self):
-        return UserPrefBase.allowed(self) and (
-            self.cfg.mail_enabled or self.cfg.jabber_enabled)
+        return UserPrefBase.allowed(self) and self.cfg.mail_enabled

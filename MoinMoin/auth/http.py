@@ -15,14 +15,14 @@
     from MoinMoin.auth.http import HTTPAuth
     auth = [HTTPAuth(autocreate=True)]
     # any presence (or absence) of 'http' auth name, e.g.:
-    auth_methods_trusted = ['http', 'xmlrpc_applytoken']
+    auth_methods_trusted = ['http', ]
 
     New (1.9.x):
     ------------
     from MoinMoin.auth import GivenAuth
     auth = [GivenAuth(autocreate=True)]
     # presence (or absence) of 'given' auth name, e.g.:
-    auth_methods_trusted = ['given', 'xmlrpc_applytoken']
+    auth_methods_trusted = ['given', ]
 
     HTTPAuthMoin
     ============
@@ -35,7 +35,7 @@
     from MoinMoin.auth.http import HTTPAuthMoin
     auth = [HTTPAuthMoin()]
     # check if you want 'http' auth name in there:
-    auth_methods_trusted = ['http', 'xmlrpc_applytoken']
+    auth_methods_trusted = ['http', ]
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.

@@ -149,14 +149,11 @@ def user_created_message(request, _, sitename, username, email):
     return {'subject': subject, 'text': text}
 
 
-# XXX: clean up this method to take a notification type instead of bool for_jabber
-def filter_subscriber_list(event, subscribers, for_jabber):
+def filter_subscriber_list(event, subscribers):
     """Filter a list of page subscribers to honor event subscriptions
 
     @param subscribers: list of subscribers (dict of lists, language is the key)
-    @param for_jabber: require jid
     @type subscribers: dict
-
     """
     event_name = event.name
 
@@ -165,14 +162,9 @@ def filter_subscriber_list(event, subscribers, for_jabber):
     for lang in subscribers.keys():
         userlist = []
 
-        if for_jabber:
-            for usr in subscribers[lang]:
-                if usr.jid and event_name in usr.jabber_subscribed_events:
-                    userlist.append(usr)
-        else:
-            for usr in subscribers[lang]:
-                if usr.email and event_name in usr.email_subscribed_events:
-                    userlist.append(usr)
+        for usr in subscribers[lang]:
+            if usr.email and event_name in usr.email_subscribed_events:
+                userlist.append(usr)
 
         subscribers[lang] = userlist
 

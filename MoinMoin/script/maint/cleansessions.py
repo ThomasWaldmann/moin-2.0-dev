@@ -17,7 +17,7 @@ class PluginScript(MoinScript):
 Purpose:
 ========
 This script allows you to clean up session files (usually used to maintain
-a "logged-in session" for http(s) or xmlrpc).
+a "logged-in session" for http(s)).
 
 Detailed Instructions:
 ======================

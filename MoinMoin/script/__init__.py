@@ -15,14 +15,7 @@ flag_quiet = 0
 # ScriptRequest -----------------------------------------------------------
 
 class ScriptRequest(object):
-    """this is for scripts (MoinMoin/script/*) running from the commandline (CLI)
-       or from the xmlrpc server (triggered by a remote xmlrpc client).
-
-       Every script needs to do IO using this ScriptRequest class object -
-       IT IS DIFFERENT from the usual "request" you have in moin (easily to be seen
-       when you look at an xmlrpc script invocation: request.write will write to the
-       xmlrpc "channel", but scriptrequest.write needs to write to some buffer we
-       transmit later as an xmlrpc function return value.
+    """this is for scripts (MoinMoin/script/*) running from the commandline (CLI).
     """
     def __init__(self, instream, outstream, errstream):
         self.instream = instream
@@ -60,9 +53,6 @@ class ScriptRequestCLI(ScriptRequest):
         return self.request.write(data) # XXX use correct request method - log, error, whatever.
 
 class ScriptRequestStrings(ScriptRequest):
-    """ When a script gets run by our xmlrpc server, we have the input as a
-        string and we also need to catch the output / error output as strings.
-    """
     def __init__(self, instr):
         self.instream = StringIO(instr)
         self.outstream = StringIO()
@@ -220,9 +210,6 @@ moin ... maint reducewiki ...
 
 moin ... migration data ...
 moin ... migration backend ...
-
-moin ... xmlrpc mailimport ...
-moin ... xmlrpc remote ...
 
 General options:
     Most commands need some general parameters before command subcommand:
