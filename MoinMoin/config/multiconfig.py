@@ -25,7 +25,6 @@ import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
-from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
 
 _url_re_cache = None
@@ -227,9 +226,6 @@ class ConfigFunctionality(object):
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
 
-    # storage index configuration (used by indexed backend only)
-    indexes = ["name", "openids", "email"]
-
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
@@ -242,7 +238,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('cache', 'plugin', 'tmp', 'indexes'):
+        for dirname in ['cache', 'plugin', 'tmp', ]:
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -660,8 +656,7 @@ options_no_group_name = {
      None,
      "Class object hook for implementing security restrictions or relaxations"),
     ('actions_excluded',
-     ['MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
-      'copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
+     ['copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
 
@@ -858,7 +853,6 @@ options_no_group_name = {
   # ==========================================================================
   'various': ('Various', None, (
     ('bang_meta', True, 'if True, enable {{{!NoWikiName}}} markup'),
-    ('caching_formats', ['text_html'], "output formats that are cached; set to [] to turn off caching (useful for development)"),
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
@@ -881,8 +875,6 @@ options_no_group_name = {
      "if True, log the remote IP address (and maybe hostname)."),
     ('log_reverse_dns_lookups', True,
      "if True, do a reverse DNS lookup on page SAVE. If your DNS is broken, set this to False to speed up SAVE."),
-    ('log_timing', False,
-     "if True, add timing infos to the log output to analyse load conditions"),
 
     # some dangerous mimetypes (we don't use "content-disposition: inline" for them when a user
     # downloads such data, because the browser might execute e.g. Javascript contained
@@ -1074,15 +1066,6 @@ options = {
       ('login', None, "'username userpass' for SMTP server authentication (None = don't use auth)."),
       ('smarthost', None, "Address of SMTP server to use for sending mail (None = don't use SMTP server)."),
       ('sendmail', None, "sendmail command to use for sending mail (None = don't use sendmail)"),
-    )),
-
-    'backup': ('Backup settings',
-        'These settings control how the backup action works and who is allowed to use it.',
-    (
-      ('compression', 'gz', 'What compression to use for the backup ("gz" or "bz2").'),
-      ('users', [], 'List of trusted user names who are allowed to get a backup.'),
-      ('include', [], 'List of pathes to backup.'),
-      ('exclude', lambda self, filename: False, 'Function f(self, filename) that tells whether a file should be excluded from backup. By default, nothing is excluded.'),
     )),
 }
 
