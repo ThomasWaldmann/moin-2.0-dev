@@ -30,10 +30,6 @@ umask = 0770
 # * some servers expect '/' at beginning and only 1 level deep.
 url_prefix_static = '/static'
 
-# Threads flag - if you write a moin server that use threads, import
-# config in the server and set this flag to True.
-use_threads = False
-
 # Charset - we support only 'utf-8'. While older encodings might work,
 # we don't have the resources to test them, and there is no real
 # benefit for the user. IMPORTANT: use only lowercase 'utf-8'!
@@ -77,9 +73,6 @@ url_schemas = ['http', 'https', 'ftp', 'file',
                'notes',
                'rtp', 'rtsp', 'rtcp',
               ]
-
-smileys = (r"X-( :D <:( :o :( :) B) :)) ;) /!\ <!> (!) :-? :\ >:> |) " +
-           r":-( :-) B-) :-)) ;-) |-) (./) {OK} {X} {i} {1} {2} {3} {*} {o}").split()
 
 
 # rights that are valid in moin2
