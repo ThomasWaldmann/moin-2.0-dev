@@ -31,7 +31,7 @@ class Converter(object):
             moin_page.type_: unicode(self.input_type),
             xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get'),
         }
-        return moin_page.object_(attrib=attrib, children={})
+        return moin_page.object_(attrib=attrib, children=[u'Your Browser does not support HTML5 audio/video element.', ])
 
 
 from . import default_registry

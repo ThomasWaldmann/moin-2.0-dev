@@ -311,12 +311,12 @@ class Converter(object):
         elif Type('video/').issupertype(mimetype):
             if href is not None:
                 attrib[html.src] = href
-            attrib[html.controls] = True
+            attrib[html.controls] = 'controls'
             return self.new_copy(html.video, elem, attrib)
         elif Type('audio/').issupertype(mimetype):
             if href is not None:
                 attrib[html.src] = href
-            attrib[html.controls] = True
+            attrib[html.controls] = 'controls'
             return self.new_copy(html.audio, elem, attrib)
         else:
             # we feel lucky and try object element:
