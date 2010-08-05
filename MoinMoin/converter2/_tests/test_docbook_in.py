@@ -237,10 +237,18 @@ class TestConverter(Base):
 
     def test_object(self):
         data = [
-            # Test for image conversion
+            # Test for image object
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
-            # <page><body><p><object xlink:href="test.png" /></p></body></page>
+            # <page><body><p><object xlink:href="test.png" type='image/' /></p></body></page>
              '/page/body/p/object[@xlink:href="test.png"][@type="image/"]'),
+            # Test for audio object
+            ('<article><para><inlinemediaobject><audioobject><audiodata fileref="test.wav"/></audioobject></inlinemediaobject></para></article>',
+            # <page><body><p><object xlink:href="test.wav" type='audio/' /></p></body></page>
+             '/page/body/p/object[@xlink:href="test.wav"][@type="audio/"]'),
+            # Test for video object
+            ('<article><para><inlinemediaobject><videoobject><videodata fileref="test.avi"/></videoobject></inlinemediaobject></para></article>',
+            # <page><body><p><object xlink:href="test.avi" type='video/' /></p></body></page>
+             '/page/body/p/object[@xlink:href="test.avi"][@type="video/"]'),
         ]
         for i in data:
             yield (self.do, ) + i
