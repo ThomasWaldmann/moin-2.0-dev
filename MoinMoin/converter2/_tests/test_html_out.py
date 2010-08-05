@@ -23,11 +23,12 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter2.html_out import *
 
 class Base(object):
-    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
+    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (
         moin_page.namespace,
         moin_page.namespace,
         html.namespace,
-        xlink.namespace)
+        xlink.namespace,
+        xml.namespace,)
     output_namespaces = {
         html.namespace: '',
         moin_page.namespace: 'page'
@@ -43,7 +44,6 @@ class Base(object):
     def handle_output(self, elem, **options):
         from cStringIO import StringIO
         file = StringIO()
-        a
         tree = ET.ElementTree(elem)
         tree.write(file, namespaces=self.output_namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
@@ -71,8 +71,6 @@ class TestConverter(Base):
                 '/div[h6="Test"]'),
             ('<page:page><page:body><page:h page:outline-level="7">Test</page:h></page:body></page:page>',
                 '/div[h6="Test"]'),
-            ('<page:page><page:body><page:a xlink:href="uri:test">Test</page:a></page:body></page:page>',
-              '/div/a[text()="Test"][@href="uri:test"]'),
             ('<page:page><page:body><page:p>Test<page:line-break/>Test</page:p></page:body></page:page>',
                 '/div/p/br'),
             ('<page:page><page:body><page:p>Test<page:span>Test</page:span></page:p></page:body></page:page>',
@@ -103,6 +101,18 @@ class TestConverter(Base):
                 '/div'),
             ('<page><body class="red" /></page>',
                 '/div[@class="red"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_link(self):
+        data = [
+            # Basic Links
+            ('<page:page><page:body><page:a xlink:href="uri:test">Test</page:a></page:body></page:page>',
+              '/div/a[text()="Test"][@href="uri:test"]'),
+            # Links with xml:base
+            ('<page xml:base="http://base.tld/"><body><p><a xlink:href="page.html">Test</a></p></body></page>',
+              '/div/p/a[@href="http://base.tld/page.html"][text()="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
