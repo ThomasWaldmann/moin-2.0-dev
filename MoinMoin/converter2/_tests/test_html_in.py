@@ -70,9 +70,9 @@ class TestConverter(Base):
              # <page><body><p>Test</p></page></body>
              '/page/body[p="Test"]'),
              # Test attributes conversion
-             ('<div><p class="class" style="style" title="title">Test</p></div>',
-             # <page><body><p html:class="class" html:style="style" html:title="title">Test</p></body></page>
-             '/page/body/p[@html:class="class"][@html:style="style"][@html:title="title"][text()="Test"]'),
+             ('<div><p class="class text" style="style text" title="title text">Test</p></div>',
+             # <page><body><p html:class="class text" html:style="style text" html:title="title text">Test</p></body></page>
+             '/page/body/p[@html:class="class text"][@html:style="style text"][@html:title="title text"][text()="Test"]'),
              # Test id
              ('<div><p id="first">Text<strong id="second">strong</strong></p></div>',
              # <page><body><p xml:id="first">Text<strong xml:id="second">strong</strong></p></div>
