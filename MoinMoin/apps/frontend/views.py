@@ -758,7 +758,7 @@ class NestedItemListBuilder(object):
         # does not recurse
         item = self.request.storage.get_item(name)
         rev = item.get_revision(-1)
-        itemlinks = rev[ITEMLINKS]
+        itemlinks = rev.get(ITEMLINKS, [])
         return [child for child in itemlinks if self.is_ok(child)]
 
     def is_ok(self, child):
