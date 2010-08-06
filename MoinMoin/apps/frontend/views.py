@@ -96,7 +96,7 @@ def show_item(item_name, rev):
 
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
-    return redirect(url_for('show_item', item_name=item_name))
+    return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+meta/<itemname:item_name>', defaults=dict(rev=-1))
@@ -202,7 +202,7 @@ def modify_item(item_name):
         if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
             # TWikiDraw/AnyWikiDraw POST more than once, redirecting would break them
             return "OK"
-        return redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
@@ -213,9 +213,9 @@ def revert_item(item_name, rev):
                                item=item, item_name=item_name,
                               )
     elif request.method == 'POST':
-        if 'button_ok' in request.form:
+        if 'button_ok' in flaskg.context.form:
             item.revert()
-        return redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -226,14 +226,14 @@ def copy_item(item_name):
                                item=item, item_name=item_name,
                               )
     if request.method == 'POST':
-        if 'button_ok' in request.form:
-            target = request.form.get('target')
-            comment = request.form.get('comment')
+        if 'button_ok' in flaskg.context.form:
+            target = flaskg.context.form.get('target')
+            comment = flaskg.context.form.get('comment')
             item.copy(target, comment)
             redirect_to = target
         else:
             redirect_to = item_name
-        return redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('frontend.show_item', item_name=redirect_to))
 
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
@@ -244,14 +244,14 @@ def rename_item(item_name):
                                item=item, item_name=item_name,
                               )
     if request.method == 'POST':
-        if 'button_ok' in request.form:
-            target = request.form.get('target')
-            comment = request.form.get('comment')
+        if 'button_ok' in flaskg.context.form:
+            target = flaskg.context.form.get('target')
+            comment = flaskg.context.form.get('comment')
             item.rename(target, comment)
             redirect_to = target
         else:
             redirect_to = item_name
-        return redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('frontend.show_item', item_name=redirect_to))
 
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
@@ -262,10 +262,10 @@ def delete_item(item_name):
                                item=item, item_name=item_name,
                               )
     elif request.method == 'POST':
-        if 'button_ok' in request.form:
-            comment = request.form.get('comment')
+        if 'button_ok' in flaskg.context.form:
+            comment = flaskg.context.form.get('comment')
             item.delete(comment)
-        return redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -276,10 +276,10 @@ def destroy_item(item_name):
                                item=item, item_name=item_name,
                               )
     if request.method == 'POST':
-        if 'button_ok' in request.form:
-            comment = request.form.get('comment')
+        if 'button_ok' in flaskg.context.form:
+            comment = flaskg.context.form.get('comment')
             item.destroy(comment)
-        return redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+index/<itemname:item_name>')
@@ -353,7 +353,7 @@ def quicklink_item(item_name):
             msg = _('Your quicklink to this page could not be removed.'), "error"
     if msg:
         flash(*msg)
-    return redirect(url_for('show_item', item_name=item_name))
+    return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+subscribe/<itemname:item_name>')
@@ -383,7 +383,7 @@ def subscribe_item(item_name):
             msg = _('You could not get subscribed to this item.'), "error"
     if msg:
         flash(*msg)
-    return redirect(url_for('show_item', item_name=item_name))
+    return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+register', methods=['GET', 'POST'])
@@ -424,6 +424,8 @@ def register():
                 msg = user.create_user(request)
             if msg:
                 flash(msg, "error")
+            else:
+                flash(_('Account created, please log in now.'), "info")
         return redirect(url_for('frontend.show_root'))
 
 
@@ -467,7 +469,7 @@ def login():
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     flash(msg, "error")
-        return redirect(url_for('show_root'))
+        return redirect(url_for('frontend.show_root'))
 
 
 @frontend.route('/+logout')
@@ -483,7 +485,7 @@ def logout():
         flash(_("You are still logged in."), "warning")
     else:
         flash(_("You are now logged out."), "info")
-    return redirect(url_for('show_root'))
+    return redirect(url_for('frontend.show_root'))
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
