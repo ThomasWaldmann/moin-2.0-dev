@@ -13,7 +13,7 @@
         <td>{{ u.groups|join(',') }}</td>
         <td>
             {% if u.email %}
-            <a href="mailto:{{ u.email|urlquote }}" class="mailto">{{ u.email|e }}</a>
+            <a href="mailto:{{ u.email|e }}" class="mailto">{{ u.email|e }}</a>
             {% endif %}
         </td>
         <td>
