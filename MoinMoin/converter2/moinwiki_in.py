@@ -722,6 +722,9 @@ class Converter(ConverterMacro):
         else:
             query = None
         if link_item is not None:
+            att = 'attachment:' # moin 1.9 needed this for an attached file
+            if link_item.startswith(att):
+                link_item = '/' + link_item[len(att):] # now we have a subitem
             if '#' in link_item:
                 path, fragment = link_item.rsplit('#', 1)
             else:
@@ -834,6 +837,9 @@ class Converter(ConverterMacro):
                 # by default, we want the item's get url for transclusion of raw data:
                 args['do'] = 'get'
             query = url_encode(args, charset=config.charset, encode_keys=True)
+            att = 'attachment:' # moin 1.9 needed this for an attached file
+            if object_item.startswith(att):
+                object_item = '/' + object_item[len(att):] # now we have a subitem
             target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
             text = object_item
         else:
