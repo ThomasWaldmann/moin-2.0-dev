@@ -268,17 +268,26 @@ def delete_item(item_name):
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
-@frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
-def destroy_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+@frontend.route('/+destroy/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
+@frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'], defaults=dict(rev=None))
+def destroy_item(item_name, rev):
+    if rev is None:
+        # no revision given
+        _rev = -1 # for item creation
+        destroy_item = True
+    else:
+        _rev = rev
+        destroy_item = False
+    item = Item.create(flaskg.context, item_name, rev_no=_rev)
     if request.method == 'GET':
         return render_template(item.destroy_template,
                                item=item, item_name=item_name,
+                               rev_no=rev,
                               )
     if request.method == 'POST':
         if 'button_ok' in flaskg.context.form:
             comment = flaskg.context.form.get('comment')
-            item.destroy(comment)
+            item.destroy(comment=comment, destroy_item=destroy_item)
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
 

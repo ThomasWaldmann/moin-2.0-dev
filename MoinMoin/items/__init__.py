@@ -318,10 +318,9 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
 
-    def destroy(self):
+    def destroy(self, comment=u'', destroy_item=False):
         # called from destroy UI/POST
-        comment = self.request.form.get('comment')
-        if comment == '0-0-0-Destruct-0': # TODO: improve this
+        if destroy_item:
             # destroy complete item with all revisions, metadata, etc.
             self.rev.item.destroy()
         else:
