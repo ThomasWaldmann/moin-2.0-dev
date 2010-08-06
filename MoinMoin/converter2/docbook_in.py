@@ -301,12 +301,15 @@ class Converter(object):
     def visit_docbook_article(self, element, depth):
         # TODO : Automatically add a ToC, need to see how to let
         # the user specify it.
+        attrib = {}
+        if self.standard_attribute:
+            attrib.update(self.standard_attribute)
+            self.standard_attribute = {}
         children = []
         children.append(ET.Element(moin_page('table-of-content')))
         children.extend(self.do_children(element, depth))
-
-        body = moin_page.body(children=children)
-        return moin_page.page(children=[body])
+        body = self.new(moin_page.body, attrib={}, children=children)
+        return self.new(moin_page.page, attrib=attrib, children=[body])
 
     def visit_docbook_audiodata(self, element, depth):
         return self.visit_data_element(element, depth)
