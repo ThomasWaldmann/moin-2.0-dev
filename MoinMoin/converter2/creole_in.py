@@ -389,6 +389,9 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
 
         if link_page is not None:
+            att = 'attachment:' # moin 1.9 needed this for an attached file
+            if link_page.startswith(att):
+                link_page = '/' + link_page[len(att):] # now we have a subitem
             target = unicode(Iri(scheme='wiki.local', path=link_page))
             text = link_page
         else:
@@ -462,6 +465,9 @@ class Converter(ConverterMacro):
         """Handles objects included in the page."""
 
         if object_page is not None:
+            att = 'attachment:' # moin 1.9 needed this for an attached file
+            if object_page.startswith(att):
+                object_page = '/' + object_page[len(att):] # now we have a subitem
             target = unicode(Iri(scheme='wiki.local', path=object_page, query='do=get'))
             text = object_page
         else:
