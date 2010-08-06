@@ -569,14 +569,6 @@ class ConverterPage(Converter):
         else:
             return super(ConverterPage, self).visit(elem)
 
-    def visit_moinpage(self, elem):
-        n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
-        f = getattr(self, n, None)
-        if f:
-            return f(elem)
-
-        raise ElementException('Unable to handle page:%s' % elem.tag.name)
-
     def visit_moinpage_h(self, elem):
         level = elem.get(moin_page.outline_level, 1)
         try:
