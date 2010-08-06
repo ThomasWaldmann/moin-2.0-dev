@@ -428,7 +428,7 @@ def send_from_directory(directory, filename, **options):
     filename = os.path.join(directory, filename)
     if not os.path.isfile(filename):
         raise NotFound()
-    return send_file(filename, conditional=True, **options)
+    return send_file(filename=filename, conditional=True, **options)
 
 
 def _get_package_path(name):
