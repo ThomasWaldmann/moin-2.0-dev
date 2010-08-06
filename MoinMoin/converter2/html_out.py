@@ -160,9 +160,9 @@ class Converter(object):
             _tag_html_a=html.a, _tag_html_href=html.href, _tag_xlink_href=xlink.href):
         attrib = {}
         href = elem.get(_tag_xlink_href)
-        if self.base_url:
-            href = ''.join([self.base_url, href])
         if href:
+            if self.base_url:
+                href = ''.join([self.base_url, href])
             attrib[_tag_html_href] = href
         # XXX should support more tag attrs
         return self.new_copy(_tag_html_a, elem, attrib)
