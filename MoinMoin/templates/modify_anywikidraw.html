@@ -2,7 +2,7 @@
 {% block data_editor %}
 <p>
 <applet code="org.anywikidraw.moinmoin.MoinMoinDrawingApplet.class" codebase="."
-        archive="{{ url_for('static', filename='applets/anywikidraw/lib/AnyWikiDrawForMoinMoin.jar') }}"
+        archive="{{ url_for('.static', filename='applets/anywikidraw/lib/AnyWikiDrawForMoinMoin.jar') }}"
         width="800" height="620">
 <param name="DrawingName" value="drawing.svg" />
 {% if drawing_exists %} 
