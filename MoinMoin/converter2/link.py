@@ -59,16 +59,28 @@ class ConverterExternOutput(ConverterBase):
     def _get_do(self, query):
         """
         get 'do' value from query string and remove do=value from querystring
+
+        Note: we can't use url_decode/url_encode from e.g. werkzeug because
+              url_encode quotes the qs values (and Iri code will quote them again)
         """
-        query_dict = url_decode(query)
-        if 'do' in query_dict:
-            do = query_dict.pop('do')
-            if query_dict:
-                query = url_encode(query_dict)
+        do = None
+        separator = '&'
+        result = []
+        for kv in query.split(separator):
+            if not kv:
+                continue
+            if '=' in kv:
+                k, v = kv.split('=', 1)
             else:
-                query = None
+                k, v = kv, ''
+            if k == 'do':
+                do = v
+                continue # we remove do=xxx from qs
+            result.append(u'%s=%s' % (k, v))
+        if result:
+            query = separator.join(result)
         else:
-            do = None
+            query = None
         return do, query
 
     # TODO: Deduplicate code
