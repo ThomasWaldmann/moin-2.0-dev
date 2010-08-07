@@ -183,7 +183,7 @@ class Converter(object):
             author = "Unknown"
         attribution = self.new(docbook('attribution'), attrib={}, children=[author])
         children = self.do_children(element)
-        para = self.new(docbook('para'), attrib={}, children=children)
+        para = self.new(docbook('simpara'), attrib={}, children=children)
         return self.new(docbook('blockquote'), attrib={}, children=[attribution, para])
 
     def visit_moinpage_code(self, element):
@@ -280,7 +280,7 @@ class Converter(object):
                     r = (r, )
                 items.extend(r)
             else:
-                an_item = ET.Element(docbook.para, attrib={}, children=child)
+                an_item = ET.Element(docbook.simpara, attrib={}, children=child)
                 items.append(an_item)
         return ET.Element(docbook.listitem, attrib={}, children=items)
 
@@ -309,7 +309,7 @@ class Converter(object):
         if not(body):
             return
 
-        body = self.new(docbook.para, attrib={}, children=body)
+        body = self.new(docbook.simpara, attrib={}, children=body)
         return self.new(docbook.footnote, attrib={}, children=[body])
 
     def visit_moinpage_object(self, element):
@@ -427,7 +427,22 @@ class Converter(object):
                             % element[:])
 
     def visit_moinpage_p(self, element):
-        return self.new_copy(docbook.para, element, attrib={})
+        """
+        If we have a title attribute for p, we return a para,
+        with a <title> child.
+        Otherwise we return a <simpara>
+        """
+        title_attr = element.get(html('title'))
+        if title_attr:
+            print title_attr
+            children = []
+            title_elem = self.new(docbook('title'), attrib={},
+                                  children=[title_attr])
+            children.append(title_elem)
+            children.extend(self.do_children(element))
+            return self.new(docbook.para, attrib={}, children=children)
+        else:
+            return self.new_copy(docbook.simpara, element, attrib={})
 
     def visit_moinpage_quote(self, element):
         return self.new_copy(docbook.quote, element, attrib={})
