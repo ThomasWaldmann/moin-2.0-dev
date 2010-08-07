@@ -77,7 +77,7 @@ class TestConverter(Base):
             ('<article><para>Test</para></article>',
             # <page><body><p>Test</p></body></page>
              '/page/body[p="Test"]'),
-            ('<article><simpara>Test</para></article>',
+            ('<article><simpara>Test</simpara></article>',
             # <page><body><p>Test</p></body></page>
              '/page/body[p="Test"]'),
             ('<article><formalpara><title>Title</title><para>Test</para></formalpara></article>',
