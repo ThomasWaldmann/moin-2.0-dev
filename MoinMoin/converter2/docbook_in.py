@@ -587,6 +587,10 @@ class Converter(object):
                 new.append(child)
         return ET.Element(moin_page.list, attrib={}, children=new)
 
+    def visit_docbook_simpara(self, element, depth):
+        return self.new_copy(moin_page.p, element,
+                             depth, attrib={})
+
     def visit_docbook_simplelist(self, element, depth):
         # TODO : Add support of the type attribute
         attrib = {}
