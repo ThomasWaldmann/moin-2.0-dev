@@ -665,13 +665,6 @@ class Application(Binary):
     supported_mimetypes = []
 
 
-class ApplicationZip(Application):
-    supported_mimetypes = ['application/zip']
-
-    def feed_input_conv(self):
-        return self.rev
-
-
 class TarMixin(object):
     """
     TarMixin offers additional functionality for tar-like items to list and
@@ -743,6 +736,13 @@ class TarMixin(object):
 
 class ApplicationXTar(TarMixin, Application):
     supported_mimetypes = ['application/x-tar', 'application/x-gtar']
+
+    def feed_input_conv(self):
+        return self.rev
+
+
+class ApplicationZip(Application):
+    supported_mimetypes = ['application/zip']
 
     def feed_input_conv(self):
         return self.rev
