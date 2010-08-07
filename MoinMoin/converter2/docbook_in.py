@@ -139,8 +139,9 @@ class Converter(object):
         # The content is given to the converter as a list of string,
         # line per line.
         # So we will concatenate all in one string.
-        docbook_str = u''
+        docbook_str = u'\n'
         docbook_str = docbook_str.join(content)
+        logging.debug(docbook_str)
         # TODO : Check why the XML parser from Element Tree need ByteString
         try:
             tree = ET.XML(docbook_str.encode('utf-8'))
