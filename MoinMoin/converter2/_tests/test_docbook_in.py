@@ -99,6 +99,10 @@ class TestConverter(Base):
             ('<article><para xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</para></article>',
             # <page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
             '/page/body/p[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
+            # ANCHOR --> SPAN
+            ('<article><para>bla bla<anchor xml:id="point_1" />bla bla</para></article>',
+            # <page><body><p>bla bla<span element="anchor" xml:id="point_1" />bla bla</p></body></page>
+            '/page/body/p/span[@element="anchor"][@xml:id="point_1"]'),
         ]
         for i in data:
             yield (self.do, ) + i
