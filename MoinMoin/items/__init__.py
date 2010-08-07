@@ -607,11 +607,10 @@ There is no help, you're doomed!
     def _do_get_modified(self, hash):
         request = self.request
         from_cache = request.values.get('from_cache')
-        from_tar = request.values.get('from_tar')
-        from_zip = request.values.get('from_zip')
-        return self._do_get(hash, from_cache, from_tar, from_zip)
+        member = request.values.get('member')
+        return self._do_get(hash, from_cache, member)
 
-    def _do_get(self, hash, from_cache=None, from_tar=None, from_zip=None):
+    def _do_get(self, hash, from_cache=None, member=None):
         request = self.request
         filename = None
         if from_cache:
@@ -629,15 +628,8 @@ There is no help, you're doomed!
                 else:
                     request.headers.add(key, value)
             file_to_send = sendcache._get_datafile()
-        elif from_tar: # content = file contained within a tar item revision
-            filename = wikiutil.taintfilename(from_tar)
-            mt = wikiutil.MimeType(filename=filename)
-            content_disposition = mt.content_disposition(request.cfg)
-            content_type = mt.content_type()
-            content_length = None
-            file_to_send = self.get_member(filename)
-        elif from_zip: # content = file contained within a zip item revision
-            filename = wikiutil.taintfilename(from_zip)
+        elif member: # content = file contained within a archive item revision
+            filename = wikiutil.taintfilename(member)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
@@ -1184,8 +1176,8 @@ class TWikiDraw(TarMixin, Image):
         # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
-        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.draw')
-        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.draw')
+        png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
         mapfile = self.get_member('drawing.map')
@@ -1258,8 +1250,8 @@ class AnyWikiDraw(TarMixin, Image):
         # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
-        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
-        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
 
         mapfile = self.get_member('drawing.map')
@@ -1332,7 +1324,7 @@ class SvgDraw(TarMixin, Image):
         # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
-        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
-        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
         return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
 
