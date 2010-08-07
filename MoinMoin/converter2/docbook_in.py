@@ -172,8 +172,12 @@ class Converter(object):
         """
         Function to process the conversion of the child of
         a given elements.
+        It return a tuple, with the list of the converted child for
+        the given element. And new attributes to add to the parent
+        element.
         """
-        new = []
+        new_children = []
+        new_attribute = {}
         depth = depth + 1
         for child in element:
             if isinstance(child, ET.Element):
@@ -182,10 +186,10 @@ class Converter(object):
                     r = ()
                 elif not isinstance(r, (list, tuple)):
                     r = (r, )
-                new.extend(r)
+                new_children.extend(r)
             else:
-                new.append(child)
-        return new
+                new_children.append(child)
+        return new_children, new_attribute
 
     def new(self, tag, attrib, children):
         """
@@ -203,7 +207,7 @@ class Converter(object):
         It first converts the child of the element,
         and the element itself.
         """
-        children = self.do_children(element, depth)
+        children = self.do_children(element, depth)[0]
         return self.new(tag, attrib, children)
 
     def get_standard_attributes(self, element):
@@ -239,7 +243,7 @@ class Converter(object):
                 return method(element, depth)
 
             # We process children of the unknown element
-            return self.do_children(element, depth)
+            return self.do_children(element, depth)[0]
         else:
             raise NameSpaceError("Unknown namespace")
 
@@ -257,7 +261,7 @@ class Converter(object):
         if self.sect_re.match(element.tag.name):
             result = []
             result.append(self.visit_docbook_sect(element, depth))
-            result.extend(self.do_children(element, depth))
+            result.extend(self.do_children(element, depth)[0])
             return result
 
         # We have an inline element without equivalence
@@ -283,7 +287,7 @@ class Converter(object):
             return method(element, depth)
 
         # Otherwise we process children of the unknown element
-        return self.do_children(element, depth)
+        return self.do_children(element, depth)[0]
 
     def visit_data_element(self, element, depth):
         data_types = {'imagedata':'image/',
@@ -316,7 +320,7 @@ class Converter(object):
             self.standard_attribute = {}
         children = []
         children.append(ET.Element(moin_page('table-of-content')))
-        children.extend(self.do_children(element, depth))
+        children.extend(self.do_children(element, depth)[0])
         body = self.new(moin_page.body, attrib={}, children=children)
         return self.new(moin_page.page, attrib=attrib, children=[body])
 
@@ -337,9 +341,9 @@ class Converter(object):
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name == "attribution":
-                    source = self.do_children(child, depth+1)
+                    source = self.do_children(child, depth+1)[0]
                 else:
-                    children.extend(self.do_children(child, depth+1))
+                    children.extend(self.do_children(child, depth+1)[0])
             else:
                 children.append(child)
         attrib = {}
@@ -373,7 +377,7 @@ class Converter(object):
         key = moin_page('note-class')
         attrib[key] = "footnote"
         children = self.new(moin_page('note-body'), attrib={},
-                            children=self.do_children(element, depth))
+                            children=self.do_children(element, depth)[0])
         return self.new(moin_page.note, attrib=attrib, children=[children])
 
     def visit_docbook_formalpara(self, element, depth):
@@ -391,7 +395,7 @@ class Converter(object):
             #XXX: Improve error
             raise SyntaxError("para child missing for formalpara element")
 
-        children = self.do_children(para_element, depth+1)
+        children = self.do_children(para_element, depth+1)[0]
         attrib = {}
         attrib[html('title')] = title_element[0]
         return self.new(moin_page.p, attrib=attrib, children=children)
@@ -549,7 +553,7 @@ class Converter(object):
         attrib = {}
         attrib[key] = self.heading_level
         result.append(self.new(moin_page.h, attrib=attrib, children=title))
-        result.extend(self.do_children(element, depth))
+        result.extend(self.do_children(element, depth)[0])
         return result
 
     def visit_docbook_seglistitem(self, element, labels, depth):
@@ -675,7 +679,7 @@ class Converter(object):
         elif default_label == 'qanda':
             return self.visit_qandaset_qanda(element, depth)
         else:
-            return self.do_children(element, depth)
+            return self.do_children(element, depth)[0]
 
     def visit_docbook_title(self, element, depth):
         """
@@ -720,7 +724,7 @@ class Converter(object):
                               'registred':'&reg;',
                               'trade': '&trade;'}
         trademark_class = element.get(docbook('class'))
-        children = self.do_children(element, depth)
+        children = self.do_children(element, depth)[0]
         if trademark_class in trademark_entities:
             print trademark_entities[trademark_class]
             children.append(trademark_entities[trademark_class])
