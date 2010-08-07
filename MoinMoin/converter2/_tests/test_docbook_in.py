@@ -206,6 +206,10 @@ class TestConverter(Base):
             ('<article><para><abbrev>ABBREV</abbrev></para></article>',
             # <page><body><p><span element="abbrev">ABBREV</span></p></body></page>
              '/page/body/p/span[@element="abbrev"][text()="ABBREV"]'),
+            # Test div for block element
+            ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
+            # <page><body><div html:class="db_acknowledgements"><p>Text</p></div></body></page>
+            '/page/body/div[@html:class="db_acknowledgements"][p="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
