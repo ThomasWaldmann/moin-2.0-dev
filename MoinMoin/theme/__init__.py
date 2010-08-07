@@ -10,7 +10,7 @@
 
 import os
 
-from flask import flash, url_for, render_template
+from flask import flash, url_for, render_template, Module
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -21,6 +21,9 @@ from MoinMoin.items import Item
 from MoinMoin.util import pysupport
 
 modules = pysupport.getPackageModules(__file__)
+
+
+theme = Module(__name__)
 
 
 class ThemeBase(object):
@@ -85,8 +88,8 @@ class ThemeBase(object):
         self.cfg = request.cfg
         self.user = request.user
         self.storage = request.storage
-        self.output_mimetype = 'text/html' # was: page.output_mimetype
-        self.output_charset = 'utf-8' # was: page.output_charset
+        self.output_mimetype = 'text/html'  # was: page.output_mimetype
+        self.output_charset = 'utf-8'  # was: page.output_charset
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -543,4 +546,3 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
-
