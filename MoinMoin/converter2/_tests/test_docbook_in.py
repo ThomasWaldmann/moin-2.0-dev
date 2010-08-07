@@ -237,6 +237,18 @@ class TestConverter(Base):
             ('<article><blockquote><attribution>author</attribution>text</blockquote></article>',
             # <page><body><blockquote source="author">text</blockquote></body></page>
             '/page/body/blockquote[@source="author"][text()="text"]'),
+            # CODE --> CODE
+            ('<article><para><code>Text</code></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
+            # COMPUTEROUTPUT --> CODE
+            ('<article><para><computeroutput>Text</computeroutput></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
+            # MARKUP --> CODE
+            ('<article><para><markup>Text</markup></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
