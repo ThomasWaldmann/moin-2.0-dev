@@ -376,15 +376,11 @@ class MoinSearch(BaseSearch):
 
         if self.pages is not None, searches in that pages.
         """
-        self.request.clock.start('_moinSearch')
-
         # if self.pages is none, we make a full pagelist, but don't
         # search attachments (thus attachment name = '')
         pages = self.pages or [{'pagename': p, 'attachment': '', 'wikiname': 'Self', } for p in self._getPageList()]
 
         hits = self._getHits(pages)
-        self.request.clock.stop('_moinSearch')
-
         return hits, None
 
     def _getPageList(self):

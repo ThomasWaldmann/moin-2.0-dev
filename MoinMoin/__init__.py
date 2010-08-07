@@ -43,6 +43,7 @@ import os, sys
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.util.clock import Clock
 from MoinMoin.web.contexts import AllContext
 from MoinMoin.web.request import Request
 from MoinMoin.storage.error import StorageError
@@ -239,6 +240,7 @@ def setup_jinja_env(request):
                             'user': request.user,
                             'cfg': request.cfg,
                             '_': request.getText,
+                            'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
                             'translated_item_name': request.theme.translated_item_name,
                             })
@@ -250,12 +252,14 @@ def before():
     Wraps an incoming WSGI request in a Context object and initializes
     several important attributes.
     """
+    flaskg.clock = Clock()
+    flaskg.clock.start('total')
+    flaskg.clock.start('init')
+
     set_umask() # do it once per request because maybe some server
                 # software sets own umask
 
     context = AllContext(Request(request.environ))
-    context.clock.start('total')
-    context.clock.start('init')
 
     context.lang = setup_i18n_preauth(context)
 
@@ -273,12 +277,13 @@ def before():
 
     context.reset()
 
-    context.clock.stop('init')
     protect_backends(context)
 
     setup_jinja_env(context)
 
     flaskg.context = context
+
+    flaskg.clock.stop('init')
     # if return value is not None, it is the final response
 
 
