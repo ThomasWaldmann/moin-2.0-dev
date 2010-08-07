@@ -16,6 +16,10 @@ from ._table import TableMixin
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.util.iri import Iri
+from MoinMoin.util.tree import moin_page, xlink
+
+
 class ArchiveException(Exception):
     """
     exception class used in case of trouble with opening/listing an archive
@@ -30,8 +34,12 @@ class ArchiveConverter(TableMixin):
     def _factory(cls, input, output, **kw):
         return cls()
 
-    def process_name(self, name):
-        return name
+    def process_name(self, member_name):
+        item_name = "foo" # TODO
+        attrib = {
+            xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get&member=%s' % member_name),
+        }
+        return moin_page.a(attrib=attrib, children=[member_name, ])
 
     def process_datetime(self, dt):
         return dt.isoformat()
