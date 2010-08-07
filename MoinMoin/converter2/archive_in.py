@@ -13,6 +13,14 @@ import zipfile
 
 from ._table import TableMixin
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
+class ArchiveException(Exception):
+    """
+    exception class used in case of trouble with opening/listing an archive
+    """
+
 class ArchiveConverter(TableMixin):
     """
     Base class for archive converters, convert an archive to a DOM table
@@ -23,8 +31,14 @@ class ArchiveConverter(TableMixin):
         return cls()
 
     def __call__(self, fileobj):
-        contents = self.list_contents(fileobj)
-        return self.build_dom_table(contents)
+        try:
+            contents = self.list_contents(fileobj)
+            return self.build_dom_table(contents)
+        except ArchiveException, err:
+            logging.exception("An exception within archive file handling occurred:")
+            # XXX we also use a table for error reporting, could be
+            # something more adequate, though:
+            return self.build_dom_table([[str(err)]])
 
     def list_contents(self, fileobj):
         """
@@ -34,7 +48,7 @@ class ArchiveConverter(TableMixin):
         
         Usually each row is [size, timestamp, name] for each archive member.
 
-        In case of problems, we return only 1 row with [error_msg].
+        In case of problems, it shall raise ArchiveException(error_msg).
         """
         raise NotImplementedError
 
@@ -44,8 +58,8 @@ class TarConverter(ArchiveConverter):
     Support listing tar files.
     """
     def list_contents(self, fileobj):
-        rows = []
         try:
+            rows = []
             tf = tarfile.open(fileobj=fileobj, mode='r')
             for tinfo in tf.getmembers():
                 rows.append([
@@ -53,10 +67,9 @@ class TarConverter(ArchiveConverter):
                     time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
                     tinfo.name,
                 ])
+            return rows
         except tarfile.TarError, err:
-            logging.exception("An exception within tar file handling occurred:")
-            rows = [[str(err)]]
-        return rows
+            raise ArchiveException(str(err))
 
 
 class ZipConverter(ArchiveConverter):
@@ -64,8 +77,8 @@ class ZipConverter(ArchiveConverter):
     Support listing zip files.
     """
     def list_contents(self, fileobj):
-        rows = []
         try:
+            rows = []
             zf = zipfile.ZipFile(fileobj, mode='r')
             for zinfo in zf.filelist:
                 rows.append([
@@ -73,13 +86,12 @@ class ZipConverter(ArchiveConverter):
                     "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
                     zinfo.filename,
                 ])
+            return rows
         except (RuntimeError, zipfile.BadZipfile), err:
             # RuntimeError is raised by zipfile stdlib module in case of
             # problems (like inconsistent slash and backslash usage in the
             # archive or a defective zip file).
-            logging.exception("An exception within zip file handling occurred:")
-            rows = [[str(err)]]
-        return rows
+            raise ArchiveException(str(err))
 
 
 from . import default_registry
