@@ -331,6 +331,12 @@ class Converter(object):
         attrib[moin_page('source')] = source[0]
         return self.new(moin_page.blockquote, attrib=attrib, children=children)
 
+    def visit_docbook_code(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
+    def visit_docbook_computeroutput(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
     def visit_docbook_emphasis(self, element, depth):
         """
         emphasis element, is the only way to apply some style
@@ -413,6 +419,9 @@ class Converter(object):
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
     def visit_docbook_literal(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
+    def visit_docbook_markup(self, element, depth):
         return self.new_copy(moin_page.code, element, depth, attrib={})
 
     def visit_docbook_orderedlist(self, element, depth):
