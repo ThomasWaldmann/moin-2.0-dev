@@ -100,7 +100,7 @@ class Converter(object):
                        # TOC
                        'toc', 'tocdiv', 'tocentry',
                        # Other elements
-                       'info', 'bridgehead'])
+                       'info', 'bridgehead', 'arc'])
 
     # DocBook inline elements which does not have equivalence in the DOM
     # tree, but we keep the information using <span element='tag.name'>
@@ -115,11 +115,12 @@ class Converter(object):
                        'remark', 'replaceable', 'returnvalue',
                        'shortaffil', 'shortcut', 'state', 'street',
                        'surname', 'symbol', 'systemitem', 'type',
-                       'userinput', 'wordasword', 'anchor'])
+                       'userinput', 'wordasword', 'anchor',
+                       'inlinemediaobject'])
 
     # DocBook block element which does not have equivalence in the DOM
     # tree, but we keep the information using <div html:class='tag.name'>
-    block_tags = set(['acknowledgements',
+    block_tags = set(['acknowledgements', 'appendix', 'mediaobject',
                         ])
 
     # DocBook has admonition as individual element, but the DOM Tree
