@@ -7,7 +7,7 @@ Make a DOM Tree representation of an archive (== list contents of it in a table)
 @license: GNU GPL, see COPYING for details.
 """
 
-import time
+from datetime import datetime
 import tarfile
 import zipfile
 
@@ -30,9 +30,22 @@ class ArchiveConverter(TableMixin):
     def _factory(cls, input, output, **kw):
         return cls()
 
+    def process_name(self, name):
+        return name
+
+    def process_datetime(self, dt):
+        return dt.isoformat()
+
+    def process_size(self, size):
+        return unicode(size)
+
     def __call__(self, fileobj):
         try:
             contents = self.list_contents(fileobj)
+            contents = [(self.process_size(size),
+                         self.process_datetime(dt),
+                         self.process_name(name),
+                        ) for size, dt, name in contents]
             return self.build_dom_table(contents)
         except ArchiveException, err:
             logging.exception("An exception within archive file handling occurred:")
@@ -46,7 +59,7 @@ class ArchiveConverter(TableMixin):
         
         We return a list of rows, each row is a list of cells.
         
-        Usually each row is [size, timestamp, name] for each archive member.
+        Usually each row is [size, datetime, name] for each archive member.
 
         In case of problems, it shall raise ArchiveException(error_msg).
         """
@@ -62,11 +75,11 @@ class TarConverter(ArchiveConverter):
             rows = []
             tf = tarfile.open(fileobj=fileobj, mode='r')
             for tinfo in tf.getmembers():
-                rows.append([
+                rows.append((
                     tinfo.size,
-                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
+                    datetime.utcfromtimestamp(tinfo.mtime),
                     tinfo.name,
-                ])
+                ))
             return rows
         except tarfile.TarError, err:
             raise ArchiveException(str(err))
@@ -81,11 +94,11 @@ class ZipConverter(ArchiveConverter):
             rows = []
             zf = zipfile.ZipFile(fileobj, mode='r')
             for zinfo in zf.filelist:
-                rows.append([
+                rows.append((
                     zinfo.file_size,
-                    "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
+                    datetime(*zinfo.date_time), # y,m,d,h,m,s
                     zinfo.filename,
-                ])
+                ))
             return rows
         except (RuntimeError, zipfile.BadZipfile), err:
             # RuntimeError is raised by zipfile stdlib module in case of
