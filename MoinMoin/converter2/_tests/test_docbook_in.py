@@ -35,7 +35,10 @@ class Base(object):
         xml.namespace: u'xml',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace,
+                        'xml': xml.namespace,
+                        'html': html.namespace
+                       }
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')
@@ -74,6 +77,12 @@ class TestConverter(Base):
             ('<article><para>Test</para></article>',
             # <page><body><p>Test</p></body></page>
              '/page/body[p="Test"]'),
+            ('<article><simpara>Test</para></article>',
+            # <page><body><p>Test</p></body></page>
+             '/page/body[p="Test"]'),
+            ('<article><formalpara><title>Title</title><para>Test</para></formalpara></article>',
+            # <page><body><p html:title="Title">Test</p></body></page>
+            '/page/body/p[text()="Test"][@html:title="Title"]'),
             ('<article><sect1><title>Heading 1</title> <para>First Paragraph</para></sect1></article>',
             # <page><body><h outline-level="1">Heading 1</h><p>First Paragraph</p></body></page>
              '/page/body[./h[@outline-level="1"][text()="Heading 1"]][./p[text()="First Paragraph"]]'),
