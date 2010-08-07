@@ -79,6 +79,10 @@ class TestConverter(Base):
            ('<page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>',
             # <article><simpara xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
             '/article/simpara[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
+           # Para with title
+           ('<page><body><p html:title="Title">Text</p></body></page>',
+            # <article><simpara xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
+            '/article/para[text()="Text"][title="Title"]'),
         ]
         for i in data:
             yield (self.do, ) + i
