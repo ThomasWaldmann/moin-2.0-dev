@@ -117,6 +117,11 @@ class Converter(object):
                        'surname', 'symbol', 'systemitem', 'type',
                        'userinput', 'wordasword'])
 
+    # DocBook block element which does not have equivalence in the DOM
+    # tree, but we keep the information using <div html:class='tag.name'>
+    block_tags = set(['acknowledgements',
+                        ])
+
     # DocBook has admonition as individual element, but the DOM Tree
     # has only one element for it, so we will convert all the DocBook
     # admonitions in this list, into the admonition element of the DOM Tree.
@@ -259,6 +264,9 @@ class Converter(object):
         if element.tag.name in self.inline_tags:
             return self.visit_docbook_inline(element, depth)
 
+        if element.tag.name in self.block_tags:
+            return self.visit_docbook_block(element, depth)
+
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
             logging.warning("Ignored tag:%s" % element.tag.name)
@@ -314,6 +322,13 @@ class Converter(object):
 
     def visit_docbook_audiodata(self, element, depth):
         return self.visit_data_element(element, depth)
+
+    def visit_docbook_block(self, element, depth):
+        attrib = {}
+        key = html('class')
+        attrib[key] = ''.join(['db_', element.tag.name])
+        return self.new_copy(moin_page.div, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_blockquote(self, element, depth):
         # TODO:Translate
