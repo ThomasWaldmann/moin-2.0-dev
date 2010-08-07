@@ -276,15 +276,15 @@ class TestConverter(Base):
             # Test for image object
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
             # <page><body><p><object xlink:href="test.png" type='image/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.png"][@type="image/"]'),
+            '/page/body/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
             # Test for audio object
             ('<article><para><inlinemediaobject><audioobject><audiodata fileref="test.wav"/></audioobject></inlinemediaobject></para></article>',
             # <page><body><p><object xlink:href="test.wav" type='audio/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.wav"][@type="audio/"]'),
+            '/page/body/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
             # Test for video object
-            ('<article><para><inlinemediaobject><videoobject><videodata fileref="test.avi"/></videoobject></inlinemediaobject></para></article>',
+            ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><p><object xlink:href="test.avi" type='video/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.avi"][@type="video/"]'),
+             '/page/body/p/div[@html:class="db_mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
         ]
         for i in data:
             yield (self.do, ) + i
