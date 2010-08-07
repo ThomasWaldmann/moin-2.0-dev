@@ -48,7 +48,7 @@ class Base(object):
             to_conv = self.handle_input(input)
         elif args['nonamespace']:
             to_conv = input
-        out = self.conv(to_conv)
+        out = self.conv([to_conv])
         f = StringIO.StringIO()
         out.write(f.write, namespaces=self.output_namespaces, )
         return self.output_re.sub(u'', f.getvalue())
