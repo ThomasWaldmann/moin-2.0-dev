@@ -668,33 +668,8 @@ class Application(Binary):
 class ApplicationZip(Application):
     supported_mimetypes = ['application/zip']
 
-    def _render_data(self):
-        # TODO: this could be a converter -> dom, then transcluding this kind
-        # of items and also rendering them with the code in base class could work
-        import zipfile
-        rows = []
-        try:
-            zf = zipfile.ZipFile(self.rev, mode='r')
-            for zinfo in zf.filelist:
-                rows.append(dict(
-                    size=str(zinfo.file_size),
-                    mtime="%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
-                    fname=zinfo.filename,
-                ))
-        except (RuntimeError, zipfile.BadZipfile), err:
-            # RuntimeError is raised by zipfile stdlib module in case of
-            # problems (like inconsistent slash and backslash usage in the
-            # archive or a defective zip file).
-            logging.exception("An exception within zip file handling occurred:")
-            return u"<pre>%s</pre>" % str(err)
-        t = Table(caption=_("ZIP listing of %(itemname)s") % dict(itemname=self.name),
-                  css_class="archivecontents")
-        t.add_column(key="size", label=_("Size"))
-        t.add_column(key="mtime", label=_("Modified"))
-        t.add_column(key="fname", label=_("File Name"))
-        for row in rows:
-            t.add_row(**row)
-        return t.render()
+    def feed_input_conv(self):
+        return self.rev
 
 
 class TarMixin(object):
@@ -769,30 +744,8 @@ class TarMixin(object):
 class ApplicationXTar(TarMixin, Application):
     supported_mimetypes = ['application/x-tar', 'application/x-gtar']
 
-    def _render_data(self):
-        # TODO: this could be a converter -> dom, then transcluding this kind
-        # of items and also rendering them with the code in base class could work
-        import tarfile
-        rows = []
-        try:
-            tf = tarfile.open(fileobj=self.rev, mode='r')
-            for tinfo in tf.getmembers():
-                rows.append(dict(
-                    size=str(tinfo.size),
-                    mtime=time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
-                    fname=tinfo.name,
-                ))
-        except tarfile.TarError, err:
-            logging.exception("An exception within tar file handling occurred:")
-            return u"<pre>%s</pre>" % str(err)
-        t = Table(caption=_("TAR listing of %(itemname)s") % dict(itemname=self.name),
-                  css_class="archivecontents")
-        t.add_column(key="size", label=_("Size"))
-        t.add_column(key="mtime", label=_("Modified"))
-        t.add_column(key="fname", label=_("File Name"))
-        for row in rows:
-            t.add_row(**row)
-        return t.render()
+    def feed_input_conv(self):
+        return self.rev
 
 
 class PDF(Application):
