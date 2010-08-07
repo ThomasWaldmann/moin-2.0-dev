@@ -33,6 +33,7 @@ class Base(object):
         moin_page.namespace: u'',
         xlink.namespace: u'xlink',
         xml.namespace: u'xml',
+        html.namespace: u'html',
     }
 
     namespaces_xpath = {'xlink': xlink.namespace,
