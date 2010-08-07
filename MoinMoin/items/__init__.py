@@ -15,7 +15,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re, tarfile, time, datetime, shutil, base64
+import os, re, time, datetime, shutil, base64
+import tarfile
+import zipfile
 from StringIO import StringIO
 import json
 import hashlib
@@ -606,9 +608,10 @@ There is no help, you're doomed!
         request = self.request
         from_cache = request.values.get('from_cache')
         from_tar = request.values.get('from_tar')
-        return self._do_get(hash, from_cache, from_tar)
+        from_zip = request.values.get('from_zip')
+        return self._do_get(hash, from_cache, from_tar, from_zip)
 
-    def _do_get(self, hash, from_cache=None, from_tar=None):
+    def _do_get(self, hash, from_cache=None, from_tar=None, from_zip=None):
         request = self.request
         filename = None
         if from_cache:
@@ -628,6 +631,13 @@ There is no help, you're doomed!
             file_to_send = sendcache._get_datafile()
         elif from_tar: # content = file contained within a tar item revision
             filename = wikiutil.taintfilename(from_tar)
+            mt = wikiutil.MimeType(filename=filename)
+            content_disposition = mt.content_disposition(request.cfg)
+            content_type = mt.content_type()
+            content_length = None
+            file_to_send = self.get_member(filename)
+        elif from_zip: # content = file contained within a zip item revision
+            filename = wikiutil.taintfilename(from_zip)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
@@ -741,7 +751,34 @@ class ApplicationXTar(TarMixin, Application):
         return self.rev
 
 
-class ApplicationZip(Application):
+class ZipMixin(object):
+    """
+    ZipMixin offers additional functionality for zip-like items to list and
+    access member files.
+    """
+    def list_members(self):
+        """
+        list zip file contents (member file names)
+        """
+        self.rev.seek(0)
+        zf = zipfile.ZipFile(self.rev, mode='r')
+        return zf.namelist()
+
+    def get_member(self, name):
+        """
+        return a file-like object with the member file data
+
+        @param name: name of the data in the zip file
+        """
+        self.rev.seek(0)
+        zf = zipfile.ZipFile(self.rev, mode='r')
+        return zf.open(name, mode='r')
+
+    def put_member(self, name, content, content_length, expected_members):
+        raise NotImplementedError
+
+
+class ApplicationZip(ZipMixin, Application):
     supported_mimetypes = ['application/zip']
 
     def feed_input_conv(self):
