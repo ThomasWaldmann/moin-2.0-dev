@@ -629,12 +629,12 @@ There is no help, you're doomed!
                     request.headers.add(key, value)
             file_to_send = sendcache._get_datafile()
         elif member: # content = file contained within a archive item revision
-            filename = wikiutil.taintfilename(member)
+            path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
             content_length = None
-            file_to_send = self.get_member(filename)
+            file_to_send = self.get_member(member)
         else: # content = item revision
             rev = self.rev
             try:
