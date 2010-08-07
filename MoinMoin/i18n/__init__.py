@@ -26,6 +26,8 @@
 import os, gettext, glob
 from StringIO import StringIO
 
+from flask import flaskg
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -64,7 +66,7 @@ def i18n_init(request):
         but next time it will be fast due to caching.
     """
     global languages
-    request.clock.start('i18n_init')
+    flaskg.clock.start('i18n_init')
     if languages is None:
         logging.debug("trying to load translations from cache")
         # the scope of the i18n cache needs to be per-wiki, because some translations
@@ -115,7 +117,7 @@ def i18n_init(request):
                     globals().update(d)
             except caching.CacheError:
                 pass
-    request.clock.stop('i18n_init')
+    flaskg.clock.stop('i18n_init')
 
 
 class Translation(object):
@@ -158,7 +160,7 @@ class Translation(object):
             logging.warning("direction problem in %r: %s" % (self.language, str(err)))
 
     def loadLanguage(self, request, trans_dir="i18n"):
-        request.clock.start('loadLanguage')
+        flaskg.clock.start('loadLanguage')
         # see comment about per-wiki scope above
         cache = caching.CacheEntry(request, arena='i18n', key=self.language, scope='wiki', use_pickle=True)
         langfilename = po_filename(request, self.language, self.domain, i18n_dir=trans_dir)
@@ -186,7 +188,7 @@ class Translation(object):
                 pass
 
         self.raw = unformatted
-        request.clock.stop('loadLanguage')
+        flaskg.clock.stop('loadLanguage')
 
 
 def getDirection(lang):

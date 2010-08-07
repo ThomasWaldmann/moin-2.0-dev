@@ -10,6 +10,8 @@
 
 import time, inspect, StringIO, sys, warnings
 
+from flask import flaskg
+
 from werkzeug import Headers, http_date, create_environ, redirect, abort
 from werkzeug.exceptions import Unauthorized, NotFound
 
@@ -17,7 +19,6 @@ from MoinMoin import i18n, error, user, config, wikiutil
 from MoinMoin.config import multiconfig
 from MoinMoin.formatter import text_html
 from MoinMoin.theme import load_theme_fallback
-from MoinMoin.util.clock import Clock
 from MoinMoin.web.request import Request, MoinMoinFinish
 from MoinMoin.web.utils import UniqueIDGenerator
 from MoinMoin.web.exceptions import Forbidden, SurgeProtection
@@ -118,7 +119,6 @@ class BaseContext(Context):
 
     # first the trivial attributes
     action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
-    clock = EnvironProxy('clock', lambda o: Clock())
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
     lang = EnvironProxy('lang')
@@ -136,9 +136,9 @@ class BaseContext(Context):
         if self.request.given_config is not None:
             return self.request.given_config('MoinMoin._tests.wikiconfig')
         try:
-            self.clock.start('load_multi_cfg')
+            flaskg.clock.start('load_multi_cfg')
             cfg = multiconfig.getConfig(self.request.url)
-            self.clock.stop('load_multi_cfg')
+            flaskg.clock.stop('load_multi_cfg')
             return cfg
         except error.NoConfigMatchedError:
             raise NotFound('<p>No wiki configuration matching the URL found!</p>')

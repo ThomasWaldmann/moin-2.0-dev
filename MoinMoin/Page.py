@@ -671,7 +671,6 @@ class Page(object):
         """
         request = self.request
         _ = request.getText
-        request.clock.start('send_page')
         emit_headers = keywords.get('emit_headers', 1)
         content_only = keywords.get('content_only', 0)
         omit_footnotes = keywords.get('omit_footnotes', 0)
@@ -837,7 +836,6 @@ class Page(object):
 
             # TODO: request.write(self.formatter.endDocument())
 
-        request.clock.stop('send_page')
         if not content_only and self.default_formatter:
             request.theme.send_closing_html()
 
@@ -875,8 +873,6 @@ class Page(object):
         @param format_args: #format arguments, used by some parsers
         @param do_cache: if True, use cached content
         """
-        request.clock.start('send_page_content')
-
         from cStringIO import StringIO
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
@@ -909,8 +905,6 @@ class Page(object):
         tree.write(out, encoding=self.output_charset,
                 default_namespace=html, method='html')
         self.request.write(out.getvalue())
-
-        request.clock.stop('send_page_content')
 
     def convert_input(self, request, body=None, format=None, format_args='',
             create_pagelinks=False):
