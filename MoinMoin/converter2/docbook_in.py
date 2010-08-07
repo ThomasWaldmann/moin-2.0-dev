@@ -23,7 +23,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import moin_page, xlink, docbook, xml
+from MoinMoin.util.tree import moin_page, xlink, docbook, xml, html
 
 from ._wiki_macro import ConverterMacro
 
@@ -360,6 +360,27 @@ class Converter(object):
         children = self.new(moin_page('note-body'), attrib={},
                             children=self.do_children(element, depth))
         return self.new(moin_page.note, attrib=attrib, children=[children])
+
+    def visit_docbook_formalpara(self, element, depth):
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'title':
+                    title_element = child
+                if child.tag.name == 'para':
+                    para_element = child
+
+        if not title_element:
+            #XXX: Improve error
+            raise SyntaxError("title child missing for formalpara element")
+        if not para_element:
+            #XXX: Improve error
+            raise SyntaxError("para child missing for formalpara element")
+
+        children = self.do_children(para_element, depth+1)
+        attrib = {}
+        attrib[html('title')] = title_element[0]
+        return self.new(moin_page.p, attrib=attrib, children=children)
+
 
     def visit_docbook_glossdef(self, element, depth):
         return self.new_copy(moin_page('list-item-body'),
