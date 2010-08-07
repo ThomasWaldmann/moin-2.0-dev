@@ -177,7 +177,6 @@ class Converter(object):
 
     def visit_moinpage_blockquote(self, element):
         author = element.get(moin_page('source'))
-        print author
         if not author:
             # TODO: Internationalisation
             author = "Unknown"
