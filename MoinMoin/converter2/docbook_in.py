@@ -115,7 +115,7 @@ class Converter(object):
                        'remark', 'replaceable', 'returnvalue',
                        'shortaffil', 'shortcut', 'state', 'street',
                        'surname', 'symbol', 'systemitem', 'type',
-                       'userinput', 'wordasword'])
+                       'userinput', 'wordasword', 'anchor'])
 
     # DocBook block element which does not have equivalence in the DOM
     # tree, but we keep the information using <div html:class='tag.name'>
