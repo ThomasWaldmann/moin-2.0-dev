@@ -73,7 +73,7 @@ class Request(ResponseBase, RequestBase):
             """
             return {
                 'do': 0, # nice to have this first (but not technically required)
-                'from_tar': 99, # TWikiDraw searches a "file extension" at URL end
+                'member': 99, # TWikiDraw searches a "file extension" at URL end
             }.get(item[0], 50) # 50 -> other stuff is somewhere in the middle
         self.href = Href(self.script_root or '/', self.charset, sort=True, key=sort_key)
         self.abs_href = Href(self.url_root, self.charset, sort=True, key=sort_key)

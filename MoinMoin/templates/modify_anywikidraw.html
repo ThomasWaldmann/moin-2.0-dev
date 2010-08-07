@@ -6,7 +6,7 @@
         width="800" height="620">
 <param name="DrawingName" value="drawing.svg" />
 {% if drawing_exists %} 
-<param name="DrawingURL" value="{{ url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg') }}" />
+<param name="DrawingURL" value="{{ url_for('frontend.get_item', item_name=item_name, member='drawing.svg') }}" />
 {% endif %}
 <param name="PageURL" value="{{ url_for('frontend.show_item', item_name=item_name) }}" />
 <param name="UploadURL" value="{{ url_for('frontend.modify_item', item_name=item_name, mimetype='application/x-anywikidraw') }}" />
