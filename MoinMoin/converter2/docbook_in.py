@@ -277,9 +277,10 @@ class Converter(object):
         return self.do_children(element, depth)
 
     def visit_data_element(self, element, depth):
-        data_types = {'imagedata':'image/',
-                      'audiodata':'audio/',
-                      'videodata':'video/'}
+        data_types = {'imagedata': 'image/',
+                      'audiodata': 'audio/',
+                      'videodata': 'video/',
+                     }
         attrib = {}
         href = element.get('fileref')
         if not href:
@@ -663,20 +664,21 @@ class Converter(object):
                              element, depth, attrib={})
 
     def visit_docbook_trademark(self, element, depth):
-        trademark_entities = {'copyright':'&copy;',
-                              'registred':'&reg;',
-                              'trade': '&trade;'}
+        trademark_entities = {'copyright': '&copy;',
+                              'registred': '&reg;',
+                              'trade': '&trade;',
+                             }
         trademark_class = element.get(docbook('class'))
         children = self.do_children(element, depth)
         if trademark_class in trademark_entities:
             print trademark_entities[trademark_class]
             children.append(trademark_entities[trademark_class])
         elif trademark_class == 'service':
-            sup_attrib = {moin_page('baseline-shift'):'super'}
+            sup_attrib = {moin_page('baseline-shift'): 'super'}
             service_mark = self.new(moin_page.span, attrib=sup_attrib,
                                     children=['SM'])
             children.append(service_mark)
-        attrib = {moin_page('element'):'trademark'}
+        attrib = {moin_page('element'): 'trademark'}
         return self.new(moin_page.span, attrib=attrib, children=children)
 
     def visit_docbook_td(self, element, depth):

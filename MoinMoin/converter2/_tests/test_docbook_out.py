@@ -27,12 +27,13 @@ class Base(object):
         moin_page.namespace,
         html.namespace,
         xlink.namespace,
-        xml.namespace,)
+        xml.namespace,
+    )
     output_namespaces = {
         docbook.namespace: '',
         moin_page.namespace: 'page',
         xlink.namespace: 'xlink',
-        xml.namespace: 'xml'
+        xml.namespace: 'xml',
     }
 
     namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}

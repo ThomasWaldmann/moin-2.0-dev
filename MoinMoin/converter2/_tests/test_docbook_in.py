@@ -27,8 +27,8 @@ class Base(object):
         docbook.namespace,
         docbook.namespace,
         xlink.namespace,
-        xml.namespace,)
-
+        xml.namespace,
+    )
     output_namespaces = {
         moin_page.namespace: u'',
         xlink.namespace: u'xlink',

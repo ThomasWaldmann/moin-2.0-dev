@@ -28,10 +28,11 @@ class Base(object):
         moin_page.namespace,
         html.namespace,
         xlink.namespace,
-        xml.namespace,)
+        xml.namespace,
+    )
     output_namespaces = {
         html.namespace: '',
-        moin_page.namespace: 'page'
+        moin_page.namespace: 'page',
     }
 
     input_re = re.compile(r'^(<[a-z:]+)')
