@@ -412,7 +412,7 @@ class Converter(object):
     def visit_docbook_block(self, element, depth):
         attrib = {}
         key = html('class')
-        attrib[key] = ''.join(['db_', element.tag.name])
+        attrib[key] = ''.join(['db-', element.tag.name])
         return self.new_copy(moin_page.div, element,
                              depth, attrib=attrib)
 
