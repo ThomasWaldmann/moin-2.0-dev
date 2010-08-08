@@ -71,7 +71,7 @@ class Converter(object):
                        'citetitle',
                        # Callout elements
                        'callout', 'calloutlist', 'area', 'areaset',
-                       'areaspec', 'co'
+                       'areaspec', 'co', 'imageobjectco',
                        # Class information
                        'classname', 'classsynopsis', 'classsynopsisinfo',
                        'constructorsynopsis', 'destructorsynopsis',
@@ -80,7 +80,8 @@ class Converter(object):
                        'funcsynopsisinfo', 'function', 'group',
                        'initializer', 'interfacename',
                        'methodname', 'methodparam', 'methodsynopsis',
-                       'ooclass', 'ooexception', 'oointerface',
+                       'ooclass', 'ooexception', 'oointerface', 'varargs',
+                       'void',
                        # GUI elements
                        'guibutton', 'guiicon', 'guilabel',
                        'guimenu', 'guimenuitem', 'guisubmenu',
@@ -100,23 +101,26 @@ class Converter(object):
                        # TOC
                        'toc', 'tocdiv', 'tocentry',
                        # Other elements
-                       'info', 'bridgehead', 'arc',
+                       'info', 'bridgehead', 'arc', 'titleabbrev',
                        ])
 
     # DocBook inline elements which does not have equivalence in the DOM
     # tree, but we keep the information using <span element='tag.name'>
-    inline_tags = set(['abbrev', 'address', 'accel', 'acronym',
+    inline_tags = set(['abbrev', 'address', 'accel', 'acronym', 'alt',
                        'affiliation', 'city', 'command', 'constant',
-                       'country', 'database', 'date', 'fax', 'filename',
-                       'firstname', 'foreignphrase', 'hardware', 'holder',
+                       'country', 'database', 'date', 'errorcode',
+                       'errorname', 'errortext', 'errortype',
+                       'exceptionname', 'fax', 'filename', 'firstname',
+                       'firstterm', 'foreignphrase', 'hardware', 'holder',
                        'honorific', 'jobtitle', 'keycap', 'keycode',
-                       'keycombo', 'keysym', 'manvolnum', 'mousebutton',
-                       'option', 'optional', 'package', 'person',
-                       'personname', 'phone', 'pob', 'postcode', 'prompt'
-                       'remark', 'replaceable', 'returnvalue',
-                       'shortaffil', 'shortcut', 'state', 'street',
-                       'surname', 'symbol', 'systemitem', 'type',
-                       'userinput', 'wordasword', 'anchor',
+                       'keycombo', 'keysym', 'lineannotation',
+                       'manvolnum', 'mousebutton', 'option', 'optional',
+                       'package', 'person', 'personname', 'phone', 'pob',
+                       'postcode', 'prompt', 'remark', 'replaceable',
+                       'returnvalue', 'shortaffil', 'shortcut', 'state',
+                       'street', 'surname', 'symbol', 'systemitem',
+                       'termdef', 'type', 'uri', 'userinput',
+                       'wordasword', 'varname', 'anchor',
                        'inlinemediaobject',
                        ])
 
