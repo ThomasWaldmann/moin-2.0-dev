@@ -783,4 +783,4 @@ from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(Converter.factory,
                           type_moin_document,
-                          Type('x-moin/format;name=rst'))
+                          Type('text/x-rst'))
