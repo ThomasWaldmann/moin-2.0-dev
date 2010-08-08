@@ -214,6 +214,14 @@ class TestConverter(Base):
             ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
             # <page><body><div html:class="db-acknowledgements"><p>Text</p></div></body></page>
             '/page/body/div[@html:class="db-acknowledgements"][p="Text"]'),
+            # Test for <informalequation>
+            ('<article><informalequation><para>E = mc^2</para></informalequation></article>',
+            # <page><body><div html:class="db-equation"><p>E = mc^2</p></div></body></page>
+             '/page/body/div[@html:class="db-equation"][p="E = mc^2"]'),
+            # Test for <informalexample>
+            ('<article><informalexample><para>example</para></informalexample></article>',
+            # <page><body><div html:class="db-example"><p>example</p></div></body></page>
+             '/page/body/div[@html:class="db-example"][p="example"]'),
         ]
         for i in data:
             yield (self.do, ) + i
