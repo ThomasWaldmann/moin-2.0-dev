@@ -197,6 +197,10 @@ class Item(object):
         links = Iri(scheme='wiki', authority='', path='/' + self.name)
         input = self.feed_input_conv()
         doc = input_conv(input)
+        # XXX is the following assuming that the top element of the doc tree
+        # is a moin_page.page element? if yes, this is the wrong place to do that
+        # as not every doc will have that element (e.g. for images, we just get
+        # moin_page.object, for a tar item, we get a moin_page.table):
         doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
         doc = smiley_conv(doc)

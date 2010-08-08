@@ -28,7 +28,7 @@ import re
 
 from MoinMoin import wikiutil
 from MoinMoin.util.iri import Iri
-from MoinMoin.util.tree import moin_page, xlink
+from MoinMoin.util.tree import moin_page, xlink, xinclude
 
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
@@ -468,16 +468,21 @@ class Converter(ConverterMacro):
             att = 'attachment:' # moin 1.9 needed this for an attached file
             if object_page.startswith(att):
                 object_page = '/' + object_page[len(att):] # now we have a subitem
-            target = unicode(Iri(scheme='wiki.local', path=object_page, query='do=get'))
+            target = Iri(scheme='wiki.local', path=object_page)
             text = object_page
+
+            attrib = {xinclude.href: target}
+            element = xinclude.include(attrib=attrib)
+            stack.top_append(element)
+
         else:
             target = object_url
             text = object_url
 
-        element = moin_page.object({xlink.href: target})
-        stack.push(element)
-        self.parse_inline(object_text or text, stack, self.link_desc_re)
-        stack.pop()
+            element = moin_page.object({xlink.href: target})
+            stack.push(element)
+            self.parse_inline(object_text or text, stack, self.link_desc_re)
+            stack.pop()
 
     inline_url = r"""
         (?P<url>
