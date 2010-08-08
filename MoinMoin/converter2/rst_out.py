@@ -3,8 +3,6 @@ MoinMoin - reStructuredText markup output converter
 
 Converts an internal document tree into reStructuredText markup.
 
-This is preprealpha version, do not use it, it doesn't work.
-
 @copyright: 2008 MoinMoin:BastianBlank
             2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
