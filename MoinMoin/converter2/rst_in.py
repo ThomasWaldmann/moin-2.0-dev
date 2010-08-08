@@ -4,8 +4,6 @@ MoinMoin - ReStructured Text input converter
 It's based on docutils rst parser.
 Conversion of docutils document tree to moinmoin document tree.
 
-This is preprealpha version, do not use it, it doesn't work.
-
 @copyright: Docutils:David Goodger <goodger@python.org>
             2004 Matthew Gilbert <gilbert AT voxmea DOT net>,
             2004 Alexander Schremmer <alex AT alexanderweb DOT de>
@@ -733,6 +731,7 @@ class Converter(object):
         return cls()
 
     def __call__(self, input, arguments=None):
+        input = u'\n'.join(input)
         parser = MoinDirectives()
         docutils_tree = core.publish_doctree(source=input)
         visitor = NodeVisitor()
@@ -741,5 +740,7 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter.factory,
+                          Type('text/x-rst'), type_moin_document)
 default_registry.register(Converter.factory,
                           Type('x-moin/format;name=rst'), type_moin_document)
