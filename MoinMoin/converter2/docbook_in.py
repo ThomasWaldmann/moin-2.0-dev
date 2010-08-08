@@ -116,7 +116,8 @@ class Converter(object):
                        'shortaffil', 'shortcut', 'state', 'street',
                        'surname', 'symbol', 'systemitem', 'type',
                        'userinput', 'wordasword', 'anchor',
-                       'inlinemediaobject'])
+                       'inlinemediaobject',
+                       ])
 
     # DocBook block element which does not have equivalence in the DOM
     # tree, but we keep the information using <div html:class='tag.name'>
@@ -127,6 +128,21 @@ class Converter(object):
     # has only one element for it, so we will convert all the DocBook
     # admonitions in this list, into the admonition element of the DOM Tree.
     admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
+
+    # DocBook can handle three kind of media: audio, image, video. Here
+    # is an helper dictionary to process such of element.
+    media_tags = {'audioobject':(['wav', 'mp3', 'ogg'],
+                                 'audiodata',
+                                 'audio/',
+                                 ),
+                  'imageobject':(['gif', 'png', 'jpg', 'png'],
+                                 'imagedata',
+                                 'image/',
+                                 ),
+                  'videoobject':(['ogg', 'avi', 'mp4'],
+                                 'videodata',
+                                 'video/',
+                                 )}
 
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
@@ -272,6 +288,10 @@ class Converter(object):
         if element.tag.name in self.block_tags:
             return self.visit_docbook_block(element, depth)
 
+        # We have a media element
+        if element.tag.name in self.media_tags:
+            return self.visit_data_object(element, depth)
+
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
             logging.warning("Ignored tag:%s" % element.tag.name)
@@ -290,19 +310,53 @@ class Converter(object):
         # Otherwise we process children of the unknown element
         return self.do_children(element, depth)[0]
 
-    def visit_data_element(self, element, depth):
-        data_types = {'imagedata':'image/',
-                      'audiodata':'audio/',
-                      'videodata':'video/'}
+    def visit_data_object(self, element, depth):
+        """
+        We need to determine which object we can display.
+        If we are not able to display an object,
+        we will try to display a text.
+        """
+        prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        object_data = []
+        text_object = []
+        caption = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == data_tag:
+                    #format = child.get(docbook.format)
+                    #format = format.lower()
+                    object_data.append(child)
+                if child.tag.name == 'caption':
+                    caption = self.do_children(child, depth+1)[0]
+                if child.tag.name == 'textobject':
+                     text_object = child
+        return self.visit_data_element(element, depth, object_data,
+            text_object, caption)
+
+    def visit_data_element(self, element, depth, object_data,
+                           text_object, caption):
+        """
+        We will try to return an object element based on the
+        object_data. If it is not possible, we return a paragraph
+        with the content of text_object.
+        """
         attrib = {}
-        href = element.get('fileref')
+        prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        if not object_data:
+            if not text_object:
+                return
+            else:
+                children = self.do_children(child, depth+1)[0]
+                return self.new(moin_page.p, attrib={},
+                                children=children)
+        #TODO: Determine with object_data to use
+        href = object_data[0].get('fileref')
         if not href:
             # We could probably try to use entityref,
             # but at this time we won't support it.
             return
         attrib[xlink.href] = href
-        if element.tag.name in data_types:
-            attrib[moin_page('type')] = data_types[element.tag.name]
+        attrib[moin_page('type')] = mimetype
         return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_admonition(self, element, depth):
