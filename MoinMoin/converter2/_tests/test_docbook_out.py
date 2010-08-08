@@ -67,19 +67,23 @@ class TestConverter(Base):
            # NB: All the output contain the <info> section, but for a better
            #     readability, I did not wrote it in the snippet except this one
            ('<page><body><p>Test</p></body></page>',
-            # <article><info><title>Untitled</title></info><para>Test</para></article>
-              '/article[./info[title="Untitled"]][para="Test"]'),
+            # <article><info><title>Untitled</title></info><simpara>Test</simpara></article>
+              '/article[./info[title="Untitled"]][simpara="Test"]'),
            # ADMONITION type --> type
            ('<page><body><admonition page:type="warning"><p>Text</p></admonition></body></page>',
-            # <article><warning><para>Text</para></warning></article>
-            '/article/warning[para="Text"]'),
+            # <article><warning><simpara>Text</simpara></warning></article>
+            '/article/warning[simpara="Text"]'),
            # Unknown admonition
            ('<page><body><admonition page:type="none"><p>Text</p></admonition></body></page>',
-            '/article[para="Text"]'),
+            '/article[simpara="Text"]'),
            # XML attributes: we support all the xml standard attributes
            ('<page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>',
-            # <article><para xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
-            '/article/para[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
+            # <article><simpara xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
+            '/article/simpara[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
+           # Para with title
+           ('<page><body><p html:title="Title">Text</p></body></page>',
+            # <article><simpara xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
+            '/article/para[text()="Text"][title="Title"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -87,7 +91,7 @@ class TestConverter(Base):
     def test_title(self):
         data = [
             ('<page><body><h page:outline-level="1">Heading 1</h><p>First</p><h page:outline-level="2">Heading 2</h><p>Second</p></body></page>',
-             '/article/sect1[title="Heading 1"][para="First"]/sect2[title="Heading 2"][para="Second"]'),
+             '/article/sect1[title="Heading 1"][simpara="First"]/sect2[title="Heading 2"][simpara="Second"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -96,32 +100,32 @@ class TestConverter(Base):
         data = [
             # Simple unordered list
             ('<page><body><list page:item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><itemizedlist><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></itemizedlist></article>
-             '/article/itemizedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><itemizedlist><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></itemizedlist></article>
+             '/article/itemizedlist[listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple ordered list (use default arabic numeration)
             ('<page><body><list page:item-label-generate="ordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><orderedlist numeration="arabic"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
-             '/article/orderedlist[@numeration="arabic"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><orderedlist numeration="arabic"><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></orderedlist></article>
+             '/article/orderedlist[@numeration="arabic"][listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple ordered list with upper-alpha numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="upper-alpha"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><orderedlist numeration="upperalpha"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
-             '/article/orderedlist[@numeration="upperalpha"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><orderedlist numeration="upperalpha"><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></orderedlist></article>
+             '/article/orderedlist[@numeration="upperalpha"][listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple ordered list with lower-alpha numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="lower-alpha"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><orderedlist numeration="loweralpha"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
-             '/article/orderedlist[@numeration="loweralpha"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><orderedlist numeration="loweralpha"><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></orderedlist></article>
+             '/article/orderedlist[@numeration="loweralpha"][listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple ordered list with upper-roman numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="upper-roman"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><orderedlist numeration="upperroman"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
-             '/article/orderedlist[@numeration="upperroman"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><orderedlist numeration="upperroman"><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></orderedlist></article>
+             '/article/orderedlist[@numeration="upperroman"][listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple ordered list with lower-roman numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="lower-roman"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             # <article><orderedlist numeration="lowerroman"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
-             '/article/orderedlist[@numeration="lowerroman"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+             # <article><orderedlist numeration="lowerroman"><listitem><simpara>Item 1</simpara></listitem><listitem><simpara>Item 2</simpara></listitem></orderedlist></article>
+             '/article/orderedlist[@numeration="lowerroman"][listitem[1]/simpara[text()="Item 1"]][listitem[2]/simpara[text()="Item 2"]]'),
             # Simple definition list
             ('<page><body><list><list-item><list-item-label>First Term</list-item-label><list-item-body>First Definition</list-item-body></list-item><list-item><list-item-label>Second Term</list-item-label><list-item-body>Second Definition</list-item-body></list-item></list></body></page>',
-             # <article><variablelist><varlistentry><term>First Term</term><listitem><para>First Definition</para></listitem></varlistentry><varlistentry><term>Second term</term><listitem><para>Second Definition</para></listitem></varlistentry></variablelist></article>
-             '/article/variablelist[varlistentry[1][./term[text()="First Term"]][./listitem/para[text()="First Definition"]]][varlistentry[2][./term[text()="Second Term"]][./listitem/para[text()="Second Definition"]]]')
+             # <article><variablelist><varlistentry><term>First Term</term><listitem><simpara>First Definition</simpara></listitem></varlistentry><varlistentry><term>Second term</term><listitem><simpara>Second Definition</simpara></listitem></varlistentry></variablelist></article>
+             '/article/variablelist[varlistentry[1][./term[text()="First Term"]][./listitem/simpara[text()="First Definition"]]][varlistentry[2][./term[text()="Second Term"]][./listitem/simpara[text()="Second Definition"]]]')
         ]
 
         for i in data:
@@ -147,56 +151,56 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
-    def test_paragraph_elements(self):
+    def test_simparagraph_elements(self):
         data = [
             # Footnote conversion
-            ('<page><body><p>Text Para<note page:note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
-             # <article><para>Text Para<footnote>Text Footnote</footnote></para></article>
-             '/article/para[text()="Text Para"]/footnote[para="Text Footnote"]'),
+            ('<page><body><p>Text simpara<note page:note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
+             # <article><simpara>Text simpara<footnote>Text Footnote</footnote></simpara></article>
+             '/article/simpara[text()="Text simpara"]/footnote[simpara="Text Footnote"]'),
             # Link conversion
             ('<page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>',
-              # <article><para><link xlink:href="uri:test" xlink:title="title">link</link></para></article>
-              '/article/para/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
+              # <article><simpara><link xlink:href="uri:test" xlink:title="title">link</link></simpara></article>
+              '/article/simpara/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # Blockcode conversion into <screen> with CDATA
             ('<page><body><blockcode>Text</blockcode></body></page>',
               # <article><screen><![CDATA[Text]]></screen></article>
              '/article[screen="<![CDATA[Text]]>"]'),
             # Code conversion into <literal>
             ('<page><body><p><code>Text</code></p></body></page>',
-              # <article><para><literal>Text</literal></para></article>
-             '/article/para[literal="Text"]'),
+              # <article><simpara><literal>Text</literal></simpara></article>
+             '/article/simpara[literal="Text"]'),
             # SPAN --> PHRASE
             ('<page><body><p><span>Text</span></p></body></page>',
-              # <article><para><phrase>Text</phrase></para></article>
-             '/article/para[phrase="Text"]'),
+              # <article><simpara><phrase>Text</phrase></simpara></article>
+             '/article/simpara[phrase="Text"]'),
             # SPAN baseline-shift=sub --> subscript
             ('<page><body><p>sub<span page:baseline-shift="sub">sub</span>script</p></body></page>',
-             # <article><para>script<subscript>sub</subscript></para></article>
-             '/article/para[text()="script"][subscript="sub"]'),
+             # <article><simpara>script<subscript>sub</subscript></simpara></article>
+             '/article/simpara[text()="script"][subscript="sub"]'),
             # SPAN baseline-shift=super --> superscript
             ('<page><body><p>sub<span page:baseline-shift="super">super</span>script</p></body></page>',
-             # <article><para>script</para><superscript>super</superscript></article>
-             '/article/para[text()="script"][superscript="super"]'),
+             # <article><simpara>script</simpara><superscript>super</superscript></article>
+             '/article/simpara[text()="script"][superscript="super"]'),
             # STRONG --> EMPHASIS role='strong'
             ('<page><body><p>text<strong>strong</strong></p></body></page>',
-             # <article><para>text<emphasis role="strong">strong</emphasis></para>
-             '/article/para[text()="text"]/emphasis[@role="strong"][text()="strong"]'),
+             # <article><simpara>text<emphasis role="strong">strong</emphasis></simpara>
+             '/article/simpara[text()="text"]/emphasis[@role="strong"][text()="strong"]'),
             # EMPHASIS --> EMPHASIS
             ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
-             # <article><para>text<emphasis>emphasis</emphasis></para>
-             '/article/para[text()="text"][emphasis="emphasis"]'),
+             # <article><simpara>text<emphasis>emphasis</emphasis></simpara>
+             '/article/simpara[text()="text"][emphasis="emphasis"]'),
             # LINE-BREAK --> SBR
             ('<page><body><p>Line 1<line-break />Line 2</p></body></page>',
-             #<article><para>Line 1<sbr />Line 2</para></article>
-             '/article/para[text()="Line 1"]/sbr'),
+             #<article><simpara>Line 1<sbr />Line 2</simpara></article>
+             '/article/simpara[text()="Line 1"]/sbr'),
             # QUOTE --> QUOTE
             ('<page><body><p>Text<quote>quotation</quote></p></body></page>',
-             # <article><para>Text<quote>quotation</quote></para></body></page>
-             '/article/para[text()="Text"][quote="quotation"]'),
+             # <article><simpara>Text<quote>quotation</quote></simpara></body></page>
+             '/article/simpara[text()="Text"][quote="quotation"]'),
             # BLOCKQUOTE --> BLOCKQUOTE
             ('<page><body><blockquote page:source="Socrates">One thing only I know, and that is that I know nothing.</blockquote></body></page>',
-             # <article><blockquote><attribution>Socrates</attribution><para>One thing ... nothing</para></blockquote></article>
-             '/article/blockquote[attribution="Socrates"][para="One thing only I know, and that is that I know nothing."]'),
+             # <article><blockquote><attribution>Socrates</attribution><simpara>One thing ... nothing</simpara></blockquote></article>
+             '/article/blockquote[attribution="Socrates"][simpara="One thing only I know, and that is that I know nothing."]'),
 
         ]
         for i in data:
@@ -205,14 +209,14 @@ class TestConverter(Base):
     def test_object(self):
         data = [
             ('<page><body><p><object xlink:href="pics.png" page:type="image/" /></p></body></page>',
-             # <article><para><inlinemediaobject><imageobject><imagedata fileref="pics.png"></imageobject></inlinemediaobject></para></article>
-             '/article/para/inlinemediaobject/imageobject/imagedata[@fileref="pics.png"]'),
+             # <article><simpara><inlinemediaobject><imageobject><imagedata fileref="pics.png"></imageobject></inlinemediaobject></simpara></article>
+             '/article/simpara/inlinemediaobject/imageobject/imagedata[@fileref="pics.png"]'),
             ('<page><body><p><object xlink:href="sound.wav" page:type="audio/" /></p></body></page>',
-             # <article><para><inlinemediaobject><audioobject><audiodata fileref="sound.wav"></audioobject></inlinemediaobject></para></article>
-             '/article/para/inlinemediaobject/audioobject/audiodata[@fileref="sound.wav"]'),
+             # <article><simpara><inlinemediaobject><audioobject><audiodata fileref="sound.wav"></audioobject></inlinemediaobject></simpara></article>
+             '/article/simpara/inlinemediaobject/audioobject/audiodata[@fileref="sound.wav"]'),
             ('<page><body><p><object xlink:href="video.ogg" page:type="video/" /></p></body></page>',
-             # <article><para><inlinemediaobject><videoobject><videodata fileref="video.ogg"></videoobject></inlinemediaobject></para></article>
-             '/article/para/inlinemediaobject/videoobject/videodata[@fileref="video.ogg"]'),
+             # <article><simpara><inlinemediaobject><videoobject><videodata fileref="video.ogg"></videoobject></inlinemediaobject></simpara></article>
+             '/article/simpara/inlinemediaobject/videoobject/videodata[@fileref="video.ogg"]'),
         ]
         for i in data:
             yield (self.do, ) + i

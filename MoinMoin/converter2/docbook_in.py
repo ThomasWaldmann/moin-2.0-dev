@@ -23,7 +23,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import moin_page, xlink, docbook, xml
+from MoinMoin.util.tree import moin_page, xlink, docbook, xml, html
 
 from ._wiki_macro import ConverterMacro
 
@@ -100,7 +100,7 @@ class Converter(object):
                        # TOC
                        'toc', 'tocdiv', 'tocentry',
                        # Other elements
-                       'info', 'bridgehead'])
+                       'info', 'bridgehead', 'arc'])
 
     # DocBook inline elements which does not have equivalence in the DOM
     # tree, but we keep the information using <span element='tag.name'>
@@ -115,12 +115,34 @@ class Converter(object):
                        'remark', 'replaceable', 'returnvalue',
                        'shortaffil', 'shortcut', 'state', 'street',
                        'surname', 'symbol', 'systemitem', 'type',
-                       'userinput', 'wordasword'])
+                       'userinput', 'wordasword', 'anchor',
+                       'inlinemediaobject',
+                       ])
+
+    # DocBook block element which does not have equivalence in the DOM
+    # tree, but we keep the information using <div html:class='tag.name'>
+    block_tags = set(['acknowledgements', 'appendix', 'mediaobject',
+                        ])
 
     # DocBook has admonition as individual element, but the DOM Tree
     # has only one element for it, so we will convert all the DocBook
     # admonitions in this list, into the admonition element of the DOM Tree.
     admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
+
+    # DocBook can handle three kind of media: audio, image, video. Here
+    # is an helper dictionary to process such of element.
+    media_tags = {'audioobject':(['wav', 'mp3', 'ogg'],
+                                 'audiodata',
+                                 'audio/',
+                                 ),
+                  'imageobject':(['gif', 'png', 'jpg', 'png'],
+                                 'imagedata',
+                                 'image/',
+                                 ),
+                  'videoobject':(['ogg', 'avi', 'mp4'],
+                                 'videodata',
+                                 'video/',
+                                 )}
 
     sect_re = re.compile('sect[1-5]')
     section_depth = 0
@@ -139,8 +161,9 @@ class Converter(object):
         # The content is given to the converter as a list of string,
         # line per line.
         # So we will concatenate all in one string.
-        docbook_str = u''
+        docbook_str = u'\n'
         docbook_str = docbook_str.join(content)
+        logging.debug(docbook_str)
         # TODO : Check why the XML parser from Element Tree need ByteString
         try:
             tree = ET.XML(docbook_str.encode('utf-8'))
@@ -167,7 +190,7 @@ class Converter(object):
         Function to process the conversion of the child of
         a given elements.
         """
-        new = []
+        new_children = []
         depth = depth + 1
         for child in element:
             if isinstance(child, ET.Element):
@@ -176,10 +199,10 @@ class Converter(object):
                     r = ()
                 elif not isinstance(r, (list, tuple)):
                     r = (r, )
-                new.extend(r)
+                new_children.extend(r)
             else:
-                new.append(child)
-        return new
+                new_children.append(child)
+        return new_children
 
     def new(self, tag, attrib, children):
         """
@@ -258,6 +281,13 @@ class Converter(object):
         if element.tag.name in self.inline_tags:
             return self.visit_docbook_inline(element, depth)
 
+        if element.tag.name in self.block_tags:
+            return self.visit_docbook_block(element, depth)
+
+        # We have a media element
+        if element.tag.name in self.media_tags:
+            return self.visit_data_object(element, depth)
+
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
             logging.warning("Ignored tag:%s" % element.tag.name)
@@ -276,20 +306,76 @@ class Converter(object):
         # Otherwise we process children of the unknown element
         return self.do_children(element, depth)
 
-    def visit_data_element(self, element, depth):
-        data_types = {'imagedata': 'image/',
-                      'audiodata': 'audio/',
-                      'videodata': 'video/',
-                     }
+    def visit_data_object(self, element, depth):
+        """
+        We need to determine which object we can display.
+        If we are not able to display an object,
+        we will try to display a text.
+        """
+        prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        object_data = []
+        text_object = []
+        caption = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == data_tag:
+                    object_data.append(child)
+                if child.tag.name == 'caption':
+                    caption = self.do_children(child, depth+1)[0]
+                if child.tag.name == 'textobject':
+                     text_object = child
+        return self.visit_data_element(element, depth, object_data,
+            text_object, caption)
+
+    def visit_data_element(self, element, depth, object_data,
+                           text_object, caption):
+        """
+        We will try to return an object element based on the
+        object_data. If it is not possible, we return a paragraph
+        with the content of text_object.
+        """
         attrib = {}
-        href = element.get('fileref')
+        prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        if not object_data:
+            if not text_object:
+                return
+            else:
+                children = self.do_children(child, depth+1)[0]
+                return self.new(moin_page.p, attrib={},
+                                children=children)
+        # We try to determine the best object to show
+        object_to_show = None
+        for obj in object_data:
+            format = obj.get(docbook.format)
+            if format:
+                format = format.lower()
+                if format in prefered_format:
+                    object_to_show = obj
+                    break
+            else:
+                #XXX: Maybe we could add some verification over the
+                #     extension of the file
+                object_to_show = obj
+
+        # If we could not find any suitable object, we return
+        # the text replacement.
+        if not object_to_show:
+            children = self.do_children(child, depth+1)[0]
+            return self.new(moin_page.p, attrib={},
+                            children=children)
+
+        href = object_to_show.get('fileref')
         if not href:
             # We could probably try to use entityref,
             # but at this time we won't support it.
             return
         attrib[xlink.href] = href
-        if element.tag.name in data_types:
-            attrib[moin_page('type')] = data_types[element.tag.name]
+        format = object_to_show.get('format')
+        if format:
+            format = format.lower()
+            attrib[moin_page('type')] = ''.join([mimetype, format])
+        else:
+            attrib[moin_page('type')] = mimetype
         return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_admonition(self, element, depth):
@@ -302,15 +388,22 @@ class Converter(object):
     def visit_docbook_article(self, element, depth):
         # TODO : Automatically add a ToC, need to see how to let
         # the user specify it.
+        attrib = {}
+        if self.standard_attribute:
+            attrib.update(self.standard_attribute)
+            self.standard_attribute = {}
         children = []
         children.append(ET.Element(moin_page('table-of-content')))
         children.extend(self.do_children(element, depth))
+        body = self.new(moin_page.body, attrib={}, children=children)
+        return self.new(moin_page.page, attrib=attrib, children=[body])
 
-        body = moin_page.body(children=children)
-        return moin_page.page(children=[body])
-
-    def visit_docbook_audiodata(self, element, depth):
-        return self.visit_data_element(element, depth)
+    def visit_docbook_block(self, element, depth):
+        attrib = {}
+        key = html('class')
+        attrib[key] = ''.join(['db_', element.tag.name])
+        return self.new_copy(moin_page.div, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_blockquote(self, element, depth):
         # TODO:Translate
@@ -327,6 +420,12 @@ class Converter(object):
         attrib = {}
         attrib[moin_page('source')] = source[0]
         return self.new(moin_page.blockquote, attrib=attrib, children=children)
+
+    def visit_docbook_code(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
+    def visit_docbook_computeroutput(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
 
     def visit_docbook_emphasis(self, element, depth):
         """
@@ -352,6 +451,27 @@ class Converter(object):
                             children=self.do_children(element, depth))
         return self.new(moin_page.note, attrib=attrib, children=[children])
 
+    def visit_docbook_formalpara(self, element, depth):
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'title':
+                    title_element = child
+                if child.tag.name == 'para':
+                    para_element = child
+
+        if not title_element:
+            #XXX: Improve error
+            raise SyntaxError("title child missing for formalpara element")
+        if not para_element:
+            #XXX: Improve error
+            raise SyntaxError("para child missing for formalpara element")
+
+        children = self.do_children(para_element, depth+1)[0]
+        attrib = {}
+        attrib[html('title')] = title_element[0]
+        return self.new(moin_page.p, attrib=attrib, children=children)
+
+
     def visit_docbook_glossdef(self, element, depth):
         return self.new_copy(moin_page('list-item-body'),
                              element, depth, attrib={})
@@ -367,9 +487,6 @@ class Converter(object):
     def visit_docbook_glossterm(self, element, depth):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
-
-    def visit_docbook_imagedata(self, element, depth):
-        return self.visit_data_element(element, depth)
 
     def visit_docbook_inline(self, element, depth):
         """
@@ -410,6 +527,9 @@ class Converter(object):
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
     def visit_docbook_literal(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
+    def visit_docbook_markup(self, element, depth):
         return self.new_copy(moin_page.code, element, depth, attrib={})
 
     def visit_docbook_orderedlist(self, element, depth):
@@ -575,6 +695,10 @@ class Converter(object):
                 new.append(child)
         return ET.Element(moin_page.list, attrib={}, children=new)
 
+    def visit_docbook_simpara(self, element, depth):
+        return self.new_copy(moin_page.p, element,
+                             depth, attrib={})
+
     def visit_docbook_simplelist(self, element, depth):
         # TODO : Add support of the type attribute
         attrib = {}
@@ -604,9 +728,6 @@ class Converter(object):
         # NB : We need to be sure it is only called for a variablelist
         return self.new_copy(moin_page('list-item-body'),
                              element, depth, attrib={})
-
-    def visit_docbook_videodata(self, element, depth):
-        return self.visit_data_element(element, depth)
 
     def visit_docbook_procedure(self, element, depth):
         # TODO : See to add Procedure text (if needed)

@@ -33,9 +33,13 @@ class Base(object):
         moin_page.namespace: u'',
         xlink.namespace: u'xlink',
         xml.namespace: u'xml',
+        html.namespace: u'html',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace,
+                        'xml': xml.namespace,
+                        'html': html.namespace
+                       }
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')
@@ -48,7 +52,7 @@ class Base(object):
             to_conv = self.handle_input(input)
         elif args['nonamespace']:
             to_conv = input
-        out = self.conv(to_conv)
+        out = self.conv([to_conv])
         f = StringIO.StringIO()
         out.write(f.write, namespaces=self.output_namespaces, )
         return self.output_re.sub(u'', f.getvalue())
@@ -74,6 +78,12 @@ class TestConverter(Base):
             ('<article><para>Test</para></article>',
             # <page><body><p>Test</p></body></page>
              '/page/body[p="Test"]'),
+            ('<article><simpara>Test</simpara></article>',
+            # <page><body><p>Test</p></body></page>
+             '/page/body[p="Test"]'),
+            ('<article><formalpara><title>Title</title><para>Test</para></formalpara></article>',
+            # <page><body><p html:title="Title">Test</p></body></page>
+            '/page/body/p[text()="Test"][@html:title="Title"]'),
             ('<article><sect1><title>Heading 1</title> <para>First Paragraph</para></sect1></article>',
             # <page><body><h outline-level="1">Heading 1</h><p>First Paragraph</p></body></page>
              '/page/body[./h[@outline-level="1"][text()="Heading 1"]][./p[text()="First Paragraph"]]'),
@@ -89,6 +99,10 @@ class TestConverter(Base):
             ('<article><para xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</para></article>',
             # <page><body><p xml:base="http://base.tld" xml:id="id" xml:lang="en">Text</p></body></page>
             '/page/body/p[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
+            # ANCHOR --> SPAN
+            ('<article><para>bla bla<anchor xml:id="point_1" />bla bla</para></article>',
+            # <page><body><p>bla bla<span element="anchor" xml:id="point_1" />bla bla</p></body></page>
+            '/page/body/p/span[@element="anchor"][@xml:id="point_1"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -196,6 +210,10 @@ class TestConverter(Base):
             ('<article><para><abbrev>ABBREV</abbrev></para></article>',
             # <page><body><p><span element="abbrev">ABBREV</span></p></body></page>
              '/page/body/p/span[@element="abbrev"][text()="ABBREV"]'),
+            # Test div for block element
+            ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
+            # <page><body><div html:class="db_acknowledgements"><p>Text</p></div></body></page>
+            '/page/body/div[@html:class="db_acknowledgements"][p="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -237,6 +255,18 @@ class TestConverter(Base):
             ('<article><blockquote><attribution>author</attribution>text</blockquote></article>',
             # <page><body><blockquote source="author">text</blockquote></body></page>
             '/page/body/blockquote[@source="author"][text()="text"]'),
+            # CODE --> CODE
+            ('<article><para><code>Text</code></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
+            # COMPUTEROUTPUT --> CODE
+            ('<article><para><computeroutput>Text</computeroutput></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
+            # MARKUP --> CODE
+            ('<article><para><markup>Text</markup></para></article>',
+            # <page><body><p><code>Text</code></p></article>
+            '/page/body/p[code="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -246,15 +276,19 @@ class TestConverter(Base):
             # Test for image object
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
             # <page><body><p><object xlink:href="test.png" type='image/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.png"][@type="image/"]'),
+            '/page/body/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
             # Test for audio object
             ('<article><para><inlinemediaobject><audioobject><audiodata fileref="test.wav"/></audioobject></inlinemediaobject></para></article>',
             # <page><body><p><object xlink:href="test.wav" type='audio/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.wav"][@type="audio/"]'),
+            '/page/body/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
             # Test for video object
-            ('<article><para><inlinemediaobject><videoobject><videodata fileref="test.avi"/></videoobject></inlinemediaobject></para></article>',
+            ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><p><object xlink:href="test.avi" type='video/' /></p></body></page>
-             '/page/body/p/object[@xlink:href="test.avi"][@type="video/"]'),
+             '/page/body/p/div[@html:class="db_mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
+            # Test for image object with different imagedata
+            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG" scale="70"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
+            # <page><body><div html:class="db_mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></body></page>
+            '/page/body/div[@html:class="db_mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/png"]'),
         ]
         for i in data:
             yield (self.do, ) + i
