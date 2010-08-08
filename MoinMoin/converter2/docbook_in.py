@@ -379,9 +379,6 @@ class Converter(object):
         body = self.new(moin_page.body, attrib={}, children=children)
         return self.new(moin_page.page, attrib=attrib, children=[body])
 
-    def visit_docbook_audiodata(self, element, depth):
-        return self.visit_data_element(element, depth)
-
     def visit_docbook_block(self, element, depth):
         attrib = {}
         key = html('class')
@@ -471,9 +468,6 @@ class Converter(object):
     def visit_docbook_glossterm(self, element, depth):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
-
-    def visit_docbook_imagedata(self, element, depth):
-        return self.visit_data_element(element, depth)
 
     def visit_docbook_inline(self, element, depth):
         """
@@ -715,9 +709,6 @@ class Converter(object):
         # NB : We need to be sure it is only called for a variablelist
         return self.new_copy(moin_page('list-item-body'),
                              element, depth, attrib={})
-
-    def visit_docbook_videodata(self, element, depth):
-        return self.visit_data_element(element, depth)
 
     def visit_docbook_procedure(self, element, depth):
         # TODO : See to add Procedure text (if needed)
