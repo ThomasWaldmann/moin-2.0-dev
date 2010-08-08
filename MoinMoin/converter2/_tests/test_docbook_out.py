@@ -36,7 +36,9 @@ class Base(object):
         xml.namespace: 'xml',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace, 'xml': xml.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace,
+                        'xml': xml.namespace,
+    }
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')

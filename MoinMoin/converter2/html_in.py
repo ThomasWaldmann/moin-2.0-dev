@@ -62,7 +62,8 @@ class Converter(object):
                         'form', 'frame', 'frameset', 'head', 'iframe', 'input', 'isindex',
                         'label', 'legend', 'link', 'map', 'menu', 'noframes', 'noscript',
                         'optgroup', 'option', 'param', 'script', 'select', 'style',
-                        'textarea', 'title', 'var'])
+                        'textarea', 'title', 'var',
+                       ])
 
     # standard_attributes are html attributes which are used
     # directly in the DOM tree, without any conversion
