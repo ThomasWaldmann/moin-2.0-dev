@@ -114,6 +114,17 @@ Apple
         for i in data:
             yield (self.do, ) + i
 
+    def test_links(self):
+        data = [
+            (u"[[SomeLink]]", u'<page><body><p><a xlink:href="wiki.local:SomeLink">SomeLink</a></p></body></page>'),
+            (u"[http://external.link]", u'<page><body><p><a xlink:href="http://external.link"></a></p></body></page>'),
+            (u"[http://external.link alt text]", u'<page><body><p><a xlink:href="http://external.link">alt text</a></p></body></page>'),
+            (u"[[SomeLink|Some text]]", u'<page><body><p><a xlink:href="wiki.local:SomeLink">Some text</a></p></body></page>'),
+            (u"[[File:Test.jpg|test]]", u'<page><body><p><object alt="test" xlink:href="wiki.local:Test.jpg?do=get">test</object></p></body></page>')
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def serialize(self, elem, **options):
         from StringIO import StringIO
         buffer = StringIO()
@@ -124,3 +135,4 @@ Apple
         out = self.conv(input.split(u'\n'), **args)
         assert self.serialize(out) == output
 
+coverage_modules = ['MoinMoin.converter2.mediawiki_in']
