@@ -528,6 +528,12 @@ class Converter(object):
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
+    def visit_docbook_inlinequation(self, element, depth):
+        attrib = {}
+        attrib[moin_page('element')] = 'equation'
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
+
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
