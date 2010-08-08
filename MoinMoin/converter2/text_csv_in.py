@@ -36,7 +36,8 @@ class Converter(TableMixin):
             row = []
             for encoded_cell in encoded_row:
                 row.append(encoded_cell.decode('utf-8'))
-            rows.append(row)
+            if row:
+                rows.append(row)
         return self.build_dom_table(rows)
 
 
