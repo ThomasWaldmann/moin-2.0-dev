@@ -499,6 +499,24 @@ class Converter(object):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
 
+    def visit_docbook_informalequation(self, element, depth):
+        attrib = {}
+        attrib[html('class')] = 'db-equation'
+        return self.new_copy(moin_page('div'), element,
+                             depth, attrib=attrib)
+
+    def visit_docbook_informalexample(self, element, depth):
+        attrib = {}
+        attrib[html('class')] = 'db-example'
+        return self.new_copy(moin_page('div'), element,
+                             depth, attrib=attrib)
+
+    def visit_docbook_informalfigure(self, element, depth):
+        attrib = {}
+        attrib[html('class')] = 'db-figure'
+        return self.new_copy(moin_page('div'), element,
+                             depth, attrib=attrib)
+
     def visit_docbook_inline(self, element, depth):
         """
         For some specific tags (defined in inline_tags)
