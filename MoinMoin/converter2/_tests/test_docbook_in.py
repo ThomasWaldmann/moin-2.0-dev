@@ -285,6 +285,10 @@ class TestConverter(Base):
             ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><p><object xlink:href="test.avi" type='video/' /></p></body></page>
              '/page/body/p/div[@html:class="db_mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
+            # Test for image object with different imagedata
+            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG" scale="70"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
+            # <page><body><div html:class="db_mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></body></page>
+            '/page/body/div[@html:class="db_mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/"]'),
         ]
         for i in data:
             yield (self.do, ) + i
