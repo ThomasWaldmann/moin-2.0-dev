@@ -3,7 +3,8 @@ MoinMoin - Include handling
 
 Expands include elements in a internal Moin document.
 
-@copyright: 2008 MoinMoin:BastianBlank
+@copyright: 2008 MoinMoin:BastianBlank,
+            2010 MoinMoin:ThomasWaldmann
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -12,9 +13,13 @@ from __future__ import absolute_import
 from emeraldtree import ElementTree as ET
 import re
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin import wikiutil
-from MoinMoin.Page import Page
+from MoinMoin.items import Item
 from MoinMoin.util.mime import type_moin_document
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xinclude, xlink
 
 class XPointer(list):
@@ -100,9 +105,13 @@ class Converter(object):
     def recurse(self, elem, page_href):
         # Check if we reached a new page
         page_href_new = elem.get(self.tag_page_href)
-        if page_href_new and page_href_new != page_href:
-            page_href = page_href_new
-            self.stack.append(page_href)
+        if page_href_new:
+            page_href_new = Iri(page_href_new)
+            if page_href_new != page_href:
+                page_href = page_href_new
+                self.stack.append(page_href)
+            else:
+                self.stack.append(None)
         else:
             self.stack.append(None)
 
@@ -155,19 +164,38 @@ class Converter(object):
 
                 if href:
                     # We have a single page to include
-                    # TODO: handle URIs
-                    if href.startswith('wiki:///'):
-                        include = href[8:]
-                    elif href.startswith('wiki.local:'):
-                        include = wikiutil.AbsPageName(page_href[8:], href[11:])
+                    href = Iri(href)
+                    link = Iri(scheme='wiki', authority='')
+                    if href.scheme == 'wiki':
+                        if href.authority:
+                            raise ValueError("can't handle xinclude for non-local authority")
+                        else:
+                            path = href.path[1:]
+                    elif href.scheme == 'wiki.local':
+                        page = page_href
+                        path = href.path
+                        if path[0] == '':
+                            # /subitem
+                            tmp = page.path[1:]
+                            tmp.extend(path[1:])
+                            path = tmp
+                        elif path[0] == '..':
+                            # ../sisteritem
+                            path = page.path[1:] + path[1:]
+                    else:
+                        raise ValueError("can't handle xinclude for schemes other than wiki or wiki.local")
 
-                    page = Page(self.request, include)
-                    pages = ((page, 'wiki:///' + include), )
+                    link.path = path
+
+                    page = Item.create(self.request, unicode(path))
+                    pages = ((page, link), )
 
                 elif xp_include_pages:
                     # We have a regex of pages to include
+                    from MoinMoin.search.term import NameFn
                     inc_match = re.compile(xp_include_pages)
-                    pagelist = self.request.rootpage.getPageList(filter=inc_match.match)
+                    root_item = Item(self.request, name=u'')
+                    pagelist = [item.name for item in root_item.list_items(NameFn(inc_match))]
                     pagelist.sort()
                     if xp_include_sort == 'descending':
                         pagelist.reverse()
@@ -176,35 +204,42 @@ class Converter(object):
                     if xp_include_items is not None:
                         pagelist = pagelist[xp_include_items + 1:]
 
-                    # TODO: URI
-                    pages = ((Page(self.request, p), 'wiki:///' + p) for p in pagelist)
+                    pages = ((Item.create(self.request, p), Iri(scheme='wiki', authority='', path='/' + p)) for p in pagelist)
 
-                div = ET.Element(self.tag_div)
-
+                included_elements = []
                 for page, page_href in pages:
                     if page_href in self.stack:
                         w = ('<p xmlns="%s"><strong class="error">Recursive include of "%s" forbidden</strong></p>'
-                                % (html.namespace, page.page_name))
+                                % (html.namespace, page.name))
                         div.append(ET.XML(w))
                         continue
                     # TODO: Is this correct?
-                    if not self.request.user.may.read(page.page_name):
+                    if not self.request.user.may.read(page.name):
                         continue
 
                     if xp_include_heading is not None:
                         attrib = {self.tag_href: page_href}
-                        children = (xp_include_heading or page.page_name, )
+                        children = (xp_include_heading or page.name, )
                         elem_a = ET.Element(self.tag_a, attrib, children=children)
                         attrib = {self.tag_outline_level: xp_include_level or '1'}
                         elem_h = ET.Element(self.tag_h, attrib, children=(elem_a, ))
                         div.append(elem_h)
 
-                    page_doc = page.convert_input_cache(self.request)
-                    page_doc.tag = self.tag_div
+                    page_doc = page.internal_representation()
+                    # page_doc.tag = self.tag_div # XXX why did we have this?
                     self.recurse(page_doc, page_href)
-                    div.append(page_doc)
+                    included_elements.append(page_doc)
 
-                return div
+                if len(included_elements) > 1:
+                    # use a div as container
+                    result = ET.Element(self.tag_div)
+                    result.extend(included_elements)
+                elif included_elements:
+                    result = included_elements[0]
+                else:
+                    result = None
+
+                return result
 
             for i in xrange(len(elem)):
                 child = elem[i]

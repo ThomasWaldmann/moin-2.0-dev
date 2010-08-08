@@ -24,13 +24,14 @@ class Base(object):
     input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:xlink="%s"' % (
         moin_page.namespace,
         moin_page.namespace,
-        xlink.namespace)
+        xlink.namespace,
+    )
     output_namespaces = {
         moin_page.namespace: '',
-        xlink.namespace: 'xlink'
+        xlink.namespace: 'xlink',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace, }
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')

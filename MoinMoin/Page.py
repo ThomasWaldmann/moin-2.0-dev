@@ -33,7 +33,6 @@ def is_cache_exception(e):
 
 class Page(object):
     """ Page - Manage an (immutable) page associated with a WikiName.
-        To change a page's content, use the PageEditor class.
     """
     def __init__(self, request, page_name, formatter=None, **kw):
         """ Create page object.
@@ -208,8 +207,7 @@ class Page(object):
 
         @param body: raw body text
         @param modified: 1 means that we internally modified the raw text and
-            that it is not in sync with the page file on disk.  This is
-            used e.g. by PageEditor when previewing the page.
+            that it is not in sync with the page file on disk.
         """
         self.body = body
         self._body_modified = modified
@@ -610,7 +608,7 @@ class Page(object):
         meta = self.meta
 
         # default is wiki markup
-        pi['format'] = self.cfg.default_markup or "wiki"
+        pi['format'] = "wiki"
         pi['formatargs'] = ''
         pi['lines'] = len(meta)
 
