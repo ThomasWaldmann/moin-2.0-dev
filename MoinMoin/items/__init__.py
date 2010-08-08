@@ -488,6 +488,8 @@ class NonExistent(Item):
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
             ('text/x.moin.creole', 'Wiki (Creole)'),
+            ('text/x-mediawiki', 'Wiki (MediaWiki)'),
+            ('text/x-rst', 'ReST'),
             ('application/docbook+xml', 'DocBook'),
             ('text/html', 'HTML'),
         ]),
@@ -1049,6 +1051,16 @@ class MoinWiki(MarkupItem):
 class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
+
+
+class MediaWiki(MarkupItem):
+    """ MediaWiki markup """
+    supported_mimetypes = ['text/x-mediawiki']
+
+
+class ReST(MarkupItem):
+    """ ReStructured Text markup """
+    supported_mimetypes = ['text/x-rst']
 
 
 class HTML(Text):
