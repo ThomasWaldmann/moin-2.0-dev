@@ -215,7 +215,7 @@ class Converter(object):
 
     def open_moinpage_emphasis(self, elem):
         childrens_output = self.open_children(elem)
-        return "%s%s%s" % (Moinwiki.emphasis, childrens_output, Moinwiki.emphasis)
+        return u"%s%s%s" % (Moinwiki.emphasis, childrens_output, Moinwiki.emphasis)
 
     def open_moinpage_h(self, elem):
         level = elem.get(moin_page.outline_level, 1)
@@ -333,9 +333,6 @@ class Converter(object):
         else:
             ret = self.open_children(elem)
         self.status.pop()
-        if self.status[-1] == 'text':
-            #ret+= Moinwiki.p
-            pass
         return ret
 
     def open_moinpage_page(self, elem):
