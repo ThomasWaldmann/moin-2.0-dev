@@ -485,9 +485,8 @@ class NonExistent(Item):
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
             ('text/x.moin.creole', 'Wiki (Creole)'),
-            ('text/x-safe-html', 'safe html'),
-            ('text/html', 'unsafe html'),
             ('application/docbook+xml', 'DocBook'),
+            ('text/html', 'HTML'),
         ]),
         ('other text items', [
             ('text/plain', 'plain text'),
@@ -1050,7 +1049,15 @@ class CreoleWiki(MarkupItem):
 
 
 class HTML(Text):
-    """ HTML markup """
+    """
+    HTML markup
+    
+    Note: As we use html_in converter to convert this to DOM and later some
+          output converterter to produce output format (e.g. html_out for html
+          output), all(?) unsafe stuff will get lost.
+
+    Note: If raw revision data is accessed, unsafe stuff might be present!
+    """
     supported_mimetypes = ['text/html']
 
     def do_modify(self, template_name):
@@ -1071,11 +1078,6 @@ class HTML(Text):
                                lang='en', direction='ltr',
                                help=self.modify_help,
                               )
-
-
-class SafeHTML(HTML):
-    """ Safe HTML markup - we'll filter dangerous stuff """
-    supported_mimetypes = ['text/x-safe-html']
 
 
 class DocBook(Text):
