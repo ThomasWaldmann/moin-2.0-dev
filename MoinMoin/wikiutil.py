@@ -1028,7 +1028,7 @@ def importPlugin(cfg, kind, name, function="execute"):
 
     If <name> plugin can not be imported, raise PluginMissingError.
 
-    kind may be one of 'action', 'formatter', 'macro', 'parser' or any other
+    kind may be one of 'action', 'formatter', 'macro' or any other
     directory that exist in MoinMoin or data/plugin.
 
     Wiki plugins will always override builtin plugins. If you want
@@ -1157,8 +1157,8 @@ def getPlugins(kind, cfg):
 
 
 def searchAndImportPlugin(cfg, type, name, what=None):
-    type2classname = {"parser": "Parser",
-                      "formatter": "Formatter",
+    type2classname = {
+        "formatter": "Formatter",
     }
     if what is None:
         what = type2classname[type]
@@ -1173,49 +1173,6 @@ def searchAndImportPlugin(cfg, type, name, what=None):
     else:
         raise PluginMissingError("Plugin not found! (%r %r %r)" % (type, name, what))
     return plugin
-
-
-#############################################################################
-### Parsers
-#############################################################################
-
-def getParserForExtension(cfg, extension):
-    """
-    Returns the Parser class of the parser fit to handle a file
-    with the given extension. The extension should be in the same
-    format as os.path.splitext returns it (i.e. with the dot).
-    Returns None if no parser willing to handle is found.
-    The dict of extensions is cached in the config object.
-
-    @param cfg: the Config instance for the wiki in question
-    @param extension: the filename extension including the dot
-    @rtype: class, None
-    @returns: the parser class or None
-    """
-    if not hasattr(cfg.cache, 'EXT_TO_PARSER'):
-        etp, etd = {}, None
-        parser_plugins = getPlugins('parser', cfg)
-        # force the 'highlight' parser to be the first entry in the list
-        # this makes it possible to overwrite some mapping entries later, so that
-        # moin will use some "better" parser for some filename extensions
-        parser_plugins.remove('highlight')
-        parser_plugins = ['highlight'] + parser_plugins
-        for pname in parser_plugins:
-            try:
-                Parser = importPlugin(cfg, 'parser', pname, 'Parser')
-            except PluginMissingError:
-                continue
-            if hasattr(Parser, 'extensions'):
-                exts = Parser.extensions
-                if isinstance(exts, list):
-                    for ext in exts:
-                        etp[ext] = Parser
-                elif str(exts) == '*':
-                    etd = Parser
-        cfg.cache.EXT_TO_PARSER = etp
-        cfg.cache.EXT_TO_PARSER_DEFAULT = etd
-
-    return cfg.cache.EXT_TO_PARSER.get(extension, cfg.cache.EXT_TO_PARSER_DEFAULT)
 
 
 #############################################################################
@@ -2528,19 +2485,6 @@ def checkTicket(request, ticket):
     ourticket = createTicket(request, timestamp_str)
     logging.debug("checkTicket: returning %r, got %r, expected %r" % (ticket == ourticket, ticket, ourticket))
     return ticket == ourticket
-
-
-def renderText(request, Parser, text):
-    """executes raw wiki markup with all page elements"""
-    import StringIO
-    out = StringIO.StringIO()
-    request.redirect(out)
-    wikiizer = Parser(text, request)
-    wikiizer.format(request.formatter, inhibit_p=True)
-    result = out.getvalue()
-    request.redirect()
-    del out
-    return result
 
 
 def split_body(body):

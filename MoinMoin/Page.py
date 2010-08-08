@@ -610,7 +610,7 @@ class Page(object):
         meta = self.meta
 
         # default is wiki markup
-        pi['format'] = self.cfg.default_markup or "wiki"
+        pi['format'] = "wiki"
         pi['formatargs'] = ''
         pi['lines'] = len(meta)
 
