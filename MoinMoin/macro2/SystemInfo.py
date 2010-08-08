@@ -14,7 +14,7 @@ import sys, os
 
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
-from MoinMoin import action, macro, parser
+from MoinMoin import action, macro
 from MoinMoin.logfile import editlog
 from MoinMoin.Page import Page
 
@@ -103,10 +103,6 @@ class Macro(MacroDefinitionListBase):
         loc_actions = [x for x in wikiutil.wikiPlugins('action', request.cfg)
                        if not x in request.cfg.actions_excluded]
         row(_('Local extension actions'), ', '.join(loc_actions) or nonestr)
-
-        row(_('Global parsers'), ', '.join(parser.modules) or nonestr)
-        row(_('Local extension parsers'),
-            ', '.join(wikiutil.wikiPlugins('parser', request.cfg)) or nonestr)
 
         try:
             import xapian
