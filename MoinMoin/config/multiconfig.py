@@ -856,8 +856,6 @@ options_no_group_name = {
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
-    ('default_markup', 'wiki', 'Default page parser / format (name of module in `MoinMoin.parser`)'),
-
     ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes."),
     ('html_head_queries', '<meta name="robots" content="noindex,nofollow">\n',
      "Additional <HEAD> tags for requests with query strings, like actions."),

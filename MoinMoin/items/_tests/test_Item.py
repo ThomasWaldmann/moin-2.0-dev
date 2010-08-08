@@ -9,7 +9,7 @@
 import py
 
 from MoinMoin._tests import become_trusted
-from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
+from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, \
                            MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
@@ -26,7 +26,6 @@ class TestItem:
         for mimetype, ExpectedClass in [
                 ('application/x-foobar', Binary),
                 ('text/plain', Text),
-                ('text/x-python', PythonSrc),
                 ('image/tiff', Image),
                 ('image/png', TransformableBitmapImage),
             ]:

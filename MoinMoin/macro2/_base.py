@@ -5,7 +5,6 @@ MoinMoin - Macro base class
 @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xlink
 
@@ -20,7 +19,7 @@ class MacroBase(object):
     def __init__(self, request):
         self.request = request
 
-    def __call__(self, content, page_url, args, alt, context_block):
+    def __call__(self, content, arguments, page_url, alternative, context_block):
         raise NotImplementedError
 
 class MacroBlockBase(MacroBase):

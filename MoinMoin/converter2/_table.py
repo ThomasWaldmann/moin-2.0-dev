@@ -22,7 +22,7 @@ class TableMixin(object):
         for row in rows:
             table_row = moin_page.table_row()
             for cell in row:
-                table_cell = moin_page.table_cell(children=[unicode(cell), ])
+                table_cell = moin_page.table_cell(children=[cell, ])
                 table_row.append(table_cell)
             table_body.append(table_row)
         return moin_page.table(children=[table_body, ])

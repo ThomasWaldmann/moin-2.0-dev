@@ -28,9 +28,10 @@ class Base(object):
         xml.namespace: 'xml',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace,
-                        'html': html.namespace,
-                        'xml': xml.namespace,
+    namespaces_xpath = {
+        'xlink': xlink.namespace,
+        'html': html.namespace,
+        'xml': xml.namespace,
     }
 
     output_re = re.compile(r'\s+xmlns="[^"]+"')

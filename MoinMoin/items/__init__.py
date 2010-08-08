@@ -188,6 +188,8 @@ class Item(object):
             raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
         include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
+        macro_conv = reg.get(type_moin_document, type_moin_document,
+                macros='expandall', request=request)
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
         smiley_conv = reg.get(type_moin_document, type_moin_document,
@@ -197,8 +199,13 @@ class Item(object):
         links = Iri(scheme='wiki', authority='', path='/' + self.name)
         input = self.feed_input_conv()
         doc = input_conv(input)
+        # XXX is the following assuming that the top element of the doc tree
+        # is a moin_page.page element? if yes, this is the wrong place to do that
+        # as not every doc will have that element (e.g. for images, we just get
+        # moin_page.object, for a tar item, we get a moin_page.table):
         doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
+        doc = macro_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
         return doc
@@ -481,9 +488,8 @@ class NonExistent(Item):
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
             ('text/x.moin.creole', 'Wiki (Creole)'),
-            ('text/x-safe-html', 'safe html'),
-            ('text/html', 'unsafe html'),
             ('application/docbook+xml', 'DocBook'),
+            ('text/html', 'HTML'),
         ]),
         ('other text items', [
             ('text/plain', 'plain text'),
@@ -629,12 +635,12 @@ There is no help, you're doomed!
                     request.headers.add(key, value)
             file_to_send = sendcache._get_datafile()
         elif member: # content = file contained within a archive item revision
-            filename = wikiutil.taintfilename(member)
+            path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
             content_length = None
-            file_to_send = self.get_member(filename)
+            file_to_send = self.get_member(member)
         else: # content = item revision
             rev = self.rev
             try:
@@ -954,7 +960,6 @@ class TransformableBitmapImage(RenderableBitmapImage):
 class Text(Binary):
     """ Any kind of text """
     supported_mimetypes = ['text/']
-    converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -1038,18 +1043,24 @@ class MarkupItem(Text):
 
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
-    supported_mimetypes = ['text/x-unidentified-wiki-format',
-                           'text/x.moin.wiki',
-                          ]  # XXX Improve mimetype handling
-    converter_mimetype = 'text/x.moin.wiki'
+    supported_mimetypes = ['text/x.moin.wiki']
 
 
 class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
 
+
 class HTML(Text):
-    """ HTML markup """
+    """
+    HTML markup
+
+    Note: As we use html_in converter to convert this to DOM and later some
+          output converterter to produce output format (e.g. html_out for html
+          output), all(?) unsafe stuff will get lost.
+
+    Note: If raw revision data is accessed, unsafe stuff might be present!
+    """
     supported_mimetypes = ['text/html']
 
     def do_modify(self, template_name):
@@ -1071,9 +1082,6 @@ class HTML(Text):
                                help=self.modify_help,
                               )
 
-class SafeHTML(HTML):
-    """ Safe HTML markup - we'll filter dangerous stuff """
-    supported_mimetypes = ['text/x-safe-html']
 
 class DocBook(Text):
     """ DocBook Document """
@@ -1125,6 +1133,7 @@ class DocBook(Text):
                          cache_timeout=10, # wiki data can change rapidly
                          add_etags=False, etag=None,
                          conditional=True)
+
 
 class TWikiDraw(TarMixin, Image):
     """
