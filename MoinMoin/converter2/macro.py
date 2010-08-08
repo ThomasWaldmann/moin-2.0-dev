@@ -14,7 +14,7 @@ from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
 
-from MoinMoin import macro, Page, wikiutil
+from MoinMoin import wikiutil
 from MoinMoin.converter2._args import Arguments
 from MoinMoin.util import iri
 from MoinMoin.util.mime import type_moin_document
