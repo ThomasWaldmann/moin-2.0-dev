@@ -149,7 +149,7 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
         return self.output_re.sub(u'', buffer.getvalue())
 
     def do(self, input, output, args={}, skip=None):
-        out = self.conv(input, **args)
+        out = self.conv(input.split(u'\n'), **args)
         assert self.serialize(out) == output
 
 coverage_modules = ['MoinMoin.converter2.rst_in']

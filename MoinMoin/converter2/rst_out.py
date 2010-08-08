@@ -3,8 +3,6 @@ MoinMoin - reStructuredText markup output converter
 
 Converts an internal document tree into reStructuredText markup.
 
-This is preprealpha version, do not use it, it doesn't work.
-
 @copyright: 2008 MoinMoin:BastianBlank
             2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
@@ -783,6 +781,9 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter.factory,
+                          type_moin_document,
+                          Type('text/x-rst'))
 default_registry.register(Converter.factory,
                           type_moin_document,
                           Type('x-moin/format;name=rst'))
