@@ -522,29 +522,41 @@ class Converter(ConverterMacro):
                 (?P<link_item> [^|]+? )
             )
             \s*
-            (
+            (?P<link_args>
+                (
                 [|]
                 \s*
-                (?P<link_text> [^|]*? )
+                [^|]*?
                 \s*
-            )?
-            (
-                [|]
-                \s*
-                (?P<link_args> .*? )
-                \s*
+                )*
             )?
             \]\]
+            |
+            \[
+            \s*
+            (?P<external_link_url>
+                    [a-zA-Z0-9+.-]+
+                    :
+                    [^ ]*
+            )
+            \s*
+            (?P<alt_text> [^\]]*? )
+            \s*
+            \]
         )
     """
 
     def inline_link_repl(self, stack, link, link_url=None, link_item=None,
-            link_text=None, link_args=None):
+                            link_args=None, external_link_url=None, alt_text=''):
         """Handle all kinds of links."""
-        if link_args:
-            link_args = parse_arguments(link_args) # XXX needs different parsing
+        link_text = ''
+        if link_args and len(link_args.split('|')) > 2:
+            link_args = parse_arguments(link_args) # TODO needs parsing for mediawiki_args
             query = url_encode(link_args.keyword, charset=config.charset, encode_keys=True)
         else:
+            if link_args:
+                link_text = link_args.split('|')[-1]
+
             query = None
         if link_item is not None:
             if '#' in link_item:
@@ -554,8 +566,36 @@ class Converter(ConverterMacro):
             target = Iri(scheme='wiki.local', path=path, query=query, fragment=fragment)
             text = link_item
         else:
+            if link_url and len(link_url.split(':')) > 0 and link_url.split(':')[0] == 'File':
+                object_item = ':'.join(link_url.split(':')[1:])
+                if object_item is not None:
+                    if 'do' not in args:
+                        # by default, we want the item's get url for transclusion of raw data:
+                        args['do'] = 'get'
+                    query = url_encode(args, charset=config.charset, encode_keys=True)
+                    target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
+                    text = object_item
+                else:
+                    target = Iri(object_url)
+                    text = object_url
+
+                attrib = {xlink.href: target}
+                if link_text is not None:
+                    attrib[moin_page.alt] = link_text
+
+                element = moin_page.object(attrib)
+                stack.push(element)
+                if link_text:
+                    self.parse_inline(object_text, stack, self.inlinedesc_re)
+                else:
+                    stack.top_append(text)
+                stack.pop()
+                return
             target = Iri(link_url)
             text = link_url
+        if external_link_url:
+            target = Iri(external_link_url)
+            text = alt_text
         element = moin_page.a(attrib={xlink.href: target})
         stack.push(element)
         if link_text:
