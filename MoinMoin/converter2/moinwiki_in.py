@@ -19,7 +19,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import config
 from MoinMoin.util.iri import Iri
-from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.util.tree import html, moin_page, xlink, xinclude
 
 from ._args import Arguments
 from ._args_wiki import parse as parse_arguments
@@ -833,30 +833,31 @@ class Converter(ConverterMacro):
         else:
             args = {}
         if object_item is not None:
-            if 'do' not in args:
-                # by default, we want the item's get url for transclusion of raw data:
-                args['do'] = 'get'
             query = url_encode(args, charset=config.charset, encode_keys=True)
             att = 'attachment:' # moin 1.9 needed this for an attached file
             if object_item.startswith(att):
                 object_item = '/' + object_item[len(att):] # now we have a subitem
             target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
             text = object_item
+
+            attrib = {xinclude.href: target}
+            element = xinclude.include(attrib=attrib)
+            stack.top_append(element)
         else:
             target = Iri(object_url)
             text = object_url
 
-        attrib = {xlink.href: target}
-        if object_text is not None:
-            attrib[moin_page.alt] = object_text
+            attrib = {xlink.href: target}
+            if object_text is not None:
+                attrib[moin_page.alt] = object_text
 
-        element = moin_page.object(attrib)
-        stack.push(element)
-        if object_text:
-            self.parse_inline(object_text, stack, self.inlinedesc_re)
-        else:
-            stack.top_append(text)
-        stack.pop()
+            element = moin_page.object(attrib)
+            stack.push(element)
+            if object_text:
+                self.parse_inline(object_text, stack, self.inlinedesc_re)
+            else:
+                stack.top_append(text)
+            stack.pop()
 
     table = block_table
 
