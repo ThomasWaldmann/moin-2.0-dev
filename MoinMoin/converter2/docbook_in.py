@@ -100,7 +100,8 @@ class Converter(object):
                        # TOC
                        'toc', 'tocdiv', 'tocentry',
                        # Other elements
-                       'info', 'bridgehead', 'arc'])
+                       'info', 'bridgehead', 'arc',
+                       ])
 
     # DocBook inline elements which does not have equivalence in the DOM
     # tree, but we keep the information using <span element='tag.name'>
@@ -131,15 +132,15 @@ class Converter(object):
 
     # DocBook can handle three kind of media: audio, image, video. Here
     # is an helper dictionary to process such of element.
-    media_tags = {'audioobject':(['wav', 'mp3', 'ogg'],
+    media_tags = {'audioobject': (['wav', 'mp3', 'ogg'],
                                  'audiodata',
                                  'audio/',
                                  ),
-                  'imageobject':(['gif', 'png', 'jpg', 'png'],
+                  'imageobject': (['gif', 'png', 'jpg', 'png'],
                                  'imagedata',
                                  'image/',
                                  ),
-                  'videoobject':(['ogg', 'avi', 'mp4'],
+                  'videoobject': (['ogg', 'avi', 'mp4'],
                                  'videodata',
                                  'video/',
                                  )}
@@ -323,7 +324,7 @@ class Converter(object):
                 if child.tag.name == 'caption':
                     caption = self.do_children(child, depth+1)[0]
                 if child.tag.name == 'textobject':
-                     text_object = child
+                    text_object = child
         return self.visit_data_element(element, depth, object_data,
             text_object, caption)
 
