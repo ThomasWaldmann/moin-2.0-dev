@@ -1051,7 +1051,7 @@ class CreoleWiki(MarkupItem):
 class HTML(Text):
     """
     HTML markup
-    
+
     Note: As we use html_in converter to convert this to DOM and later some
           output converterter to produce output format (e.g. html_out for html
           output), all(?) unsafe stuff will get lost.

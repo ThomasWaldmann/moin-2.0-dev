@@ -64,9 +64,9 @@ class ArchiveConverter(TableMixin):
     def list_contents(self, fileobj):
         """
         analyze archive we get as fileobj and return data for table rendering.
-        
+
         We return a list of rows, each row is a list of cells.
-        
+
         Usually each row is [size, datetime, name] for each archive member.
 
         In case of problems, it shall raise ArchiveException(error_msg).
