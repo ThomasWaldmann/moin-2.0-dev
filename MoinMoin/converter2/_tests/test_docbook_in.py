@@ -212,8 +212,8 @@ class TestConverter(Base):
              '/page/body/p/span[@element="abbrev"][text()="ABBREV"]'),
             # Test div for block element
             ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
-            # <page><body><div html:class="db_acknowledgements"><p>Text</p></div></body></page>
-            '/page/body/div[@html:class="db_acknowledgements"][p="Text"]'),
+            # <page><body><div html:class="db-acknowledgements"><p>Text</p></div></body></page>
+            '/page/body/div[@html:class="db-acknowledgements"][p="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -284,11 +284,11 @@ class TestConverter(Base):
             # Test for video object
             ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><p><object xlink:href="test.avi" type='video/' /></p></body></page>
-             '/page/body/p/div[@html:class="db_mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
+             '/page/body/p/div[@html:class="db-mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
             # Test for image object with different imagedata
             ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG" scale="70"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
-            # <page><body><div html:class="db_mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></body></page>
-            '/page/body/div[@html:class="db_mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/png"]'),
+            # <page><body><div html:class="db-mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></body></page>
+            '/page/body/div[@html:class="db-mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/png"]'),
         ]
         for i in data:
             yield (self.do, ) + i
