@@ -54,6 +54,12 @@ class Converter(object):
         return self.visit(element)
 
     def do_children(self, element):
+        """
+        Function to process the conversion of the children
+        of a given element.
+
+        Return a list of elements.
+        """
         new = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -69,7 +75,7 @@ class Converter(object):
 
     def new(self, tag, attrib, children):
         """
-        Return a new element in the DocBook tree
+        Return a new element in the DocBook tree.
         """
         if self.standard_attribute:
             attrib.update(self.standard_attribute)
@@ -92,8 +98,8 @@ class Converter(object):
 
     def get_standard_attributes(self, element):
         """
-        We will extract the standart attributes of the element, if any.
-        We save the result in our standard attribute.
+        We will extract the standard attributes of the element, if any.
+        We save the result in standard_attribute.
         """
         result = {}
         for key, value in element.attrib.iteritems():
@@ -107,7 +113,7 @@ class Converter(object):
 
     def visit(self, element):
         """
-        Function called at each element, to process it.
+        Function called at each element to process it.
 
         It will just determine the namespace of our element,
         then call a dedicated function to handle conversion
@@ -129,7 +135,7 @@ class Converter(object):
         belonging to the moin_page namespace.
 
         We will choose the most appropriate procedure to convert
-        the element according to his name
+        the element according to the tag name
         """
         # Save the standard attribute of the element
         self.get_standard_attributes(element)
@@ -153,7 +159,7 @@ class Converter(object):
         Link are defined using the XLINK namespace either
         for the DOM Tree and in DocBook specification, so
         the converter can just copy each xlink: attribute
-        into an <a> tag.
+        into an <link> tag.
         """
         attrib = {}
         for key, value in element.attrib.iteritems():
@@ -162,6 +168,12 @@ class Converter(object):
         return self.new_copy(docbook.link, element, attrib=attrib)
 
     def visit_moinpage_admonition(self, element):
+        """
+        There is 5 admonition in DocBook, which are also supported
+        in the DOM Tree.
+
+        For instance: <caution> --> <admonition type='caution'>
+        """
         tag = element.get(moin_page('type'))
         if tag in self.admonition_tags:
             # Our tag is valid for DocBook 5
@@ -171,14 +183,30 @@ class Converter(object):
             return self.do_children(element)
 
     def visit_moinpage_blockcode(self, element):
+        """
+        <blockcode>text</blockcode> --> <screen><![CDATA[text]]></scren>
+        """
         code_str = ''.join(element)
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
 
     def visit_moinpage_blockquote(self, element):
+        """
+        <blockquote>text<blockquote>
+          --> <blockquote>
+                <attribution>Uknown</attribution>
+                <simpara>text</text>
+              </blockquote>
+
+        <blockquote source="author">text</blockquote>
+          --> <blockquote>
+                <attribution>Uknown</attribution>
+                <simpara>text</text>
+              </blockquote>
+        """
         author = element.get(moin_page('source'))
         if not author:
-            # TODO: Internationalisation
+            # TODO: Internationalization
             author = "Unknown"
         attribution = self.new(docbook('attribution'), attrib={}, children=[author])
         children = self.do_children(element)
@@ -225,6 +253,7 @@ class Converter(object):
                 self.current_section = int(depth)
 
     def visit_moinpage_line_break(self, element):
+        # XXX: Not so good choice.
         return docbook.sbr()
 
     def visit_moinpage_list(self, element):
@@ -285,13 +314,17 @@ class Converter(object):
 
     def visit_moinpage_list_item_label(self, element):
         """
-        In our DOM Tree, <list-item-label> only occur for a
+        In our DOM Tree, <list-item-label> only occurs for a
         list of definition, so we can convert it as a term
         in the DocBook tree.
         """
         return self.new_copy(docbook.term, element, attrib={})
 
     def visit_moinpage_note(self, element):
+        """
+        <note note-class="footnote"><note-body>text</note-body></note>
+          --> <footnote><simpara>text</simpara></footnote>
+        """
         note_class = element.get(moin_page('note-class'))
         # We only convert footnote, we do not convert endnote yet
         if note_class != 'footnote':
@@ -312,6 +345,16 @@ class Converter(object):
         return self.new(docbook.footnote, attrib={}, children=[body])
 
     def visit_moinpage_object(self, element):
+        """
+        <object type='image/' xlink:href='uri'/>
+        --> <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="uri" />
+              </imageobject>
+            </inlinemediaobject>
+
+        Similar for video and audio object.
+        """
         href = element.get(xlink.href, None)
         attrib = {}
         mimetype = Type(_type=element.get(moin_page.type_, 'application/x-nonexistent'))
@@ -341,7 +384,7 @@ class Converter(object):
 
 
     def visit_moinpage_table(self, element):
-        # TODO : Attributes conversion
+        # TODO: Attributes conversion
         title = element.get(html('title'))
         if not title:
             #TODO: Translation
@@ -353,7 +396,7 @@ class Converter(object):
         return self.new(docbook.table, attrib={}, children=children)
 
     def visit_moinpage_table_body(self, element):
-        # TODO : Attributes conversion
+        # TODO: Attributes conversion
         return self.new_copy(docbook.tbody, element, attrib={})
 
     def visit_moinpage_table_cell(self, element):
@@ -368,15 +411,15 @@ class Converter(object):
         return self.new_copy(docbook.td, element, attrib=attrib)
 
     def visit_moinpage_table_header(self, element):
-        # TODO : Attributes conversion
+        # TODO: Attributes conversion
         return self.new_copy(docbook.thead, element, attrib={})
 
     def visit_moinpage_table_footer(self, element):
-        # TODO : Attributes conversion
+        # TODO: Attributes conversion
         return self.new_copy(docbook.tfoot, element, attrib={})
 
     def visit_moinpage_table_row(self, element):
-        #TODO : Attributes conversion
+        #TODO: Attributes conversion
         return self.new_copy(docbook.tr, element, attrib={})
 
     def handle_simple_list(self, docbook_tag, element, attrib):
@@ -429,7 +472,7 @@ class Converter(object):
         """
         If we have a title attribute for p, we return a para,
         with a <title> child.
-        Otherwise we return a <simpara>
+        Otherwise we return a <simpara>.
         """
         title_attr = element.get(html('title'))
         if title_attr:
@@ -451,8 +494,8 @@ class Converter(object):
         The span element is used in the DOM Tree to define some specific formatting.
         So each attribute will give different resulting tag.
 
-        TODO : Add support for text-decoration attribute
-        TODO : Add support for font-size attribute
+        TODO: Add support for text-decoration attribute
+        TODO: Add support for font-size attribute
         """
         # Check for the attributes of span
         for key, value in element.attrib.iteritems():
@@ -466,6 +509,9 @@ class Converter(object):
         return self.new_copy(docbook.phrase, element, attrib={})
 
     def visit_moinpage_strong(self, element):
+        """
+        <strong> --> <emphasis role=strong>
+        """
         attrib = {}
         key = docbook.role
         attrib[key] = "strong"
