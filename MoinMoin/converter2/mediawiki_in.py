@@ -773,3 +773,4 @@ class Converter(ConverterMacro):
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(Converter.factory, Type('x-moin/format;name=mediawiki'), type_moin_document)
+default_registry.register(Converter.factory, Type('text/x-mediawiki'), type_moin_document)
