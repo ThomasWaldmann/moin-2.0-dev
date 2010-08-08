@@ -323,8 +323,6 @@ class Converter(object):
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name == data_tag:
-                    #format = child.get(docbook.format)
-                    #format = format.lower()
                     object_data.append(child)
                 if child.tag.name == 'caption':
                     caption = self.do_children(child, depth+1)[0]
@@ -349,8 +347,28 @@ class Converter(object):
                 children = self.do_children(child, depth+1)[0]
                 return self.new(moin_page.p, attrib={},
                                 children=children)
-        #TODO: Determine with object_data to use
-        href = object_data[0].get('fileref')
+        # We try to determine the best object to show
+        object_to_show = None
+        for obj in object_data:
+            format = obj.get(docbook.format)
+            if format:
+                format = format.lower()
+                if format in prefered_format:
+                    object_to_show = obj
+                    break
+            else:
+                #XXX: Maybe we could add some verification over the
+                #     extension of the file
+                object_to_show = obj
+
+        # If we could not find any suitable object, we return
+        # the text replacement.
+        if not object_to_show:
+            children = self.do_children(child, depth+1)[0]
+            return self.new(moin_page.p, attrib={},
+                            children=children)
+
+        href = object_to_show.get('fileref')
         if not href:
             # We could probably try to use entityref,
             # but at this time we won't support it.
