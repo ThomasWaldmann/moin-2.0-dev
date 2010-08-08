@@ -731,6 +731,7 @@ class Converter(object):
         return cls()
 
     def __call__(self, input, arguments=None):
+        input = u'\n'.join(input)
         parser = MoinDirectives()
         docutils_tree = core.publish_doctree(source=input)
         visitor = NodeVisitor()
