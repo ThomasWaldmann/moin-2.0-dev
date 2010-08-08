@@ -181,3 +181,5 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+coverage_modules = ['MoinMoin.converter2.rst_out']

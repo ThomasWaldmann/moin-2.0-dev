@@ -152,3 +152,4 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
         out = self.conv(input, **args)
         assert self.serialize(out) == output
 
+coverage_modules = ['MoinMoin.converter2.rst_in']
