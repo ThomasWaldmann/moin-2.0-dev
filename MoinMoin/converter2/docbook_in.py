@@ -374,7 +374,12 @@ class Converter(object):
             # but at this time we won't support it.
             return
         attrib[xlink.href] = href
-        attrib[moin_page('type')] = mimetype
+        format = object_to_show.get('format')
+        if format:
+            format = format.lower()
+            attrib[moin_page('type')] = ''.join([mimetype, format])
+        else:
+            attrib[moin_page('type')] = mimetype
         return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_admonition(self, element, depth):
