@@ -110,6 +110,10 @@ Apple
 |test
 |}
 """, u'<page><body><table style="border-width: 1px;"><table-body><table-row><table-cell number-columns-spanned="2" style="border-style: solid; border-width: 1px">Orange\nApple</table-cell></table-row><table-row><table-cell number-rows-spanned="2">Bread</table-cell><table-cell>Pie</table-cell></table-row><table-row><table-cell>test</table-cell></table-row></table-body></table></body></page>'),
+("""{|
+|class="test"|text||style="border:1px"|test
+|}
+""", u'<page><body><table><table-body><table-row><table-cell class="test">text</table-cell><table-cell style="border:1px">test</table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -133,6 +137,7 @@ Apple
 
     def do(self, input, output, args={}, skip=None):
         out = self.conv(input.split(u'\n'), **args)
+        print self.serialize(out)
         assert self.serialize(out) == output
 
 coverage_modules = ['MoinMoin.converter2.mediawiki_in']
