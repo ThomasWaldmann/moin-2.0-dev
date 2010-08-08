@@ -958,7 +958,6 @@ class TransformableBitmapImage(RenderableBitmapImage):
 class Text(Binary):
     """ Any kind of text """
     supported_mimetypes = ['text/']
-    converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -1042,15 +1041,13 @@ class MarkupItem(Text):
 
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
-    supported_mimetypes = ['text/x-unidentified-wiki-format',
-                           'text/x.moin.wiki',
-                          ]  # XXX Improve mimetype handling
-    converter_mimetype = 'text/x.moin.wiki'
+    supported_mimetypes = ['text/x.moin.wiki']
 
 
 class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
+
 
 class HTML(Text):
     """ HTML markup """
@@ -1075,9 +1072,11 @@ class HTML(Text):
                                help=self.modify_help,
                               )
 
+
 class SafeHTML(HTML):
     """ Safe HTML markup - we'll filter dangerous stuff """
     supported_mimetypes = ['text/x-safe-html']
+
 
 class DocBook(Text):
     """ DocBook Document """
@@ -1129,6 +1128,7 @@ class DocBook(Text):
                          cache_timeout=10, # wiki data can change rapidly
                          add_etags=False, etag=None,
                          conditional=True)
+
 
 class TWikiDraw(TarMixin, Image):
     """
