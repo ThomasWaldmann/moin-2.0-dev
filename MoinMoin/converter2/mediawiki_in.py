@@ -657,68 +657,6 @@ class Converter(ConverterMacro):
         else:
             return
 
-    inline_object = r"""
-        (?P<object>
-            {{
-            \s*
-            (
-                (?P<object_url>
-                    [a-zA-Z0-9+.-]+
-                    ://
-                    [^|]+?
-                )
-                |
-                (?P<object_item> [^|]+? )
-            )
-            \s*
-            (
-                [|]
-                \s*
-                (?P<object_text> [^|]*? )
-                \s*
-            )?
-            (
-                [|]
-                \s*
-                (?P<object_args> .*? )
-                \s*
-            )?
-            }}
-        )
-    """
-
-    '''
-    def inline_object_repl(self, stack, object, object_url=None, object_item=None,
-                           object_text=None, object_args=None):
-        """Handles objects included in the page."""
-        if object_args:
-            args = parse_arguments(object_args).keyword # XXX needs different parsing
-        else:
-            args = {}
-        if object_item is not None:
-            if 'do' not in args:
-                # by default, we want the item's get url for transclusion of raw data:
-                args['do'] = 'get'
-            query = url_encode(args, charset=config.charset, encode_keys=True)
-            target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
-            text = object_item
-        else:
-            target = Iri(object_url)
-            text = object_url
-
-        attrib = {xlink.href: target}
-        if object_text is not None:
-            attrib[moin_page.alt] = object_text
-
-        element = moin_page.object(attrib)
-        stack.push(element)
-        if object_text:
-            self.parse_inline(object_text, stack, self.inlinedesc_re)
-        else:
-            stack.top_append(text)
-        stack.pop()
-    '''
-
     table = block_table
 
     tablerow = r"""
@@ -735,34 +673,6 @@ class Converter(ConverterMacro):
         (?P<text> .* )
         $
     """
-    '''
-    def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
-        element = moin_page.table_cell()
-        stack.push(element)
-
-        if len(cell_marker) / 2 > 1:
-            element.set(moin_page.number_columns_spanned, len(cell_marker) / 2)
-
-        if cell_args:
-            cell_args = _TableArguments()(cell_args)
-
-            for key, value in cell_args.keyword.iteritems():
-                attrib = element.attrib
-                if key.startswith('table'):
-                    key = key[5:]
-                    attrib = table.attrib
-                elif key.startswith('row'):
-                    key = key[3:]
-                    attrib = row.attrib
-
-                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
-                    attrib[moin_page(key)] = value
-
-        self.parse_inline(cell_text, stack, self.inline_re)
-
-        stack.pop_name('table-cell')
-    '''
-
     # Block elements
     block = (
         block_line,
@@ -783,7 +693,7 @@ class Converter(ConverterMacro):
         inline_breakline,
         #inline_macro,
         inline_nowiki,
-        inline_object,
+        #inline_object,
         inline_emphstrong,
         inline_comment,
         #inline_size,
