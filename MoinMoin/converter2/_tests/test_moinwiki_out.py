@@ -33,9 +33,7 @@ class Base(object):
 
     def do(self, input, output, args={}):
         out = self.conv(self.handle_input(input), **args)
-        x = self.handle_output(out)
-        print x
-        assert x == output
+        assert self.handle_output(out) == output
 
 
 class TestConverter(Base):
@@ -213,3 +211,4 @@ Its visibility gets toggled the same way.
         for i in data:
             yield (self.do, ) + i
 
+coverage_modules = ['MoinMoin.converter2.moinwiki_out']
