@@ -66,17 +66,18 @@ class ConverterExternOutput(ConverterBase):
         do = None
         separator = '&'
         result = []
-        for kv in query.split(separator):
-            if not kv:
-                continue
-            if '=' in kv:
-                k, v = kv.split('=', 1)
-            else:
-                k, v = kv, ''
-            if k == 'do':
-                do = v
-                continue # we remove do=xxx from qs
-            result.append(u'%s=%s' % (k, v))
+        if query:
+            for kv in query.split(separator):
+                if not kv:
+                    continue
+                if '=' in kv:
+                    k, v = kv.split('=', 1)
+                else:
+                    k, v = kv, ''
+                if k == 'do':
+                    do = v
+                    continue # we remove do=xxx from qs
+                result.append(u'%s=%s' % (k, v))
         if result:
             query = separator.join(result)
         else:
