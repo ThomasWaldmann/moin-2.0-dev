@@ -44,10 +44,10 @@ class Base(object):
 
     def handle_output(self, elem, **options):
         from cStringIO import StringIO
-        file = StringIO()
+        buffer = StringIO()
         tree = ET.ElementTree(elem)
-        tree.write(file, namespaces=self.output_namespaces, **options)
-        return self.output_re.sub(u'', file.getvalue())
+        tree.write(buffer, namespaces=self.output_namespaces, **options)
+        return self.output_re.sub(u'', buffer.getvalue())
 
     def do(self, input, xpath, args={}):
         out = self.conv(self.handle_input(input), **args)
