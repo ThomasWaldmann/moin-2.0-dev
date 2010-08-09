@@ -121,12 +121,12 @@ class Converter(object):
     # DocBook block element which does not have equivalence in the DOM
     # tree, but we keep the information using <div html:class='tag.name'>
     block_tags = set(['acknowledgements', 'appendix', 'article', 'book',
-                      'caption', 'cmdsynopsis', 'colophon', 'dedication',
-                      'epigraph', 'example', 'figure', 'equation',
-                      'mediaobject', 'screenshoot', 'sidebar',
-                      'simplesect', 'subtitle', 'task',
-                      'taskprerequisites', 'taskrelated', 'tasksummary'
-                      'title',
+                      'caption', 'chapter', 'cmdsynopsis', 'colophon',
+                      'dedication', 'epigraph', 'example', 'figure',
+                      'equation', 'mediaobject', 'part', 'partintro',
+                      'screenshoot', 'sidebar', 'simplesect',
+                      'subtitle', 'task', 'taskprerequisites',
+                      'taskrelated', 'tasksummary', 'title',
                      ])
 
     # DocBook has admonition as individual element, but the DOM Tree
