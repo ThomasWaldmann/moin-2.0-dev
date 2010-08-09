@@ -31,7 +31,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     # This puts the contents from the specified xml file (a serialized backend) into your
     # backend(s). You can remove this after the first request to your wiki or
     # from the beginning if you don't want to use this feature at all.
-    preloaded_xml = os.path.join(instance_dir, 'syspages.xml')
+    preloaded_xml = os.path.join(instance_dir, 'preloaded_items.xml')
 
     # This provides a simple default setup for your backend configuration.
     # 'fs:' indicates that you want to use the filesystem backend. You can also use
