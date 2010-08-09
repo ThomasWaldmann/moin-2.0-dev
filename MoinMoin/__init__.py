@@ -313,3 +313,5 @@ app.register_module(feed, url_prefix='/+feed')
 from MoinMoin.apps.misc import misc
 app.register_module(misc, url_prefix='/+misc')
 
+from MoinMoin.theme import theme
+app.register_module(theme)
