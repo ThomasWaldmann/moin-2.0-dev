@@ -156,8 +156,6 @@ class Converter(object):
                                  )}
 
     sect_re = re.compile('sect[1-5]')
-    section_depth = 0
-    heading_level = 0
 
     @classmethod
     def _factory(cls, input, output, request, **kw):
@@ -168,6 +166,11 @@ class Converter(object):
         Function called by the converter to process
         the conversion.
         """
+        # Initalize our attributes
+        self.section_depth = 0
+        self.heading_level = 0
+        self.is_section = False
+
         # We will create an element tree from the DocBook content
         # The content is given to the converter as a list of string,
         # line per line.
@@ -281,6 +284,7 @@ class Converter(object):
         """
         # Save the standard attribute of the element
         self.get_standard_attributes(element)
+
         # We have a section tag
         if self.sect_re.match(element.tag.name):
             result = []
@@ -397,15 +401,15 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_article(self, element, depth):
-        # TODO : Automatically add a ToC, need to see how to let
-        # the user specify it.
         attrib = {}
         if self.standard_attribute:
             attrib.update(self.standard_attribute)
             self.standard_attribute = {}
         children = []
-        children.append(ET.Element(moin_page('table-of-content')))
         children.extend(self.do_children(element, depth))
+        if self.is_section:
+            children.insert(0, self.new(moin_page('table-of-content'),
+                                    attrib={}, children={}))
         body = self.new(moin_page.body, attrib={}, children=children)
         return self.new(moin_page.page, attrib=attrib, children=[body])
 
@@ -612,6 +616,7 @@ class Converter(object):
         TODO : See if we can unify with recursive section below.
         TODO : Add div element, with specific id
         """
+        self.is_section = True
         title = ''
         for child in element:
             if isinstance(child, ET.Element):
@@ -637,6 +642,7 @@ class Converter(object):
         two attributes of the converter which indicate the
         current depth of the section and the current level heading.
         """
+        self.is_section = True
         if depth > self.section_depth:
             self.section_depth = self.section_depth + 1
             self.heading_level = self.heading_level + 1
