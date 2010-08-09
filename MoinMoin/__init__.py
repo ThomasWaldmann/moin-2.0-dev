@@ -47,7 +47,7 @@ from MoinMoin.util.clock import Clock
 from MoinMoin.web.contexts import AllContext
 from MoinMoin.web.request import Request
 from MoinMoin.storage.error import StorageError
-from MoinMoin.storage.serialization import unserialize
+from MoinMoin.storage.serialization import serialize, unserialize
 from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin import auth, config, i18n, user
 
@@ -80,15 +80,15 @@ def init_unprotected_backends(context):
     context.unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
 
     # This makes the first request after server restart potentially much slower...
-    preload_xml(context)
+    import_export_xml(context)
 
 
-def preload_xml(context):
+def import_export_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
-    xmlfile = context.cfg.preloaded_xml
+    xmlfile = context.cfg.load_xml
     if xmlfile:
-        context.cfg.preloaded_xml = None
+        context.cfg.load_xml = None
         tmp_backend = router.RouterBackend([('/', memory.MemoryBackend())],
                                            index_uri='sqlite://')
         unserialize(tmp_backend, xmlfile)
@@ -96,7 +96,7 @@ def preload_xml(context):
         item_count = 0
         for item in tmp_backend.iteritems():
             item_count += 1
-        logging.debug("preloaded xml into tmp_backend: %s, %d items" % (xmlfile, item_count))
+        logging.debug("loaded xml into tmp_backend: %s, %d items" % (xmlfile, item_count))
         try:
             # In case the server was restarted we cannot know whether
             # the xml data already exists in the target backend.
@@ -117,6 +117,12 @@ def preload_xml(context):
     # XXX wrong place / name - this is a generic preload functionality, not just for tests
     # To make some tests happy
     context.cfg.test_num_pages = item_count
+
+    xmlfile = context.cfg.save_xml
+    if xmlfile:
+        context.cfg.save_xml = None
+        backend = context.unprotected_storage
+        serialize(backend, xmlfile)
 
 
 def protect_backends(context):

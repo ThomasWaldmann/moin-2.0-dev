@@ -17,7 +17,6 @@ import re, shutil
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
 from MoinMoin.datastruct import WikiGroups, GroupDoesNotExistError
 from MoinMoin import Page, security
-from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
 from MoinMoin._tests import append_item, become_trusted, create_item, create_random_string_list, wikiconfig
 
