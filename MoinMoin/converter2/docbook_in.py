@@ -128,9 +128,10 @@ class Converter(object):
                       'caption', 'chapter', 'cmdsynopsis', 'colophon',
                       'dedication', 'epigraph', 'example', 'figure',
                       'equation', 'mediaobject', 'part', 'partintro',
-                      'screenshoot', 'sidebar', 'simplesect',
-                      'subtitle', 'task', 'taskprerequisites',
-                      'taskrelated', 'tasksummary', 'title',
+                      'screenshoot', 'set', 'setindex', 'sidebar',
+                      'simplesect', 'subtitle', 'task',
+                      'taskprerequisites', 'taskrelated',
+                      'tasksummary', 'title',
                      ])
 
     # DocBook has admonition as individual element, but the DOM Tree
