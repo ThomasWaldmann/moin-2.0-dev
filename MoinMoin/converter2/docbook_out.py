@@ -29,6 +29,15 @@ class Converter(object):
     # Only these admonitions are supported by DocBook 5
     admonition_tags = set(['caution', 'important', 'note', 'tip', 'warning'])
 
+    # DOM Tree element which can easily be converted into a DocBook
+    # element, without attributes.
+    simple_tags = {'code': docbook.literal,
+                   'emphasis': docbook.emphasis,
+                   'list-item': docbook.varlistentry,
+                   'list-item-label': docbook.term,
+                   'quote': docbook.quote,
+    }
+
     # We store the standard attributes of an element.
     # Once we have been able to put it into an output element,
     # we clear this attribute.
@@ -139,10 +148,16 @@ class Converter(object):
         """
         # Save the standard attribute of the element
         self.get_standard_attributes(element)
+
+        # Check if we can a simple conversion
+        if element.tag.name in self.simple_tags:
+            return self.visit_simple_tag(element)
+
         # Check that the tag is supported
         if element.tag.name in self.unsupported_tags:
             logging.warning("Unsupported tag : %s" % element.tag.name)
             return self.do_children(element)
+
         method_name = 'visit_moinpage_' + element.tag.name.replace('-', '_')
         method = getattr(self, method_name, None)
         if method:
@@ -212,12 +227,6 @@ class Converter(object):
         children = self.do_children(element)
         para = self.new(docbook('simpara'), attrib={}, children=children)
         return self.new(docbook('blockquote'), attrib={}, children=[attribution, para])
-
-    def visit_moinpage_code(self, element):
-        return self.new_copy(docbook.literal, element, attrib={})
-
-    def visit_moinpage_emphasis(self, element):
-        return self.new_copy(docbook.emphasis, element, attrib={})
 
     def visit_moinpage_h(self, element):
         """
@@ -289,14 +298,6 @@ class Converter(object):
         else:
             return self.new_copy(docbook.variablelist, element, attrib={})
 
-    def visit_moinpage_list_item(self, element):
-        """
-        We can be sure we will have a varlist entry, because the
-        two other kind of list we support will ignore <list-item>
-        tag.
-        """
-        return self.new_copy(docbook.varlistentry, element, attrib={})
-
     def visit_moinpage_list_item_body(self, element):
         items = []
         for child in element:
@@ -311,14 +312,6 @@ class Converter(object):
                 an_item = ET.Element(docbook.simpara, attrib={}, children=child)
                 items.append(an_item)
         return ET.Element(docbook.listitem, attrib={}, children=items)
-
-    def visit_moinpage_list_item_label(self, element):
-        """
-        In our DOM Tree, <list-item-label> only occurs for a
-        list of definition, so we can convert it as a term
-        in the DocBook tree.
-        """
-        return self.new_copy(docbook.term, element, attrib={})
 
     def visit_moinpage_note(self, element):
         """
@@ -486,9 +479,6 @@ class Converter(object):
         else:
             return self.new_copy(docbook.simpara, element, attrib={})
 
-    def visit_moinpage_quote(self, element):
-        return self.new_copy(docbook.quote, element, attrib={})
-
     def visit_moinpage_span(self, element):
         """
         The span element is used in the DOM Tree to define some specific formatting.
@@ -516,6 +506,10 @@ class Converter(object):
         key = docbook.role
         attrib[key] = "strong"
         return self.new_copy(docbook.emphasis, element, attrib=attrib)
+
+    def visit_simple_tag(self, element):
+        tag_to_return = self.simple_tags[element.tag.name]
+        return self.new_copy(tag_to_return, element, attrib={})
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
