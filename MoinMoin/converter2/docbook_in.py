@@ -632,7 +632,7 @@ class Converter(object):
                                 "loweralpha": "lower-alpha",
                                 "upperroman": "upper-roman",
                                 "lowerroman": "lower-roman"}
-        numeration = element.get(docbook.numeration)
+        numeration = element.get('numeration')
         if numeration in attribute_conversion:
             key = moin_page('list-style-type')
             attrib[key] = attribute_conversion[numeration]
@@ -825,7 +825,7 @@ class Converter(object):
         """
         See visit_qandaset_* method.
         """
-        default_label = element.get(docbook.defaultlabel)
+        default_label = element.get('defaultlabel')
         if default_label == 'number':
             return self.visit_qandaset_number(element, depth)
         elif default_label == 'qanda':
@@ -859,7 +859,7 @@ class Converter(object):
                               'registred': '&reg;',
                               'trade': '&trade;',
                              }
-        trademark_class = element.get(docbook('class'))
+        trademark_class = element.get('class')
         children = self.do_children(element, depth)
         if trademark_class in trademark_entities:
             print trademark_entities[trademark_class]
@@ -877,8 +877,8 @@ class Converter(object):
         <td> --> <table-cell>
         """
         attrib = {}
-        rowspan = element.get(docbook.rowspan)
-        colspan = element.get(docbook.colspan)
+        rowspan = element.get('rowspan')
+        colspan = element.get('colspan')
         if rowspan:
             attrib[moin_page('number-rows-spanned')] = rowspan
         if colspan:
