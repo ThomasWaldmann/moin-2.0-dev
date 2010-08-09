@@ -311,6 +311,8 @@ class Serializable(object):
 def create_value_object(v):
     if isinstance(v, tuple):
         return TupleValue(v)
+    elif isinstance(v, list):
+        return ListValue(v)
     elif isinstance(v, dict):
         return DictValue(v)
     elif isinstance(v, unicode):
@@ -435,6 +437,7 @@ class TupleValue(Serializable):
             'long': LongValue,
             'float': FloatValue,
             'complex': ComplexValue,
+            'list': ListValue,
             'tuple': TupleValue,
             'dict': DictValue,
         }
@@ -455,6 +458,14 @@ class TupleValue(Serializable):
         for e in self.value:
             e = create_value_object(e)
             e.serialize(xmlgen)
+
+
+class ListValue(TupleValue):
+    element_name = 'list'
+
+    def endElement(self):
+        value = list(self._data)
+        self._result_fn(value)
 
 
 class DictValue(Serializable):
