@@ -639,6 +639,12 @@ class Converter(object):
         return self.visit_simple_list(moin_page.list, attrib,
                                       element, depth)
 
+    def visit_docbook_sbr(self, element, depth):
+        """
+        <sbr /> --> <line-break />
+        """
+        return self.new(moin_page('line-break'), attrib={}, children={})
+
     def visit_docbook_sect(self, element, depth):
         """
         This is the function to convert a numbered section.
