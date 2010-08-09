@@ -101,6 +101,10 @@ class TestConverter(Base):
             ('<article><para>bla bla<anchor xml:id="point_1" />bla bla</para></article>',
             # <page><body><p>bla bla<span element="anchor" xml:id="point_1" />bla bla</p></body></page>
             '/page/body/p/span[@element="anchor"][@xml:id="point_1"]'),
+            # BOOK Document
+            ('<book><para>Test</para></book>',
+            # <page><body><p>Test</p></body></page>
+            '/page/body[p="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
