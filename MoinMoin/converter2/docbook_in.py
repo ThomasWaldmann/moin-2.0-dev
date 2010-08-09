@@ -39,14 +39,8 @@ class Converter(object):
         docbook.namespace: 'docbook'
     }
 
-    # We store the standard attributes of an element.
-    # Once we have been able to put it into an output element,
-    # we clear this attribute.
-    standard_attribute = {}
-
     # DocBook elements which are completely ignored by our converter
     # We even do not process children of these elements
-    # "Info" elements are the biggest part of this set
     ignored_tags = set([#Info elements
                        'abstract', 'artpagenums', 'annotation',
                        'artpagenums', 'author', 'authorgroup',
@@ -180,6 +174,7 @@ class Converter(object):
                    'varlistentry': moin_page('list-item'),
     }
 
+    # Regular expression to find section tag.
     sect_re = re.compile('sect[1-5]')
 
     @classmethod
@@ -196,21 +191,26 @@ class Converter(object):
         self.heading_level = 0
         self.is_section = False
 
+        # We store the standard attributes of an element.
+        # Once we have been able to put it into an output element,
+        # we clear this attribute.
+        self.standard_attribute = {}
+
         # We will create an element tree from the DocBook content
         # The content is given to the converter as a list of string,
         # line per line.
         # So we will concatenate all in one string.
-        docbook_str = u'\n'
-        docbook_str = docbook_str.join(content)
+        docbook_str = u'\n'.join(content)
         logging.debug(docbook_str)
-        # TODO : Check why the XML parser from Element Tree need ByteString
         try:
+            # XXX: The XML parser need bytestring.
             tree = ET.XML(docbook_str.encode('utf-8'))
         except ET.ParseError as detail:
             return self.error(str(detail))
 
         try:
             result = self.visit(tree, 0)
+        # XXX: Error handling could probably be better.
         except NameSpaceError as detail:
             return self.error(str(detail))
         return result
@@ -226,8 +226,8 @@ class Converter(object):
 
     def do_children(self, element, depth):
         """
-        Function to process the conversion of the child of
-        a given elements.
+        Function to process the conversion of the children of
+        a given element.
         """
         new_children = []
         depth = depth + 1
@@ -245,7 +245,7 @@ class Converter(object):
 
     def new(self, tag, attrib, children):
         """
-        Return a new element for the DocBook Tree
+        Return a new element for the DocBook Tree.
         """
         if self.standard_attribute:
             attrib.update(self.standard_attribute)
@@ -256,15 +256,15 @@ class Converter(object):
         """
         Function to copy one element to the DocBook Tree.
 
-        It first converts the child of the element,
-        and the element itself.
+        It first converts the children of the element,
+        and then the element itself.
         """
         children = self.do_children(element, depth)
         return self.new(tag, attrib, children)
 
     def get_standard_attributes(self, element):
         """
-        We will extract the standart attributes of the element, if any.
+        We will extract the standard attributes of the element, if any.
         We save the result in our standard attribute.
         """
         result = {}
@@ -294,17 +294,15 @@ class Converter(object):
             if method is not None:
                 return method(element, depth)
 
-            # We process children of the unknown element
-            return self.do_children(element, depth)
-        else:
-            raise NameSpaceError("Unknown namespace")
+        # We did not recognize the namespace, we stop the conversion.
+        raise NameSpaceError("Unknown namespace")
 
     def visit_docbook(self, element, depth):
         """
         Function called to handle the conversion of DocBook elements
-        to the Moin_page DOM Tree.
+        to the moin_page DOM Tree.
 
-        We will detect the name of the tag, and pick the correct method
+        We will detect the name of the tag, and pick up the correct method
         to convert it.
         """
         # Save the standard attribute of the element
@@ -317,14 +315,15 @@ class Converter(object):
             result.extend(self.do_children(element, depth))
             return result
 
-        # We have an inline element without equivalence
+        # We have an inline element without equivalence in the DOM Tree
         if element.tag.name in self.inline_tags:
             return self.visit_docbook_inline(element, depth)
 
+        # We have a block element without equivalence in the DOM Tree
         if element.tag.name in self.block_tags:
             return self.visit_docbook_block(element, depth)
 
-        # We have an element simple to convert
+        # We have an element easy to convert
         if element.tag.name in self.simple_tags:
             return self.visit_simple_tag(element, depth)
 
@@ -348,6 +347,7 @@ class Converter(object):
             return method(element, depth)
 
         # Otherwise we process children of the unknown element
+        # XXX: We should probably raise an error to have a strict converter
         return self.do_children(element, depth)
 
     def visit_data_object(self, element, depth):
@@ -423,6 +423,9 @@ class Converter(object):
         return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_admonition(self, element, depth):
+        """
+        <tag.name> --> <admonition tye='tag.name'>
+        """
         attrib = {}
         key = moin_page('type')
         attrib[key] = element.tag.name
@@ -430,12 +433,17 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_article(self, element, depth):
+        """
+        An article is converted as a page in our DOM Tree.
+        We also directly output the <body> element.
+        """
         attrib = {}
         if self.standard_attribute:
             attrib.update(self.standard_attribute)
             self.standard_attribute = {}
         children = []
         children.extend(self.do_children(element, depth))
+        # We show the table of content only if it is not empty
         if self.is_section:
             children.insert(0, self.new(moin_page('table-of-content'),
                                     attrib={}, children={}))
@@ -443,6 +451,12 @@ class Converter(object):
         return self.new(moin_page.page, attrib=attrib, children=[body])
 
     def visit_docbook_block(self, element, depth):
+        """
+        Convert a block element which does not have equivalence
+        in the DOM Tree.
+
+        <tag.name> --> <div html:class="db-tag.name">
+        """
         attrib = {}
         key = html('class')
         attrib[key] = ''.join(['db-', element.tag.name])
@@ -450,7 +464,17 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_blockquote(self, element, depth):
-        # TODO:Translate
+        """
+        <blockquote>
+          <attribution>Author</attribution>
+          Text
+        </blockquote>
+          --> <blockquote source="Author">Text</blockquote>
+
+        <blockquote>Text</blockquote>
+          --> <blockquote source="Unknow">Text</blockquote>
+        """
+        # TODO: Translate
         source = u"Unknow"
         children = []
         for child in element:
@@ -482,6 +506,9 @@ class Converter(object):
                              depth, attrib={})
 
     def visit_docbook_footnote(self, element, depth):
+        """
+        <footnote> --> <note note-class="footnote"><note-body>
+        """
         attrib = {}
         key = moin_page('note-class')
         attrib[key] = "footnote"
@@ -490,6 +517,13 @@ class Converter(object):
         return self.new(moin_page.note, attrib=attrib, children=[children])
 
     def visit_docbook_formalpara(self, element, depth):
+        """
+        <formalpara>
+          <title>Heading</title>
+          <para>Text</para>
+        </formalpara>
+          --> <p html:title="Heading">Text</p>
+        """
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name == 'title':
@@ -510,18 +544,27 @@ class Converter(object):
         return self.new(moin_page.p, attrib=attrib, children=children)
 
     def visit_docbook_informalequation(self, element, depth):
+        """
+        <informalequation> --> <div html:class="equation">
+        """
         attrib = {}
         attrib[html('class')] = 'db-equation'
         return self.new_copy(moin_page('div'), element,
                              depth, attrib=attrib)
 
     def visit_docbook_informalexample(self, element, depth):
+        """
+        <informalexample> --> <div html:class="example">
+        """
         attrib = {}
         attrib[html('class')] = 'db-example'
         return self.new_copy(moin_page('div'), element,
                              depth, attrib=attrib)
 
     def visit_docbook_informalfigure(self, element, depth):
+        """
+        <informalfigure> --> <div html:class="figure">
+        """
         attrib = {}
         attrib[html('class')] = 'db-figure'
         return self.new_copy(moin_page('div'), element,
@@ -539,12 +582,18 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_inlinequation(self, element, depth):
+        """
+        <inlinequation> --> <span element="equation">
+        """
         attrib = {}
         attrib[moin_page('element')] = 'equation'
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
     def visit_docbook_itemizedlist(self, element, depth):
+        """
+        <itemizedlist> --> <list item-label-generate="unordered">
+        """
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'unordered'
@@ -559,8 +608,8 @@ class Converter(object):
         One using the xlink namespace.
         The other one using linkend attribute.
 
-        The xlink attribute can directly be used in the <a> tag of the
-        DOM Tree.
+        The xlink attributes can directly be used in the <a> tag of the
+        DOM Tree since we support xlink.
 
         For the linkend attribute, we need to have a system supporting
         the anchors.
@@ -571,13 +620,11 @@ class Converter(object):
                 attrib[key] = value
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
-    def visit_docbook_literal(self, element, depth):
-        return self.new_copy(moin_page.code, element, depth, attrib={})
-
-    def visit_docbook_markup(self, element, depth):
-        return self.new_copy(moin_page.code, element, depth, attrib={})
-
     def visit_docbook_orderedlist(self, element, depth):
+        """
+        <orderedlist> --> <list item-label-generate="ordered">
+        See attribute_conversion for more details about the attributes.
+        """
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
@@ -594,18 +641,18 @@ class Converter(object):
 
     def visit_docbook_sect(self, element, depth):
         """
-        This is the function to convert numbered section.
+        This is the function to convert a numbered section.
 
-        Numbered section use tag like <sectN> where N is the number
+        Numbered section uses tag like <sectN> where N is the number
         of the section between 1 and 5.
 
-        The section are supposed to be correctly nested.
+        The sections are supposed to be correctly nested.
 
         We only convert a section to an heading if one of the children
         is a title element.
 
-        TODO : See if we can unify with recursive section below.
-        TODO : Add div element, with specific id
+        TODO: See if we can unify with recursive section below.
+        TODO: Add div element, with specific id
         """
         self.is_section = True
         title = ''
@@ -728,13 +775,19 @@ class Converter(object):
         return ET.Element(moin_page.list, attrib={}, children=new)
 
     def visit_docbook_simplelist(self, element, depth):
-        # TODO : Add support of the type attribute
+        """
+        <simplelist> --> <list item-label-generate="unordered">
+        """
+        # TODO: Add support of the type attribute
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'unordered'
         return self.visit_simple_list(moin_page.list, attrib, element, depth)
 
     def visit_docbook_subscript(self, element, depth):
+        """
+        <subscript> --> <span baseline-shift="sub">
+        """
         attrib = {}
         key = moin_page('baseline-shift')
         attrib[key] = 'sub'
@@ -742,6 +795,9 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_superscript(self, element, depth):
+        """
+        <superscript> --> <span baseline-shift="super">
+        """
         attrib = {}
         key = moin_page('baseline-shift')
         attrib[key] = 'super'
@@ -749,7 +805,10 @@ class Converter(object):
                              depth, attrib=attrib)
 
     def visit_docbook_procedure(self, element, depth):
-        # TODO : See to add Procedure text (if needed)
+        """
+        <procedure> --> <list item-label-generate="ordered">
+        """
+        # TODO: See to add Procedure text (if needed)
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
@@ -757,6 +816,9 @@ class Converter(object):
                                       element, depth)
 
     def visit_docbook_qandaset(self, element, depth):
+        """
+        See visit_qandaset_* method.
+        """
         default_label = element.get(docbook.defaultlabel)
         if default_label == 'number':
             return self.visit_qandaset_number(element, depth)
@@ -765,16 +827,10 @@ class Converter(object):
         else:
             return self.do_children(element, depth)
 
-    def visit_docbook_title(self, element, depth):
-        """
-        Later we should add support for all the different kind of title.
-
-        But currently, only the section title are supported, so we do
-        not want to process it.
-        """
-        pass
-
     def visit_docbook_table(self, element, depth):
+        """
+        <table> --> <table>
+        """
         # we should not have any strings in the child
         list_table_elements = []
         for child in element:
@@ -788,6 +844,11 @@ class Converter(object):
         return ET.Element(moin_page.table, attrib={}, children=list_table_elements)
 
     def visit_docbook_trademark(self, element, depth):
+        """
+        Depending of the trademark class, a specific entities is added
+        at the end of the string.
+        <trademark> --> <span element="trademark">
+        """
         trademark_entities = {'copyright': '&copy;',
                               'registred': '&reg;',
                               'trade': '&trade;',
@@ -806,6 +867,9 @@ class Converter(object):
         return self.new(moin_page.span, attrib=attrib, children=children)
 
     def visit_docbook_td(self, element, depth):
+        """
+        <td> --> <table-cell>
+        """
         attrib = {}
         rowspan = element.get(docbook.rowspan)
         colspan = element.get(docbook.colspan)
@@ -834,14 +898,13 @@ class Converter(object):
         attrib[key] = href
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
-    def visit_docbook_variablelist(self, element, depth):
-        return self.new_copy(moin_page.list, element, depth, attrib={})
-
-    def visit_docbook_varlistentry(self, element, depth):
-        return self.new_copy(moin_page('list-item'), element,
-                             depth, attrib={})
-
     def visit_qandaentry_number(self, element, depth):
+        """
+        <question>Q</question><answer>A</answer>
+          --> <list-item>
+                <list-item-body><p>Q</p><p>A</p></list-item-body>
+              </list-item>
+        """
         items = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -859,6 +922,10 @@ class Converter(object):
         return ET.Element(moin_page('list-item'), attrib={}, children=[item_body])
 
     def visit_qandaset_number(self, element, depth):
+        """
+        <qandaset defaultlabel="number">
+          --> <list item-label-generate='ordered'>
+        """
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
@@ -879,6 +946,17 @@ class Converter(object):
         return ET.Element(moin_page('list'), attrib=attrib, children=items)
 
     def visit_qandaentry_qanda(self, element, depth):
+        """
+        <question>Q body</question><answer>A Body</answer>
+        --> <list-item>
+              <list-item-label>Q:</list-item-label>
+              <list-item-body>Q Body</list-item-body>
+            </list-item>
+            <list-item>
+              <list-item-label>A:</list-item-label>
+              <list-item-body>A Body</list-item-body>
+            </list-item>
+        """
         items = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -905,6 +983,9 @@ class Converter(object):
         return items
 
     def visit_qandaset_qanda(self, element, depth):
+        """
+        <qandaset defaultlabel="qanda"> --> <list>
+        """
         items = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -923,6 +1004,12 @@ class Converter(object):
         return ET.Element(moin_page('list'), attrib={}, children=items)
 
     def visit_simple_list(self, moin_page_tag, attrib, element, depth):
+        """
+        There is different list element in DocBook with different
+        semantic meaning, but with an unique result in the DOM Tree.
+
+        Here we handle the conversion of such of list.
+        """
         list_item_tags = set(['listitem', 'step', 'member'])
         items = []
         for child in element:
@@ -946,6 +1033,11 @@ class Converter(object):
         return ET.Element(moin_page.list, attrib=attrib, children=items)
 
     def visit_simple_tag(self, element, depth):
+        """
+        Some docbook tags can be converted directly to an equivalent
+        DOM Tree element. We retrieve the equivalent tag from the
+        simple_tags dictionnary defined at the begining of this file.
+        """
         tag_to_return = self.simple_tags[element.tag.name]
         return self.new_copy(tag_to_return, element, depth, attrib={})
 
