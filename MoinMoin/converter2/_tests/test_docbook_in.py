@@ -376,7 +376,7 @@ class TestConverter(Base):
 
     def test_error(self):
         data = [
-            # Error : Xml not correctly formatted
+            # Error: Xml not correctly formatted
             ('<article><para>Text</para>',
              '/page/body/part/error'),
             # Error: Root Element is not correct
@@ -388,7 +388,7 @@ class TestConverter(Base):
 
     def test_namespace(self):
         data = [
-            # Error : Missing namespace
+            # Error: Missing namespace
             ('<article><para>Text</para></article>',
              '/page/body/part/error'),
         ]
