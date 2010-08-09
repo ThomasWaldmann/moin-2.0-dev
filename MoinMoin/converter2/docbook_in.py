@@ -120,7 +120,7 @@ class Converter(object):
 
     # DocBook block element which does not have equivalence in the DOM
     # tree, but we keep the information using <div html:class='tag.name'>
-    block_tags = set(['acknowledgements', 'appendix',
+    block_tags = set(['acknowledgements', 'appendix', 'article', 'book',
                       'caption', 'cmdsynopsis', 'colophon', 'dedication',
                       'epigraph', 'example', 'figure', 'equation',
                       'mediaobject', 'screenshoot', 'sidebar',
@@ -174,6 +174,15 @@ class Converter(object):
                    'varlistentry': moin_page('list-item'),
     }
 
+    # Other block elements which can be root element.
+    root_tags = set(['blockquote', 'formalpara', 'informalequation',
+                     'informalexample', 'informalfigure',
+                     'informalfigure', 'orderedlist', 'sect1', 'sect2',
+                     'sect3', 'sect4', 'sect5', 'section',
+                     'segmentedlist', 'simplelist', 'procedure',
+                     'qandaset',
+    ])
+
     # Regular expression to find section tag.
     sect_re = re.compile('sect[1-5]')
 
@@ -209,7 +218,11 @@ class Converter(object):
             return self.error(str(detail))
 
         try:
-            result = self.visit(tree, 0)
+            if tree.tag.name in self.block_tags:
+                return self.start_dom_tree(tree, 0)
+            else:
+                # XXX: Internationalization
+                return self.error("The root element of the docbook document is not supported by the converter")
         # XXX: Error handling could probably be better.
         except NameSpaceError as detail:
             return self.error(str(detail))
@@ -431,24 +444,6 @@ class Converter(object):
         attrib[key] = element.tag.name
         return self.new_copy(moin_page.admonition, element,
                              depth, attrib=attrib)
-
-    def visit_docbook_article(self, element, depth):
-        """
-        An article is converted as a page in our DOM Tree.
-        We also directly output the <body> element.
-        """
-        attrib = {}
-        if self.standard_attribute:
-            attrib.update(self.standard_attribute)
-            self.standard_attribute = {}
-        children = []
-        children.extend(self.do_children(element, depth))
-        # We show the table of content only if it is not empty
-        if self.is_section:
-            children.insert(0, self.new(moin_page('table-of-content'),
-                                    attrib={}, children={}))
-        body = self.new(moin_page.body, attrib={}, children=children)
-        return self.new(moin_page.page, attrib=attrib, children=[body])
 
     def visit_docbook_block(self, element, depth):
         """
@@ -1046,6 +1041,25 @@ class Converter(object):
         """
         tag_to_return = self.simple_tags[element.tag.name]
         return self.new_copy(tag_to_return, element, depth, attrib={})
+
+    def start_dom_tree(self, element, depth):
+        """
+        Return the root element of the DOM tree, with all the children.
+
+        We also add a <table-of-content> element if needed.
+        """
+        attrib = {}
+        if self.standard_attribute:
+            attrib.update(self.standard_attribute)
+            self.standard_attribute = {}
+        children = []
+        children.extend(self.do_children(element, depth))
+        # We show the table of content only if it is not empty
+        if self.is_section:
+            children.insert(0, self.new(moin_page('table-of-content'),
+                                    attrib={}, children={}))
+        body = self.new(moin_page.body, attrib={}, children=children)
+        return self.new(moin_page.page, attrib=attrib, children=[body])
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
