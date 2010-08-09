@@ -222,6 +222,10 @@ class TestConverter(Base):
             ('<article><informalexample><para>example</para></informalexample></article>',
             # <page><body><div html:class="db-example"><p>example</p></div></body></page>
              '/page/body/div[@html:class="db-example"][p="example"]'),
+            # Test for <sbr />
+            ('<article><cmdsynopsis><para>Line 1<sbr />Line 2</para></cmdsynopsis></article>',
+            # <page><body><div html:class="db-cmdsynopsis"><p>Line 1<line-break />Line 2</p></div></body></page>
+            '/page/body/div[@html:class="db-cmdsynopsis"]/p/line-break'),
         ]
         for i in data:
             yield (self.do, ) + i
