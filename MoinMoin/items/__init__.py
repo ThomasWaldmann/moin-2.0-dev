@@ -1080,7 +1080,7 @@ class HTML(Text):
                               )
 
 
-class DocBook(Text):
+class DocBook(MarkupItem):
     """ DocBook Document """
     supported_mimetypes = ['application/docbook+xml']
 
