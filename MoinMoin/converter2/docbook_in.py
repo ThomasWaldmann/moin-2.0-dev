@@ -1053,7 +1053,7 @@ class Converter(object):
             attrib.update(self.standard_attribute)
             self.standard_attribute = {}
         children = []
-        children.extend(self.do_children(element, depth))
+        children.append(self.visit(element, depth))
         # We show the table of content only if it is not empty
         if self.is_section:
             children.insert(0, self.new(moin_page('table-of-content'),
