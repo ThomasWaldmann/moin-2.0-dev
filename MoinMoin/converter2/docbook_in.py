@@ -157,6 +157,7 @@ class Converter(object):
     # DocBook tags which can be convert directly to a DOM Tree element
     simple_tags = {'code': moin_page.code,
                    'computeroutput': moin_page.code,
+                   'entry': moin_page('table-cell'),
                    'glossdef': moin_page('list-item-body'),
                    'glossentry': moin_page('list-item'),
                    'glosslist': moin_page('list'),
@@ -167,6 +168,7 @@ class Converter(object):
                    'phrase': moin_page.span,
                    'programlisting': moin_page.blockcode,
                    'quote': moin_page.quote,
+                   'row': moin_page('table-row'),
                    'screen': moin_page.blockcode,
                    'simpara': moin_page.p,
                    'term': moin_page('list-item-label'),
@@ -504,6 +506,15 @@ class Converter(object):
                                      depth, attrib={})
         return self.new_copy(moin_page.emphasis, element,
                              depth, attrib={})
+
+    def visit_docbook_entrytbl(self, element, depth):
+        """
+        Return a table within a table-cell.
+        """
+        table_element = self.new_copy(moin_page.table, element,
+                                      depth, attrib={})
+        return self.new(moin_page('table-cell'),
+                        attrib={}, children=[table_element])
 
     def visit_docbook_footnote(self, element, depth):
         """
