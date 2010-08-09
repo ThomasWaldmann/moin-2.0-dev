@@ -94,6 +94,10 @@ class Converter(object):
                        'refsection', 'refsynopsisdiv'
                        # TOC
                        'toc', 'tocdiv', 'tocentry',
+                       # Index elements
+                       'index', 'indexdiv', 'indexentry', 'indexterm',
+                       'primary', 'primaryie', 'secondary',
+                       'secondaryie', 'see', 'seealso',
                        # Other elements
                        'info', 'bridgehead', 'arc', 'titleabbrev',
                        ])
