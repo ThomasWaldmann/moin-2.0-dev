@@ -196,6 +196,10 @@ class TestConverter(Base):
             ('<article><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></article>',
             # <page><body><div html:class="article"><table><table-body><table-row><table-cell number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></div></body></page>
              '/page/body/div/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
+            # Simple db.cals.table
+            ('<article><table xml:id="ex.calstable"><tgroup cols="2"><thead><row><entry>a1</entry><entry>a2</entry></row></thead><tfoot><row><entry>f1</entry><entry>f2</entry></row></tfoot><tbody><row><entry>b1</entry><entry>b2</entry></row></tbody></tgroup></table></article>',
+            # <page><body><div html:class="article"><table><table-header><table-row><table-cell>a1</table-cell><table-cell>a2</table-cell></table-row></table-header><table-footer><table-row><table-cell>f1</table-cell><table-cell>f2</table-cell></table-row></table-footer><table-body><table-row><table-cell>b1</table-row><table-cell>b2</table-row></table-cell></table></div></body></page>
+             '/page/body/div/table[./table-header/table-row[table-cell="a1"][table-cell="a2"]][./table-footer/table-row[table-cell="f1"][table-cell="f2"]][./table-body/table-row[table-cell="b1"][table-cell="b2"]]'),
         ]
         for i in data:
             yield (self.do, ) + i
