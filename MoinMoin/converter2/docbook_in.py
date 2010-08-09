@@ -155,6 +155,31 @@ class Converter(object):
                                  'video/',
                                  )}
 
+    # DocBook tags which can be convert directly to a DOM Tree element
+    simple_tags = {'code': moin_page.code,
+                   'computeroutput': moin_page.code,
+                   'glossdef': moin_page('list-item-body'),
+                   'glossentry': moin_page('list-item'),
+                   'glosslist': moin_page('list'),
+                   'glossterm': moin_page('list-item-label'),
+                   'literal': moin_page.code,
+                   'markup': moin_page.code,
+                   'para': moin_page.p,
+                   'phrase': moin_page.span,
+                   'programlisting': moin_page.blockcode,
+                   'quote': moin_page.quote,
+                   'screen': moin_page.blockcode,
+                   'simpara': moin_page.p,
+                   'term': moin_page('list-item-label'),
+                   'listitem': moin_page('list-item-body'),
+                   'thead': moin_page('table-header'),
+                   'tfoot': moin_page('table-footer'),
+                   'tbody': moin_page('table-body'),
+                   'tr': moin_page('table-row'),
+                   'variablelist': moin_page('list'),
+                   'varlistentry': moin_page('list-item'),
+    }
+
     sect_re = re.compile('sect[1-5]')
 
     @classmethod
@@ -299,6 +324,10 @@ class Converter(object):
         if element.tag.name in self.block_tags:
             return self.visit_docbook_block(element, depth)
 
+        # We have an element simple to convert
+        if element.tag.name in self.simple_tags:
+            return self.visit_simple_tag(element, depth)
+
         # We have a media element
         if element.tag.name in self.media_tags:
             return self.visit_data_object(element, depth)
@@ -436,12 +465,6 @@ class Converter(object):
         attrib[moin_page('source')] = source[0]
         return self.new(moin_page.blockquote, attrib=attrib, children=children)
 
-    def visit_docbook_code(self, element, depth):
-        return self.new_copy(moin_page.code, element, depth, attrib={})
-
-    def visit_docbook_computeroutput(self, element, depth):
-        return self.new_copy(moin_page.code, element, depth, attrib={})
-
     def visit_docbook_emphasis(self, element, depth):
         """
         emphasis element, is the only way to apply some style
@@ -485,23 +508,6 @@ class Converter(object):
         attrib = {}
         attrib[html('title')] = title_element[0]
         return self.new(moin_page.p, attrib=attrib, children=children)
-
-
-    def visit_docbook_glossdef(self, element, depth):
-        return self.new_copy(moin_page('list-item-body'),
-                             element, depth, attrib={})
-
-    def visit_docbook_glossentry(self, element, depth):
-        return self.new_copy(moin_page('list-item'),
-                             element, depth, attrib={})
-
-    def visit_docbook_glosslist(self, element, depth):
-        return self.new_copy(moin_page.list, element,
-                             depth, attrib={})
-
-    def visit_docbook_glossterm(self, element, depth):
-        return self.new_copy(moin_page('list-item-label'),
-                             element, depth, attrib={})
 
     def visit_docbook_informalequation(self, element, depth):
         attrib = {}
@@ -585,21 +591,6 @@ class Converter(object):
             attrib[key] = attribute_conversion[numeration]
         return self.visit_simple_list(moin_page.list, attrib,
                                       element, depth)
-
-    def visit_docbook_para(self, element, depth):
-        return self.new_copy(moin_page.p, element, depth, attrib={})
-
-    def visit_docbook_phrase(self, element, depth):
-        return self.new_copy(moin_page.span, element, depth, attrib={})
-
-    def visit_docbook_programlisting(self, element, depth):
-        return self.new_copy(moin_page.blockcode, element, depth, attrib={})
-
-    def visit_docbook_quote(self, element, depth):
-        return self.new_copy(moin_page.quote, element, depth, attrib={})
-
-    def visit_docbook_screen(self, element, depth):
-        return self.new_copy(moin_page.blockcode, element, depth, attrib={})
 
     def visit_docbook_sect(self, element, depth):
         """
@@ -736,10 +727,6 @@ class Converter(object):
                 new.append(child)
         return ET.Element(moin_page.list, attrib={}, children=new)
 
-    def visit_docbook_simpara(self, element, depth):
-        return self.new_copy(moin_page.p, element,
-                             depth, attrib={})
-
     def visit_docbook_simplelist(self, element, depth):
         # TODO : Add support of the type attribute
         attrib = {}
@@ -760,15 +747,6 @@ class Converter(object):
         attrib[key] = 'super'
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
-
-    def visit_docbook_term(self, element, depth):
-        return self.new_copy(moin_page('list-item-label'),
-                             element, depth, attrib={})
-
-    def visit_docbook_listitem(self, element, depth):
-        # NB : We need to be sure it is only called for a variablelist
-        return self.new_copy(moin_page('list-item-body'),
-                             element, depth, attrib={})
 
     def visit_docbook_procedure(self, element, depth):
         # TODO : See to add Procedure text (if needed)
@@ -808,22 +786,6 @@ class Converter(object):
                     r = (r, )
                 list_table_elements.extend(r)
         return ET.Element(moin_page.table, attrib={}, children=list_table_elements)
-
-    def visit_docbook_thead(self, element, depth):
-        return self.new_copy(moin_page.table_header,
-                             element, depth, attrib={})
-
-    def visit_docbook_tfoot(self, element, depth):
-        return self.new_copy(moin_page.table_footer,
-                             element, depth, attrib={})
-
-    def visit_docbook_tbody(self, element, depth):
-        return self.new_copy(moin_page.table_body,
-                             element, depth, attrib={})
-
-    def visit_docbook_tr(self, element, depth):
-        return self.new_copy(moin_page.table_row,
-                             element, depth, attrib={})
 
     def visit_docbook_trademark(self, element, depth):
         trademark_entities = {'copyright': '&copy;',
@@ -982,6 +944,10 @@ class Converter(object):
             else:
                 items.append(child)
         return ET.Element(moin_page.list, attrib=attrib, children=items)
+
+    def visit_simple_tag(self, element, depth):
+        tag_to_return = self.simple_tags[element.tag.name]
+        return self.new_copy(tag_to_return, element, depth, attrib={})
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
