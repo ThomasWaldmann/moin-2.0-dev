@@ -200,6 +200,10 @@ class TestConverter(Base):
             ('<article><table xml:id="ex.calstable"><tgroup cols="2"><thead><row><entry>a1</entry><entry>a2</entry></row></thead><tfoot><row><entry>f1</entry><entry>f2</entry></row></tfoot><tbody><row><entry>b1</entry><entry>b2</entry></row></tbody></tgroup></table></article>',
             # <page><body><div html:class="article"><table><table-header><table-row><table-cell>a1</table-cell><table-cell>a2</table-cell></table-row></table-header><table-footer><table-row><table-cell>f1</table-cell><table-cell>f2</table-cell></table-row></table-footer><table-body><table-row><table-cell>b1</table-row><table-cell>b2</table-row></table-cell></table></div></body></page>
              '/page/body/div/table[./table-header/table-row[table-cell="a1"][table-cell="a2"]][./table-footer/table-row[table-cell="f1"][table-cell="f2"]][./table-body/table-row[table-cell="b1"][table-cell="b2"]]'),
+            # db.cals.table with entry table.
+            ('<article><table xml:id="ex.calstable"><tgroup cols="1"><thead><row><entry>a1</entry></row></thead><tfoot><row><entry>f1</entry></row></tfoot><tbody><row><entrytbl cols="1"><tbody><row><entry>s1</entry></row></tbody></entrytbl></row></tbody></tgroup></table></article>',
+            # <page><body><div html:class="article"><table><table-header><table-row><table-cell>a1</table-cell></table-row></table-header><table-footer><table-row><table-cell>f1</table-cell></table-row></table-footer><table-body><table-row><table-cell><table><table-body><table-row><table-cell>s1</table-cell></table-row></table-body></table></table-row></table-cell></table></div></body></page>
+             '/page/body/div/table[./table-header/table-row[table-cell="a1"]][./table-footer/table-row[table-cell="f1"]][./table-body/table-row[table-cell/table/table-body/table-row[table-cell="s1"]]]'),
         ]
         for i in data:
             yield (self.do, ) + i
