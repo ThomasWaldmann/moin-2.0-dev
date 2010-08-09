@@ -379,6 +379,9 @@ class TestConverter(Base):
             # Error : Xml not correctly formatted
             ('<article><para>Text</para>',
              '/page/body/part/error'),
+            # Error: Root Element is not correct
+            ('<link xlink:href="uri">link</link>',
+             '/page/body/part/error'),
         ]
         for i in data:
             yield (self.do, ) + i
