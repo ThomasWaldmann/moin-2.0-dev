@@ -23,8 +23,7 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter2.docbook_in import *
 
 class Base(object):
-    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
-        docbook.namespace,
+    input_namespaces = ns_all = u'xmlns="%s" xmlns:xlink="%s"' % (
         docbook.namespace,
         xlink.namespace,
     )
@@ -135,20 +134,20 @@ class TestConverter(Base):
             # <page><body><list item-label-generate="ordered"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with upperalpha numeration --> ordered list with upper-alpha list-style-type
-            ('<article><orderedlist db:numeration="upperalpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            ('<article><orderedlist numeration="upperalpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
 
             # <page><body><list item-label-generage="ordered" list-style-type="upper-alpha"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with loweralpha numeration --> ordered list with lower-alpha list-style-type
-            ('<article><orderedlist db:numeration="loweralpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            ('<article><orderedlist numeration="loweralpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
             # <page><body><list item-label-generage="ordered" list-style-type="lower-alpha"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with upperroman numeration --> ordered list with upper-roman list-style-type
-            ('<article><orderedlist db:numeration="upperroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            ('<article><orderedlist numeration="upperroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
             # <page><body><list item-label-generage="ordered" list-style-type="upper-roman"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with lowerroman numeration --> ordered list with lower-roman list-style-type
-            ('<article><orderedlist db:numeration="lowerroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            ('<article><orderedlist numeration="lowerroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
             # <page><body><list item-label-generage="ordered" list-style-type="lower-roman"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # VARIABLE LIST --> list
@@ -171,11 +170,11 @@ class TestConverter(Base):
             # <page><body><list item-label-generate="unordered"><list-item><list-item-body>Unordered Item 1</list-item-body></list-item><list-item><list-item-body>Unordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="unordered"][list-item[1]/list-item-body[text()="Item 1"]][list-item[2]/list-item-body[text()="Item 2"]]'),
             # Q and A set with defaultlabel = number --> ordered list
-            ("<article><qandaset db:defaultlabel='number'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+            ("<article><qandaset defaultlabel='number'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
             # <page><body><list item-label-generate="ordered"><list-item><list-item-body><p>Question1</p><p>Answer 1</p></list-item-body></list-item><list-item><list-item-body><p>Question 2</p><p>Answer 2</p></list-item-body></list-item></body></page>
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[p[1][text()="Question 1"]][p[2][text()="Answer 1"]]][list-item[2]/list-item-body[p[1][text()="Question 2"]][p[2][text()="Answer 2"]]]'),
             # Q and A set with defaultlabel = qanda --> definition list, with Q: and A: for the label
-            ("<article><qandaset db:defaultlabel='qanda'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+            ("<article><qandaset defaultlabel='qanda'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
             # <page><body><list><list-item><list-item-label>Q: </list-item-label><list-item-body>Question 1</list-item-body></list-item><list-item><list-item-label>A: </list-item-label><list-item-body>Answer 1</list-item-body></list-item><list-item><list-item-label>Q: </list-item-label><list-item-body>Question 2</list-item-body></list-item><list-item><list-item-label>A: </list-item-label><list-item-body>Answer 2</list-item-body></list-item>
               '/page/body/list[list-item[1][list-item-label="Q:"][list-item-body="Question 1"]][list-item[2][list-item-label="A:"][list-item-body="Answer 1"]][list-item[3][list-item-label="Q:"][list-item-body="Question 2"]][list-item[4][list-item-label="A:"][list-item-body="Answer 2"]]'),
         ]
@@ -187,10 +186,10 @@ class TestConverter(Base):
             ('<article><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></article>',
             # <page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-row></table-cell></table></body></page>
              '/page/body/table[./table-header/table-row[table-cell="Header"]][./table-footer/table-row[table-cell="Footer"]][./table-body/table-row[table-cell="Cell"]]'),
-            ('<article><table><tbody><tr><td db:colspan="2">Cell</td></tr></tbody></table></article>',
+            ('<article><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></article>',
             # <page><body><table><table-body><table-row><table-cell number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-columns-spanned="2"]'),
-            ('<article><table><tbody><tr><td db:rowspan="2">Cell</td></tr></tbody></table></article>',
+            ('<article><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></article>',
             # <page><body><table><table-body><table-row><table-cell number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
         ]
@@ -311,7 +310,7 @@ class TestConverter(Base):
             # <page><body><p>text<emphasis>emphasis</emphasis></p></body></page>
              '/page/body/p[text()="text"][emphasis="emphasis"]'),
             # EMPHASIS role='strong' --> STRONG
-            ('<article><para>text<emphasis db:role="strong">strong</emphasis></para></article>',
+            ('<article><para>text<emphasis role="strong">strong</emphasis></para></article>',
             # <page><body><p>text<strong>strong</strong></p></body></page>
              '/page/body/p[text()="text"][strong="strong"]'),
             # SUBSCRIPT --> SPAN baseline-shift = 'sub'
@@ -358,10 +357,10 @@ class TestConverter(Base):
 
     def test_trademark(self):
         data = [
-            ('<article><para><trademark db:class="copyright">MoinMoin</trademark></para></article>',
+            ('<article><para><trademark class="copyright">MoinMoin</trademark></para></article>',
              # <page><body><p><span element="trademark">MoinMoin&copy;</span></p></body></page>
              '/page/body/p/span[@element="trademark"][text()="MoinMoin&copy;"]'),
-            ('<article><para><trademark db:class="service">MoinMoin</trademark></para></article>',
+            ('<article><para><trademark class="service">MoinMoin</trademark></para></article>',
              # <page><body><p><span element="trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></body></page>
              '/page/body/p/span[@element="trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
             ('<article><para><trademark>MoinMoin</trademark></para></article>',
