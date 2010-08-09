@@ -188,6 +188,8 @@ class Item(object):
             raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
         include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
+        macro_conv = reg.get(type_moin_document, type_moin_document,
+                macros='expandall', request=request)
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
         smiley_conv = reg.get(type_moin_document, type_moin_document,
@@ -203,6 +205,7 @@ class Item(object):
         # moin_page.object, for a tar item, we get a moin_page.table):
         doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
+        doc = macro_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
         return doc
@@ -485,6 +488,8 @@ class NonExistent(Item):
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
             ('text/x.moin.creole', 'Wiki (Creole)'),
+            ('text/x-mediawiki', 'Wiki (MediaWiki)'),
+            ('text/x-rst', 'ReST'),
             ('application/docbook+xml', 'DocBook'),
             ('text/html', 'HTML'),
         ]),
@@ -1046,6 +1051,16 @@ class MoinWiki(MarkupItem):
 class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
+
+
+class MediaWiki(MarkupItem):
+    """ MediaWiki markup """
+    supported_mimetypes = ['text/x-mediawiki']
+
+
+class ReST(MarkupItem):
+    """ ReStructured Text markup """
+    supported_mimetypes = ['text/x-rst']
 
 
 class HTML(Text):

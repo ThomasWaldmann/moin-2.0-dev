@@ -99,9 +99,9 @@ class TestConverter(object):
 
     def serialize(self, elem, **options):
         from StringIO import StringIO
-        file = StringIO()
-        elem.write(file.write, namespaces=self.namespaces, **options)
-        return self.output_re.sub(u'', file.getvalue())
+        buffer = StringIO()
+        elem.write(buffer.write, namespaces=self.namespaces, **options)
+        return self.output_re.sub(u'', buffer.getvalue())
 
     def _do(self, name, args, text, context_block, output):
         result = self.conv.macro(name, args, text, context_block)
