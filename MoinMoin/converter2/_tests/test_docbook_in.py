@@ -23,11 +23,10 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter2.docbook_in import *
 
 class Base(object):
-    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (
+    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
         docbook.namespace,
         docbook.namespace,
         xlink.namespace,
-        xml.namespace,
     )
     output_namespaces = {
         moin_page.namespace: u'',
