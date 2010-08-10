@@ -681,6 +681,8 @@ class Converter(object):
                 name = self.docbook_namespace.get(uri, None)
                 if name == 'docbook' and child.tag.name == 'title':
                     title = child
+                    # Remove the title element to avoid double conversion
+                    element.remove(child)
         heading_level = element.tag.name[4]
         key = moin_page('outline-level')
         attrib = {}
@@ -715,6 +717,8 @@ class Converter(object):
                 name = self.docbook_namespace.get(uri, None)
                 if name == 'docbook' and child.tag.name == 'title':
                     title = child
+                    # Remove the title element to avoid double conversion
+                    element.remove(child)
         key = moin_page('outline-level')
         attrib = {}
         attrib[key] = self.heading_level
