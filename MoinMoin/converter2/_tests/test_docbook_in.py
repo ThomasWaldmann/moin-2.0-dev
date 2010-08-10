@@ -262,6 +262,10 @@ class TestConverter(Base):
             ('<article><para><ulink url="url:test">link</ulink></para></article>',
             # <page><body><div html:class="article"><p><a xlink:href="url:test">link</a></p></div></body></page>
              '/page/body/div/p/a[@xlink:href="url:test"][text()="link"]'),
+            # Normal link, with linkend attribute
+            ('<article><para><link linkend="anchor">link</link></para></article>',
+            # <page><body><div html:class="article"><p><a xlink:href="#anchor">link</a></p></div></body></page>
+             '/page/body/div/p/a[@xlink:href="#anchor"][text()="link"]'),
         ]
         for i in data:
             yield (self.do, ) + i
