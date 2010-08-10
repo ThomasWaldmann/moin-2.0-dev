@@ -63,7 +63,7 @@
         />
     {%- endfor %}
     {% if theme.user.valid and theme.user.css_url -%}
-        <link media="all" rel="stylesheet" title="{{ theme.user.name }}'s stylesheet" href="{{ theme.user.css_url|e }}" />
+        <link media="all" rel="stylesheet" title="{{ theme.user.name|e }}'s stylesheet" href="{{ theme.user.css_url|e }}" />
     {%- endif %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
