@@ -101,7 +101,7 @@ class Converter(object):
                        'tertiary', 'tertiaryie',
                        # Other elements
                        'info', 'bridgehead', 'arc', 'titleabbrev',
-                       'spanspec',
+                       'spanspec', 'xref',
                        ])
 
     # DocBook inline elements which does not have equivalence in the DOM
