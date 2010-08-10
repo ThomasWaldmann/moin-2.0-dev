@@ -98,8 +98,10 @@ class Converter(object):
                        'index', 'indexdiv', 'indexentry', 'indexterm',
                        'primary', 'primaryie', 'secondary',
                        'secondaryie', 'see', 'seealso',
+                       'tertiary', 'tertiaryie',
                        # Other elements
                        'info', 'bridgehead', 'arc', 'titleabbrev',
+                       'spanspec',
                        ])
 
     # DocBook inline elements which does not have equivalence in the DOM
