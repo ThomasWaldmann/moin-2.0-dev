@@ -841,6 +841,12 @@ class Converter(object):
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
+    def visit_docbook_substeps(self, element, depth):
+        """
+        Return the same elements than a procedure
+        """
+        return self.visit_docbook_procedure(element, depth)
+
     def visit_docbook_superscript(self, element, depth):
         """
         <superscript> --> <span baseline-shift="super">
