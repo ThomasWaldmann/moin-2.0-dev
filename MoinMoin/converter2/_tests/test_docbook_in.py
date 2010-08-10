@@ -297,6 +297,10 @@ class TestConverter(Base):
             ('<article><para><markup>Text</markup></para></article>',
             # <page><body><div html:class="article"><p><code>Text</code></p></article>
             '/page/body/div/p[code="Text"]'),
+            # LITERALLAYOUT --> BLOCKCODE
+            ('<article><literallayout>Text</literallayout></article>',
+             # <page><body><div html:class="article"><blockcode html:class="db-literallayout">Text</blockcode></div></body></page>
+             '/page/body/div/blockcode[text()="Text"][@html:class="db-literallayout"]'),
         ]
         for i in data:
             yield (self.do, ) + i
