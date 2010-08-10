@@ -1063,7 +1063,7 @@ class Converter(object):
 
         Here we handle the conversion of such of list.
         """
-        list_item_tags = set(['listitem', 'step', 'member'])
+        list_item_tags = set(['listitem', 'step', 'stepalternatives', 'member'])
         items = []
         for child in element:
             if isinstance(child, ET.Element):
