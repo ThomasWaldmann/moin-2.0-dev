@@ -124,6 +124,11 @@ textarea {
     font-size: 100%;
     vertical-align: middle;
 }
+
+#moin-interwiki {
+    font-size: 1em;
+}
+
 #moin-pagetrail {
     clear: right;
     display: inline;
@@ -132,12 +137,8 @@ textarea {
     font-size: 0.88em;
 }
 
-*[dir="rtl"] #moin-pagetrail {
+*[dir="rtl"] #moin-pagetrail, *[dir="rtl"] #moin-locationline  {
     clear: left;
-}
-
-#moin-interwiki {
-    font-size: 1em;
 }
 
 #moin-locationline {
@@ -147,15 +148,11 @@ textarea {
     margin: 0.25em 12px 5px 12px;
     clear: right;
 }
-*[dir="rtl"] #moin-locationline {
-    clear: left;
-}
 
 #moin-pagelocation {
     font-size: 1.5em;
     letter-spacing: 0.05em;
 }
-
 
 *[dir="rtl"] #moin-pagetrail span.sep {
     visibility: hidden;

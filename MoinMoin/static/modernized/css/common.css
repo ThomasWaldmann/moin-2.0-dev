@@ -241,12 +241,7 @@ hr {
 .strike {text-decoration: line-through;}
 
 /* eye catchers */
-.warning 
-{
-    color: red;
-}
-
-.error 
+.warning, .error
 {
     color: red;
 }
