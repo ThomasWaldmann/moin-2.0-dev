@@ -162,6 +162,10 @@ class TestConverter(Base):
             ('<article><procedure><step>First Step</step><step>Second Step</step></procedure></article>',
             # <page><body><div html:class="article"><list item-label-generate="ordered"><list-item><list-item-body>First Step</list-item-body></list-item><list-item><list-item-body>Second Step</list-item-body></list-item></list></div></body></page>
              '/page/body/div/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
+            # PROCEDURE --> ordered list (with arabic numeration) (with stepalternative)
+            ('<article><procedure><step>First Step</step><stepalternatives>Second Step</stepalternatives></procedure></article>',
+            # <page><body><div html:class="article"><list item-label-generate="ordered"><list-item><list-item-body>First Step</list-item-body></list-item><list-item><list-item-body>Second Step</list-item-body></list-item></list></div></body></page>
+             '/page/body/div/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
             # GLOSS LIST --> Definition list
             ('<article><glosslist><glossentry><glossterm>Term 1</glossterm><glossdef><para>Definition 1</para></glossdef></glossentry><glossentry><glossterm>Term 2</glossterm><glossdef><para>Definition 2</para></glossdef></glossentry></glosslist></article>',
             # <page><body><div html:class="article"><list><list-item><list-item-label>Termm 1</list-item-label><list-item-body>Definition 1</list-item-body></list-item><list-item><list-item-label>Term 2</list-item-label><list-item-body>Definition 2</list-item-body></list-item></list></div></body></page>
