@@ -236,6 +236,14 @@ class TestConverter(Base):
             ('<article><cmdsynopsis><para>Line 1<sbr />Line 2</para></cmdsynopsis></article>',
             # <page><body><div html:class="article"><div html:class="db-cmdsynopsis"><p>Line 1<line-break />Line 2</p></div></div></body></page>
             '/page/body/div/div[@html:class="db-cmdsynopsis"]/p/line-break'),
+            # Test for <tag> element with class and namespace attribute
+            ('<article><para><tag class="attribute" namespace="namespace">TAG</tag></para></article>',
+            # <page><body><div html:class="article"><p><span class="db-tag-attribute">{namespace}TAG</span></p></div></article>
+            '/page/body/div/p/span[@html:class="db-tag-attribute"][text()="{namespace}TAG"]'),
+            # Test for <tag> element without class and namespace attribute
+            ('<article><para><tag>TAG</tag></para></article>',
+            # <page><body><div html:class="article"><p><span class="db-tag">TAG</span></p></div></article>
+            '/page/body/div/p/span[@html:class="db-tag"][text()="TAG"]'),
         ]
         for i in data:
             yield (self.do, ) + i
