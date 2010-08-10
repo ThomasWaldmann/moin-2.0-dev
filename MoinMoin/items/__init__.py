@@ -227,7 +227,7 @@ class Item(object):
         return out.tounicode()
 
     def _render_data_xml(self):
-        from MoinMoin.util.tree import moin_page, xlink
+        from MoinMoin.util.tree import moin_page, xlink, html
         doc = self.internal_representation()
 
         from array import array
@@ -235,6 +235,7 @@ class Item(object):
         doc.write(out.fromunicode,
                   namespaces={moin_page.namespace: '',
                               xlink.namespace: 'xlink',
+                              html.namespace: 'html',
                              },
                   method='xml')
         return out.tounicode()
