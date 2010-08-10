@@ -644,6 +644,19 @@ class Converter(object):
         return self.new_copy(moin_page.blockcode, element,
                              depth, attrib=attrib)
 
+    def visit_docbook_olink(self, element, depth):
+        """
+        <olink targetdoc='URI' targetptr='ptr'>
+          --> <a xlink:href='URI#ptr'>
+        """
+        targetdoc = element.get('targetdoc')
+        targetptr = element.get('targetptr')
+        if targetdoc and targetptr:
+            attrib = {}
+            attrib[xlink.href] = ''.join([targetdoc, '#', targetptr])
+            return self.new_copy(moin_page.a, element,
+                                 depth, attrib=attrib)
+
     def visit_docbook_orderedlist(self, element, depth):
         """
         <orderedlist> --> <list item-label-generate="ordered">
