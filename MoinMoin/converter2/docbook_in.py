@@ -633,6 +633,14 @@ class Converter(object):
                 attrib[key] = value
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
+    def visit_docbook_literallayout(self, element, depth):
+        """
+        <literallayout> --> <blockcode html:class="db-literallayout">
+        """
+        attrib = {html('class'): 'db-literallayout'}
+        return self.new_copy(moin_page.blockcode, element,
+                             depth, attrib=attrib)
+
     def visit_docbook_orderedlist(self, element, depth):
         """
         <orderedlist> --> <list item-label-generate="ordered">
