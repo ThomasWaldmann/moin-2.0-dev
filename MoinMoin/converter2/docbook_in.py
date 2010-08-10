@@ -860,6 +860,28 @@ class Converter(object):
                 list_table_elements.extend(r)
         return ET.Element(moin_page.table, attrib={}, children=list_table_elements)
 
+    def visit_docbook_tag(self, element, depth):
+        """
+        <tag class="class.name" namespace="ns.address">TAG</tag>
+          --> <span class="db-tag-class.name">{ns.address}TAG</tag>
+        """
+        # We get the attributes
+        class_attribute = element.get('class')
+        namespace_attribute = element.get('namespace')
+        # We create the attribute for our final element
+        attrib = {}
+        children = []
+        if class_attribute:
+            attrib[html('class')] = ''.join(['db-tag-',
+                                        class_attribute])
+        else:
+            attrib[html('class')] = 'db-tag'
+        if namespace_attribute:
+            namespace_str = ''.join(['{', namespace_attribute, '}'])
+            children.append(namespace_str)
+        children.extend(self.do_children(element, depth))
+        return self.new(moin_page.span, attrib=attrib, children=children)
+
     def visit_docbook_trademark(self, element, depth):
         """
         Depending of the trademark class, a specific entities is added
