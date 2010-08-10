@@ -631,6 +631,9 @@ class Converter(object):
         for key, value in element.attrib.iteritems():
             if key.uri == xlink:
                 attrib[key] = value
+        linkend = element.get('linkend')
+        if linkend:
+            attrib[xlink.href] = ''.join(['#', linkend])
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
     def visit_docbook_literallayout(self, element, depth):
