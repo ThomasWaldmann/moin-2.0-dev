@@ -796,6 +796,18 @@ function runASAP(func) {
         }
     }
 }
+
+$(document).ready(function() {
+   $('#moin-actionsmenu-select').change(function(){
+       if ((this.selectedIndex != 0) &&
+                 (this.options[this.selectedIndex].disabled == false)) {
+           $("#moin-actionsmenu-form").submit();
+       }
+       this.selectedIndex = 0;
+   }); 
+});
+
+
 runASAP(runScrollTextareaInitOnce);
 // ensure init will be run by obsolete browsers
 addLoadEvent(runScrollTextareaInitOnce);
