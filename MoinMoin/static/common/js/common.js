@@ -799,20 +799,21 @@ function runASAP(func) {
 
 $(function() {
     // Only submit actions menu form if option of select is not first
-   $('#moin-actionsmenu-select').change(function(){
-       if ((this.selectedIndex != 0) &&
+    $('#moin-actionsmenu-select').change(function(){
+        if ((this.selectedIndex != 0) &&
                  (this.options[this.selectedIndex].disabled == false)) {
-           $("#moin-actionsmenu-form").submit();
-       }
-       this.selectedIndex = 0;
-   });
+            $("#moin-actionsmenu-form").submit();
+        }
+        this.selectedIndex = 0;
+    });
    
-   // Initialize search form
-   var f = document.getElementById('searchform');
-   f.getElementsByTagName('label')[0].style.display = 'none';
-   var e = document.getElementById('searchinput');
-   searchChange(e);
-   searchBlur(e);
+    // Initialize search form
+    var f = document.getElementById('searchform');
+    f.getElementsByTagName('label')[0].style.display = 'none';
+    var e = document.getElementById('searchinput');
+    searchChange(e);
+    searchBlur(e);
+    
 });
 
 
