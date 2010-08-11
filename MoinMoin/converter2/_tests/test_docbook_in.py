@@ -333,7 +333,7 @@ class TestConverter(Base):
             # <page><body><div html:class="article"><p><object xlink:href="test.avi" type='video/' /></p></div></body></page>
              '/page/body/div/p/div[@html:class="db-mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
             # Test for image object with different imagedata
-            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG" scale="70"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
+            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
             # <page><body><div html:class="article"><div html:class="db-mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></div></body></page>
             '/page/body/div/div[@html:class="db-mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/png"]'),
         ]
