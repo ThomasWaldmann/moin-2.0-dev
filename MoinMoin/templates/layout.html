@@ -14,7 +14,6 @@
             <input id="searchinput" type="text" name="value" value="{{ theme.request.values.get('value', '')|e }}" size="20" />
             <input id="titlesearch" name="titlesearch" type="submit" value="{{ _('Titles') }}" />
             <input id="fullsearch" name="fullsearch" type="submit" value="{{ _('Text') }}" />
-
         </div>
     </form>
     
@@ -132,14 +131,14 @@
 
 {{ theme.emit_custom_html(cfg.html_after_footer) }}
 
-{% set null = flaskg.clock.stop('total') %}
-{% set timing_information = flaskg.clock.dump() %}
+{%- set null = flaskg.clock.stop('total') -%}
+{%- set timing_information = flaskg.clock.dump() -%}
 
-{% if cfg.show_timings %}
+{% if cfg.show_timings -%}
     <ul id="moin-timings">
-    {% for timing in timing_information %}
+    {% for timing in timing_information -%}
         <li> {{ timing }}</li>
-    {% endfor %}
+    {%- endfor %}
     </ul>
-{% endif %}
+{%- endif -%}
 {% endblock %}
