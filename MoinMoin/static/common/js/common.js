@@ -806,13 +806,33 @@ $(function() {
         }
         this.selectedIndex = 0;
     });
-   
+
+
+    // Functions related to search form
+    
     // Initialize search form
     var f = document.getElementById('searchform');
     f.getElementsByTagName('label')[0].style.display = 'none';
     var e = document.getElementById('searchinput');
     searchChange(e);
     searchBlur(e);
+    
+    $('#searchinput').blur(function(){
+        searchBlur(this);
+    });
+
+    $('#searchinput').focus(function(){
+        searchFocus(this);
+    });
+
+    $('#searchinput').change(function(){
+        searchChange(this);
+    });
+
+    $('#searchinput').keyup(function(){
+        searchChange(this);
+    });
+
     
 });
 
