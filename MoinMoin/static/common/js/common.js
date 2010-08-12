@@ -809,10 +809,6 @@ $(function() {
 
 
     // Functions related to search form
-    
-    // Initialize search form
-    var f = document.getElementById('searchform');
-    f.getElementsByTagName('label')[0].style.display = 'none';
     var e = document.getElementById('searchinput');
     searchChange(e);
     searchBlur(e);
