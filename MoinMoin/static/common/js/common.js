@@ -797,6 +797,11 @@ function runASAP(func) {
     }
 }
 
+
+runASAP(runScrollTextareaInitOnce);
+// ensure init will be run by obsolete browsers
+addLoadEvent(runScrollTextareaInitOnce);
+
 $(function() {
     // Only submit actions menu form if option of select is not first
     $('#moin-actionsmenu-select').change(function(){
@@ -806,7 +811,6 @@ $(function() {
         }
         this.selectedIndex = 0;
     });
-
 
     // Functions related to search form
     var e = document.getElementById('searchinput');
@@ -831,9 +835,3 @@ $(function() {
 
     
 });
-
-
-runASAP(runScrollTextareaInitOnce);
-// ensure init will be run by obsolete browsers
-addLoadEvent(runScrollTextareaInitOnce);
-
