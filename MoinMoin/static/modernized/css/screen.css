@@ -125,6 +125,10 @@ textarea {
     vertical-align: middle;
 }
 
+#searchform label {
+    display:none;
+}
+
 #moin-interwiki {
     font-size: 1em;
 }
