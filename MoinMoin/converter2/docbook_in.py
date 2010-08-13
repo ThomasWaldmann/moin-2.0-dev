@@ -129,7 +129,7 @@ class Converter(object):
     block_tags = set(['acknowledgements', 'appendix', 'article', 'book',
                       'caption', 'chapter', 'cmdsynopsis', 'colophon',
                       'dedication', 'epigraph', 'example', 'figure',
-                      'equation', 'mediaobject', 'part', 'partintro',
+                      'equation', 'part', 'partintro',
                       'screenshoot', 'set', 'setindex', 'sidebar',
                       'simplesect', 'subtitle', 'synopsis',
                       'synopfragment', 'task', 'taskprerequisites',
@@ -350,8 +350,8 @@ class Converter(object):
             return self.visit_simple_tag(element, depth)
 
         # We have a media element
-        if element.tag.name in self.media_tags:
-            return self.visit_data_object(element, depth)
+        #if element.tag.name in self.media_tags:
+        #    return self.visit_data_object(element, depth)
 
         # We should ignore this element
         if element.tag.name in self.ignored_tags:
@@ -372,26 +372,37 @@ class Converter(object):
         # XXX: We should probably raise an error to have a strict converter
         return self.do_children(element, depth)
 
-    def visit_data_object(self, element, depth):
+    def visit_docbook_mediaobject(self, element, depth):
         """
         We need to determine which object we can display.
         If we are not able to display an object,
         we will try to display a text.
+        TODO: See for a preference list between image, data, audio
         """
-        prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        prefered_format, data_tag, mimetype = ('','','')
         object_data = []
         text_object = []
         caption = []
+        object_element = ''
         for child in element:
             if isinstance(child, ET.Element):
-                if child.tag.name == data_tag:
-                    object_data.append(child)
+                if child.tag.name in self.media_tags:
+                    #XXX: Check the spec to be sure that object tag have only one child.
+                    #TODO: Better way to do it
+                    prefered_format, data_tag, mimetype = self.media_tags[child.tag.name]
+                    object_element = child
+                    for grand_child in child:
+                        if isinstance(grand_child, ET.Element):
+                            object_data.append(grand_child)
                 if child.tag.name == 'caption':
                     caption = self.do_children(child, depth+1)[0]
                 if child.tag.name == 'textobject':
                     text_object = child
-        return self.visit_data_element(element, depth, object_data,
+        data_element = self.visit_data_element(object_element, depth, object_data,
             text_object, caption)
+        attrib = {html('class'): 'db-mediaobject'}
+        return self.new(moin_page.div, attrib=attrib,
+                        children=[data_element])
 
     def visit_data_element(self, element, depth, object_data,
                            text_object, caption):
@@ -402,6 +413,7 @@ class Converter(object):
         """
         attrib = {}
         prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
+        print object_data
         if not object_data:
             if not text_object:
                 return
@@ -412,7 +424,7 @@ class Converter(object):
         # We try to determine the best object to show
         object_to_show = None
         for obj in object_data:
-            format = obj.get(docbook.format)
+            format = obj.get('format')
             if format:
                 format = format.lower()
                 if format in prefered_format:
