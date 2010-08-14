@@ -98,6 +98,12 @@ class NodeVisitor():
     def depart_Text(self, node):
         pass
 
+    def visit_admonition(self, node):
+        self.open_moin_page_node(moin_page.admonition())
+
+    def depart_admonition(self, node=None):
+        self.close_moin_page_node()
+
     def visit_block_quote(self, node):
         self.open_moin_page_node(moin_page.list())
         self.open_moin_page_node(moin_page.list_item())
@@ -733,9 +739,21 @@ class Converter(object):
         return cls()
 
     def __call__(self, input, arguments=None):
-        input = u'\n'.join(input)
         parser = MoinDirectives()
-        docutils_tree = core.publish_doctree(source=input)
+        while True:
+            input = u'\n'.join(input)
+            try:
+                docutils_tree = core.publish_doctree(source=input)
+            except utils.SystemMessage as inst:
+                string_numb = re.search(re.compile(r'\: (?P<str_num> [0-9]* ) \:', re.X | re.U), str(inst))
+                if string_numb:
+                    str_num = string_numb.groupdict().get('str_num')
+                    input = input.split('\n')
+                    if str_num:
+                        input = ['.. error::\n ::\n\n  %s\n\n' % str(inst).replace('\n', '\n  ')]
+                        continue
+                raise inst
+            break
         visitor = NodeVisitor()
         walkabout(docutils_tree, visitor)
         return visitor.tree()
