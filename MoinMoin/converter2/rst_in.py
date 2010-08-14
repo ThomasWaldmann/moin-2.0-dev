@@ -273,7 +273,7 @@ class NodeVisitor():
         new_footnote = moin_page.note(
                             attrib={moin_page.note_class: u'footnote'})
         self.open_moin_page_node(new_footnote)
-        self.footnotes[node.children[0]] = new_footnote
+        self.footnotes[node.children[-1]] = new_footnote
         node.children = []
 
     def depart_footnote_reference(self, node):
@@ -377,7 +377,10 @@ class NodeVisitor():
             self.open_moin_page_node(moin_page.p())
 
     def depart_paragraph(self, node):
-        self.close_moin_page_node()
+        if self.status[-1] == 'footnote':
+            pass
+        else:
+            self.close_moin_page_node()
 
     def visit_problematic(self, node):
         pass
