@@ -409,7 +409,6 @@ class Converter(object):
         """
         attrib = {}
         prefered_format, data_tag, mimetype = self.media_tags[element.tag.name]
-        print object_data
         if not object_data:
             if not text_object:
                 return
@@ -951,7 +950,6 @@ class Converter(object):
         trademark_class = element.get('class')
         children = self.do_children(element, depth)
         if trademark_class in trademark_entities:
-            print trademark_entities[trademark_class]
             children.append(trademark_entities[trademark_class])
         elif trademark_class == 'service':
             sup_attrib = {moin_page('baseline-shift'): 'super'}
