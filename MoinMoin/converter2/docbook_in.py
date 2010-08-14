@@ -121,7 +121,6 @@ class Converter(object):
                        'street', 'surname', 'symbol', 'systemitem',
                        'termdef', 'type', 'uri', 'userinput',
                        'wordasword', 'varname', 'anchor',
-                       'inlinemediaobject',
                        ])
 
     # DocBook block element which does not have equivalence in the DOM
@@ -372,7 +371,7 @@ class Converter(object):
         # XXX: We should probably raise an error to have a strict converter
         return self.do_children(element, depth)
 
-    def visit_docbook_mediaobject(self, element, depth):
+    def visit_data_object(self, element, depth):
         """
         We need to determine which object we can display.
         If we are not able to display an object,
@@ -398,11 +397,8 @@ class Converter(object):
                     caption = self.do_children(child, depth+1)[0]
                 if child.tag.name == 'textobject':
                     text_object = child
-        data_element = self.visit_data_element(object_element, depth, object_data,
+        return self.visit_data_element(object_element, depth, object_data,
             text_object, caption)
-        attrib = {html('class'): 'db-mediaobject'}
-        return self.new(moin_page.div, attrib=attrib,
-                        children=[data_element])
 
     def visit_data_element(self, element, depth, object_data,
                            text_object, caption):
@@ -615,6 +611,12 @@ class Converter(object):
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
+    def visit_docbook_inlinemediaobject(self, element, depth):
+        data_element = self.visit_data_object(element, depth)
+        attrib = {moin_page('element'): 'inlinemediaobject'}
+        return self.new(moin_page.span, attrib=attrib,
+                        children=[data_element])
+
     def visit_docbook_itemizedlist(self, element, depth):
         """
         <itemizedlist> --> <list item-label-generate="unordered">
@@ -655,6 +657,12 @@ class Converter(object):
         attrib = {html('class'): 'db-literallayout'}
         return self.new_copy(moin_page.blockcode, element,
                              depth, attrib=attrib)
+
+    def visit_docbook_mediaobject(self, element, depth):
+        data_element = self.visit_data_object(element, depth)
+        attrib = {html('class'): 'db-mediaobject'}
+        return self.new(moin_page.div, attrib=attrib,
+                        children=[data_element])
 
     def visit_docbook_olink(self, element, depth):
         """
