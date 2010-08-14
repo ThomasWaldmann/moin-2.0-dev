@@ -297,13 +297,15 @@ class NodeVisitor():
         self.status.pop()
 
     def visit_footnote_reference(self, node):
-        new_footnote = moin_page.note(
-                            attrib={moin_page.note_class: u'footnote'})
+        self.open_moin_page_node(moin_page.note(
+                            attrib={moin_page.note_class: u'footnote'}))
+        new_footnote = moin_page.note_body()
         self.open_moin_page_node(new_footnote)
         self.footnotes[node.children[-1]] = new_footnote
         node.children = []
 
     def depart_footnote_reference(self, node):
+        self.close_moin_page_node()
         self.close_moin_page_node()
 
     def visit_header(self, node):
