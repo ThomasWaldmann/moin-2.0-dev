@@ -104,6 +104,28 @@ class NodeVisitor():
     def depart_admonition(self, node=None):
         self.close_moin_page_node()
 
+    visit_note = visit_admonition
+    visit_important = visit_admonition
+    visit_danger = visit_admonition
+    visit_caution = visit_admonition
+    visit_attention = visit_admonition
+    visit_tip = visit_admonition
+    visit_warning = visit_admonition
+
+    depart_note = depart_admonition
+    depart_important = depart_admonition
+    depart_danger = depart_admonition
+    depart_caution = depart_admonition
+    depart_attention = depart_admonition
+    depart_tip = depart_admonition
+    depart_warning = depart_admonition
+
+    def visit_error(self, node):
+        self.open_moin_page_node(moin_page.error())
+
+    def depart_error(self, node=None):
+        self.close_moin_page_node()   
+    
     def visit_block_quote(self, node):
         self.open_moin_page_node(moin_page.list())
         self.open_moin_page_node(moin_page.list_item())
