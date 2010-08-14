@@ -99,8 +99,8 @@ class TestConverter(Base):
             '/page/body/div/p[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
             # ANCHOR --> SPAN
             ('<article><para>bla bla<anchor xml:id="point_1" />bla bla</para></article>',
-            # <page><body><div html:class="article"><p>bla bla<span element="anchor" xml:id="point_1" />bla bla</p></div></body></page>
-            '/page/body/div/p/span[@element="anchor"][@xml:id="point_1"]'),
+            # <page><body><div html:class="article"><p>bla bla<span class="db-anchor" xml:id="point_1" />bla bla</p></div></body></page>
+            '/page/body/div/p/span[@html:class="db-anchor"][@xml:id="point_1"]'),
             # BOOK Document
             ('<book><para>Test</para></book>',
             # <page><body><div html:class="db-book"><p>Test</p></div></body></page>
@@ -166,6 +166,10 @@ class TestConverter(Base):
             ('<article><procedure><step>First Step</step><stepalternatives>Second Step</stepalternatives></procedure></article>',
             # <page><body><div html:class="article"><list item-label-generate="ordered"><list-item><list-item-body>First Step</list-item-body></list-item><list-item><list-item-body>Second Step</list-item-body></list-item></list></div></body></page>
              '/page/body/div/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
+            # PROCEDURE with SUBSTEPS
+            ('<article><procedure><step>First Step</step><substeps><step>Second Step</step></substeps></procedure></article>',
+            # <page><body><div html:class="article"><list item-label-generate="ordered"><list-item><list-item-body>First Step</list-item-body></list-item><list-item><list-item-body><list item-label-generate="ordered">Second Step</list-item-body></list-item></list></list></div></body></page>
+             '/page/body/div/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list[@item-label-generate="ordered"]/list-item/list-item-body[text()="Second Step"]]'),
             # GLOSS LIST --> Definition list
             ('<article><glosslist><glossentry><glossterm>Term 1</glossterm><glossdef><para>Definition 1</para></glossdef></glossentry><glossentry><glossterm>Term 2</glossterm><glossdef><para>Definition 2</para></glossdef></glossentry></glosslist></article>',
             # <page><body><div html:class="article"><list><list-item><list-item-label>Termm 1</list-item-label><list-item-body>Definition 1</list-item-body></list-item><list-item><list-item-label>Term 2</list-item-label><list-item-body>Definition 2</list-item-body></list-item></list></div></body></page>
@@ -222,8 +226,8 @@ class TestConverter(Base):
             '/page/body/div/p[quote="text"]'),
             # Test span for inline element
             ('<article><para><abbrev>ABBREV</abbrev></para></article>',
-            # <page><body><div html:class="article"><p><span element="abbrev">ABBREV</span></p></div></body></page>
-             '/page/body/div/p/span[@element="abbrev"][text()="ABBREV"]'),
+            # <page><body><div html:class="article"><p><span class="db-abbrev">ABBREV</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-abbrev"][text()="ABBREV"]'),
             # Test div for block element
             ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
             # <page><body><div html:class="article"><div html:class="db-acknowledgements"><p>Text</p></div></div></body></page>
@@ -258,13 +262,18 @@ class TestConverter(Base):
             ('<article><para><link xlink:href="uri:test" xlink:title="title">link</link></para></article>',
             # <page><body><div html:class="article"><p><a xlink:href="uri:test" xlink:title="title">link</a></p></div></body></page>
              '/page/body/div/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
-            # XREF link TODO : Check that it works with any href attribute
-            #('<article><para><xref xlink:href="uri:test" xlink:title="title">link</link></para></article>',
-            # '/page/body/div/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # Old link from DocBook v.4.X for backward compatibility
             ('<article><para><ulink url="url:test">link</ulink></para></article>',
             # <page><body><div html:class="article"><p><a xlink:href="url:test">link</a></p></div></body></page>
              '/page/body/div/p/a[@xlink:href="url:test"][text()="link"]'),
+            # Normal link, with linkend attribute
+            ('<article><para><link linkend="anchor">link</link></para></article>',
+            # <page><body><div html:class="article"><p><a xlink:href="#anchor">link</a></p></div></body></page>
+             '/page/body/div/p/a[@xlink:href="#anchor"][text()="link"]'),
+            # OLINK
+            ('<article><para><olink targetdoc="uri" targetptr="anchor">link</olink></para></article>',
+            # <page><body><div html:class="article"><para><a xlink:href="uri#anchor">link</a></para></div></body></page>
+             '/page/body/div/p/a[@xlink:href="uri#anchor"][text()="link"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -314,17 +323,17 @@ class TestConverter(Base):
             # Test for image object
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.png" type='image/' /></p></div></body></page>
-            '/page/body/div/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
+            '/page/body/div/p/span[@html:class="db-inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
             # Test for audio object
             ('<article><para><inlinemediaobject><audioobject><audiodata fileref="test.wav"/></audioobject></inlinemediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.wav" type='audio/' /></p></div></body></page>
-            '/page/body/div/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
+            '/page/body/div/p/span[@html:class="db-inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
             # Test for video object
             ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.avi" type='video/' /></p></div></body></page>
              '/page/body/div/p/div[@html:class="db-mediaobject"]/object[@xlink:href="test.avi"][@type="video/"]'),
             # Test for image object with different imagedata
-            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG" scale="70"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
+            ('<article><mediaobject><imageobject><imagedata fileref="figures/eiffeltower.eps" format="EPS"/></imageobject><imageobject><imagedata fileref="figures/eiffeltower.png" format="PNG"/></imageobject><textobject><phrase>The Eiffel Tower</phrase> </textobject><caption><para>Designed by Gustave Eiffel in 1889, The Eiffel Tower is one of the most widely recognized buildings in the world.</para>  </caption></mediaobject></article>',
             # <page><body><div html:class="article"><div html:class="db-mediaobject"><object xlink:href="figures/eiffeltowe.png" /></div></div></body></page>
             '/page/body/div/div[@html:class="db-mediaobject"]/object[@xlink:href="figures/eiffeltower.png"][@type="image/png"]'),
         ]
@@ -386,14 +395,14 @@ class TestConverter(Base):
     def test_trademark(self):
         data = [
             ('<article><para><trademark class="copyright">MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin&copy;</span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin&copy;"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin&copy;</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin&copy;"]'),
             ('<article><para><trademark class="service">MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
             ('<article><para><trademark>MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin</span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin"]'),
         ]
         for i in data:
             yield(self.do, ) + i
