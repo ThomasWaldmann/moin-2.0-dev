@@ -595,9 +595,9 @@ class Converter(object):
         For some specific tags (defined in inline_tags)
         We just return <span element="tag.name">
         """
-        key = moin_page('element')
+        key = html('class')
         attrib = {}
-        attrib[key] = element.tag.name
+        attrib[key] = ''.join(['db-',element.tag.name])
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
@@ -612,7 +612,7 @@ class Converter(object):
 
     def visit_docbook_inlinemediaobject(self, element, depth):
         data_element = self.visit_data_object(element, depth)
-        attrib = {moin_page('element'): 'inlinemediaobject'}
+        attrib = {html('class'): 'db-inlinemediaobject'}
         return self.new(moin_page.span, attrib=attrib,
                         children=[data_element])
 
@@ -956,7 +956,7 @@ class Converter(object):
             service_mark = self.new(moin_page.span, attrib=sup_attrib,
                                     children=['SM'])
             children.append(service_mark)
-        attrib = {moin_page('element'): 'trademark'}
+        attrib = {html('class'): 'db-trademark'}
         return self.new(moin_page.span, attrib=attrib, children=children)
 
     def visit_docbook_td(self, element, depth):

@@ -99,8 +99,8 @@ class TestConverter(Base):
             '/page/body/div/p[@xml:base="http://base.tld"][@xml:id="id"][@xml:lang="en"][text()="Text"]'),
             # ANCHOR --> SPAN
             ('<article><para>bla bla<anchor xml:id="point_1" />bla bla</para></article>',
-            # <page><body><div html:class="article"><p>bla bla<span element="anchor" xml:id="point_1" />bla bla</p></div></body></page>
-            '/page/body/div/p/span[@element="anchor"][@xml:id="point_1"]'),
+            # <page><body><div html:class="article"><p>bla bla<span class="db-anchor" xml:id="point_1" />bla bla</p></div></body></page>
+            '/page/body/div/p/span[@html:class="db-anchor"][@xml:id="point_1"]'),
             # BOOK Document
             ('<book><para>Test</para></book>',
             # <page><body><div html:class="db-book"><p>Test</p></div></body></page>
@@ -226,8 +226,8 @@ class TestConverter(Base):
             '/page/body/div/p[quote="text"]'),
             # Test span for inline element
             ('<article><para><abbrev>ABBREV</abbrev></para></article>',
-            # <page><body><div html:class="article"><p><span element="abbrev">ABBREV</span></p></div></body></page>
-             '/page/body/div/p/span[@element="abbrev"][text()="ABBREV"]'),
+            # <page><body><div html:class="article"><p><span class="db-abbrev">ABBREV</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-abbrev"][text()="ABBREV"]'),
             # Test div for block element
             ('<article><acknowledgements><para>Text</para></acknowledgements></article>',
             # <page><body><div html:class="article"><div html:class="db-acknowledgements"><p>Text</p></div></div></body></page>
@@ -323,11 +323,11 @@ class TestConverter(Base):
             # Test for image object
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.png" type='image/' /></p></div></body></page>
-            '/page/body/div/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
+            '/page/body/div/p/span[@html:class="db-inlinemediaobject"]/object[@xlink:href="test.png"][@type="image/"]'),
             # Test for audio object
             ('<article><para><inlinemediaobject><audioobject><audiodata fileref="test.wav"/></audioobject></inlinemediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.wav" type='audio/' /></p></div></body></page>
-            '/page/body/div/p/span[@element="inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
+            '/page/body/div/p/span[@html:class="db-inlinemediaobject"]/object[@xlink:href="test.wav"][@type="audio/"]'),
             # Test for video object
             ('<article><para><mediaobject><videoobject><videodata fileref="test.avi"/></videoobject></mediaobject></para></article>',
             # <page><body><div html:class="article"><p><object xlink:href="test.avi" type='video/' /></p></div></body></page>
@@ -395,14 +395,14 @@ class TestConverter(Base):
     def test_trademark(self):
         data = [
             ('<article><para><trademark class="copyright">MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin&copy;</span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin&copy;"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin&copy;</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin&copy;"]'),
             ('<article><para><trademark class="service">MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin<span baseline-shift="super">SM</span></span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin"]/span[@baseline-shift="super"][text()="SM"]'),
             ('<article><para><trademark>MoinMoin</trademark></para></article>',
-             # <page><body><div html:class="article"><p><span element="trademark">MoinMoin</span></p></div></body></page>
-             '/page/body/div/p/span[@element="trademark"][text()="MoinMoin"]'),
+             # <page><body><div html:class="article"><p><span class="db-trademark">MoinMoin</span></p></div></body></page>
+             '/page/body/div/p/span[@html:class="db-trademark"][text()="MoinMoin"]'),
         ]
         for i in data:
             yield(self.do, ) + i
