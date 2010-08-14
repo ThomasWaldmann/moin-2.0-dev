@@ -122,8 +122,7 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_definition_list(self, node):
-        self.open_moin_page_node(moin_page.list(
-                        attrib={moin_page.item_label_generate: u'definition'}))
+        self.open_moin_page_node(moin_page.list())
 
     def depart_definition_list(self, node):
         self.close_moin_page_node()
