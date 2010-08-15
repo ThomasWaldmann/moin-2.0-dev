@@ -77,15 +77,10 @@
     {%- endif %}
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="moin-actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
+            <form class="moin-actionsmenu" id="moin-actionsmenu-form" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
                 <div>
                     <label>{{ _('More Actions:') }}</label>
-                    <select name="endpoint"
-                        onchange="if ((this.selectedIndex != 0) &&
-                                      (this.options[this.selectedIndex].disabled == false)) {
-                                this.form.submit();
-                            }
-                            this.selectedIndex = 0;">
+                    <select name="endpoint" id="moin-actionsmenu-select">
                         {% for title, disabled, endpoint in theme.actions_menu_options(item_name) %}
                             <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}

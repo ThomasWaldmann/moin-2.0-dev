@@ -53,14 +53,22 @@
     {% for src in ['jquery' ,'svg', 'common'] -%}
         <script type="text/javascript" src="{{ url_for('.static', filename='common/js/%s.js' % src) }}"></script>
     {% endfor %}
+    
+    {% for type, src in cfg.external_scripts -%}
+        <script type="{{ type }}" src="{{ src }}"></script>
+    {% endfor %}
+    
     {% for media, name in theme.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ url_for('.static', filename='%s/css/%s.css' % (theme.name, name))|e }}" />
     {% endfor %}
-    {% for media, url in cfg.stylesheets -%}
-        <link media="{{ media }}" rel="stylesheet" href="{{ url|e }}" />
+    {% for media, url, title, alternate in cfg.stylesheets -%}
+        <link media="{{ media }}" href="{{ url|e }}"
+        {%- if title %} title="{{ title }}" {% endif -%}
+        rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
+        />
     {%- endfor %}
     {% if theme.user.valid and theme.user.css_url -%}
-        <link media="all" rel="stylesheet" href="{{ theme.user.css_url|e }}" />
+        <link media="all" rel="stylesheet" title="{{ theme.user.name|e }}'s stylesheet" href="{{ theme.user.css_url|e }}" />
     {%- endif %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
