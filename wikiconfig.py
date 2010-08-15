@@ -8,11 +8,12 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 
 import sys, os
 
-from MoinMoin.config import multiconfig, url_prefix_static
+from MoinMoin.config import url_prefix_static
+from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
 
-class Config(multiconfig.DefaultConfig):
+class Config(DefaultConfig):
     # vvv DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO vvv
     # Directory containing THIS wikiconfig:
     wikiconfig_dir = os.path.abspath(os.path.dirname(__file__))
