@@ -229,25 +229,25 @@ def shorten_item_name(name, length=25):
     return name
 
 
-def setup_jinja_env(request):
+def setup_jinja_env(context):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
-    app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-    app.jinja_env.filters['user_format'] = lambda rev, request = request: \
-                                          user.get_printable_editor(request,
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = context.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = context.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['user_format'] = lambda rev, context = context: \
+                                          user.get_printable_editor(context,
                                                                     rev.get(EDIT_LOG_USERID),
                                                                     rev.get(EDIT_LOG_ADDR),
                                                                     rev.get(EDIT_LOG_HOSTNAME))
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
                             'list': list,
-                            'theme': request.theme,
-                            'user': request.user,
-                            'cfg': request.cfg,
-                            '_': request.getText,
+                            'theme': context.theme,
+                            'user': context.user,
+                            'cfg': context.cfg,
+                            '_': context.getText,
                             'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': request.theme.translated_item_name,
+                            'translated_item_name': context.theme.translated_item_name,
                             })
 
 
