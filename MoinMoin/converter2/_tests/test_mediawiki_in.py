@@ -35,8 +35,9 @@ class TestConverter(object):
             (u'<u>underscore</u>', u'<page><body><p><span text-decoration="underline">underscore</span></p></body></page>'),
             (u'<del>Strikethrough</del>', u'<page><body><p><span text-decoration="line-through">Strikethrough</span></p></body></page>'),
             (u"test <sup>super</sup> or <sub>sub</sub>", u'<page><body><p>test <span baseline-shift="super">super</span> or <span baseline-shift="sub">sub</span></p></body></page>'),
-            (u"text <blockquote> quote quote quote quote quote quote </blockquote> text", u""),
+            (u"text <blockquote> quote quote quote quote quote quote </blockquote> text", u"<page><body><p>text <blockquote> quote quote quote quote quote quote </blockquote> text</p></body></page>"),
             (u"aaa<br />bbb", u"<page><body><p>aaa<line-break />bbb</p></body></page>"),
+            (u"aaa <ref> sdf </ref> test\n\n asd", '<page><body><p>aaa <note note-class="footnote"><note-body> sdf </note-body></note> test</p><p> asd</p></body></page>'),
             (u"""=level 1=
 == level 2 ==
 ===level 3===
