@@ -40,6 +40,7 @@ def robots():
 User-agent: *
 Crawl-delay: 20
 Disallow: /+convert/
+Disallow: /+dom/
 Disallow: /+modify/
 Disallow: /+copy/
 Disallow: /+delete/
@@ -97,6 +98,20 @@ def show_item(item_name, rev):
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
     return redirect(url_for('frontend.show_item', item_name=item_name))
+
+
+@frontend.route('/+dom/<int:rev>/<itemname:item_name>')
+@frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
+def show_dom(item_name, rev):
+    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    if isinstance(item, NonExistent):
+        status = 404
+    else:
+        status = 200
+    content = render_template('dom.xml',
+                              data_xml=item._render_data_xml(),
+                             )
+    return Response(content, status, mimetype='text/xml')
 
 
 @frontend.route('/+meta/<itemname:item_name>', defaults=dict(rev=-1))

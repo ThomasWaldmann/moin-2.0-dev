@@ -226,6 +226,20 @@ class Item(object):
         doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         return out.tounicode()
 
+    def _render_data_xml(self):
+        from MoinMoin.util.tree import moin_page, xlink, html
+        doc = self.internal_representation()
+
+        from array import array
+        out = array('u')
+        doc.write(out.fromunicode,
+                  namespaces={moin_page.namespace: '',
+                              xlink.namespace: 'xlink',
+                              html.namespace: 'html',
+                             },
+                  method='xml')
+        return out.tounicode()
+
     def _do_modify_show_templates(self):
         # call this if the item is still empty
         rev_nos = []
