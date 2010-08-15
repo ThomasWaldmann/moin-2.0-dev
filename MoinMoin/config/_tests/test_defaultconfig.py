@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - MoinMoin.config.multiconfig Tests
+    MoinMoin - MoinMoin.config.default Tests
 
     @copyright: 2007 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -35,5 +35,5 @@ class TestPasswordChecker:
                 print "%r: %s" % (pw, pw_error)
                 assert result == (pw_error is None)
 
-coverage_modules = ['MoinMoin.config.multiconfig']
+coverage_modules = ['MoinMoin.config.default']
 
