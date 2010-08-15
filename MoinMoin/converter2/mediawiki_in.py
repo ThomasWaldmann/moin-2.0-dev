@@ -88,7 +88,7 @@ class Converter(ConverterMacro):
 
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
-
+        self.preprocessor = self.Mediawiki_preprocessor()
         body = self.parse_block(iter_content, arguments)
         root = moin_page.page(children=(body, ))
 
@@ -182,6 +182,7 @@ class Converter(ConverterMacro):
         lines = _Iter(self.block_table_lines(iter_content))
         element = moin_page.table_row()
         stack.push(element)
+        preprocessor_status = []
         for line in lines:
             m = self.tablerow_re.match(line)
             if not m:
@@ -209,9 +210,13 @@ class Converter(ConverterMacro):
                     else:
                         cell = cell[0]
                     stack.push(element)
+                    self.preprocessor.push()
                     self.parse_inline(cell, stack, self.inline_re)
+                    preprocessor_status = self.preprocessor.pop()
             elif m.group('text'):
+                self.preprocessor.push(preprocessor_status)
                 self.parse_inline('\n%s' % m.group('text'), stack, self.inline_re)
+                preprocessor_status = self.preprocessor.pop()
         stack.pop_name('table')
 
     block_text = r'(?P<text> .+ )'
@@ -588,7 +593,9 @@ class Converter(ConverterMacro):
                 element = moin_page.object(attrib)
                 stack.push(element)
                 if link_text:
+                    self.preprocessor.push()
                     self.parse_inline(link_text, stack, self.inlinedesc_re)
+                    self.preprocessor.pop()
                 else:
                     stack.top_append(text)
                 stack.pop()
@@ -601,7 +608,9 @@ class Converter(ConverterMacro):
         element = moin_page.a(attrib={xlink.href: target})
         stack.push(element)
         if link_text:
+            self.preprocessor.push()
             self.parse_inline(link_text, stack, self.inlinedesc_re)
+            self.preprocessor.pop()
         else:
             stack.top_append(text)
         stack.pop()
@@ -661,7 +670,7 @@ class Converter(ConverterMacro):
 
     tablerow = r"""
         ^
-        \|
+        [|!]
         (?P<tablerow>
             (?P<caption> \+.* )
             |
@@ -691,11 +700,13 @@ class Converter(ConverterMacro):
     inline = (
         inline_link,
         inline_breakline,
+        inline_blockquote,
         #inline_macro,
         inline_nowiki,
         #inline_object,
         inline_emphstrong,
         inline_comment,
+        inline_footnote,
         #inline_size,
         inline_strike,
         inline_subscript,
@@ -722,6 +733,143 @@ class Converter(ConverterMacro):
 
     # Table row
     tablerow_re = re.compile(tablerow, re.X | re.U)
+
+    class Mediawiki_preprocessor(object):
+
+        class Preprocessor_tag(object):
+            def __init__(self, name='', text='', tag='',  status=True):
+                self.tag_name = name
+                self.tag = tag
+                self.text = [text]
+                self.status = status
+
+        all_tags = [
+            'br',
+            'blockquote'
+            'del',
+            'pre',
+            'code',
+            'tt',
+            'nowiki',
+            'ref',
+            's',
+            'sub',
+            'sup',
+            ]
+
+        nowiki_tags = [
+            'pre',
+            'code',
+            'tt',
+            'nowiki',
+            ]
+
+        block_tags = [
+            'blockquote',
+            ]
+
+        def __init__(self):
+            self.opened_tags = []
+            self.nowiki = False
+            self.nowiki_tag = ''
+            self._stack = []
+
+        def push(self, status = []):
+            self._stack.append(self.opened_tags)
+            self.opened_tags = status
+            if self.opened_tags:
+                if self.opened_tags[-1].tag_name in self.nowiki_tags:
+                    self.nowiki = True
+                    self.nowiki_tag = self.opened_tags[-1].tag_name
+                else:
+                    self.nowiki = False
+                    self.nowiki_tag = ''
+
+        def pop(self):
+            if len(self._stack):
+                self.opened_tags = self._stack.pop()
+            else:
+                self.opened_tags = []
+            if self.opened_tags:
+                if self.opened_tags[-1].tag_name in self.nowiki_tags:
+                    self.nowiki = True
+                    self.nowiki_tag = self.opened_tags[-1].tag_name
+                else:
+                    self.nowiki = False
+                    self.nowiki_tag = ''
+            return self.opened_tags
+
+        def __call__(self, line, tags = []):
+            tags = tags or self.opened_tags
+            match = re.match(r"(.*?)(\<.*\>.*)|(.*)", line)
+            if match:
+                pre_text = match.group(1) or match.group(3)
+                # text may be None
+                if pre_text:
+                    if len(tags):
+                        tags[-1].text.append(pre_text)
+                    else:
+                        post_line = [pre_text]
+                else:
+                    post_line = []
+                next_text = match.group(2)
+                while next_text:
+                    match = re.match(r"<\s*([^>]*)>(?:(.*?)(<[^>]*>.*)|(.*))", next_text)
+                    if match:
+                        tag = match.group(1)
+                        next_text = match.group(3)
+                        text = match.group(2) or match.group(4)
+                        if not text: text = ''
+                        tag_match = re.match(r"/\s*(.*)", tag)
+                        status = not tag_match
+                        if tag_match: tag_name = tag_match.group(1).split(' ')[0]
+                        else: tag_name = tag.split(' ')[0]
+                        if not tag_name in self.all_tags or re.match(r'.*/\s*$', tag)\
+                                or self.nowiki and (status or tag_name != self.nowiki_tag):
+                            if not len(tags):
+                                post_line.append('<%s>' % tag)
+                                post_line.append(text)
+                            else:
+                                tags[-1].text.append('<%s>' % tag)
+                                tags[-1].text.append(text)
+                        else:
+                            if not status:
+                                if self.nowiki:
+                                    if tag_name == self.nowiki_tag:
+                                        self.nowiki_tag = ''
+                                        self.nowiki = False
+                                if tag_name in [t.tag_name for t in tags]:
+                                    open_tags = []
+                                    tmp_line = ''
+                                    close_tag = self.Preprocessor_tag()
+                                    while tag_name != close_tag.tag_name:
+                                        close_tag = tags.pop()
+                                        tmp_line = '<%s>%s%s</%s>' % (close_tag.tag, ''.join(close_tag.text), tmp_line, close_tag.tag_name)
+                                        if not len(tags):
+                                            post_line.append(tmp_line)
+                                        else:
+                                            tags[-1].text.append(tmp_line)
+                                        open_tags.append(close_tag)
+                                    open_tags = open_tags[:-1]
+                                    if not len(tags):
+                                        post_line.append(text)
+                                    else:
+                                        tags[-1].text.append(text)
+                                    if open_tags:
+                                        for t in open_tags[:-1].reverse():
+                                            t.text = ''
+                                            tags.append(t)
+                            else:
+                                if tag_name in self.nowiki_tags:
+                                    self.nowiki = True
+                                    self.nowiki_tag = tag_name
+                                tags.append(self.Preprocessor_tag(tag_name, text, tag))
+                    else:
+                        post_line.append(next_text)
+                        break
+                return ''.join(post_line)
+            self.opened_tags = tags
+
 
     def _apply(self, match, prefix, *args):
         """
@@ -757,7 +905,11 @@ class Converter(ConverterMacro):
 
     def parse_inline(self, text, stack, inline_re):
         """Recognize inline elements within the given text"""
-
+        lines = text.split('\n')
+        text = []
+        for line in lines:
+            text.append(self.preprocessor(line))
+        text = '\n'.join(text)
         pos = 0
         for match in inline_re.finditer(text):
             # Handle leading text
