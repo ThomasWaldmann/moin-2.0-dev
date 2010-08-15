@@ -14,7 +14,7 @@ from flask import flaskg
 
 from werkzeug import create_environ
 
-from MoinMoin import i18n, user, config, wikiutil
+from MoinMoin import i18n, user, config
 from MoinMoin.formatter import text_html
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.web.request import Request
@@ -158,26 +158,6 @@ class HTTPContext(BaseContext):
 
     session = EnvironProxy('session')
 
-    # proxy some descriptors of the underlying WSGI request, since
-    # setting on those does not work over __(g|s)etattr__-proxies
-    class _proxy(property):
-        def __init__(self, name):
-            self.name = name
-            property.__init__(self, self.get, self.set, self.delete)
-        def get(self, obj):
-            return getattr(obj.request, self.name)
-        def set(self, obj, value):
-            setattr(obj.request, self.name, value)
-        def delete(self, obj):
-            delattr(obj.request, self.name)
-
-    mimetype = _proxy('mimetype')
-    content_type = _proxy('content_type')
-    status = _proxy('status')
-    status_code = _proxy('status_code')
-
-    del _proxy
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:
@@ -185,39 +165,6 @@ class HTTPContext(BaseContext):
         except AttributeError, e:
             return super(HTTPContext, self).__getattribute__(name)
 
-    # methods regarding manipulation of HTTP related data
-    def read(self, n=None):
-        """ Read n bytes (or everything) from input stream. """
-        if n is None:
-            return self.request.stream.read()
-        else:
-            return self.request.stream.read(n)
-
-    # the output related methods
-    def write(self, *data):
-        """ Write to output stream. """
-        self.request.out_stream.writelines(data)
-
-    def getQualifiedURL(self, uri=''):
-        """ Return an absolute URL starting with schema and host.
-
-        Already qualified urls are returned unchanged.
-
-        @param uri: server rooted uri e.g /scriptname/pagename.
-                    It must start with a slash. Must be ascii and url encoded.
-        """
-        import urlparse
-        scheme = urlparse.urlparse(uri)[0]
-        if scheme:
-            return uri
-
-        host_url = self.request.host_url.rstrip('/')
-        result = "%s%s" % (host_url, uri)
-
-        # This might break qualified urls in redirects!
-        # e.g. mapping 'http://netloc' -> '/'
-        result = wikiutil.mapURL(self, result)
-        return result
 
 class AuxilaryMixin(object):
     """
@@ -274,10 +221,3 @@ class ScriptContext(AllContext):
         from MoinMoin import wsgiapp
         wsgiapp.init(self)
 
-    def write(self, *data):
-        for d in data:
-            if isinstance(d, unicode):
-                d = d.encode(config.charset)
-            else:
-                d = str(d)
-            sys.stdout.write(d)
