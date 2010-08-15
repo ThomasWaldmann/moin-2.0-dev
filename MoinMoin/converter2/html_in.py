@@ -386,9 +386,9 @@ class Converter(object):
         For some specific inline tags (defined in inline_tags)
         We just return <span element="tag.name">
         """
-        key = moin_page('element')
+        key = html('class')
         attrib = {}
-        attrib[key] = element.tag.name
+        attrib[key] = ''.join(['html-',element.tag.name])
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_list(self, element):
