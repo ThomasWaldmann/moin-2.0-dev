@@ -16,7 +16,6 @@ from werkzeug import Headers, http_date, create_environ, redirect, abort
 from werkzeug.exceptions import Unauthorized, NotFound
 
 from MoinMoin import i18n, error, user, config, wikiutil
-from MoinMoin.config import multiconfig
 from MoinMoin.formatter import text_html
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.web.request import Request, MoinMoinFinish
@@ -130,19 +129,6 @@ class BaseContext(Context):
 
     page = EnvironProxy('page', None) # TODO deprecated, get rid of this
     item_name = EnvironProxy('item_name', lambda o: get_item_name(o))
-
-    # now the more complex factories
-    def cfg(self):
-        if self.request.given_config is not None:
-            return self.request.given_config('MoinMoin._tests.wikiconfig')
-        try:
-            flaskg.clock.start('load_multi_cfg')
-            cfg = multiconfig.getConfig(self.request.url)
-            flaskg.clock.stop('load_multi_cfg')
-            return cfg
-        except error.NoConfigMatchedError:
-            raise NotFound('<p>No wiki configuration matching the URL found!</p>')
-    cfg = EnvironProxy(cfg)
 
     def getText(self):
         lang = self.lang

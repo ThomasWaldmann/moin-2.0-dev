@@ -12,7 +12,7 @@ from MoinMoin.config import multiconfig, url_prefix_static
 from MoinMoin.storage.backends import create_simple_mapping
 
 
-class LocalConfig(multiconfig.DefaultConfig):
+class Config(multiconfig.DefaultConfig):
     # vvv DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO vvv
     # Directory containing THIS wikiconfig:
     wikiconfig_dir = os.path.abspath(os.path.dirname(__file__))
@@ -60,20 +60,17 @@ class LocalConfig(multiconfig.DefaultConfig):
     # Add your configuration items here.
     secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'
 
+# Flask wants uppercase stuff
+MOINCFG = Config
+
 # DEVELOPERS! Do not add your configuration items there,
 # you could accidentally commit them! Instead, create a
 # wikiconfig_local.py file containing this:
 #
-# from wikiconfig import LocalConfig
+# from wikiconfig import Config as WikiConfig
 #
-# class Config(LocalConfig):
+# class Config(WikiConfig):
 #     configuration_item_1 = 'value1'
 #
-
-try:
-    from wikiconfig_local import Config
-except ImportError, err:
-    if not str(err).endswith('wikiconfig_local'):
-        raise
-    Config = LocalConfig
+# MOINCFG = Config
 
