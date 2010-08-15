@@ -21,8 +21,6 @@
                that the browser sent
        multistage: boolean indicating multistage login continuation
                    [may not be present, login only]
-       openid_identifier: the OpenID identifier we got from the form
-                          (or None) [login only]
 
     login_hint() should return a HTML text that is displayed to the user right
     below the login form, it should tell the user what to do in case of a
@@ -63,8 +61,7 @@
     Note, however, that when no username is entered or the username is not
     found in the database, it may be appropriate to return with a message
     and the continue flag set to true (ContinueLogin) because a subsequent auth
-    plugin might work even without the username, say the openid plugin for
-    example.
+    plugin might work even without the username (e.g. an openid auth plugin).
 
     The multistage member must evaluate to false or be callable. If it is
     callable, this indicates that the authentication method requires a second
@@ -98,10 +95,9 @@
      * login_inputs: a list of required inputs, currently supported are
                       - 'username': username entry field
                       - 'password': password entry field
-                      - 'openid_identifier': OpenID entry field
                       - 'special_no_input': manual login is required
                             but no form fields need to be filled in
-                            (for example openid with forced provider)
+                            (e.g. openid with forced provider)
                             in this case the theme may provide a short-
                             cut omitting the login form
      * logout_possible: boolean indicating whether this auth methods
@@ -253,14 +249,10 @@ class MoinAuth(BaseAuth):
 
     def login_hint(self, request):
         _ = request.getText
-        #if request.cfg.openidrp_registration_url:
-        #    register_url = request.cfg.openidrp_registration_url
-        #else:
         register_url = url_for('frontend.register')
         recover_url = url_for('frontend.recoverpass')
 
         msg = ''
-        #if request.cfg.openidrp_allow_registration:
         msg = _('If you do not have an account, <a href="%(register_url)s">you can create one now</a>. ') % {
               'register_url': register_url}
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>') % {
@@ -378,7 +370,7 @@ class GivenAuth(BaseAuth):
 
 
 def handle_login(request, userobj=None, username=None, password=None,
-                 attended=True, openid_identifier=None, stage=None):
+                 attended=True, stage=None):
     """
     Process a 'login' request by going through the configured authentication
     methods in turn. The passable keyword arguments are explained in more
@@ -388,7 +380,6 @@ def handle_login(request, userobj=None, username=None, password=None,
         'username': username,
         'password': password,
         'attended': attended,
-        'openid_identifier': openid_identifier,
         'multistage': (stage and True) or None
     }
     for authmethod in request.cfg.auth:

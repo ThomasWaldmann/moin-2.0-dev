@@ -879,20 +879,6 @@ options = {
        "User object attributes that are not persisted to permanent storage (internal use)."),
     )),
 
-    'openidrp': ('OpenID Relying Party',
-        'These settings control the built-in OpenID Relying Party (client).',
-    (
-      ('allowed_op', [], "List of forced providers"),
-    )),
-
-    'openid_server': ('OpenID Server',
-        'These settings control the built-in OpenID Identity Provider (server).',
-    (
-      ('enabled', False, "True to enable the built-in OpenID server."),
-      ('restricted_users_group', None, "If set to a group name, the group members are allowed to use the wiki as an OpenID provider. (None = allow for all users)"),
-      ('enable_user', False, "If True, the OpenIDUser processing instruction is allowed."),
-    )),
-
     'mail': ('Mail settings',
         'These settings control outgoing and incoming email from and to the wiki.',
     (

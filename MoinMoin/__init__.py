@@ -156,7 +156,6 @@ def setup_user(context, session):
             'username': form.get('name'),
             'password': form.get('password'),
             'attended': True,
-            'openid_identifier': form.get('openid_identifier'),
             'stage': form.get('stage')
         }
         userobj = auth.handle_login(context, userobj, **params)
