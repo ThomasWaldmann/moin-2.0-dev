@@ -449,6 +449,24 @@ class Converter(ConverterMacro):
             c = unichr(name2codepoint.get(entity[1:-1], 0xfffe))
         stack.top_append(c)
 
+    inline_blockquote = r"""
+        (?P<blockquote>
+            (?P<blockquote_begin>
+            \<blockquote.*?\>
+            )
+            |
+            (?P<blockquote_end>
+            \<\/blockquote\>
+            )
+        )
+    """
+
+    def inline_blockquote_repl(self, stack, blockquote, blockquote_begin=None, blockquote_end=None):
+        if blockquote_begin is not None:
+            stack.push(moin_page.blockquote())
+        elif blockquote_end is not None:
+            stack.pop()
+
     inline_footnote = r"""
         (?P<footnote>
             (?P<footnote_begin>
