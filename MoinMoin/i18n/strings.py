@@ -162,7 +162,6 @@ optional_help_pages = [
     _('HelpOnMacros/MailTo'),
     _('HelpOnMacros/MonthCalendar'),
     _('HelpOnNavigation'),
-    _('HelpOnOpenIDProvider'),
     _('HelpOnPageCreation'),
     _('HelpOnPageDeletion'),
     _('HelpOnParsers'),
