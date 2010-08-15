@@ -449,6 +449,27 @@ class Converter(ConverterMacro):
             c = unichr(name2codepoint.get(entity[1:-1], 0xfffe))
         stack.top_append(c)
 
+    inline_footnote = r"""
+        (?P<footnote>
+            (?P<footnote_begin>
+            \<ref.*?\>
+            )
+            |
+            (?P<footnote_end>
+            \<\/ref\>
+            )
+        )
+    """
+
+    def inline_footnote_repl(self, stack, footnote, footnote_begin=None, footnote_text=None, footnote_end=None, footnote_start=None):
+        #stack.top_check('emphasis'):
+        if footnote_begin is not None:
+            stack.push(moin_page.note(attrib={moin_page.note_class: 'footnote'}))
+            stack.push(moin_page.note_body())
+        elif footnote_end is not None:
+            stack.pop()
+            stack.pop()
+
     inline_strike = r"""
         (?P<strike>
            (?P<strike_begin>
