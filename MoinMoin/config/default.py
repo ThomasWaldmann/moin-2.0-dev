@@ -95,8 +95,6 @@ class ConfigFunctionality(object):
         self.cache.page_group_regexact = re.compile(u'^%s$' % self.page_group_regex, re.UNICODE)
         self.cache.page_template_regexact = re.compile(u'^%s$' % self.page_template_regex, re.UNICODE)
 
-        self.cache.ua_spiders = self.ua_spiders and re.compile(self.ua_spiders, re.IGNORECASE)
-
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
                      (e.g. ['Sample User', 'AnotherUser']).
@@ -501,40 +499,10 @@ options_no_group_name = {
   'spam_leech_dos': ('Anti-Spam/Leech/DOS',
   'These settings help limiting ressource usage and avoiding abuse.',
   (
-    ('hosts_deny', [], "List of denied IPs; if an IP ends with a dot, it denies a whole subnet (class A, B or C)"),
-    ('surge_action_limits',
-     {# allow max. <count> <action> requests per <dt> secs
-        # action: (count, dt)
-        'all': (30, 30), # all requests (except cache/get action) count for this limit
-        'default': (30, 60), # default limit for actions without a specific limit
-        'show': (30, 60),
-        'recall': (10, 120),
-        'diff': (30, 60),
-        'fullsearch': (10, 120),
-        'modify': (30, 300), # can be lowered after making preview different from edit
-        'atom_feed': (1, 60),
-        # The following actions are often used for images - to avoid pages with lots of images
-        # (like photo galleries) triggering surge protection, we assign rather high limits:
-        'get': (300, 30),
-        'cache': (600, 30), # cache action is very cheap/efficient
-     },
-     "Surge protection tries to deny clients causing too much load/traffic, see HelpOnConfiguration/SurgeProtection."),
-    ('surge_lockout_time', 3600, "time [s] someone gets locked out when ignoring the warnings"),
-
     ('textchas', None,
      "Spam protection setup using site-specific questions/answers, see HelpOnSpam."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked !TextCha questions."),
-
-    # a regex of HTTP_USER_AGENTS that should be excluded from logging
-    # and receive a FORBIDDEN for anything except viewing a page
-    # list must not contain 'java' because of twikidraw wanting to save drawing uses this useragent
-    ('ua_spiders',
-     ('archiver|cfetch|charlotte|crawler|curl|gigabot|googlebot|heritrix|holmes|htdig|httrack|httpunit|'
-      'intelix|jeeves|larbin|leech|libwww-perl|linkbot|linkmap|linkwalk|litefinder|mercator|'
-      'microsoft.url.control|mirror| mj12bot|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
-      'sherlock|slurp|sitecheck|snoopy|spider|teleport|twiceler|voilabot|voyager|webreaper|wget|yeti'),
-     "A regex of HTTP_USER_AGENTs that should be excluded from logging and are not allowed to use actions."),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
