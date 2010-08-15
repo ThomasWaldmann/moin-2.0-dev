@@ -1,9 +1,9 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Multiple configuration handler and Configuration defaults class
+    MoinMoin - Configuration defaults class
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2005-2009 MoinMoin:ThomasWaldmann,
+                2005-2010 MoinMoin:ThomasWaldmann,
                 2008      MoinMoin:JohannesBerg,
                 2010      MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
@@ -12,7 +12,6 @@
 import re
 import os
 import sys
-import time
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -26,171 +25,6 @@ from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.security import AccessControlList
-
-_url_re_cache = None
-_farmconfig_mtime = None
-_config_cache = {}
-
-
-def _importConfigModule(name):
-    """ Import and return configuration module and its modification time
-
-    Handle all errors except ImportError, because missing file is not
-    always an error.
-
-    @param name: module name
-    @rtype: tuple
-    @return: module, modification time
-    """
-    try:
-        module = __import__(name, globals(), {})
-        mtime = os.path.getmtime(module.__file__)
-    except ImportError:
-        raise
-    except IndentationError, err:
-        logging.exception('Your source code / config file is not correctly indented!')
-        msg = """IndentationError: %(err)s
-
-The configuration files are Python modules. Therefore, whitespace is
-important. Make sure that you use only spaces, no tabs are allowed here!
-You have to use four spaces at the beginning of the line mostly.
-""" % {
-    'err': err,
-}
-        raise error.ConfigurationError(msg)
-    except Exception, err:
-        logging.exception('An exception happened.')
-        msg = '%s: %s' % (err.__class__.__name__, str(err))
-        raise error.ConfigurationError(msg)
-    return module, mtime
-
-
-def _url_re_list():
-    """ Return url matching regular expression
-
-    Import wikis list from farmconfig on the first call and compile the
-    regexes. Later just return the cached regex list.
-
-    @rtype: list of tuples of (name, compiled re object)
-    @return: url to wiki config name matching list
-    """
-    global _url_re_cache, _farmconfig_mtime
-    if _url_re_cache is None:
-        try:
-            farmconfig, _farmconfig_mtime = _importConfigModule('farmconfig')
-        except ImportError, err:
-            if 'farmconfig' in str(err):
-                # we failed importing farmconfig
-                logging.debug("could not import farmconfig, mapping all URLs to wikiconfig")
-                _farmconfig_mtime = 0
-                _url_re_cache = [('wikiconfig', re.compile(r'.')), ] # matches everything
-            else:
-                # maybe there was a failing import statement inside farmconfig
-                raise
-        else:
-            logging.info("using farm config: %s" % os.path.abspath(farmconfig.__file__))
-            try:
-                cache = []
-                for name, regex in farmconfig.wikis:
-                    cache.append((name, re.compile(regex)))
-                _url_re_cache = cache
-            except AttributeError:
-                logging.error("required 'wikis' list missing in farmconfig")
-                msg = """
-Missing required 'wikis' list in 'farmconfig.py'.
-
-If you run a single wiki you do not need farmconfig.py. Delete it and
-use wikiconfig.py.
-"""
-                raise error.ConfigurationError(msg)
-    return _url_re_cache
-
-
-def _makeConfig(name):
-    """ Create and return a config instance
-
-    Timestamp config with either module mtime or farmconfig mtime. This
-    mtime can be used later to invalidate older caches.
-
-    @param name: module name
-    @rtype: DefaultConfig sub class instance
-    @return: new configuration instance
-    """
-    global _farmconfig_mtime
-    try:
-        module, mtime = _importConfigModule(name)
-        configClass = getattr(module, 'Config')
-        cfg = configClass(name)
-        cfg.cfg_mtime = max(mtime, _farmconfig_mtime)
-        logging.info("using wiki config: %s" % os.path.abspath(module.__file__))
-    except ImportError, err:
-        logging.exception('Could not import.')
-        msg = """ImportError: %(err)s
-
-Check that the file is in the same directory as the server script. If
-it is not, you must add the path of the directory where the file is
-located to the python path in the server script. See the comments at
-the top of the server script.
-
-Check that the configuration file name is either "wikiconfig.py" or the
-module name specified in the wikis list in farmconfig.py. Note that the
-module name does not include the ".py" suffix.
-""" % {
-    'err': err,
-}
-        raise error.ConfigurationError(msg)
-    except AttributeError, err:
-        logging.exception('An exception occured.')
-        msg = """AttributeError: %(err)s
-
-Could not find required "Config" class in "%(name)s.py".
-
-This might happen if you are trying to use a pre 1.3 configuration file, or
-made a syntax or spelling error.
-
-Another reason for this could be a name clash. It is not possible to have
-config names like e.g. storage.py - because that collides with MoinMoin/storage/ -
-have a look into your MoinMoin code directory what other names are NOT
-possible.
-
-Please check your configuration file. As an example for correct syntax,
-use the wikiconfig.py file from the distribution.
-""" % {
-    'name': name,
-    'err': err,
-}
-        raise error.ConfigurationError(msg)
-
-    return cfg
-
-
-def _getConfigName(url):
-    """ Return config name for url or raise """
-    for name, regex in _url_re_list():
-        match = regex.match(url)
-        if match:
-            return name
-    raise error.NoConfigMatchedError
-
-
-def getConfig(url):
-    """ Return cached config instance for url or create new one
-
-    If called by many threads in the same time multiple config
-    instances might be created. The first created item will be
-    returned, using dict.setdefault.
-
-    @param url: the url from request, possibly matching specific wiki
-    @rtype: DefaultConfig subclass instance
-    @return: config object for specific wiki
-    """
-    cfgName = _getConfigName(url)
-    try:
-        cfg = _config_cache[cfgName]
-    except KeyError:
-        cfg = _makeConfig(cfgName)
-        cfg = _config_cache.setdefault(cfgName, cfg)
-    return cfg
 
 
 # This is a way to mark some text for the gettext tools so that they don't
@@ -213,7 +47,6 @@ class ConfigFunctionality(object):
 
     # attributes of this class that should not be shown
     # in the WikiConfig() macro.
-    cfg_mtime = None
     siteid = None
     cache = None
     mail_enabled = None
@@ -226,9 +59,8 @@ class ConfigFunctionality(object):
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
 
-    def __init__(self, siteid):
+    def __init__(self):
         """ Init Config instance """
-        self.siteid = siteid
         self.cache = CacheClass()
 
         if self.config_check_enabled:
@@ -518,7 +350,8 @@ file. It should match the actual charset of the configuration file.
                         try:
                             # Load the module and set in sys.modules
                             module = imp.load_module(modname, fp, path, info)
-                            setattr(sys.modules[self.siteid], 'csum', module)
+                            # XXX for what was this good for?:
+                            #setattr(sys.modules[self.siteid], 'csum', module)
                         finally:
                             # Make sure fp is closed properly
                             if fp:
@@ -915,7 +748,8 @@ options_no_group_name = {
 
     ('search_results_per_page', 25, "Number of hits shown per page in the search results"),
 
-    ('siteid', 'default', None),
+    ('siteid', 'MoinMoin', None), # XXX just default to some existing module name to
+                                  # make plugin loader etc. work for now
   )),
 }
 
