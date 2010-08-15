@@ -267,6 +267,11 @@ def before():
 
     context = AllContext(Request(request.environ))
 
+    flaskg.clock.start('create_cfg_instance')
+    # Note: we could give the context to Config.__init__():
+    context.cfg = app.config['MOINCFG']()
+    flaskg.clock.stop('create_cfg_instance')
+
     context.lang = setup_i18n_preauth(context)
 
     context.session = context.cfg.session_service.get_session(context)
