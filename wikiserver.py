@@ -24,5 +24,9 @@ except IOError, err:
     # it couldn't load from wikiconfig_local.py, retry with wikiconfig.py
     app.config.from_pyfile(path.join(here, 'wikiconfig.py'))
 
-app.run(host='127.0.0.1', port=8080, debug=True)
+host = app.config.get('HOST', '127.0.0.1')
+port = app.config.get('PORT', 8080)
+debug = app.config.get('DEBUG', True) # XXX change default to False later
+
+app.run(host=host, port=port, debug=debug)
 
