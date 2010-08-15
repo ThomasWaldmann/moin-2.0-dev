@@ -554,7 +554,17 @@ options_no_group_name = {
      "if True, do not allow to change the theme"),
 
     ('stylesheets', [],
-     "List of tuples (media, csshref) to insert after theme css, before user css, see HelpOnThemes."),
+     """
+     List of tuples (media, csshref, title, alternate_stylesheet) 
+     to insert after theme css, before user css, see HelpOnThemes.
+     Usage: [('screen', 'http://www.moinmo.in/alternate.css', 'Moin Other Style', True)]
+     """),
+     
+     ('external_scripts', [],
+      """
+      List of tuples (type, href) to insert after Moin javascript.
+      Usage: [('text/javascript', 'http://www.moinmo.in/script.js')]
+      """),
 
     ('supplementation_item_names', [u'Discussion', ],
      "List of names of the supplementation (sub)items [unicode]"),
