@@ -124,8 +124,8 @@ class NodeVisitor():
         self.open_moin_page_node(moin_page.error())
 
     def depart_error(self, node=None):
-        self.close_moin_page_node()   
-    
+        self.close_moin_page_node()
+
     def visit_block_quote(self, node):
         self.open_moin_page_node(moin_page.list())
         self.open_moin_page_node(moin_page.list_item())
