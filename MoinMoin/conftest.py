@@ -74,7 +74,7 @@ def init_test_request(given_config):
         content_acl = given_config.content_acl
         given_config.namespace_mapping, given_config.router_index_uri = \
             create_simple_mapping("memory:", content_acl)
-        request.given_config = given_config
+        app.config['MOINCFG'] = given_config
         before()
         request.cfg = flaskg.context.cfg #XXX: Should not be set up manually normally.
         return request
