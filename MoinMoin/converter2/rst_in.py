@@ -4,6 +4,9 @@ MoinMoin - ReStructured Text input converter
 It's based on docutils rst parser.
 Conversion of docutils document tree to moinmoin document tree.
 
+This converter based on ReStructuredText 2006-09-22.
+Works with docutils version 0.5 (2008-06-25) or higher.
+
 @copyright: Docutils:David Goodger <goodger@python.org>
             2004 Matthew Gilbert <gilbert AT voxmea DOT net>,
             2004 Alexander Schremmer <alex AT alexanderweb DOT de>
