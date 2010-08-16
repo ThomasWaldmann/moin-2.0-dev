@@ -127,18 +127,6 @@ def get_by_email_address(request, email_address):
         return users[0]
 
 
-def getUserIdByOpenId(request, openid):
-    """ Searches for an user with a particular openid id and returns it. """
-    from MoinMoin.search import term
-    filter = term.ItemHasMetaDataValue('openids', openid)
-    identifier = get_user_backend(request).search_item(filter)
-
-    users = []
-    for user in identifier:
-        users.append(User(request, user))
-    return users
-
-
 def getUserId(request, searchName):
     """ Get the user ID for a specific user NAME.
 
@@ -560,12 +548,6 @@ class User:
         caching.CacheEntry(self._request, arena, key, scope='wiki').remove()
         try:
             del self._request.cfg.cache.name2id
-        except:
-            pass
-        key = 'openid2id'
-        caching.CacheEntry(self._request, arena, key, scope='wiki').remove()
-        try:
-            del self._request.cfg.cache.openid2id
         except:
             pass
 

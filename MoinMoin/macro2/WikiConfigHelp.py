@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details
 """
 
-from MoinMoin.config import multiconfig
+from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
 
@@ -17,10 +17,10 @@ class Macro(MacroBlockBase):
         _ = request.getText
 
         groups = []
-        for groupname in multiconfig.options:
-            groups.append((groupname, True, multiconfig.options))
-        for groupname in multiconfig.options_no_group_name:
-            groups.append((groupname, False, multiconfig.options_no_group_name))
+        for groupname in defaultconfig.options:
+            groups.append((groupname, True, defaultconfig.options))
+        for groupname in defaultconfig.options_no_group_name:
+            groups.append((groupname, False, defaultconfig.options_no_group_name))
         groups.sort()
 
         result = moin_page.div()
@@ -51,7 +51,7 @@ class Macro(MacroBlockBase):
             for name, default, description in opts:
                 if addgroup:
                     name = groupname + '_' + name
-                if isinstance(default, multiconfig.DefaultExpression):
+                if isinstance(default, defaultconfig.DefaultExpression):
                     default_txt = default.text
                 else:
                     default_txt = '%r' % (default, )

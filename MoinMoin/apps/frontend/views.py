@@ -214,8 +214,8 @@ def modify_item(item_name):
         cancelled = 'button_cancel' in flaskg.context.form
         if not cancelled:
             item.modify()
-        if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
-            # TWikiDraw/AnyWikiDraw POST more than once, redirecting would break them
+        if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw', 'application/x-svgdraw'):
+            # TWikiDraw/AnyWikiDraw/SvgDraw POST more than once, redirecting would break them
             return "OK"
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
