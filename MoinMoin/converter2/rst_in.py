@@ -772,13 +772,15 @@ class Converter(object):
             try:
                 docutils_tree = core.publish_doctree(source=input)
             except utils.SystemMessage as inst:
-                string_numb = re.search(re.compile(r'\: (?P<str_num> [0-9]* ) \:', re.X | re.U), str(inst))
+                string_numb = re.match(re.compile(r'<string>\:([0-9]*)\:\s*\(.*?\)\s*(.*)', re.X | re.U | re.M | re.S), str(inst))
                 if string_numb:
-                    str_num = string_numb.groupdict().get('str_num')
+                    str_num = string_numb.group(1)
                     input = input.split('\n')
                     if str_num:
-                        input = ['.. error::\n ::\n\n  %s\n\n' % str(inst).replace('\n', '\n  ')]
+                        input = ['.. error::\n ::\n\n  Parse error on line number %s:\n\n  %s\n\n  Go back and try fix that.\n\n' % (str_num, string_numb.group(2).replace('\n', '\n  '))]
                         continue
+                else:
+                    input = ['.. error::\n ::\n\n  %s\n\n' % str(inst).replace('\n', '\n  ')]
                 raise inst
             break
         visitor = NodeVisitor()
