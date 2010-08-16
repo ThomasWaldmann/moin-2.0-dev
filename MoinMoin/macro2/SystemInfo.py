@@ -20,8 +20,6 @@ from MoinMoin.Page import Page
 
 class Macro(MacroDefinitionListBase):
     def macro(self):
-        if self.request.isSpiderAgent: # reduce bot cpu usage
-            return ''
         return self.create_definition_list(self.get_items())
 
     def formatInReadableUnits(self, size):
