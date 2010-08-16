@@ -47,7 +47,7 @@ b
 c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></list-item-body></list-item></list></body></page>'''),
             (u'1. a\n2. b\n\nA. c\n\na. A\n\n   3. B\n\n   4. C\n\n', '<page><body><list item-label-generate="ordered"><list-item><list-item-body><p>a</p></list-item-body></list-item><list-item><list-item-body><p>b</p></list-item-body></list-item></list><list item-label-generate="ordered" list-style-type="upper-alpha"><list-item><list-item-body><p>c</p></list-item-body></list-item></list><list item-label-generate="ordered" list-style-type="lower-alpha"><list-item><list-item-body><p>A</p><list item-label-generate="ordered"><list-item><list-item-body><p>B</p></list-item-body></list-item><list-item><list-item-body><p>C</p></list-item-body></list-item></list></list-item-body></list-item></list></body></page>'),
             (u'* A\n\n   - B\n\n      + C\n\n   - D\n\n* E', '<page><body><list item-label-generate="unordered"><list-item><list-item-body><p>A</p><list><list-item><list-item-body><list item-label-generate="unordered"><list-item><list-item-body><p>B</p><list><list-item><list-item-body><list item-label-generate="unordered"><list-item><list-item-body><p>C</p></list-item-body></list-item></list></list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body><p>D</p></list-item-body></list-item></list></list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body><p>E</p></list-item-body></list-item></list></body></page>'),
-            (u'what\n      def\n\nhow\n      to', '<page><body><list item-label-generate="definition"><list-item><list-item-label>what</list-item-label><list-item-body><p>def</p></list-item-body></list-item><list-item><list-item-label>how</list-item-label><list-item-body><p>to</p></list-item-body></list-item></list></body></page>')
+            (u'what\n      def\n\nhow\n      to', '<page><body><list><list-item><list-item-label>what</list-item-label><list-item-body><p>def</p></list-item-body></list-item><list-item><list-item-label>how</list-item-label><list-item-body><p>to</p></list-item-body></list-item></list></body></page>')
             ]
         for i in data:
             yield (self.do, ) + i
@@ -75,8 +75,8 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
 
     def test_footnote(self):
         data = [
-            (u'Abra [1]_\n\n.. [1] arba', '<page><body><p>Abra <note note-class="footnote">arba</note></p></body></page>'),
-            (u'Abra [#]_\n\n.. [#] arba', '<page><body><p>Abra <note note-class="footnote">arba</note></p></body></page>'),
+            (u'Abra [1]_\n\n.. [1] arba', '<page><body><p>Abra <note note-class="footnote"><note-body>arba</note-body></note></p></body></page>'),
+            (u'Abra [#]_\n\n.. [#] arba', '<page><body><p>Abra <note note-class="footnote"><note-body>arba</note-body></note></p></body></page>'),
             ]
         for i in data:
             yield (self.do, ) + i
