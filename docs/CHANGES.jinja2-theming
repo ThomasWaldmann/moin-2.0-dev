@@ -7,3 +7,4 @@ New features:
  * Added support to add external scripts in config/default.py
   * How to in http://www.moinmo.in/DiogenesAugusto/CreatingAlternateStyleSheet
  * Added support to add alternate stylesheets (or not) in config/default.py
+  * How to in http://www.moinmo.in/DiogenesAugusto/AddingExternalScripts
