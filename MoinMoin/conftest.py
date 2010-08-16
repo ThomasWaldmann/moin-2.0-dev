@@ -21,13 +21,20 @@ use a Config class to define the required configuration within the test class.
 """
 
 import atexit
+import os
 import sys
 
 import py
 
-rootdir = py.magic.autopath().dirpath()
+rootdir = py.path.local(__file__)
 moindir = rootdir.join("..")
-sys.path.insert(0, str(moindir))
+
+from MoinMoin import support
+dirname = os.path.dirname(support.__file__)
+dirname = os.path.abspath(dirname)
+if not dirname in sys.path:
+    sys.path.insert(0, dirname)
+
 
 from MoinMoin.web.request import TestRequest
 from . import app, protect_backends, before, flaskg

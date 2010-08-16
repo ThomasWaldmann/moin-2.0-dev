@@ -6,14 +6,13 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import re
 from StringIO import StringIO
 
 from werkzeug import Request as RequestBase
 from werkzeug import BaseResponse, ETagResponseMixin, \
                      CommonResponseDescriptorsMixin, WWWAuthenticateMixin
 from werkzeug.wrappers import ResponseStream
-from werkzeug import EnvironHeaders, Headers, HeaderSet
+from werkzeug import EnvironHeaders, Headers
 from werkzeug import Href, create_environ, url_encode, cached_property
 from werkzeug import Client # used by tests
 
@@ -22,8 +21,6 @@ from MoinMoin import config
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-class MoinMoinFinish(Exception):
-    """ Raised to jump directly to end of run() function, where finish is called """
 
 class ModifiedResponseStreamMixin(object):
     """

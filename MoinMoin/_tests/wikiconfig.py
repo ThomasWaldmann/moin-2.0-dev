@@ -13,7 +13,7 @@ work without setting them (like data_dir).
 
 import os
 from os.path import abspath, dirname, join
-from MoinMoin.config.multiconfig import DefaultConfig
+from MoinMoin.config.default import DefaultConfig
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'

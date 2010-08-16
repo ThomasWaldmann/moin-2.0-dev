@@ -651,10 +651,6 @@ class Page(object):
             elif verb == "deprecated":
                 pi['deprecated'] = True
 
-            elif verb == "openiduser":
-                if request.cfg.openid_server_enable_user:
-                    pi['openid.user'] = args
-
         return pi
 
     def send_page(self, **keywords):
@@ -739,10 +735,6 @@ class Page(object):
                 else:
                     request.status_code = 404
 
-            if not page_exists and self.request.isSpiderAgent:
-                # don't send any 404 content to bots
-                return
-
             # TODO: request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header
@@ -768,33 +760,6 @@ class Page(object):
                 title = self.page_name
 
                 html_head = ''
-                if request.cfg.openid_server_enabled:
-                    openid_username = self.page_name
-                    userid = user.getUserId(request, openid_username)
-
-                    if userid is None and 'openid.user' in self.pi:
-                        openid_username = self.pi['openid.user']
-                        userid = user.getUserId(request, openid_username)
-
-                    openid_group_name = request.cfg.openid_server_restricted_users_group
-                    if userid is not None and (
-                        not openid_group_name or (
-                            openid_group_name in request.groups and
-                            openid_username in request.groups[openid_group_name])):
-                        html_head = '<link rel="openid2.provider" href="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid'})), True)
-                        html_head += '<link rel="openid.server" href="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid'})), True)
-                        html_head += '<meta http-equiv="x-xrds-location" content="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid', 'yadis': 'ep'})), True)
-                    elif self.page_name == request.cfg.page_front_page:
-                        html_head = '<meta http-equiv="x-xrds-location" content="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid', 'yadis': 'idp'})), True)
-
                 request.theme.send_title(title, page=self,
                                     print_mode=print_mode,
                                     media=media, pi_refresh=pi.get('refresh'),

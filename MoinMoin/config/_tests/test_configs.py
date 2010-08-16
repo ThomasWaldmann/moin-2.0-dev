@@ -1,4 +1,4 @@
-from MoinMoin.config.multiconfig import DefaultConfig
+from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
 
