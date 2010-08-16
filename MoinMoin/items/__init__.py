@@ -1319,14 +1319,15 @@ class SvgDraw(TarMixin, Image):
     def modify(self):
         # called from modify UI/POST
         request = self.request
-        filepath = request.values.get('filepath')
-        filecontent = filepath.decode('base_64')
-        filename = request.values.get('filename').strip()
+        file_upload = request.values.get('data')
+        filename = request.form['filename']
+        filecontent = file_upload.decode('base_64')
         basepath, basename = os.path.split(filename)
         basename, ext = os.path.splitext(basename)
+        content_length = None
+
         if ext == '.png':
             filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
-        content_length = None # len(filecontent)
         self.put_member(filename, filecontent, content_length,
                         expected_members=set(['drawing.svg', 'drawing.png']))
 
@@ -1334,24 +1335,12 @@ class SvgDraw(TarMixin, Image):
         """
         Fills params into the template for initializing of the applet.
         """
-        request = self.request
-        draw_url = ""
-        if 'drawing.svg' in self.list_members():
-            draw_url = url_for('frontend.get_item', item_name=self.name)
-
-        svg_params = {
-            'draw_url': draw_url,
-            'itemname': self.name,
-            'url_prefix_static': request.cfg.url_prefix_static,
-        }
-
         return render_template("modify_svg-edit.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
-                               t=svg_params,
                               )
 
     def _render_data(self):

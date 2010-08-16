@@ -529,7 +529,22 @@
 					);
 				top.window.location = itemname;
 			};
-			
+	
+			//Read GET URL variables and return them as an associative array.
+			//function from (http://snipplr.com/users/Roshambo/) http://snipplr.com/view/799/get-url-variables/
+			function getUrlVars()
+			{
+			    var vars = [], hash;
+			    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+			    for(var i = 0; i < hashes.length; i++)
+			    {
+				hash = hashes[i].split('=');
+				vars.push(hash[0]);
+				vars[hash[0]] = hash[1];
+			    }
+			    return vars;
+			}
+
 			var exportHandler = function(window, data) {
 				// the exportHandler can save to PNG and therefore post it too
 				// additional post of svg data
@@ -538,12 +553,20 @@
 				show_save_warning = false;
 				var issues = data.issues;
 				var svg_data = Utils.encode64(data.svg);
-				var loc = document.location.href;
-				var itemname = loc.split('&item=')[1].split('?do')[0];
+
+				url_vars = getUrlVars();
+				// We can't use $.deparam.querystring(); 
+				// because of this paramurl and param logic, Once paramurl is used all query params become treated as a member of the paramurl
+				// and we need currently the paramurl parameter for loading of a svg item into the editor.
+				//related:
+				//http://code.google.com/p/svg-edit/issues/detail?id=594
+				//http://code.google.com/p/svg-edit/issues/detail?id=645
+				savepath = url_vars["savepath"];
+				viewpath = url_vars["viewpath"];
 				$.post(
-					itemname,
-					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.svg', 'filepath': svg_data}
-				      );
+					savepath,
+					{'mimetype': 'application/x-svgdraw', 'filename': 'drawing.svg', 'data': svg_data}
+					);
 				
 				if(!$('#export_canvas').length) {
 					$('<canvas>', {id: 'export_canvas'}).hide().appendTo('body');
@@ -555,12 +578,13 @@
 				canvg(c, data.svg);
 				var datauri = c.toDataURL('image/png');
 				var png_data = Utils.encode64(datauri);
-				
 				$.post(
-					itemname,
-					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.png', 'filepath': png_data}
+					savepath,
+					{'mimetype': 'application/x-svgdraw', 'filename': 'drawing.png', 'data': png_data}
 					);
-				top.window.location = itemname;
+				// if we can't set the redirect from item modify we can do it may be here
+				// it looks like that sometimes saving did not work because of to early change of the location
+				//top.window.location = viewpath;
 			};
 			
 			// called when we've selected a different element
