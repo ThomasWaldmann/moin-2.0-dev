@@ -4,3 +4,5 @@ SoC 2010 : Diógenes Augusto Fernandes Hermínio
 Version 2.0
 New features:
  * Use of Jinja2 as templating engine.
+ * Added support to add external scripts in multiconfig
+ * Added support to add alternate stylesheets (or not) in multiconfig
