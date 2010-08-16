@@ -735,10 +735,6 @@ class Page(object):
                 else:
                     request.status_code = 404
 
-            if not page_exists and self.request.isSpiderAgent:
-                # don't send any 404 content to bots
-                return
-
             # TODO: request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header

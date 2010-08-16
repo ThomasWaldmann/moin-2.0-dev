@@ -684,24 +684,3 @@ class VAR(CompositeElement):
         'class': None,
     }
 
-
-#############################################################################
-### Widgets
-#############################################################################
-
-#from MoinMoin.widget.base import Widget
-#class FormWidget(Widget):
-#    """ Widget to display data as an HTML form.
-#
-#        TODO: write code to combine the labels, data and HTML DOM to a complete form.
-#
-#        INCOMPLETE!!!
-#    """
-#
-#    def __init__(self, request, **kw):
-#        Widget.__init__(self, request)
-#        self.form = form(**kw)
-#
-#    def render(self):
-#        self.request.write(str(self.form))
-

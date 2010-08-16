@@ -259,8 +259,5 @@ class DataBrowserWidget(base.Widget):
             result.append(fmt.rawHTML('</form>'))
         return ''.join(result)
 
-    format = _format # DEPRECATED, use render()
-
-    render = _format # Note: in moin <= 1.7.1 render() used request.write(), this was wrong!
-                     # Now it just returns the result, as the other widgets do.
+    render = _format
 
