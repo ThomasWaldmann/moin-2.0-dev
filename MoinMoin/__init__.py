@@ -10,8 +10,19 @@ This creates the WSGI application (using Flask) as "app".
             2010 MoinMoin:DiogenesAugusto
 @license: GNU GPL, see COPYING for details.
 """
+import os
+import sys
 
-from flask import Flask, request, url_for, render_template, flash
+try:
+    from flask import Flask, request, url_for, render_template, flash
+except ImportError:
+    from MoinMoin import support
+    dirname = os.path.dirname(support.__file__)
+    dirname = os.path.abspath(dirname)
+    if not dirname in sys.path:
+        sys.path.insert(0, dirname)
+
+    from flask import Flask, request, url_for, render_template, flash
 
 # HACK: creating a custom alias for the single-letter "g"
 # Note: this should be done with a *standard* longer name in flask and
