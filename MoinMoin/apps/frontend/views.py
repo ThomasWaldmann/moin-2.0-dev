@@ -16,6 +16,8 @@ import difflib
 from flask import request, url_for, flash, render_template, Response, redirect
 from flask import flaskg
 
+from flask import current_app as app
+
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
@@ -30,7 +32,7 @@ def dispatch():
 
 @frontend.route('/')
 def show_root():
-    item_name = flaskg.context.cfg.page_front_page
+    item_name = app.cfg.page_front_page
     location = url_for('frontend.show_item', item_name=item_name)
     return redirect(location)
 
@@ -386,7 +388,7 @@ def subscribe_item(item_name):
     request = flaskg.context
     _ = request.getText
     u = request.user
-    cfg = request.cfg
+    cfg = app.cfg
     msg = None
     if not u.valid:
         msg = _("You must login to use this action: %(action)s.") % {"action": "subscribe/unsubscribe"}, "error"
@@ -415,7 +417,7 @@ def register():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     request = flaskg.context
     _ = request.getText
-    cfg = request.cfg
+    cfg = app.cfg
     item_name = 'Register' # XXX
 
     from MoinMoin.auth import MoinAuth
@@ -480,12 +482,12 @@ def login():
     request = flaskg.context
     _ = request.getText
     if request.method == 'GET':
-        for authmethod in request.cfg.auth:
+        for authmethod in app.cfg.auth:
             hint = authmethod.login_hint(request)
             if hint:
                 flash(hint, "info")
         return render_template('login.html',
-                               login_inputs=request.cfg.auth_login_inputs,
+                               login_inputs=app.cfg.auth_login_inputs,
                                title=_("Login"),
                               )
     if request.method == 'POST':

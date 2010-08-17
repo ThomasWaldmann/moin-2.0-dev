@@ -13,6 +13,8 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin.search.queryparser import QueryParser, QueryError
 from MoinMoin.search.builtin import MoinSearch
 
@@ -42,7 +44,7 @@ def _get_searcher(request, query, sort='weight', mtime=None, historysearch=None,
     query = _parse_query(query, **kw)
     searcher = None
 
-    if request.cfg.xapian_search:
+    if app.cfg.xapian_search:
         try:
             from MoinMoin.search.Xapian.search import XapianSearch, IndexDoesNotExistError
             searcher = XapianSearch(request, query, sort, mtime=mtime, historysearch=historysearch)

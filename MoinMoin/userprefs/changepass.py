@@ -8,6 +8,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin import user, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
@@ -20,7 +22,7 @@ class Settings(UserPrefBase):
         self.request = request
         self._ = request.getText
         _ = request.getText
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.title = _("Change password")
         self.name = 'changepass'
 
@@ -55,7 +57,7 @@ class Settings(UserPrefBase):
         if not password:
             return 'error', _("Please specify a password!")
 
-        pw_checker = request.cfg.password_checker
+        pw_checker = app.cfg.password_checker
         if pw_checker:
             pw_error = pw_checker(request, request.user.name, password)
             if pw_error:

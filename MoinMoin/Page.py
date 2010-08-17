@@ -15,6 +15,8 @@ import os, re, codecs
 
 from flask import flash
 
+from flask import current_app as app
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -48,7 +50,7 @@ class Page(object):
         @keyword include_self: if 1, include current user (default: 0)
         """
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.page_name = page_name
         self.rev = kw.get('rev', -1) # revision of this page
         self.include_self = kw.get('include_self', 0)
@@ -455,7 +457,7 @@ class Page(object):
                     pass
         if not isinstance(acls, (list, tuple)):
             acls = (acls, )
-        return AccessControlList(self.request.cfg, acls)
+        return AccessControlList(app.cfg, acls)
 
     def url(self, request, querystr=None, anchor=None, relative=False, **kw):
         """ Return complete URL for this page, including scriptname.
@@ -706,7 +708,7 @@ class Page(object):
                 body += oldpage.get_data()
                 del oldpage
 
-        lang = self.pi.get('language', request.cfg.language_default)
+        lang = self.pi.get('language', app.cfg.language_default)
         request.setContentLanguage(lang)
 
         # start document output
@@ -966,7 +968,7 @@ class Page(object):
 
         if special_type == 'missing':
             if request.user.valid and request.user.name == self.page_name and \
-               request.cfg.user_homewiki in ('Self', request.cfg.interwikiname):
+               app.cfg.user_homewiki in ('Self', app.cfg.interwikiname):
                 page = wikiutil.getLocalizedPage(request, 'MissingHomePage')
             else:
                 page = wikiutil.getLocalizedPage(request, 'MissingPage')

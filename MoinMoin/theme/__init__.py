@@ -10,6 +10,8 @@
 
 import os
 
+from flask import current_app as app
+
 from flask import flash, url_for, render_template
 
 from MoinMoin import log
@@ -82,7 +84,7 @@ class ThemeBase(object):
         @param request: the request object
         """
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.user = request.user
         self.storage = request.storage
         self.output_mimetype = 'text/html' # was: page.output_mimetype
@@ -185,7 +187,7 @@ class ThemeBase(object):
                     wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
                     wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
                     href = wikiutil.join_wiki(wiki_base_url, item_name)
-                    if wiki_name in [request.cfg.interwikiname, 'Self', ]:
+                    if wiki_name in [app.cfg.interwikiname, 'Self', ]:
                         exists = self.item_exists(item_name)
                         wiki_name = ''  # means "this wiki" for the theme code
                     else:
@@ -271,13 +273,13 @@ class ThemeBase(object):
         wiki_name, item_name = wikiutil.split_interwiki(target)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
-        if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
+        if wiki_name not in [app.cfg.interwikiname, 'Self', ]:
             if not title:
                 title = item_name
             return href, title, wiki_name
 
         # Handle regular pagename like "FrontPage"
-        item_name = wikiutil.normalize_pagename(item_name, request.cfg)
+        item_name = wikiutil.normalize_pagename(item_name, app.cfg)
 
         # Use localized pages for the current user
         if localize:
@@ -300,7 +302,7 @@ class ThemeBase(object):
         current = item_name
 
         # Process config navi_bar
-        for text in request.cfg.navi_bar:
+        for text in app.cfg.navi_bar:
             url, link_text, title = self.split_navilink(text)
             items.append(('wikilink', url, link_text, title))
 
@@ -312,8 +314,8 @@ class ThemeBase(object):
             items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
-        for sistername, sisterurl in request.cfg.sistersites:
-            if sistername == request.cfg.interwikiname:  # it is THIS wiki
+        for sistername, sisterurl in app.cfg.sistersites:
+            if sistername == app.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
                 cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
@@ -403,9 +405,9 @@ class ThemeBase(object):
         """
         request = self.request
         url = ''
-        if request.cfg.auth_login_inputs == ['special_no_input']:
+        if app.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
-        if request.cfg.auth_have_login:
+        if app.cfg.auth_have_login:
             url = url or url_for('frontend.login')
         return url
 
@@ -447,7 +449,7 @@ class ThemeBase(object):
         options = []
         for title, action, endpoint, disabled in menu:
             # removes excluded actions from the more actions menu
-            if action in request.cfg.actions_excluded:
+            if action in app.cfg.actions_excluded:
                 continue
             options.append((title, disabled, endpoint))
         return options
@@ -509,10 +511,10 @@ def load_theme(request, theme_name=None):
     @return: a theme initialized for the request
     """
     if theme_name is None or theme_name == '<default>':
-        theme_name = request.cfg.theme_default
+        theme_name = app.cfg.theme_default
 
     try:
-        Theme = wikiutil.importPlugin(request.cfg, 'theme', theme_name, 'Theme')
+        Theme = wikiutil.importPlugin(app.cfg, 'theme', theme_name, 'Theme')
     except wikiutil.PluginMissingError:
         raise ThemeNotFound(theme_name)
 
@@ -538,7 +540,7 @@ def load_theme_fallback(request, theme_name=None):
     except ThemeNotFound:
         fallback = 1
         try:
-            request.theme = load_theme(request, request.cfg.theme_default)
+            request.theme = load_theme(request, app.cfg.theme_default)
         except ThemeNotFound:
             fallback = 2
             from MoinMoin.theme.modernized import Theme

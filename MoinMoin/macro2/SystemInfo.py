@@ -9,8 +9,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-
 import sys, os
+
+from flask import current_app as app
 
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
@@ -93,13 +94,13 @@ class Macro(MacroDefinitionListBase):
         # a valid user gets info about all installed extensions
         row(_('Global extension macros'), ', '.join(macro.modules) or nonestr)
         row(_('Local extension macros'),
-            ', '.join(wikiutil.wikiPlugins('macro', request.cfg)) or nonestr)
+            ', '.join(wikiutil.wikiPlugins('macro', app.cfg)) or nonestr)
 
         glob_actions = [x for x in action.modules
-                        if not x in request.cfg.actions_excluded]
+                        if not x in app.cfg.actions_excluded]
         row(_('Global extension actions'), ', '.join(glob_actions) or nonestr)
-        loc_actions = [x for x in wikiutil.wikiPlugins('action', request.cfg)
-                       if not x in request.cfg.actions_excluded]
+        loc_actions = [x for x in wikiutil.wikiPlugins('action', app.cfg)
+                       if not x in app.cfg.actions_excluded]
         row(_('Local extension actions'), ', '.join(loc_actions) or nonestr)
 
         try:
@@ -109,7 +110,7 @@ class Macro(MacroDefinitionListBase):
             xapian = None
             xapVersion = _('Xapian and/or Python Xapian bindings not installed')
 
-        xapian_enabled = request.cfg.xapian_search
+        xapian_enabled = app.cfg.xapian_search
         xapState = (_('Disabled'), _('Enabled'))
         xapRow = '%s, %s' % (xapState[xapian_enabled], xapVersion)
 
@@ -127,7 +128,7 @@ class Macro(MacroDefinitionListBase):
 
         if xapian and xapian_enabled:
             stems = xapian.Stem.get_available_languages()
-            row(_('Stemming for Xapian'), xapState[request.cfg.xapian_stemming] +
+            row(_('Stemming for Xapian'), xapState[app.cfg.xapian_stemming] +
                 " (%s)" % (stems or nonestr))
 
         try:

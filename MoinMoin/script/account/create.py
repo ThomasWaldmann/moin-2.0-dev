@@ -6,6 +6,8 @@ MoinMoin - create a user account
 @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin.script import MoinScript
 
 class PluginScript(MoinScript):
@@ -68,7 +70,7 @@ General syntax: moin [options] account create [create-options]
             print 'This username "%s" exists already!' % self.options.uname
             return
         # Email should be unique - see also MoinMoin.user.create_user
-        if self.options.email and request.cfg.user_email_unique:
+        if self.options.email and app.cfg.user_email_unique:
             if user.get_by_email_address(request, self.options.email):
                 print 'This emailaddress "%s" belongs to someone else!' % self.options.email
                 return

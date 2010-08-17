@@ -10,6 +10,8 @@ import os.path, re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
@@ -191,7 +193,7 @@ class Formatter(FormatterBase):
 
         self._is_included = kw.get('is_included', False)
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = app.cfg
 
     # Primitive formatter functions #####################################
 

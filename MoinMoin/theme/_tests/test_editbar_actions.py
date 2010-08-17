@@ -7,6 +7,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin.theme import ThemeBase
 from MoinMoin.Page import Page
 
@@ -16,14 +18,14 @@ class TestEditBarActions(object):
 
     def setup_method(self, method):
         self.savedValid = self.request.user.valid
-        self.savedMailEnabled = self.request.cfg.mail_enabled
-        self.request.cfg.mail_enabled = True
+        self.savedMailEnabled = app.cfg.mail_enabled
+        app.cfg.mail_enabled = True
         self.page = Page(self.request, u'FrontPage')
         self.ThemeBase = ThemeBase(self.request)
 
     def teardown_method(self, method):
         self.request.user.valid = self.savedValid
-        self.request.cfg.mail_enabled = self.savedMailEnabled
+        app.cfg.mail_enabled = self.savedMailEnabled
 
     def test_editbar_for_anonymous_user(self):
         assert not self.request.user.valid

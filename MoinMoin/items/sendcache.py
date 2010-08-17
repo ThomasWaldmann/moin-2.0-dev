@@ -31,6 +31,8 @@ import hmac
 
 from flask import url_for
 
+from flask import current_app as app
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -69,7 +71,7 @@ class SendCache(object):
         """
         hmac_data = repr(meta)
         if secret is None:
-            secret = request.cfg.secrets['action/cache']
+            secret = app.cfg.secrets['action/cache']
         key = hmac.new(secret, hmac_data, digestmod=hashlib.sha1).hexdigest()
         return cls(request, key)
 
@@ -147,7 +149,7 @@ class SendCache(object):
                    ('Content-Length', content_length),
                   ]
         if content_disposition is None and mt is not None:
-            content_disposition = mt.content_disposition(request.cfg)
+            content_disposition = mt.content_disposition(app.cfg)
         if content_disposition:
             headers.append(('Content-Disposition', content_disposition))
 

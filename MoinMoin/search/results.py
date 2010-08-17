@@ -12,6 +12,8 @@
 
 import StringIO, time
 
+from flask import current_app as app
+
 from MoinMoin import wikiutil
 
 ############################################################################
@@ -290,7 +292,7 @@ class SearchResults(object):
                     'hitsFrom': hitsFrom + 1,
                     'hitsTo': hitsFrom +
                             min(self.estimated_hits[1] - hitsFrom,
-                                request.cfg.search_results_per_page),
+                                app.cfg.search_results_per_page),
                     'bs': formatter.strong(1), 'be': formatter.strong(0)},
             u' (%s %s)' % (''.join([formatter.strong(1),
                 formatter.text("%.2f" % self.elapsed),
@@ -322,7 +324,7 @@ class SearchResults(object):
         else:
             lst = f.bullet_list
 
-        if paging and len(self.hits) <= request.cfg.search_results_per_page:
+        if paging and len(self.hits) <= app.cfg.search_results_per_page:
             paging = False
 
         # Add pages formatted as list
@@ -330,7 +332,7 @@ class SearchResults(object):
             write(lst(1))
 
             if paging:
-                hitsTo = hitsFrom + request.cfg.search_results_per_page
+                hitsTo = hitsFrom + app.cfg.search_results_per_page
                 displayHits = self.hits[hitsFrom:hitsTo]
             else:
                 displayHits = self.hits
@@ -375,7 +377,7 @@ class SearchResults(object):
             write(lst(0))
             if paging:
                 write(self.formatPageLinks(hitsFrom=hitsFrom,
-                    hitsPerPage=request.cfg.search_results_per_page,
+                    hitsPerPage=app.cfg.search_results_per_page,
                     hitsNum=len(self.hits)))
 
         return self.getvalue()
@@ -400,7 +402,7 @@ class SearchResults(object):
         write = self.buffer.write
         _ = request.getText
 
-        if paging and len(self.hits) <= request.cfg.search_results_per_page:
+        if paging and len(self.hits) <= app.cfg.search_results_per_page:
             paging = False
 
         # Add pages formatted as definition list
@@ -408,7 +410,7 @@ class SearchResults(object):
             write(f.definition_list(1))
 
             if paging:
-                hitsTo = hitsFrom + request.cfg.search_results_per_page
+                hitsTo = hitsFrom + app.cfg.search_results_per_page
                 displayHits = self.hits[hitsFrom:hitsTo]
             else:
                 displayHits = self.hits
@@ -453,7 +455,7 @@ class SearchResults(object):
             write(f.definition_list(0))
             if paging:
                 write(self.formatPageLinks(hitsFrom=hitsFrom,
-                    hitsPerPage=request.cfg.search_results_per_page,
+                    hitsPerPage=app.cfg.search_results_per_page,
                     hitsNum=len(self.hits)))
 
         return self.getvalue()
@@ -824,7 +826,7 @@ def getSearchResults(request, query, hits, start, sort, estimated_hits):
     """
     result_hits = []
     for wikiname, page, attachment, match, rev in hits:
-        if wikiname in (request.cfg.interwikiname, 'Self'): # a local match
+        if wikiname in (app.cfg.interwikiname, 'Self'): # a local match
             if attachment:
                 result_hits.append(FoundAttachment(page.page_name, attachment, matches=match, page=page, rev=rev))
             else:

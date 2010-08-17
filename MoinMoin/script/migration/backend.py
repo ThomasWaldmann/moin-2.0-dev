@@ -16,6 +16,8 @@
 import shutil, sys
 from os.path import join
 
+from flask import current_app as app
+
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
 from MoinMoin.storage.backends import fs19
@@ -37,7 +39,7 @@ class PluginScript(MoinScript):
         self.init_request()
         request = self.request
         init_unprotected_backends(request)
-        cfg = request.cfg
+        cfg = app.cfg
 
         try:
             data_dir_old = cfg.data_dir_old

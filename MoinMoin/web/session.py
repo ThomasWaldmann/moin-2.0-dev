@@ -21,6 +21,8 @@ try:
 except ImportError:
     from pickle import load, dump, HIGHEST_PROTOCOL
 
+from flask import current_app as app
+
 from werkzeug.contrib.sessions import SessionStore, ModificationTrackingDict
 
 from MoinMoin import config
@@ -221,7 +223,7 @@ def _get_session_lifetime(request, userobj):
     For logged-in sessions, t>0 means that many hours,
     or forever if user checked 'remember_me', t<0 means -t hours and
     ignore user 'remember_me' setting - you usually don't want to use t=0, it disables logged-in sessions."""
-    lifetime = int(float(request.cfg.cookie_lifetime[userobj and userobj.valid]) * 3600)
+    lifetime = int(float(app.cfg.cookie_lifetime[userobj and userobj.valid]) * 3600)
     forever = 10 * 365 * 24 * 3600 # 10 years
 
     if userobj and userobj.valid and userobj.remember_me and lifetime > 0:
@@ -271,7 +273,7 @@ def get_cookie_name(request, name, usage, software='MOIN'):
         name = '_'.join(url_components)
 
     elif name is 'siteidmagic':
-        name = request.cfg.siteid  # == config name, unique per farm
+        name = app.cfg.siteid  # == config name, unique per farm
 
     return "%s_%s_%s" % (software, usage, name)
 
@@ -288,7 +290,7 @@ class FileSessionService(SessionService):
         self.cookie_usage = cookie_usage
 
     def _store_get(self, request):
-        path = request.cfg.session_dir
+        path = app.cfg.session_dir
         try:
             filesys.mkdir(path)
         except OSError:
@@ -298,7 +300,7 @@ class FileSessionService(SessionService):
 
     def get_session(self, request, sid=None):
         if sid is None:
-            cookie_name = get_cookie_name(request, name=request.cfg.cookie_name, usage=self.cookie_usage)
+            cookie_name = get_cookie_name(request, name=app.cfg.cookie_name, usage=self.cookie_usage)
             sid = request.cookies.get(cookie_name, None)
         logging.debug("get_session for sid %r" % sid)
         store = self._store_get(request)
@@ -336,7 +338,7 @@ class FileSessionService(SessionService):
             setuid = None
         logging.debug("finalize userobj = %r, setuid = %r" % (userobj, setuid))
 
-        cfg = request.cfg
+        cfg = app.cfg
         # we use different cookie names for different wikis:
         cookie_name = get_cookie_name(request, name=cfg.cookie_name, usage=self.cookie_usage)
         # we always use path='/' except if explicitly overridden by configuration,

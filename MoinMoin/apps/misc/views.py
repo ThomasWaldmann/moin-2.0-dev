@@ -13,6 +13,8 @@ import time
 from flask import render_template, Response
 from flask import flaskg
 
+from flask import current_app as app
+
 from MoinMoin.apps.misc import misc
 
 from MoinMoin import wikiutil
@@ -50,7 +52,7 @@ def sitemap():
             priority = "0.5"
         sitemap.append((item.name, format_timestamp(rev.timestamp), changefreq, priority))
     # add an entry for root url
-    item = storage.get_item(request.cfg.page_front_page)
+    item = storage.get_item(app.cfg.page_front_page)
     rev = item.get_revision(-1)
     sitemap.append((u'', format_timestamp(rev.timestamp), "hourly", "1.0"))
     sitemap.sort()
