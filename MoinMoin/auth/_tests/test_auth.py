@@ -7,6 +7,8 @@
 """
 import py.test
 
+from flask import flaskg
+
 from MoinMoin.web.request import TestRequest, evaluate_request
 from MoinMoin import wsgiapp
 from MoinMoin._tests import wikiconfig
@@ -42,7 +44,7 @@ class TestNoAuth(AuthTest):
         request = self.run_request()
 
         # anon user?
-        assert not request.user.valid
+        assert not flaskg.user.valid
 
         appiter, status, headers = evaluate_request(request.request)
         # check if the request resulted in normal status, result headers and content
@@ -82,7 +84,7 @@ class TestAnonSession(AuthTest):
                                        environ_overrides=environ_overrides)
 
             # anon user?
-            assert not request.user.valid
+            assert not flaskg.user.valid
 
             # Do we have a session?
             assert request.session is not None
@@ -150,8 +152,8 @@ class TestHttpAuthSession(AuthTest):
                                        environ_overrides=environ_overrides)
 
             # Login worked?
-            assert request.user.valid
-            assert request.user.name == username
+            assert flaskg.user.valid
+            assert flaskg.user.name == username
 
             # Do we have a session?
             assert request.session is not None
@@ -224,8 +226,8 @@ class TestMoinAuthSession(AuthTest):
                                            environ_overrides=environ_overrides)
 
             # Login worked?
-            assert request.user.valid
-            assert request.user.name == username
+            assert flaskg.user.valid
+            assert flaskg.user.name == username
 
             # Do we have a session?
             assert request.session is not None

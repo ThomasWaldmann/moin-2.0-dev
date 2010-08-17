@@ -23,6 +23,8 @@ except ImportError:
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from werkzeug.contrib.sessions import SessionStore, ModificationTrackingDict
 
 from MoinMoin import config
@@ -330,11 +332,11 @@ class FileSessionService(SessionService):
         store.delete(session)
 
     def finalize(self, request, session):
-        if request.user.auth_method == 'setuid':
+        if flaskg.user.auth_method == 'setuid':
             userobj = request._setuid_real_user
-            setuid = request.user.id
+            setuid = flaskg.user.id
         else:
-            userobj = request.user
+            userobj = flaskg.user
             setuid = None
         logging.debug("finalize userobj = %r, setuid = %r" % (userobj, setuid))
 

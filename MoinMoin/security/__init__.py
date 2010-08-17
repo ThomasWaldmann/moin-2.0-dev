@@ -21,6 +21,8 @@
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import user
 
 
@@ -272,8 +274,8 @@ class AccessControlList:
             Does not work for subsription emails that should be sent to <user>,
             as he is not logged in in that case.
         """
-        if (request.user.name == name and
-            request.user.auth_method in self.auth_methods_trusted):
+        if (flaskg.user.name == name and
+            flaskg.user.auth_method in self.auth_methods_trusted):
             return rightsdict.get(dowhat)
         return None
 

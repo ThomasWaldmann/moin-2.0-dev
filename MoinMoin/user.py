@@ -25,6 +25,8 @@ import hmac
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
 
@@ -157,7 +159,7 @@ def getUserIdentification(request, username=None):
     _ = request.getText
 
     if username is None:
-        username = request.user.name
+        username = flaskg.user.name
 
     return username or (app.cfg.show_hosts and request.remote_addr) or _("<unknown>")
 
@@ -919,7 +921,7 @@ class User:
 
     def isCurrentUser(self):
         """ Check if this user object is the user doing the current request """
-        return self._request.user.name == self.name
+        return flaskg.user.name == self.name
 
     def isSuperUser(self):
         """ Check if this user is superuser """

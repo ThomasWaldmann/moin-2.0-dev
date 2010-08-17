@@ -17,6 +17,8 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import wikiutil, config, caching
 from MoinMoin.util import lock, filesys
 from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMatch, getSearchResults
@@ -228,7 +230,7 @@ class BaseIndex(object):
                 return True
 
         r = copy.copy(request)
-        r.user.may = SecurityPolicy(r.user)
+        r.user.may = SecurityPolicy(r.user) # XXX
         return r
 
 
@@ -287,7 +289,7 @@ class BaseSearch(object):
 
         @param hits: list of hits
         """
-        userMayRead = self.request.user.may.read
+        userMayRead = flaskg.user.may.read
         fs_rootpage = self.fs_rootpage + "/"
         thiswiki = (app.cfg.interwikiname, 'Self')
         filtered = [(wikiname, page, attachment, match, rev)

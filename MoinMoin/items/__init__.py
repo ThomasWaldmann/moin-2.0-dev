@@ -27,6 +27,8 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from flask import request, url_for, send_file, render_template, Response, abort, escape
 from werkzeug import is_resource_modified
 
@@ -436,8 +438,8 @@ class Item(object):
         request = self.request
         newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
         newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
-        if request.user.valid:
-            newrev[EDIT_LOG_USERID] = unicode(request.user.id)
+        if flaskg.user.valid:
+            newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
 
     def search_item(self, term=None):
         """ search items matching the term or,

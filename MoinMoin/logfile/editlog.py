@@ -14,6 +14,8 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import wikiutil, user
 from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
@@ -42,7 +44,7 @@ class EditLogLine(object):
             return cmp(self.mtime, other)
 
     def is_from_current_user(self, request):
-        user = request.user
+        user = flaskg.user
         if user.id:
             return user.id == self.userid
         return request.remote_addr == self.addr
@@ -113,7 +115,7 @@ class LocalEditLog(object):
             hostname = ''
 
         comment = wikiutil.clean_input(comment)
-        user_id = request.user.valid and request.user.id or ''
+        user_id = flaskg.user.valid and flaskg.user.id or ''
 
         mtime = wikiutil.timestamp2version(mtime)
 
