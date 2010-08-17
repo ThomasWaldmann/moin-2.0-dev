@@ -12,6 +12,8 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin.util import pysupport
 from MoinMoin import wikiutil
 
@@ -93,7 +95,7 @@ class FormatterBase:
             return ''
         if not pagename and page:
             pagename = page.page_name
-        pagename = wikiutil.normalize_pagename(pagename, self.request.cfg)
+        pagename = wikiutil.normalize_pagename(pagename, app.cfg)
         if pagename and pagename not in self.pagelinks:
             self.pagelinks.append(pagename)
 
@@ -104,7 +106,7 @@ class FormatterBase:
                        also the text_html formatter.
         """
         wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
-        if wikitag == 'Self' or wikitag == self.request.cfg.interwikiname:
+        if wikitag == 'Self' or wikitag == app.cfg.interwikiname:
             return self.pagelink(on, wikitail, **kw)
         return ''
 

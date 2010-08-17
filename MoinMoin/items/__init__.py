@@ -25,8 +25,9 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from flask import request, url_for, send_file, render_template, Response, abort, escape
-from flask import flaskg
 from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
@@ -257,7 +258,7 @@ class Item(object):
 
     def meta_filter(self, meta):
         """ kill metadata entries that we set automatically when saving """
-        hash_name = self.request.cfg.hash_algorithm
+        hash_name = app.cfg.hash_algorithm
         kill_keys = [# shall not get copied from old rev to new rev
                      SYSPAGE_VERSION,
                      NAME_OLD,
@@ -289,7 +290,7 @@ class Item(object):
     data = property(fget=get_data)
 
     def _write_stream(self, content, new_rev, bufsize=8192):
-        hash_name = self.request.cfg.hash_algorithm
+        hash_name = app.cfg.hash_algorithm
         hash = hashlib.new(hash_name)
         if hasattr(content, "read"):
             while True:
@@ -331,7 +332,7 @@ class Item(object):
         delete this item by moving it to the trashbin
         """
         trash_prefix = u'Trash/' # XXX move to config
-        now = time.strftime(self.request.cfg.datetime_fmt, time.gmtime())
+        now = time.strftime(app.cfg.datetime_fmt, time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
         return self._rename(trashname, comment, action='SAVE/DELETE')
@@ -580,7 +581,7 @@ There is no help, you're doomed!
     def get_templates(self, mimetype=None):
         """ create a list of templates (for some specific mimetype) """
         from MoinMoin.search.term import NameRE, AND, LastRevisionMetaDataMatch
-        regex = self.request.cfg.cache.page_template_regexact
+        regex = app.cfg.cache.page_template_regexact
         term = NameRE(regex)
         if mimetype:
             term = AND(term, LastRevisionMetaDataMatch(MIMETYPE, mimetype))
@@ -608,7 +609,7 @@ There is no help, you're doomed!
     revert_template = 'revert.html'
 
     def _render_data_diff(self, oldrev, newrev):
-        hash_name = self.request.cfg.hash_algorithm
+        hash_name = app.cfg.hash_algorithm
         if oldrev[hash_name] == newrev[hash_name]:
             return "The items have the same data hash code (that means they very likely have the same data)."
         else:
@@ -620,7 +621,7 @@ There is no help, you're doomed!
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
 
     def do_get(self):
-        hash = self.rev.get(flaskg.context.cfg.hash_algorithm)
+        hash = self.rev.get(app.cfg.hash_algorithm)
         if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
         else:
@@ -653,7 +654,7 @@ There is no help, you're doomed!
         elif member: # content = file contained within a archive item revision
             path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
-            content_disposition = mt.content_disposition(request.cfg)
+            content_disposition = mt.content_disposition(app.cfg)
             content_type = mt.content_type()
             content_length = None
             file_to_send = self.get_member(member)
@@ -664,7 +665,7 @@ There is no help, you're doomed!
             except KeyError:
                 mimestr = mimetypes.guess_type(rev.item.name)[0]
             mt = wikiutil.MimeType(mimestr=mimestr)
-            content_disposition = mt.content_disposition(request.cfg)
+            content_disposition = mt.content_disposition(app.cfg)
             content_type = mt.content_type()
             content_length = rev.size
             file_to_send = rev
@@ -911,7 +912,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             transpose = 1
         if width or height or transpose != 1:
             # resize requested, XXX check ACL behaviour! XXX
-            hash_name = request.cfg.hash_algorithm
+            hash_name = app.cfg.hash_algorithm
             hash_hexdigest = self.rev[hash_name]
             cache_meta = [ # we use a list to have order stability
                 (hash_name, hash_hexdigest),
@@ -955,7 +956,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
         diffimage = PILdiff(newimage, oldimage)
 
         request = self.request
-        hash_name = request.cfg.hash_algorithm
+        hash_name = app.cfg.hash_algorithm
         cache_meta = [ # we use a list to have order stability
             (hash_name, oldrev[hash_name], newrev[hash_name]),
         ]
@@ -1144,7 +1145,7 @@ class DocBook(MarkupItem):
 
         # We determine the different parameters for the reply
         mt = wikiutil.MimeType(mimestr='application/docbook+xml')
-        content_disposition = mt.content_disposition(request.cfg)
+        content_disposition = mt.content_disposition(app.cfg)
         content_type = mt.content_type()
         # After creation of the StringIO, we are at the end of the file
         # so position is the size the file.

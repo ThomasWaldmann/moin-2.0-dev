@@ -9,6 +9,8 @@
 
 import py
 
+from flask import current_app as app
+
 from MoinMoin import user, caching
 
 
@@ -62,7 +64,7 @@ class TestLoginWithPassword(object):
         # Remove user name to id cache, or next test will fail
         caching.CacheEntry(self.request, 'user', 'name2id', scope='wiki').remove()
         try:
-            del self.request.cfg.cache.name2id
+            del app.cfg.cache.name2id
         except:
             pass
 

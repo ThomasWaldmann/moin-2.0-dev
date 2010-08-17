@@ -23,6 +23,8 @@ import os, time, codecs, base64
 import hashlib
 import hmac
 
+from flask import current_app as app
+
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
 
@@ -61,7 +63,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     if not password:
         return _("Please specify a password!")
 
-    pw_checker = request.cfg.password_checker
+    pw_checker = app.cfg.password_checker
     if pw_checker:
         pw_error = pw_checker(request, theuser.name, password)
         if pw_error:
@@ -78,12 +80,12 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     # try to get the email, for new users it is required
     email = wikiutil.clean_input(form.get('email', ''))
     theuser.email = email.strip()
-    if not theuser.email and 'email' not in request.cfg.user_form_remove:
+    if not theuser.email and 'email' not in app.cfg.user_form_remove:
         return _("Please provide your email address. If you lose your"
                  " login information, you can get it by email.")
 
     # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
-    if theuser.email and request.cfg.user_email_unique:
+    if theuser.email and app.cfg.user_email_unique:
         if get_by_email_address(request, theuser.email):
             return _("This email already belongs to somebody else.")
 
@@ -96,7 +98,7 @@ def get_user_backend(request):
     Just a shorthand that makes the rest of the code easier
     by returning the proper user backend.
     """
-    ns_user_profile = request.cfg.ns_user_profile
+    ns_user_profile = app.cfg.ns_user_profile
     return request.unprotected_storage.get_backend(ns_user_profile)
 
 
@@ -157,7 +159,7 @@ def getUserIdentification(request, username=None):
     if username is None:
         username = request.user.name
 
-    return username or (request.cfg.show_hosts and request.remote_addr) or _("<unknown>")
+    return username or (app.cfg.show_hosts and request.remote_addr) or _("<unknown>")
 
 
 def get_editor(request, userid, addr, hostname):
@@ -168,7 +170,7 @@ def get_editor(request, userid, addr, hostname):
         'interwiki' (Interwiki homepage) or 'anon' ('').
     """
     result = 'anon', ''
-    if request.cfg.show_hosts and hostname:
+    if app.cfg.show_hosts and hostname:
         result = 'ip', hostname
     if userid:
         userdata = User(request, userid)
@@ -186,7 +188,7 @@ def get_printable_editor(request, userid, addr, hostname, mode='html'):
     mode=='text': Return a simple text string.
     """
     _ = request.getText
-    if request.cfg.show_hosts and hostname and addr:
+    if app.cfg.show_hosts and hostname and addr:
         title = " @ %s[%s]" % (hostname, addr)
     else:
         title = ""
@@ -295,7 +297,7 @@ def isValidName(request, name):
     @param name: user name, unicode
     """
     normalized = normalizeName(name)
-    return (name == normalized) and not wikiutil.isGroupPage(name, request.cfg)
+    return (name == normalized) and not wikiutil.isGroupPage(name, app.cfg)
 
 
 class User:
@@ -322,7 +324,7 @@ class User:
         self._user_backend = get_user_backend(request)
         self._user = None
 
-        self._cfg = request.cfg
+        self._cfg = app.cfg
         self.valid = 0
         self.id = id
         self.auth_username = auth_username
@@ -547,7 +549,7 @@ class User:
         key = 'name2id'
         caching.CacheEntry(self._request, arena, key, scope='wiki').remove()
         try:
-            del self._request.cfg.cache.name2id
+            del app.cfg.cache.name2id
         except:
             pass
 
@@ -584,7 +586,7 @@ class User:
                 # browser language if this is current user
                 lang = i18n.get_browser_language(self._request)
         if not lang:
-            lang = self._request.cfg.language_default
+            lang = app.cfg.language_default
         available = i18n.wikiLanguages() or ["en"]
         if lang not in available:
             lang = 'en'
@@ -880,7 +882,7 @@ class User:
     # Trail
 
     def _wantTrail(self):
-        return (not self.valid and self._request.cfg.cookie_lifetime[0]  # anon sessions enabled
+        return (not self.valid and app.cfg.cookie_lifetime[0]  # anon sessions enabled
                 or self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
 
     def addTrail(self, item_name):
@@ -924,10 +926,10 @@ class User:
         if not self.valid:
             return False
         request = self._request
-        if request.cfg.DesktopEdition and request.remote_addr == '127.0.0.1':
+        if app.cfg.DesktopEdition and request.remote_addr == '127.0.0.1':
             # the DesktopEdition gives any local user superuser powers
             return True
-        superusers = request.cfg.superuser
+        superusers = app.cfg.superuser
         assert isinstance(superusers, (list, tuple))
         return self.name and self.name in superusers
 

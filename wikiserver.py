@@ -58,6 +58,8 @@ from MoinMoin import app
 # - wiki_config path is wrong
 # - wiki_config file contents are invalid somehow
 app.config.from_pyfile(wiki_config)
+Config = app.config['MOINCFG']
+app.cfg = Config()
 
 # get some configuration values for the builtin server:
 host = app.config.get('HOST', '127.0.0.1')

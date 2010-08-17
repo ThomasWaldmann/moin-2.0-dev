@@ -14,6 +14,8 @@ py.test.skip("mostly broken")
 
 import re, shutil
 
+from flask import current_app as app
+
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
 from MoinMoin.datastruct import WikiGroups, GroupDoesNotExistError
 from MoinMoin import Page, security
@@ -155,7 +157,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         create_item(request, u'NewGroup', u" * ExampleUser")
 
         acl_rights = ["NewGroup:read,write"]
-        acl = security.AccessControlList(request.cfg, acl_rights)
+        acl = security.AccessControlList(app.cfg, acl_rights)
 
         has_rights_before = acl.may(request, u"AnotherUser", "read")
 

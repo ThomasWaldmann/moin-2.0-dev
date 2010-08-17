@@ -7,6 +7,8 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from flask import current_app as app
+
 from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
@@ -74,7 +76,7 @@ class Macro(MacroBlockBase):
                         yield name, cls.__dict__[name]
 
         found = []
-        for vname, value in iter_vnames(request.cfg):
+        for vname, value in iter_vnames(app.cfg):
             if hasattr(defaultconfig.ConfigFunctionality, vname):
                 continue
             if vname in settings and settings[vname] == value:

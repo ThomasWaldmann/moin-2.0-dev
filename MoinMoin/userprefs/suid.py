@@ -13,6 +13,9 @@ from MoinMoin import user, util, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
 from MoinMoin.action.UserBrowser import get_account_infos
+
+from flask import current_app as app
+
 from flask import render_template
 
 class Settings(UserPrefBase):
@@ -22,13 +25,13 @@ class Settings(UserPrefBase):
         UserPrefBase.__init__(self, request)
         self.request = request
         self._ = request.getText
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         _ = self._
         self.title = _("Switch user")
         self.name = 'suid'
 
     def allowed(self):
-        return (self.request.user.auth_method in self.request.cfg.auth_can_logout and
+        return (self.request.user.auth_method in app.cfg.auth_can_logout and
                UserPrefBase.allowed(self) and self.request.user.isSuperUser())
 
     def handle_form(self):

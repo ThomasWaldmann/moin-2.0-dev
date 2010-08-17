@@ -9,6 +9,8 @@ MoinMoin - Dump a MoinMoin wiki to static pages
 
 import sys, os, time, codecs, shutil, re, errno
 
+from flask import current_app as app
+
 from MoinMoin import config, wikiutil, Page, user
 from MoinMoin import script
 
@@ -128,7 +130,7 @@ General syntax: moin [options] export dump [dump-options]
         request = self.request
 
         # fix url_prefix_static so we get relative paths in output html
-        request.cfg.url_prefix_static = url_prefix_static
+        app.cfg.url_prefix_static = url_prefix_static
 
         # use this user for permissions checks
         request.user = user.User(request, name=self.options.dump_user)
@@ -153,7 +155,7 @@ General syntax: moin [options] export dump [dump-options]
         errlog = open(errfile, 'w')
         errcnt = 0
 
-        page_front_page = wikiutil.getLocalizedPage(request, request.cfg.page_front_page).page_name
+        page_front_page = wikiutil.getLocalizedPage(request, app.cfg.page_front_page).page_name
         page_title_index = wikiutil.getLocalizedPage(request, 'TitleIndex').page_name
         page_word_index = wikiutil.getLocalizedPage(request, 'WordIndex').page_name
 
@@ -192,7 +194,7 @@ General syntax: moin [options] export dump [dump-options]
                     'logo_html': logo_html,
                     'navibar_html': navibar_html,
                     'timestamp': timestamp,
-                    'theme': request.cfg.theme_default,
+                    'theme': app.cfg.theme_default,
                 })
                 fileout.close()
 
