@@ -12,7 +12,7 @@ import os
 
 from flask import current_app as app
 
-from flask import flash, url_for, render_template
+from flask import flash, url_for, render_template, flaskg
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -85,7 +85,7 @@ class ThemeBase(object):
         """
         self.request = request
         self.cfg = app.cfg
-        self.user = request.user
+        self.user = flaskg.user
         self.storage = request.storage
         self.output_mimetype = 'text/html' # was: page.output_mimetype
         self.output_charset = 'utf-8' # was: page.output_charset
@@ -113,7 +113,7 @@ class ThemeBase(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return self.request.user.may.read(item_name)
+        return flaskg.user.may.read(item_name)
 
     def item_writable(self, item_name):
         """
@@ -122,7 +122,7 @@ class ThemeBase(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return self.request.user.may.write(item_name)
+        return flaskg.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
         """

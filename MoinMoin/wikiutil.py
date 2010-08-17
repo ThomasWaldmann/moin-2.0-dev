@@ -21,6 +21,8 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
@@ -426,7 +428,7 @@ def set_edit_lock(item, request):
     addr = request.remote_addr
     hostname = wikiutil.get_hostname(request, addr)
     if hasattr(request, "user"):
-        userid = request.user.valid and request.user.id or ''
+        userid = flaskg.user.valid and flaskg.user.id or ''
     else:
         userid = ''
 
@@ -696,8 +698,8 @@ def getHomePage(request, username=None):
     """
     from MoinMoin.Page import Page
     # default to current user
-    if username is None and request.user.valid:
-        username = request.user.name
+    if username is None and flaskg.user.valid:
+        username = flaskg.user.name
 
     # known user?
     if username:
@@ -725,8 +727,8 @@ def getInterwikiHomePage(request, username=None):
     @return: (wikiname, pagename)
     """
     # default to current user
-    if username is None and request.user.valid:
-        username = request.user.name
+    if username is None and flaskg.user.valid:
+        username = flaskg.user.name
     if not username:
         return None # anon user
 
@@ -2452,8 +2454,8 @@ def createTicket(request, tm=None, action=None, pagename=None):
     else:
         sid = ''
 
-    if request.user.valid:
-        uid = request.user.id
+    if flaskg.user.valid:
+        uid = flaskg.user.id
     else:
         uid = ''
 

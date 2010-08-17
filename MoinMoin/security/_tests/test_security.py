@@ -12,6 +12,8 @@ import py
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import security
 acliter = security.ACLStringIterator
 AccessControlList = security.AccessControlList
@@ -198,11 +200,11 @@ class TestAcl(object):
     """
     def setup_method(self, method):
         # Backup user
-        self.savedUser = self.request.user.name
+        self.savedUser = flaskg.user.name
 
     def teardown_method(self, method):
         # Restore user
-        self.request.user.name = self.savedUser
+        flaskg.user.name = self.savedUser
 
     def testApplyACLByUser(self):
         """ security: applying acl by user name"""
@@ -319,7 +321,7 @@ class TestItemAcls(object):
             u.valid = True
 
             def _have_right(u, right, itemname):
-                self.request.user = u
+                flaskg.user = u
                 can_access = getattr(u.may, right)(itemname)
                 assert can_access, "%r may %s %r (normal)" % (u.name, right, itemname)
 
@@ -328,7 +330,7 @@ class TestItemAcls(object):
                 yield _have_right, u, right, itemname
 
             def _not_have_right(u, right, itemname):
-                self.request.user = u
+                flaskg.user = u
                 can_access = getattr(u.may, right)(itemname)
                 assert not can_access, "%r may not %s %r (normal)" % (u.name, right, itemname)
 
@@ -401,7 +403,7 @@ class TestItemHierachicalAcls(object):
             u.valid = True
 
             def _have_right(u, right, itemname):
-                self.request.user = u
+                flaskg.user = u
                 can_access = getattr(u.may, right)(itemname)
                 assert can_access, "%r may %s %r (hierarchic)" % (u.name, right, itemname)
 
@@ -410,7 +412,7 @@ class TestItemHierachicalAcls(object):
                 yield _have_right, u, right, itemname
 
             def _not_have_right(u, right, itemname):
-                self.request.user = u
+                flaskg.user = u
                 can_access = getattr(u.may, right)(itemname)
                 assert not can_access, "%r may not %s %r (hierarchic)" % (u.name, right, itemname)
 

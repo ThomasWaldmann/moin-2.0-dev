@@ -10,6 +10,7 @@
 import os, shutil
 
 from flask import current_app as app
+from flask import flaskg
 
 from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
@@ -22,26 +23,26 @@ from MoinMoin import config, security
 # need more privs...
 
 def become_valid(request, username=u"ValidUser"):
-    """ modify request.user to make the user valid.
+    """ modify flaskg.user to make the user valid.
         Note that a valid user will only be in ACL special group "Known", if
         we have a user profile for this user as the ACL system will check if
         there is a userid for this username.
         Thus, for testing purposes (e.g. if you need delete rights), it is
         easier to use become_trusted().
     """
-    request.user.name = username
-    request.user.may.name = username
-    request.user.valid = 1
+    flaskg.user.name = username
+    flaskg.user.may.name = username
+    flaskg.user.valid = 1
 
 
 def become_trusted(request, username=u"TrustedUser"):
-    """ modify request.user to make the user valid and trusted, so it is in acl group Trusted """
+    """ modify flaskg.user to make the user valid and trusted, so it is in acl group Trusted """
     become_valid(request, username)
-    request.user.auth_method = app.cfg.auth_methods_trusted[0]
+    flaskg.user.auth_method = app.cfg.auth_methods_trusted[0]
 
 
 def become_superuser(request):
-    """ modify request.user so it is in the superuser list,
+    """ modify flaskg.user so it is in the superuser list,
         also make the user valid (see notes in become_valid()),
         also make the user trusted (and thus in "Trusted" ACL pseudo group).
 

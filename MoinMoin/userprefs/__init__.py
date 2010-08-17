@@ -8,6 +8,8 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import flaskg
+
 from MoinMoin.util import pysupport
 from MoinMoin.widget import html
 
@@ -65,7 +67,7 @@ class UserPrefBase(object):
             title should be listed or not and whether
             submissions are accepted.
         '''
-        return self.request.user and self.request.user.valid
+        return flaskg.user and flaskg.user.valid
 
     def make_form(self, explanation=None):
         '''

@@ -11,6 +11,8 @@ import sys, os, time, codecs, shutil, re, errno
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin import config, wikiutil, Page, user
 from MoinMoin import script
 
@@ -133,7 +135,7 @@ General syntax: moin [options] export dump [dump-options]
         app.cfg.url_prefix_static = url_prefix_static
 
         # use this user for permissions checks
-        request.user = user.User(request, name=self.options.dump_user)
+        flaskg.user = user.User(request, name=self.options.dump_user)
 
         pages = request.rootpage.getPageList(user='') # get list of all pages in wiki
         # XXX sorting shouldn't be necessary, and filtering

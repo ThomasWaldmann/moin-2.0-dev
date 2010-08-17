@@ -36,6 +36,8 @@
 
 from emeraldtree import ElementTree as ET
 
+from flask import flaskg
+
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import html
 from MoinMoin import wikiutil
@@ -51,8 +53,8 @@ class Macro(MacroBlockBase):
             self.label = request.getText(button_label)
         else:
             self.label = _("Create New Page")
-        if parent_page == '@ME' and request.user.valid:
-            self.parent = request.user.name
+        if parent_page == '@ME' and flaskg.user.valid:
+            self.parent = flaskg.user.name
         elif parent_page == '@SELF':
             self.parent = self.page_name
         else:

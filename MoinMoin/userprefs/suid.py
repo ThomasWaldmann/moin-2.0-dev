@@ -9,6 +9,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import flaskg
+
 from MoinMoin import user, util, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
@@ -31,8 +33,8 @@ class Settings(UserPrefBase):
         self.name = 'suid'
 
     def allowed(self):
-        return (self.request.user.auth_method in app.cfg.auth_can_logout and
-               UserPrefBase.allowed(self) and self.request.user.isSuperUser())
+        return (flaskg.user.auth_method in app.cfg.auth_can_logout and
+               UserPrefBase.allowed(self) and flaskg.user.isSuperUser())
 
     def handle_form(self):
         _ = self._
@@ -58,9 +60,9 @@ class Settings(UserPrefBase):
         # set valid to True so superusers can even switch
         # to disable accounts
         theuser.valid = True
-        request._setuid_real_user = request.user
+        request._setuid_real_user = flaskg.user
         # now continue as the other user
-        request.user = theuser
+        flaskg.user = theuser
         return  _("You can now change the settings of the selected user account; log out to get back to your account.")
 
     def create_form(self):

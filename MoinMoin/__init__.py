@@ -242,8 +242,8 @@ def shorten_item_name(name, length=25):
 
 def setup_jinja_env(context):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    app.jinja_env.filters['datetime_format'] = lambda tm, u = context.user: u.getFormattedDateTime(tm)
-    app.jinja_env.filters['date_format'] = lambda tm, u = context.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
     app.jinja_env.filters['user_format'] = lambda rev, context = context: \
                                           user.get_printable_editor(context,
                                                                     rev.get(EDIT_LOG_USERID),
@@ -253,7 +253,7 @@ def setup_jinja_env(context):
                             'isinstance': isinstance,
                             'list': list,
                             'theme': context.theme,
-                            'user': context.user,
+                            'user': flaskg.user,
                             'cfg': app.cfg,
                             '_': context.getText,
                             'flaskg': flaskg,
@@ -282,7 +282,7 @@ def before():
     context.session = app.cfg.session_service.get_session(context)
 
     init_unprotected_backends(context)
-    context.user = setup_user(context, context.session)
+    flaskg.user = setup_user(context, context.session)
 
     context.lang = setup_i18n_postauth(context)
 

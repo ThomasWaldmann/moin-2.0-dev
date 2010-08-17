@@ -7,7 +7,7 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
-from flask import render_template, flash
+from flask import render_template, flash, flaskg
 
 from flask import current_app as app
 
@@ -86,7 +86,7 @@ def _create_page(request, cancel=False):
 
 def execute(pagename, request):
     _ = request.getText
-    if not request.user.valid:
+    if not flaskg.user.valid:
         actname = __name__.split('.')[-1]
         flash(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")
         return Page.Page(request, pagename).send_page()

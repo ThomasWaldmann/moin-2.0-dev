@@ -71,7 +71,7 @@ Allow: /
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
-    flaskg.context.user.addTrail(item_name)
+    flaskg.user.addTrail(item_name)
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
@@ -119,7 +119,7 @@ def show_dom(item_name, rev):
 @frontend.route('/+meta/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+meta/<int:rev>/<itemname:item_name>')
 def show_item_meta(item_name, rev):
-    flaskg.context.user.addTrail(item_name)
+    flaskg.user.addTrail(item_name)
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
@@ -367,11 +367,11 @@ def quicklink_item(item_name):
     """ Add/Remove the current wiki page to/from the user quicklinks """
     request = flaskg.context
     _ = request.getText
-    u = request.user
+    u = flaskg.user
     msg = None
     if not u.valid:
         msg = _("You must login to use this action: %(action)s.") % {"action": "quicklink/quickunlink"}, "error"
-    elif not request.user.isQuickLinkedTo([item_name]):
+    elif not flaskg.user.isQuickLinkedTo([item_name]):
         if not u.addQuicklink(item_name):
             msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
@@ -387,7 +387,7 @@ def subscribe_item(item_name):
     """ Add/Remove the current wiki item to/from the user's subscriptions """
     request = flaskg.context
     _ = request.getText
-    u = request.user
+    u = flaskg.user
     cfg = app.cfg
     msg = None
     if not u.valid:
@@ -506,7 +506,7 @@ def logout():
     # if the user really was logged out say so,
     # but if the user manually added ?do=logout
     # and that isn't really supported, then don't
-    if request.user.valid:
+    if flaskg.user.valid:
         # something went wrong
         flash(_("You are still logged in."), "warning")
     else:
@@ -791,7 +791,7 @@ class NestedItemListBuilder(object):
 
     def is_ok(self, child):
         if child not in self.children:
-            if not self.request.user.may.read(child):
+            if not flaskg.user.may.read(child):
                 return False
             if self.request.storage.has_item(child):
                 self.children.add(child)

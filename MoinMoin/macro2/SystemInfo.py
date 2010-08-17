@@ -13,6 +13,8 @@ import sys, os
 
 from flask import current_app as app
 
+from flask import flaskg
+
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
 from MoinMoin import action, macro
@@ -56,11 +58,11 @@ class Macro(MacroDefinitionListBase):
         row(_('Python Version'), sys.version)
         row(_('MoinMoin Version'), _('Release %s [Revision %s]') % (version.release, version.revision))
 
-        if not request.user.valid:
+        if not flaskg.user.valid:
             # for an anonymous user it ends here.
             return desc_list
 
-        if request.user.isSuperUser():
+        if flaskg.user.isSuperUser():
             # superuser gets all page dependent stuff only
             try:
                 import Ft
@@ -122,7 +124,7 @@ class Macro(MacroDefinitionListBase):
             xapRow += ', %s' % idxState[idx_exists]
             if idx_exists:
                 xapRow += ', %s' % (_('last modified: %s') %
-                    request.user.getFormattedDateTime(idx.mtime()))
+                    flaskg.user.getFormattedDateTime(idx.mtime()))
 
         row(_('Xapian search'), xapRow)
 

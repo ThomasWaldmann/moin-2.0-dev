@@ -14,6 +14,7 @@
 from mercurial.templatefilters import json
 
 from flask import current_app as app
+from flask import flaskg
 
 from MoinMoin import wikiutil
 from MoinMoin import user
@@ -27,7 +28,7 @@ def execute(pagename, request):
     """Show page history drawing revision graph."""
     page = Page(request, pagename)
 
-    if not request.user.may.read(pagename) or not page.exists():
+    if not flaskg.user.may.read(pagename) or not page.exists():
         page.send_page()
         return
 
@@ -116,7 +117,7 @@ def execute(pagename, request):
             url = page.url(request, {'action': 'recall', 'rev': '%d' % revno})
             editor = user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR],
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
-            date = request.user.getFormattedDateTime(float(revision.timestamp))
+            date = flaskg.user.getFormattedDateTime(float(revision.timestamp))
             comment = wikiutil.escape(comment) or '&nbsp;'
             node = "%d:%s" % (revno, request.storage._get_revision_node(revision)[1])
 
