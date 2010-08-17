@@ -249,16 +249,21 @@ def setup_jinja_env(context):
                                                                     rev.get(EDIT_LOG_USERID),
                                                                     rev.get(EDIT_LOG_ADDR),
                                                                     rev.get(EDIT_LOG_HOSTNAME))
+
+    from MoinMoin.theme import load_theme_fallback
+    theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
+    flaskg.theme = load_theme_fallback(context, theme_name)
+
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
                             'list': list,
-                            'theme': context.theme,
+                            'theme': flaskg.theme,
                             'user': flaskg.user,
                             'cfg': app.cfg,
                             '_': context.getText,
                             'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': context.theme.translated_item_name,
+                            'translated_item_name': flaskg.theme.translated_item_name,
                             })
 
 
