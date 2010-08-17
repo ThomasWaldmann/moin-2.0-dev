@@ -536,13 +536,14 @@ def load_theme_fallback(request, theme_name=None):
     """
     fallback = 0
     try:
-        request.theme = load_theme(request, theme_name)
+        theme = load_theme(request, theme_name)
     except ThemeNotFound:
         fallback = 1
         try:
-            request.theme = load_theme(request, app.cfg.theme_default)
+            theme = load_theme(request, app.cfg.theme_default)
         except ThemeNotFound:
             fallback = 2
             from MoinMoin.theme.modernized import Theme
-            request.theme = Theme(request)
+            theme = Theme(request)
+    return theme
 

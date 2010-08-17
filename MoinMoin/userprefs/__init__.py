@@ -83,8 +83,8 @@ class UserPrefBase(object):
         self._table = html.TABLE(border="0")
 
         # Use the user interface language and direction
-        ui_lang = self.request.theme.ui_lang
-        ui_dir = self.request.theme.ui_dir
+        ui_lang = flaskg.theme.ui_lang
+        ui_dir = flaskg.theme.ui_dir
         _form.append(html.Raw('<div class="userpref" lang="%s" dir="%s">' % (ui_lang, ui_dir)))
         para = html.P()
         _form.append(para)

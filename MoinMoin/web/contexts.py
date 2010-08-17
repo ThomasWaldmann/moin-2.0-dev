@@ -16,7 +16,6 @@ from flask import current_app as app
 
 from MoinMoin import i18n, user, config
 from MoinMoin.formatter import text_html
-from MoinMoin.theme import load_theme_fallback
 from MoinMoin.web.request import Request
 from MoinMoin.web.utils import UniqueIDGenerator
 
@@ -137,19 +136,6 @@ class BaseContext(Context):
         from MoinMoin.items import Item
         return Item(self, u'')
     rootitem = EnvironProxy(rootitem)
-
-    def _theme(self):
-        self.initTheme()
-        return self.theme
-    theme = EnvironProxy('theme', _theme)
-
-    def initTheme(self):
-        """ Set theme - forced theme, user theme or wiki default """
-        if app.cfg.theme_force:
-            theme_name = app.cfg.theme_default
-        else:
-            theme_name = self.user.theme_name
-        load_theme_fallback(self, theme_name)
 
 
 class HTTPContext(BaseContext):
