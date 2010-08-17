@@ -9,6 +9,8 @@
 
 from flask import flash
 
+from flask import current_app as app
+
 from MoinMoin import user, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
@@ -28,7 +30,7 @@ def _do_email(request, u):
 def _do_recover(request):
     _ = request.getText
     form = request.form
-    if not request.cfg.mail_enabled:
+    if not app.cfg.mail_enabled:
         return _("""This wiki is not enabled for mail processing.
 Contact the owner of the wiki, who can enable email.""")
 
@@ -145,7 +147,7 @@ def _create_token_form(request, name=None, token=None):
 
 def execute(pagename, request):
     found = False
-    for auth in request.cfg.auth:
+    for auth in app.cfg.auth:
         if isinstance(auth, MoinAuth):
             found = True
             break
@@ -159,7 +161,7 @@ def execute(pagename, request):
     _ = request.getText
     form = request.values # link in mail -> GET request
 
-    if not request.cfg.mail_enabled:
+    if not app.cfg.mail_enabled:
         flash(_("""This wiki is not enabled for mail processing.
 Contact the owner of the wiki, who can enable email."""), 'warning')
         page.send_page()
@@ -175,7 +177,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
         msg = _("Passwords don't match!")
         msg_type = 'error'
         if newpass == newpass2:
-            pw_checker = request.cfg.password_checker
+            pw_checker = app.cfg.password_checker
             pw_error = None
             if pw_checker:
                 pw_error = pw_checker(request, name, newpass)

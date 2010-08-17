@@ -15,6 +15,8 @@ import sys, os, time, errno, codecs
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin import wikiutil, config, caching
 from MoinMoin.util import lock, filesys
 from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMatch, getSearchResults
@@ -193,7 +195,7 @@ class BaseIndex(object):
         mt = wikiutil.MimeType(filename=filename)
         for modulename in mt.module_name():
             try:
-                execute = wikiutil.importPlugin(request.cfg, 'filter', modulename)
+                execute = wikiutil.importPlugin(app.cfg, 'filter', modulename)
                 break
             except wikiutil.PluginMissingError:
                 pass
@@ -287,7 +289,7 @@ class BaseSearch(object):
         """
         userMayRead = self.request.user.may.read
         fs_rootpage = self.fs_rootpage + "/"
-        thiswiki = (self.request.cfg.interwikiname, 'Self')
+        thiswiki = (app.cfg.interwikiname, 'Self')
         filtered = [(wikiname, page, attachment, match, rev)
                 for wikiname, page, attachment, match, rev in hits
                     if (not wikiname in thiswiki or
@@ -325,7 +327,7 @@ class BaseSearch(object):
 
             logging.debug("_getHits processing %r %r %d %r" % (wikiname, pagename, revision, attachment))
 
-            if wikiname in (self.request.cfg.interwikiname, 'Self'): # THIS wiki
+            if wikiname in (app.cfg.interwikiname, 'Self'): # THIS wiki
                 page = Page(self.request, pagename, rev=revision)
 
                 if not self.historysearch and revision:

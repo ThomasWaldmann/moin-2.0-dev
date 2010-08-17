@@ -19,6 +19,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin import user
 
 
@@ -57,9 +59,9 @@ class Permissions:
         @return: checking function for that right, accepting an itemname
         """
         request = self.request
-        if attr not in request.cfg.acl_rights_valid:
+        if attr not in app.cfg.acl_rights_valid:
             raise AttributeError(attr)
-        ns_content = request.cfg.ns_content
+        ns_content = app.cfg.ns_content
         may = request.storage.get_backend(ns_content)._may
         return lambda itemname: may(itemname, attr)
 

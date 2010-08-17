@@ -19,6 +19,8 @@ import time
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
@@ -446,12 +448,12 @@ def generate_file_list(request):
 
     # order is important here, intermap files read later overwrite
     # data from files read earlier!
-    intermap_files = request.cfg.shared_intermap
+    intermap_files = app.cfg.shared_intermap
     if not isinstance(intermap_files, list):
         intermap_files = [intermap_files]
     else:
         intermap_files = intermap_files[:]
-    request.cfg.shared_intermap_files = [filename for filename in intermap_files
+    app.cfg.shared_intermap_files = [filename for filename in intermap_files
                                          if filename and os.path.isfile(filename)]
 
 
@@ -471,23 +473,23 @@ def load_wikimap(request):
     from MoinMoin.Page import Page
 
     now = int(time.time())
-    if getattr(request.cfg, "shared_intermap_files", None) is None:
+    if getattr(app.cfg, "shared_intermap_files", None) is None:
         generate_file_list(request)
 
     try:
-        _interwiki_list = request.cfg.cache.interwiki_list
-        old_mtime = request.cfg.cache.interwiki_mtime
-        if request.cfg.cache.interwiki_ts + (1*60) < now: # 1 minutes caching time
-            max_mtime = get_max_mtime(request.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
+        _interwiki_list = app.cfg.cache.interwiki_list
+        old_mtime = app.cfg.cache.interwiki_mtime
+        if app.cfg.cache.interwiki_ts + (1*60) < now: # 1 minutes caching time
+            max_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
             if max_mtime > old_mtime:
                 raise AttributeError # refresh cache
             else:
-                request.cfg.cache.interwiki_ts = now
+                app.cfg.cache.interwiki_ts = now
     except AttributeError:
         _interwiki_list = {}
         lines = []
 
-        for filename in request.cfg.shared_intermap_files:
+        for filename in app.cfg.shared_intermap_files:
             f = codecs.open(filename, "r", config.charset)
             lines.extend(f.readlines())
             f.close()
@@ -510,13 +512,13 @@ def load_wikimap(request):
 
         # add own wiki as "Self" and by its configured name
         _interwiki_list['Self'] = request.script_root + '/'
-        if request.cfg.interwikiname:
-            _interwiki_list[request.cfg.interwikiname] = request.script_root + '/'
+        if app.cfg.interwikiname:
+            _interwiki_list[app.cfg.interwikiname] = request.script_root + '/'
 
         # save for later
-        request.cfg.cache.interwiki_list = _interwiki_list
-        request.cfg.cache.interwiki_ts = now
-        request.cfg.cache.interwiki_mtime = get_max_mtime(request.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
+        app.cfg.cache.interwiki_list = _interwiki_list
+        app.cfg.cache.interwiki_ts = now
+        app.cfg.cache.interwiki_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
 
     return _interwiki_list
 
@@ -600,7 +602,7 @@ def isTemplatePage(request, pagename):
     @rtype: bool
     @return: true if page is a template page
     """
-    return request.cfg.cache.page_template_regexact.search(pagename) is not None
+    return app.cfg.cache.page_template_regexact.search(pagename) is not None
 
 
 def isGroupPage(pagename, cfg):
@@ -627,7 +629,7 @@ def filterCategoryPages(request, pagelist):
     @rtype: list
     @return: only the category pages of pagelist
     """
-    func = request.cfg.cache.page_category_regexact.search
+    func = app.cfg.cache.page_category_regexact.search
     return [pn for pn in pagelist if func(pn)]
 
 
@@ -677,7 +679,7 @@ def getFrontPage(request):
     @rtype: Page object
     @return localized page_front_page, if there is a translation
     """
-    return getLocalizedPage(request, request.cfg.page_front_page)
+    return getLocalizedPage(request, app.cfg.page_front_page)
 
 
 def getHomePage(request, username=None):
@@ -728,8 +730,8 @@ def getInterwikiHomePage(request, username=None):
     if not username:
         return None # anon user
 
-    homewiki = request.cfg.user_homewiki
-    if homewiki == request.cfg.interwikiname:
+    homewiki = app.cfg.user_homewiki
+    if homewiki == app.cfg.interwikiname:
         homewiki = u'Self'
 
     return homewiki, username
@@ -2237,12 +2239,12 @@ def mapURL(request, url):
     @return: mapped URL
     """
     # check whether we have to map URLs
-    if request.cfg.url_mappings:
+    if app.cfg.url_mappings:
         # check URL for the configured prefixes
-        for prefix in request.cfg.url_mappings:
+        for prefix in app.cfg.url_mappings:
             if url.startswith(prefix):
                 # substitute prefix with replacement value
-                return request.cfg.url_mappings[prefix] + url[len(prefix):]
+                return app.cfg.url_mappings[prefix] + url[len(prefix):]
 
     # return unchanged url
     return url
@@ -2461,7 +2463,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
             value = value.encode('utf-8')
         hmac_data.append(value)
 
-    h = hmac.new(request.cfg.secrets['wikiutil/tickets'],
+    h = hmac.new(app.cfg.secrets['wikiutil/tickets'],
                  ''.join(hmac_data), digestmod=hashlib.sha1)
     return "%s.%s" % (tm, h.hexdigest())
 
@@ -2557,7 +2559,7 @@ def get_hostname(request, addr):
     """
     Looks up the hostname depending on the configuration.
     """
-    if request.cfg.log_reverse_dns_lookups:
+    if app.cfg.log_reverse_dns_lookups:
         import socket
         try:
             hostname = socket.gethostbyaddr(addr)[0]

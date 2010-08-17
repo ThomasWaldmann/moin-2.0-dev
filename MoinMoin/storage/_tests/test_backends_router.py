@@ -10,6 +10,8 @@
 
 import py
 
+from flask import current_app as app
+
 from MoinMoin.error import ConfigurationError
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.memory import MemoryBackend
@@ -24,7 +26,7 @@ class TestRouterBackend(BackendTest):
 
     def create_backend(self):
         self.root = MemoryBackend()
-        self.ns_user_profile = self.request.cfg.ns_user_profile
+        self.ns_user_profile = app.cfg.ns_user_profile
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()

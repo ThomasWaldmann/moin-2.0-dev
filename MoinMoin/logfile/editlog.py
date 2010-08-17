@@ -12,6 +12,8 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin import wikiutil, user
 from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
@@ -102,7 +104,7 @@ class LocalEditLog(object):
 
         @deprecated: drop that as fast as possible, only used by attachements.
         """
-        if request.cfg.log_remote_addr:
+        if app.cfg.log_remote_addr:
             if host is None:
                 host = request.remote_addr
             hostname = wikiutil.get_hostname(request, host)

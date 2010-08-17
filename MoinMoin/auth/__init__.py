@@ -136,6 +136,8 @@ logging = log.getLogger(__name__)
 from werkzeug import redirect, abort, url_quote, url_quote_plus
 from flask import url_for
 
+from flask import current_app as app
+
 from MoinMoin import user, wikiutil
 
 
@@ -382,7 +384,7 @@ def handle_login(request, userobj=None, username=None, password=None,
         'attended': attended,
         'multistage': (stage and True) or None
     }
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue
         ret = authmethod.login(request, userobj, **params)
@@ -425,7 +427,7 @@ def handle_logout(request, userobj):
         del request._setuid_real_user
         return userobj
 
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.logout(request, userobj, cookie=request.cookies)
         if not cont:
             break
@@ -433,7 +435,7 @@ def handle_logout(request, userobj):
 
 def handle_request(request, userobj):
     """ Handle the per-request callbacks of the configured authentication methods. """
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.request(request, userobj, cookie=request.cookies)
         if not cont:
             break
@@ -464,8 +466,8 @@ def setup_from_session(request, session):
         auth_method = session['user.auth_method']
         auth_attrs = session['user.auth_attribs']
         logging.debug("got from session: %r %r" % (auth_userid, auth_method))
-        logging.debug("current auth methods: %r" % request.cfg.auth_methods)
-        if auth_method and auth_method in request.cfg.auth_methods:
+        logging.debug("current auth methods: %r" % app.cfg.auth_methods)
+        if auth_method and auth_method in app.cfg.auth_methods:
             userobj = user.User(request, id=auth_userid,
                                 auth_method=auth_method,
                                 auth_attribs=auth_attrs)

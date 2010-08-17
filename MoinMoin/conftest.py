@@ -30,7 +30,7 @@ moindir = rootdir.join("..")
 sys.path.insert(0, str(moindir))
 
 from MoinMoin.web.request import TestRequest
-from . import app, protect_backends, before, flaskg
+from . import app, protect_backends, before
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -75,8 +75,8 @@ def init_test_request(given_config):
         given_config.namespace_mapping, given_config.router_index_uri = \
             create_simple_mapping("memory:", content_acl)
         app.config['MOINCFG'] = given_config
+        app.cfg = given_config()
         before()
-        request.cfg = flaskg.context.cfg #XXX: Should not be set up manually normally.
         return request
 
 # py.test customization starts here

@@ -10,6 +10,8 @@
 import re
 import xapian
 
+from flask import current_app as app
+
 from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
 from MoinMoin import config
 
@@ -46,7 +48,7 @@ class WikiAnalyzer(object):
         @param language: if given, the language in which to stem words
         """
         self.stemmer = None
-        if request and request.cfg.xapian_stemming and language:
+        if request and app.cfg.xapian_stemming and language:
             try:
                 stemmer = xapian.Stem(language)
                 # we need this wrapper because the stemmer returns a utf-8

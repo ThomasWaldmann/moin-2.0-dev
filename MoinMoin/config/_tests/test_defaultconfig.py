@@ -8,6 +8,7 @@
 
 import py
 
+from flask import current_app as app
 
 class TestPasswordChecker:
     username = u"SomeUser"
@@ -26,7 +27,7 @@ class TestPasswordChecker:
         (u'Moin-2007', True), # this should be OK
     ]
     def testBuiltinPasswordChecker(self):
-        pw_checker = self.request.cfg.password_checker
+        pw_checker = app.cfg.password_checker
         if not pw_checker:
             py.test.skip("password_checker is disabled in the configuration, not testing it")
         else:

@@ -9,6 +9,8 @@
 
 import os, shutil
 
+from flask import current_app as app
+
 from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
@@ -35,7 +37,7 @@ def become_valid(request, username=u"ValidUser"):
 def become_trusted(request, username=u"TrustedUser"):
     """ modify request.user to make the user valid and trusted, so it is in acl group Trusted """
     become_valid(request, username)
-    request.user.auth_method = request.cfg.auth_methods_trusted[0]
+    request.user.auth_method = app.cfg.auth_methods_trusted[0]
 
 
 def become_superuser(request):
@@ -48,8 +50,8 @@ def become_superuser(request):
     """
     su_name = u"SuperUser"
     become_trusted(request, su_name)
-    if su_name not in request.cfg.superuser:
-        request.cfg.superuser.append(su_name)
+    if su_name not in app.cfg.superuser:
+        app.cfg.superuser.append(su_name)
 
 # Creating and destroying test pages --------------------------------
 
@@ -96,7 +98,7 @@ def make_macro(request, page):
 
 def nuke_xapian_index(request):
     """ completely delete everything in xapian index dir """
-    fpath = os.path.join(request.cfg.cache_dir, 'xapian')
+    fpath = os.path.join(app.cfg.cache_dir, 'xapian')
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 

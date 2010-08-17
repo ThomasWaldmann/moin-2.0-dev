@@ -10,6 +10,8 @@ import os, re, tempfile, shutil
 
 import py.test
 
+from flask import current_app as app
+
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item
 from MoinMoin.storage.backends.fs19 import FSPageBackend, regenerate_acl
@@ -211,7 +213,7 @@ class TestAclRegeneration(object):
             (u'Joe Doe,Jane Doe:delete,read,write All:',
              u'Joe Doe,Jane Doe:read,write All:'), # multiple entries, blanks in names, remove 'delete'
         ]
-        acl_rights_valid = self.request.cfg.acl_rights_valid
+        acl_rights_valid = app.cfg.acl_rights_valid
         for acl, expected in tests:
             result = regenerate_acl(acl, acl_rights_valid)
             assert result == expected
