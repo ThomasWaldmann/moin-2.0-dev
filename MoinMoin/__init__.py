@@ -84,10 +84,10 @@ def init_unprotected_backends(context):
     # A ns_mapping consists of several lines, where each line is made up like this:
     # mountpoint, unprotected backend, protection to apply as a dict
     # We don't consider the protection here. That is done in protect_backends.
-    ns_mapping = context.cfg.namespace_mapping
+    ns_mapping = app.cfg.namespace_mapping
     # Just initialize with unprotected backends.
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
-    index_uri = context.cfg.router_index_uri
+    index_uri = app.cfg.router_index_uri
     context.unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
 
     # This makes the first request after server restart potentially much slower...
@@ -97,9 +97,9 @@ def init_unprotected_backends(context):
 def import_export_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
-    xmlfile = context.cfg.load_xml
+    xmlfile = app.cfg.load_xml
     if xmlfile:
-        context.cfg.load_xml = None
+        app.cfg.load_xml = None
         tmp_backend = router.RouterBackend([('/', memory.MemoryBackend())],
                                            index_uri='sqlite://')
         unserialize(tmp_backend, xmlfile)
@@ -127,11 +127,11 @@ def import_export_xml(context):
 
     # XXX wrong place / name - this is a generic preload functionality, not just for tests
     # To make some tests happy
-    context.cfg.test_num_pages = item_count
+    app.cfg.test_num_pages = item_count
 
-    xmlfile = context.cfg.save_xml
+    xmlfile = app.cfg.save_xml
     if xmlfile:
-        context.cfg.save_xml = None
+        app.cfg.save_xml = None
         backend = context.unprotected_storage
         serialize(backend, xmlfile)
 
@@ -144,10 +144,10 @@ def protect_backends(context):
     backends after the user has been set up.
     """
     amw = acl.AclWrapperBackend
-    ns_mapping = context.cfg.namespace_mapping
+    ns_mapping = app.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
     protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
-    index_uri = context.cfg.router_index_uri
+    index_uri = app.cfg.router_index_uri
     context.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
 
 
@@ -189,7 +189,7 @@ def setup_i18n_preauth(context):
 
     lang = None
     if i18n.languages:
-        cfg = context.cfg
+        cfg = app.cfg
         if not cfg.language_ignore_browser:
             for l, w in context.request.accept_languages:
                 logging.debug("client accepts language %r, weight %r" % (l, w))
@@ -240,25 +240,25 @@ def shorten_item_name(name, length=25):
     return name
 
 
-def setup_jinja_env(request):
+def setup_jinja_env(context):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
-    app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-    app.jinja_env.filters['user_format'] = lambda rev, request = request: \
-                                          user.get_printable_editor(request,
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = context.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = context.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['user_format'] = lambda rev, context = context: \
+                                          user.get_printable_editor(context,
                                                                     rev.get(EDIT_LOG_USERID),
                                                                     rev.get(EDIT_LOG_ADDR),
                                                                     rev.get(EDIT_LOG_HOSTNAME))
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
                             'list': list,
-                            'theme': request.theme,
-                            'user': request.user,
-                            'cfg': request.cfg,
-                            '_': request.getText,
+                            'theme': context.theme,
+                            'user': context.user,
+                            'cfg': app.cfg,
+                            '_': context.getText,
                             'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': request.theme.translated_item_name,
+                            'translated_item_name': context.theme.translated_item_name,
                             })
 
 
@@ -277,14 +277,9 @@ def before():
 
     context = AllContext(Request(request.environ))
 
-    flaskg.clock.start('create_cfg_instance')
-    # Note: we could give the context to Config.__init__():
-    context.cfg = app.config['MOINCFG']()
-    flaskg.clock.stop('create_cfg_instance')
-
     context.lang = setup_i18n_preauth(context)
 
-    context.session = context.cfg.session_service.get_session(context)
+    context.session = app.cfg.session_service.get_session(context)
 
     init_unprotected_backends(context)
     context.user = setup_user(context, context.session)
@@ -311,7 +306,7 @@ def before():
 @app.after_request
 def after(response):
     context = flaskg.context
-    context.cfg.session_service.finalize(context, context.session)
+    app.cfg.session_service.finalize(context, context.session)
     context.finish()
     return response
 

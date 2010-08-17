@@ -44,6 +44,8 @@
 
 from UserDict import DictMixin
 
+from flask import current_app as app
+
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
@@ -83,7 +85,7 @@ class AclWrapperBackend(object):
                       If None is give, the global wiki default is used.
         """
         self.request = request
-        cfg = request.cfg
+        cfg = app.cfg
         self.backend = backend
         self.hierarchic = hierarchic
         self.valid = valid
@@ -174,7 +176,7 @@ class AclWrapperBackend(object):
         if not isinstance(acls, (tuple, list)):
             acls = (acls, )
         default = self.default.default
-        return AccessControlList(self.request.cfg, acls, default=default, valid=self.valid)
+        return AccessControlList(app.cfg, acls, default=default, valid=self.valid)
 
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.

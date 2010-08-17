@@ -9,6 +9,8 @@ MoinMoin - cleansessions script
 
 import os, time
 
+from flask import current_app as app
+
 from MoinMoin import user
 from MoinMoin.script import MoinScript
 
@@ -71,7 +73,7 @@ General syntax: moin [options] maint cleansessions [cleansessions-options]
                         return False
                 checks.append(user_matches)
 
-        session_service = request.cfg.session_service
+        session_service = app.cfg.session_service
         for sid in session_service.get_all_session_ids(request):
             session = session_service.get_session(request, sid)
 

@@ -12,6 +12,7 @@
 import re, time
 
 from flask import flash
+from flask import current_app as app
 
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
@@ -108,8 +109,8 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
 
             # get mtime from known date/time formats
             for fmt in (request.user.datetime_fmt,
-                    request.cfg.datetime_fmt, request.user.date_fmt,
-                    request.cfg.date_fmt):
+                    app.cfg.datetime_fmt, request.user.date_fmt,
+                    app.cfg.date_fmt):
                 try:
                     mtime_parsed = time.strptime(mtime, fmt)
                 except ValueError:

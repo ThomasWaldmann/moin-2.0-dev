@@ -11,12 +11,15 @@
 from MoinMoin import events, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
+
+from flask import current_app as app
+
 from flask import render_template
 
 def get_notify_info(request):
     _ = request.getText
     types = []
-    if request.cfg.mail_enabled and request.user.email:
+    if app.cfg.mail_enabled and request.user.email:
         types.append(('email', _("Email")))
     isSuperUser = request.user.isSuperUser()
     notify_infos = []
@@ -45,7 +48,7 @@ class Settings(UserPrefBase):
         UserPrefBase.__init__(self, request)
         self.request = request
         self._ = request.getText
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.title = self._("Notification")
         self.name = 'notification'
 

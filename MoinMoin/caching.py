@@ -16,6 +16,8 @@ import hashlib
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin import config
 from MoinMoin.util import filesys, lock, pickle, PICKLE_PROTOCOL
 
@@ -41,14 +43,14 @@ def get_arena_dir(request, arena, scope):
     if scope == 'dir':
         return arena
     if scope == 'item':
-        path = request.cfg.siteid, 'item', hashlib.new('sha1', arena.encode('utf-8')).hexdigest()
+        path = app.cfg.siteid, 'item', hashlib.new('sha1', arena.encode('utf-8')).hexdigest()
     elif scope == 'wiki':
-        path = request.cfg.siteid, arena
+        path = app.cfg.siteid, arena
     elif scope == 'farm':
         path = '__common__', arena
     else:
         raise ValueError('Unsupported scope: %r' % scope)
-    return os.path.join(request.cfg.cache_dir, *path)
+    return os.path.join(app.cfg.cache_dir, *path)
 
 
 def get_cache_list(request, arena, scope):
