@@ -18,17 +18,11 @@
 """
 
 # hint: use None as value if the code already is in sys.path
-support_code = None # '/path/to/code/MoinMoin/support'
 moin_code = None # '/path/to/code'
 
 wiki_config = '/path/to/config/wikiconfig.py'
 
 import sys, os
-
-if support_code:
-    # add the parent dir of the support code libraries to sys.path,
-    # to make import work:
-    sys.path.insert(0, support_code)
 
 if moin_code:
     # add the parent dir of the MoinMoin code to sys.path,
