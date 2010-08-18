@@ -36,15 +36,8 @@ import py
 rootdir = py.path.local(__file__)
 moindir = rootdir.join("..")
 
-from MoinMoin import support
-dirname = os.path.dirname(support.__file__)
-dirname = os.path.abspath(dirname)
-if not dirname in sys.path:
-    sys.path.insert(0, dirname)
-
-
+from MoinMoin import create_app, protect_backends, before
 from MoinMoin.web.request import TestRequest
-from . import create_app, protect_backends, before
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
