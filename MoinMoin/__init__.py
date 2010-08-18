@@ -43,17 +43,45 @@ class MoinFlask(Flask):
     )
 
 
-def create_app(wiki_config_path):
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
+
+def create_app(flask_config_file=None, flask_config_dict=None,
+               moin_config_class=None, warn_default=True, **kwargs
+              ):
     """
     Factory for moin wsgi apps
+
+    @param flask_config_file: a flask config file name (may have a MOINCFG class)
+    @param flask_config_dict: a dict used to update flask config (applied after
+                              flask_config_file was loaded [if given])
+    @param moin_config_class: if you give this, it'll be instantiated as app.cfg,
+                              otherwise it'll use MOINCFG from flask config. If that
+                              also is not there, it'll use the DefaultConfig built
+                              into MoinMoin.
+    @oaram warn_default: emit a warning if moin falls back to its builtin default
+                         config (maybe user forgot to specify MOINCFG?)
+    @param **kwargs: if you give additional key/values here, they'll get patched
+                     into the moin configuration (after it has made the Config
+                     class instance
     """
     app = MoinFlask('MoinMoin')
-    # load the wiki config - this might fail, if:
-    # - wiki_config path is wrong
-    # - wiki_config file contents are invalid somehow
-    app.config.from_pyfile(wiki_config_path)
-    Config = app.config['MOINCFG']
-    app.cfg = Config()
+    if flask_config_file:
+        app.config.from_pyfile(flask_config_file)
+    if flask_config_dict:
+        app.config.update(flask_config_dict)
+    Config = moin_config_class
+    if not Config:
+        Config = app.config.get('MOINCFG')
+    if not Config:
+        if warn_default:
+            logging.warning("using builtin default configuration")
+        from MoinMoin.config.default import DefaultConfig as Config
+    cfg = Config()
+    for key, value in kwargs.iteritems():
+        setattr(cfg, key, value)
+    app.cfg = cfg
     # register converters
     from werkzeug.routing import PathConverter
     app.url_map.converters['itemname'] = PathConverter
@@ -73,9 +101,6 @@ def create_app(wiki_config_path):
     app.after_request(after)
     return app
 
-
-from MoinMoin import log
-logging = log.getLogger(__name__)
 
 from MoinMoin.util.clock import Clock
 from MoinMoin.web.contexts import AllContext
