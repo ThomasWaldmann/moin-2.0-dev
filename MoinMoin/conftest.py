@@ -20,6 +20,13 @@ use a Config class to define the required configuration within the test class.
 @license: GNU GPL, see COPYING for details.
 """
 
+# exclude some directories from py.test test discovery, pathes relative to this file
+collect_ignore = ['support', # do not test 3rd party stuff
+                  'static',  # same
+                  '../wiki', # no tests there
+                  '../instance', # tw likes to use this for wiki data (non-revisioned)
+                 ]
+
 import atexit
 import os
 import sys
