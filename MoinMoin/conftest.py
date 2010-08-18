@@ -37,7 +37,7 @@ if not dirname in sys.path:
 
 
 from MoinMoin.web.request import TestRequest
-from . import app, protect_backends, before
+from . import create_app, protect_backends, before
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -73,16 +73,17 @@ except ImportError:
 
 
 def init_test_request(given_config):
+    namespace_mapping, router_index_uri = create_simple_mapping("memory:", given_config.content_acl)
+    more_config = dict(
+        namespace_mapping=namespace_mapping,
+        router_index_uri=router_index_uri,
+    )
+    app = create_app(moin_config_class=given_config, **more_config)
     with app.test_client() as c:
         rv = c.get('/') #Run a test request in flask
         request = TestRequest() #Same thing for moin
         # XXX: We need a way to merge the two requests
         #      or see which one is the best.
-        content_acl = given_config.content_acl
-        given_config.namespace_mapping, given_config.router_index_uri = \
-            create_simple_mapping("memory:", content_acl)
-        app.config['MOINCFG'] = given_config
-        app.cfg = given_config()
         before()
         return request
 
