@@ -503,7 +503,7 @@ def login():
                 for msg in request._login_messages:
                     flash(msg, "error")
 
-        userobj = flaskg.user    
+        userobj = flaskg.user
         if userobj.valid:
             # we have a logged-in user
             session['user.id'] = userobj.id

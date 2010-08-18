@@ -378,7 +378,7 @@ class Converter(object):
         we will try to display a text.
         TODO: See for a preference list between image, data, audio
         """
-        prefered_format, data_tag, mimetype = ('','','')
+        prefered_format, data_tag, mimetype = ('', '', '')
         object_data = []
         text_object = []
         caption = []
@@ -597,7 +597,7 @@ class Converter(object):
         """
         key = html('class')
         attrib = {}
-        attrib[key] = ''.join(['db-',element.tag.name])
+        attrib[key] = ''.join(['db-', element.tag.name])
         return self.new_copy(moin_page.span, element,
                              depth, attrib=attrib)
 
