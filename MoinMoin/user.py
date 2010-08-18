@@ -25,7 +25,7 @@ import hmac
 
 from flask import current_app as app
 
-from flask import flaskg
+from flask import flaskg, session
 
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
@@ -896,13 +896,13 @@ class User:
             # Save interwiki links internally
             if self._cfg.interwikiname:
                 item_name = self._interWikiName(item_name)
-            trail_in_session = self._request.session.get('trail', [])
+            trail_in_session = session.get('trail', [])
             trail = trail_in_session[:]
             trail = [i for i in trail if i != item_name] # avoid dupes
             trail.append(item_name) # append current item name at end
             trail = trail[-self._cfg.trail_size:] # limit trail length
             if trail != trail_in_session:
-                self._request.session['trail'] = trail
+                session['trail'] = trail
 
     def getTrail(self):
         """ Return list of recently visited item names.
@@ -911,7 +911,7 @@ class User:
         @return: item names (unicode) in trail
         """
         if self._wantTrail():
-            trail = self._request.session.get('trail', [])
+            trail = session.get('trail', [])
         else:
             trail = []
         return trail

@@ -134,7 +134,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
-from flask import url_for
+from flask import url_for, session
 
 from flask import current_app as app
 
@@ -421,12 +421,6 @@ def handle_logout(request, userobj):
         # not logged in
         return userobj
 
-    if userobj.auth_method == 'setuid':
-        # we have no authmethod object for setuid
-        userobj = request._setuid_real_user
-        del request._setuid_real_user
-        return userobj
-
     for authmethod in app.cfg.auth:
         userobj, cont = authmethod.logout(request, userobj, cookie=request.cookies)
         if not cont:
@@ -441,25 +435,7 @@ def handle_request(request, userobj):
             break
     return userobj
 
-def setup_setuid(request, userobj):
-    """ Check for setuid conditions in the session and setup an user
-    object accordingly. Returns a tuple of the new user objects.
-
-    @param request: a moin request object
-    @param userobj: a moin user object
-    @rtype: boolean
-    @return: (new_user, user) or (user, None)
-    """
-    old_user = None
-    if 'setuid' in request.session and userobj and userobj.isSuperUser():
-        old_user = userobj
-        uid = request.session['setuid']
-        userobj = user.User(request, uid, auth_method='setuid')
-        userobj.valid = True
-    logging.debug("setup_suid returns %r, %r" % (userobj, old_user))
-    return (userobj, old_user)
-
-def setup_from_session(request, session):
+def setup_from_session(request):
     userobj = None
     if 'user.id' in session:
         auth_userid = session['user.id']

@@ -13,7 +13,7 @@
 import re
 import difflib
 
-from flask import request, url_for, flash, render_template, Response, redirect
+from flask import request, url_for, flash, render_template, Response, redirect, session
 from flask import flaskg
 
 from flask import current_app as app
@@ -495,6 +495,13 @@ def login():
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     flash(msg, "error")
+
+        userobj = flaskg.user    
+        if userobj.valid:
+            # we have a logged-in user
+            session['user.id'] = userobj.id
+            session['user.auth_method'] = userobj.auth_method
+            session['user.auth_attribs'] = userobj.auth_attribs
         return redirect(url_for('frontend.show_root'))
 
 
@@ -503,14 +510,10 @@ def logout():
     item_name = 'LoggedOut' # XXX
     request = flaskg.context
     _ = request.getText
-    # if the user really was logged out say so,
-    # but if the user manually added ?do=logout
-    # and that isn't really supported, then don't
-    if flaskg.user.valid:
-        # something went wrong
-        flash(_("You are still logged in."), "warning")
-    else:
-        flash(_("You are now logged out."), "info")
+    flash(_("You are now logged out."), "info")
+    for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
+        if key in session:
+            del session[key]
     return redirect(url_for('frontend.show_root'))
 
 

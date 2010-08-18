@@ -87,7 +87,7 @@ class TestAnonSession(AuthTest):
             assert not flaskg.user.valid
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -122,13 +122,13 @@ class TestAnonSession(AuthTest):
                 first = False
                 continue
 
-            assert not request.session.is_new
+            assert not session.is_new
 
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 
 class TestHttpAuthSession(AuthTest):
@@ -156,7 +156,7 @@ class TestHttpAuthSession(AuthTest):
             assert flaskg.user.name == username
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -193,8 +193,8 @@ class TestHttpAuthSession(AuthTest):
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 
 class TestMoinAuthSession(AuthTest):
@@ -230,7 +230,7 @@ class TestMoinAuthSession(AuthTest):
             assert flaskg.user.name == username
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -267,7 +267,7 @@ class TestMoinAuthSession(AuthTest):
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 

@@ -141,8 +141,7 @@ class ConfigFunctionality(object):
 
         # post process
 
-        # 'setuid' special auth method auth method can log out
-        self.auth_can_logout = ['setuid']
+        self.auth_can_logout = []
         self.auth_login_inputs = []
         found_names = []
         for auth in self.auth:
