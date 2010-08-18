@@ -40,8 +40,6 @@ class MoinFlask(Flask):
         autoescape=False,
     )
 
-    secret_key = "thisisnotsecret"
-
 
 app = MoinFlask('MoinMoin')
 
