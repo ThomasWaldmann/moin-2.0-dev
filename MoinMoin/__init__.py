@@ -15,6 +15,7 @@ import sys
 
 try:
     from flask import Flask, request, url_for, render_template, flash, session
+    from flask import current_app as app
 except ImportError:
     from MoinMoin import support
     dirname = os.path.dirname(support.__file__)
@@ -23,6 +24,7 @@ except ImportError:
         sys.path.insert(0, dirname)
 
     from flask import Flask, request, url_for, render_template, flash, session
+    from flask import current_app as app
 
 # HACK: creating a custom alias for the single-letter "g"
 # Note: this should be done with a *standard* longer name in flask and
@@ -41,13 +43,36 @@ class MoinFlask(Flask):
     )
 
 
-app = MoinFlask('MoinMoin')
+def create_app(wiki_config_path):
+    """
+    Factory for moin wsgi apps
+    """
+    app = MoinFlask('MoinMoin')
+    # load the wiki config - this might fail, if:
+    # - wiki_config path is wrong
+    # - wiki_config file contents are invalid somehow
+    app.config.from_pyfile(wiki_config_path)
+    Config = app.config['MOINCFG']
+    app.cfg = Config()
+    # register converters
+    from werkzeug.routing import PathConverter
+    app.url_map.converters['itemname'] = PathConverter
+    # register modules
+    from MoinMoin.apps.frontend import frontend
+    app.register_module(frontend)
+    from MoinMoin.apps.admin import admin
+    app.register_module(admin, url_prefix='/+admin')
+    from MoinMoin.apps.feed import feed
+    app.register_module(feed, url_prefix='/+feed')
+    from MoinMoin.apps.misc import misc
+    app.register_module(misc, url_prefix='/+misc')
+    # register filters
+    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+    # register before/after request functions
+    app.before_request(before)
+    app.after_request(after)
+    return app
 
-from werkzeug.routing import PathConverter
-app.url_map.converters['itemname'] = PathConverter
-
-
-import os, sys
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -212,7 +237,6 @@ def setup_i18n_postauth(context):
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 
-@app.template_filter()
 def shorten_item_name(name, length=25):
     """
     Shorten item names
@@ -263,7 +287,6 @@ def setup_jinja_env(context):
                             })
 
 
-@app.before_request
 def before():
     """
     Wraps an incoming WSGI request in a Context object and initializes
@@ -302,22 +325,9 @@ def before():
     # if return value is not None, it is the final response
 
 
-@app.after_request
 def after(response):
     context = flaskg.context
     context.finish()
     return response
 
-
-from MoinMoin.apps.frontend import frontend
-app.register_module(frontend)
-
-from MoinMoin.apps.admin import admin
-app.register_module(admin, url_prefix='/+admin')
-
-from MoinMoin.apps.feed import feed
-app.register_module(feed, url_prefix='/+feed')
-
-from MoinMoin.apps.misc import misc
-app.register_module(misc, url_prefix='/+misc')
 
