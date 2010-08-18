@@ -884,8 +884,9 @@ class User:
     # Trail
 
     def _wantTrail(self):
-        return (not self.valid and app.cfg.cookie_lifetime[0]  # anon sessions enabled
-                or self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
+        return (not self.valid # anon session
+                or
+                self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
 
     def addTrail(self, item_name):
         """ Add item name to trail.
