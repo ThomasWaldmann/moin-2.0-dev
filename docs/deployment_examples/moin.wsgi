@@ -35,17 +35,7 @@ if moin_code:
     # to make import work:
     sys.path.insert(0, moin_code)
 
-
-# app is the Flask application
-from MoinMoin import app
-
-# load the wiki config - this might fail, if:
-# - wiki_config path is wrong
-# - wiki_config file contents are invalid somehow
-app.config.from_pyfile(wiki_config)
-Config = app.config['MOINCFG']
-app.cfg = Config()
-
-# mod_wsgi expects "application":
-application = app
+# application is the Flask application
+from MoinMoin import create_app
+application = create_app(wiki_config)
 
