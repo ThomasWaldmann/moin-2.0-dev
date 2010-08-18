@@ -65,8 +65,7 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     @oaram warn_default: emit a warning if moin falls back to its builtin default
                          config (maybe user forgot to specify MOINCFG?)
     @param **kwargs: if you give additional key/values here, they'll get patched
-                     into the moin configuration (after it has made the Config
-                     class instance
+                     into the moin configuration class (before it instance is created)
     """
     app = MoinFlask('MoinMoin')
     if flask_config_file:
@@ -82,10 +81,9 @@ def create_app(flask_config_file=None, flask_config_dict=None,
         if warn_default:
             logging.warning("using builtin default configuration")
         from MoinMoin.config.default import DefaultConfig as Config
-    cfg = Config()
     for key, value in kwargs.iteritems():
-        setattr(cfg, key, value)
-    app.cfg = cfg
+        setattr(Config, key, value)
+    app.cfg = Config()
     # register converters
     from werkzeug.routing import PathConverter
     app.url_map.converters['itemname'] = PathConverter
