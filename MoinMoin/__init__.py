@@ -13,18 +13,13 @@ This creates the WSGI application (using Flask) as "app".
 import os
 import sys
 
-try:
-    from flask import Flask, request, url_for, render_template, flash, session
-    from flask import current_app as app
-except ImportError:
-    from MoinMoin import support
-    dirname = os.path.dirname(support.__file__)
-    dirname = os.path.abspath(dirname)
-    if not dirname in sys.path:
-        sys.path.insert(0, dirname)
+# XXX temporary sys.path hack for convenience:
+support_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'support'))
+if support_dir not in sys.path:
+    sys.path.insert(0, support_dir)
 
-    from flask import Flask, request, url_for, render_template, flash, session
-    from flask import current_app as app
+from flask import Flask, request, url_for, render_template, flash, session
+from flask import current_app as app
 
 # HACK: creating a custom alias for the single-letter "g"
 # Note: this should be done with a *standard* longer name in flask and
