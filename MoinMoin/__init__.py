@@ -53,7 +53,9 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     """
     Factory for moin wsgi apps
 
-    @param flask_config_file: a flask config file name (may have a MOINCFG class)
+    @param flask_config_file: a flask config file name (may have a MOINCFG class),
+                              if not given, a config pointed to by MOINCFG env var
+                              will be loaded (if possible).
     @param flask_config_dict: a dict used to update flask config (applied after
                               flask_config_file was loaded [if given])
     @param moin_config_class: if you give this, it'll be instantiated as app.cfg,
@@ -69,6 +71,8 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     app = MoinFlask('MoinMoin')
     if flask_config_file:
         app.config.from_pyfile(flask_config_file)
+    else:
+        app.config.from_envvar('MOINCFG')
     if flask_config_dict:
         app.config.update(flask_config_dict)
     Config = moin_config_class
