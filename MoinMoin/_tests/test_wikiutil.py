@@ -103,7 +103,7 @@ class TestSystemPage:
         )
 
     class Config(wikiconfig.Config):
-        preloaded_xml = wikiconfig.Config._test_items_xml
+        load_xml = wikiconfig.Config._test_items_xml
 
     def testSystemPage(self):
         """wikiutil: good system page names accepted, bad rejected"""

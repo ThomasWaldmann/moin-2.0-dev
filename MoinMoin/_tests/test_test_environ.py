@@ -45,7 +45,7 @@ class TestStorageEnvironWithoutConfig(object):
 
 class TestStorageEnvironWithConfig(object):
     class Config(wikiconfig.Config):
-        preloaded_xml = wikiconfig.Config._test_items_xml
+        load_xml = wikiconfig.Config._test_items_xml
         content_acl = dict(
             before="+All:write", # need to write to sys pages
             default="All:read,write,admin,create,destroy",
