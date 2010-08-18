@@ -55,6 +55,9 @@ if moin_code:
 from MoinMoin import create_app
 app = create_app(wiki_config)
 
+# please note: if you want to do some wsgi app wrapping, do it like shown below:
+#app.wsgi_app = somewrapper(app.wsgi_app)
+
 # get some configuration values for the builtin server:
 host = app.config.get('HOST', '127.0.0.1')
 port = app.config.get('PORT', 8080)

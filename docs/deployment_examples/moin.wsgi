@@ -39,3 +39,6 @@ if moin_code:
 from MoinMoin import create_app
 application = create_app(wiki_config)
 
+# please note: if you want to do some wsgi app wrapping, do it like shown below:
+#application.wsgi_app = somewrapper(application.wsgi_app)
+
