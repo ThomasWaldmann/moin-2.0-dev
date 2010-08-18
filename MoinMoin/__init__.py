@@ -72,7 +72,7 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     if flask_config_file:
         app.config.from_pyfile(flask_config_file)
     else:
-        app.config.from_envvar('MOINCFG')
+        app.config.from_envvar('MOINCFG', silent=True)
     if flask_config_dict:
         app.config.update(flask_config_dict)
     Config = moin_config_class
