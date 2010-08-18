@@ -68,6 +68,13 @@ Allow: /
 """, mimetype='text/plain')
 
 
+@frontend.route('/favicon.ico')
+def favicon():
+    # although we tell that favicon.ico is at /static/favicon.ico,
+    # some browsers still request it from /favicon.ico...
+    return app.send_static_file('favicon.ico')
+
+
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
