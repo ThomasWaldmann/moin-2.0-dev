@@ -142,8 +142,6 @@ class HTTPContext(BaseContext):
     """ Context that holds attributes and methods for manipulation of
     incoming and outgoing HTTP data. """
 
-    session = EnvironProxy('session')
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:
@@ -161,7 +159,6 @@ class AuxilaryMixin(object):
     _login_messages = EnvironProxy('_login_messages', lambda o: [])
     _login_multistage = EnvironProxy('_login_multistage', None)
     _login_multistage_name = EnvironProxy('_login_multistage_name', None)
-    _setuid_real_user = EnvironProxy('_setuid_real_user', None)
 
     def uid_generator(self):
         pagename = None

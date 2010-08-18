@@ -14,7 +14,7 @@ import os
 import sys
 
 try:
-    from flask import Flask, request, url_for, render_template, flash
+    from flask import Flask, request, url_for, render_template, flash, session
 except ImportError:
     from MoinMoin import support
     dirname = os.path.dirname(support.__file__)
@@ -22,7 +22,7 @@ except ImportError:
     if not dirname in sys.path:
         sys.path.insert(0, dirname)
 
-    from flask import Flask, request, url_for, render_template, flash
+    from flask import Flask, request, url_for, render_template, flash, session
 
 # HACK: creating a custom alias for the single-letter "g"
 # Note: this should be done with a *standard* longer name in flask and
@@ -151,13 +151,11 @@ def protect_backends(context):
     context.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
 
 
-def setup_user(context, session):
+def setup_user(context):
     """ Try to retrieve a valid user object from the request, be it
     either through the session or through a login. """
     # first try setting up from session
-    userobj = auth.setup_from_session(context, session)
-    userobj, olduser = auth.setup_setuid(context, userobj)
-    context._setuid_real_user = olduser
+    userobj = auth.setup_from_session(context)
 
     # then handle login/logout forms
     form = context.request.values
@@ -284,10 +282,8 @@ def before():
 
     context.lang = setup_i18n_preauth(context)
 
-    context.session = app.cfg.session_service.get_session(context)
-
     init_unprotected_backends(context)
-    flaskg.user = setup_user(context, context.session)
+    flaskg.user = setup_user(context)
 
     context.lang = setup_i18n_postauth(context)
 
@@ -311,7 +307,6 @@ def before():
 @app.after_request
 def after(response):
     context = flaskg.context
-    app.cfg.session_service.finalize(context, context.session)
     context.finish()
     return response
 

@@ -21,7 +21,7 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
-from flask import flaskg
+from flask import flaskg, session
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
@@ -2447,10 +2447,10 @@ def createTicket(request, tm=None, action=None, pagename=None):
     if action is None:
         action = request.action
 
-    if request.session:
+    if session:
         # either a user is logged in or we have a anon session -
         # if session times out, ticket will get invalid
-        sid = request.session.sid
+        sid = session.sid
     else:
         sid = ''
 
