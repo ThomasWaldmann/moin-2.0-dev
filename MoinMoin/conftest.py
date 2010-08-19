@@ -80,12 +80,14 @@ def init_test_app(given_config):
         namespace_mapping=namespace_mapping,
         router_index_uri=router_index_uri,
     )
-    app = create_app(moin_config_class=given_config, **more_config)
+    app = create_app(flask_config_dict=dict(SECRET_KEY='foo'),
+                     moin_config_class=given_config,
+                     **more_config)
     ctx = app.test_request_context('/')
     ctx.push()
     before()
     request = flaskg.context
-    return ctx, request
+    return app, ctx, request
 
 
 # py.test-1.0 provides "funcargs" natively
@@ -114,11 +116,11 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = cls.Config
         else:
             given_config = wikiconfig.Config
-        cls.ctx, cls.request = init_test_app(given_config)
+        cls.app, cls.ctx, cls.request = init_test_app(given_config)
 
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
-                self.ctx, self.request = init_test_app(given_config)
+                self.app, self.ctx, self.request = init_test_app(given_config)
                 # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
@@ -136,8 +138,7 @@ class MoinClassCollector(py.test.collect.Class):
         except AttributeError:
             # Perhaps the test class did not define a setup_method.
             def no_setup(self, method):
-                ctx, request = init_test_app(given_config)
-                self.request = request
+                self.app, self.ctx, self.request = init_test_app(given_config)
             cls.setup_method = no_setup
 
         try:
@@ -163,7 +164,7 @@ class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
         given_config = wikiconfig.Config
-        self.ctx, self.request = init_test_app(given_config)
+        self.app, self.ctx, self.request = init_test_app(given_config)
         # XXX do ctx.pop() in ... (where?)
         super(Module, self).__init__(*args, **kwargs)
 
