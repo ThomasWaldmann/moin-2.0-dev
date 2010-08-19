@@ -26,7 +26,7 @@ from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-
+from flask import request
 from flask import flaskg
 
 from flask import request, url_for, send_file, render_template, Response, abort, escape
@@ -435,9 +435,10 @@ class Item(object):
         @param data: either str or open file (we can avoid having to read/seek
                      rev's data with this)
         """
-        request = self.request
-        newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
-        newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
+        remote_addr = request.remote_addr
+        if remote_addr:
+            newrev[EDIT_LOG_ADDR] = unicode(remote_addr)
+            newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, remote_addr))
         if flaskg.user.valid:
             newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
 
