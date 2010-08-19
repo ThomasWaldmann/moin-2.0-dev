@@ -11,7 +11,7 @@ class TestMisc(object):
         with self.app.test_client() as c:
             rv = c.get('/+misc/sitemap')
             assert rv.status == '200 OK'
-            assert rv.headers['Content-Type'] == 'text/xml'
+            assert rv.headers['Content-Type'] == 'text/xml; charset=utf-8'
             assert rv.data.startswith('<?xml')
             assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' in rv.data
             assert '</urlset>' in rv.data

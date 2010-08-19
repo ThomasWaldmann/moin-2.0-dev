@@ -18,7 +18,7 @@ from flask import current_app as app
 from MoinMoin.apps.misc import misc
 
 from MoinMoin import wikiutil
-from MoinMoin.storage.error import NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchRevisionError, NoSuchItemError
 
 SITEMAP_HAS_SYSTEM_ITEMS = True
 
@@ -52,9 +52,12 @@ def sitemap():
             priority = "0.5"
         sitemap.append((item.name, format_timestamp(rev.timestamp), changefreq, priority))
     # add an entry for root url
-    item = storage.get_item(app.cfg.page_front_page)
-    rev = item.get_revision(-1)
-    sitemap.append((u'', format_timestamp(rev.timestamp), "hourly", "1.0"))
+    try:
+        item = storage.get_item(app.cfg.page_front_page)
+        rev = item.get_revision(-1)
+        sitemap.append((u'', format_timestamp(rev.timestamp), "hourly", "1.0"))
+    except NoSuchItemError:
+        pass
     sitemap.sort()
     content = render_template('misc/sitemap.xml', sitemap=sitemap)
     return Response(content, mimetype='text/xml')
