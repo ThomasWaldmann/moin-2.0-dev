@@ -11,7 +11,7 @@
 
 from datetime import datetime
 
-from flask import url_for
+from flask import url_for, Response
 from flask import flaskg
 
 from flask import current_app as app
@@ -71,5 +71,5 @@ def atom(item_name):
                  url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
                  updated=datetime.utcfromtimestamp(rev.timestamp),
                 )
-    return feed.to_string()
+    return Response(feed.to_string(), content_type='application/atom+xml')
 
