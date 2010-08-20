@@ -7,7 +7,9 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
-from flask import render_template, flash
+from flask import render_template, flash, flaskg
+
+from flask import current_app as app
 
 from MoinMoin import Page, wikiutil
 from MoinMoin.widget import html
@@ -20,11 +22,11 @@ def _handle_submission(request):
     _ = request.getText
     sub = request.values.get('handler')
 
-    if sub in request.cfg.userprefs_disabled:
+    if sub in app.cfg.userprefs_disabled:
         return None, None
 
     try:
-        cls = wikiutil.importPlugin(request.cfg, 'userprefs', sub, 'Settings')
+        cls = wikiutil.importPlugin(app.cfg, 'userprefs', sub, 'Settings')
     except wikiutil.PluginMissingError:
         # we never show this plugin to click on so no need to
         # give a message here
@@ -42,16 +44,16 @@ def _handle_submission(request):
 
 def _create_prefs_page(request, sel=None):
     _ = request.getText
-    plugins = wikiutil.getPlugins('userprefs', request.cfg)
+    plugins = wikiutil.getPlugins('userprefs', app.cfg)
     ret = html.P()
     ret.append(html.Text(_("Please choose:")))
     ret.append(html.BR())
     items = html.UL()
     ret.append(items)
     for sub in plugins:
-        if sub in request.cfg.userprefs_disabled:
+        if sub in app.cfg.userprefs_disabled:
             continue
-        cls = wikiutil.importPlugin(request.cfg, 'userprefs', sub, 'Settings')
+        cls = wikiutil.importPlugin(app.cfg, 'userprefs', sub, 'Settings')
         obj = cls(request)
         if not obj.allowed():
             continue
@@ -67,9 +69,9 @@ def _create_page(request, cancel=False):
 
     sub = request.args.get('sub', '')
     cls = None
-    if sub and sub not in request.cfg.userprefs_disabled:
+    if sub and sub not in app.cfg.userprefs_disabled:
         try:
-            cls = wikiutil.importPlugin(request.cfg, 'userprefs', sub, 'Settings')
+            cls = wikiutil.importPlugin(app.cfg, 'userprefs', sub, 'Settings')
         except wikiutil.PluginMissingError:
             # cls is already None
             pass
@@ -84,7 +86,7 @@ def _create_page(request, cancel=False):
 
 def execute(pagename, request):
     _ = request.getText
-    if not request.user.valid:
+    if not flaskg.user.valid:
         actname = __name__.split('.')[-1]
         flash(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")
         return Page.Page(request, pagename).send_page()

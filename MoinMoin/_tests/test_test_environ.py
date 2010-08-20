@@ -8,6 +8,8 @@
 
 import py
 
+from flask import current_app as app
+
 from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
 from MoinMoin.storage.error import NoSuchItemError
 
@@ -20,7 +22,7 @@ class TestStorageEnvironWithoutConfig(object):
     def test_fresh_backends(self):
         assert self.class_level_value == 123
 
-        assert isinstance(self.request.cfg, wikiconfig.Config)
+        assert isinstance(app.cfg, wikiconfig.Config)
 
         storage = self.request.storage
         assert storage
@@ -43,7 +45,7 @@ class TestStorageEnvironWithoutConfig(object):
 
 class TestStorageEnvironWithConfig(object):
     class Config(wikiconfig.Config):
-        preloaded_xml = wikiconfig.Config._test_items_xml
+        load_xml = wikiconfig.Config._test_items_xml
         content_acl = dict(
             before="+All:write", # need to write to sys pages
             default="All:read,write,admin,create,destroy",
@@ -52,7 +54,7 @@ class TestStorageEnvironWithConfig(object):
         )
 
     def test_fresh_backends_with_content(self):
-        assert isinstance(self.request.cfg, wikiconfig.Config)
+        assert isinstance(app.cfg, wikiconfig.Config)
 
         storage = self.request.storage
         should_be_there = (u"FrontPage", u"HelpOnLinking", u"HelpOnMoinWikiSyntax", )

@@ -83,6 +83,15 @@ shipped: 0.8.7
 minimum: 0.8.7(?)
 
 
+flask (micro framework)
+=======================
+shipped: 0.6
+minimum: 0.6
+Note:
+send_file needs moin custom patches, see changesets 25de9bb78a9f
+and 58eb8f978188
+
+
 werkzeug (WSGI toolkit)
 =======================
 shipped: 0.6.2
@@ -91,7 +100,7 @@ minimum: 0.5.1 will work, maybe 0.5 also
 
 jinja2
 ======
-shipped: 2.5
+shipped: 2.5.2
 minimum: 2.5
 
 

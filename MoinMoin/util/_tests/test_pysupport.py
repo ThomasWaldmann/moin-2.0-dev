@@ -11,6 +11,8 @@ import os, errno
 
 import py
 
+from flask import current_app as app
+
 from MoinMoin.util import pysupport, random_string
 from MoinMoin import wikiutil
 
@@ -46,7 +48,7 @@ class TestImportNameFromPlugin(object):
 
     def setup_method(self, method):
         """ Check for valid plugin package """
-        self.pluginDirectory = os.path.join(self.request.cfg.data_dir, 'plugin', 'parser')
+        self.pluginDirectory = os.path.join(app.cfg.data_dir, 'plugin', 'parser')
         self.checkPackage(self.pluginDirectory)
 
     def checkPackage(self, path):
@@ -72,7 +74,7 @@ class TestImportNonExisting(TestImportNameFromPlugin):
             py.test.skip('plugin exists: %s' % self.plugin)
         py.test.raises(wikiutil.PluginMissingError,
                        wikiutil.importWikiPlugin,
-                           self.request.cfg, 'parser',
+                           app.cfg, 'parser',
                            self.plugin, 'Parser')
 
 
@@ -93,8 +95,8 @@ class TestImportExisting(TestImportNameFromPlugin):
         try:
             self.createTestPlugin()
             # clear the plugin cache...
-            self.request.cfg._site_plugin_lists = {}
-            parser = wikiutil.importWikiPlugin(self.request.cfg, 'parser',
+            app.cfg._site_plugin_lists = {}
+            parser = wikiutil.importWikiPlugin(app.cfg, 'parser',
                                                self.plugin, 'Parser')
             assert getattr(parser, '__name__', None) == 'Parser'
             assert parser.key == self.key

@@ -21,8 +21,6 @@
                that the browser sent
        multistage: boolean indicating multistage login continuation
                    [may not be present, login only]
-       openid_identifier: the OpenID identifier we got from the form
-                          (or None) [login only]
 
     login_hint() should return a HTML text that is displayed to the user right
     below the login form, it should tell the user what to do in case of a
@@ -63,8 +61,7 @@
     Note, however, that when no username is entered or the username is not
     found in the database, it may be appropriate to return with a message
     and the continue flag set to true (ContinueLogin) because a subsequent auth
-    plugin might work even without the username, say the openid plugin for
-    example.
+    plugin might work even without the username (e.g. an openid auth plugin).
 
     The multistage member must evaluate to false or be callable. If it is
     callable, this indicates that the authentication method requires a second
@@ -98,10 +95,9 @@
      * login_inputs: a list of required inputs, currently supported are
                       - 'username': username entry field
                       - 'password': password entry field
-                      - 'openid_identifier': OpenID entry field
                       - 'special_no_input': manual login is required
                             but no form fields need to be filled in
-                            (for example openid with forced provider)
+                            (e.g. openid with forced provider)
                             in this case the theme may provide a short-
                             cut omitting the login form
      * logout_possible: boolean indicating whether this auth methods
@@ -138,7 +134,9 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
-from flask import url_for
+from flask import url_for, session
+
+from flask import current_app as app
 
 from MoinMoin import user, wikiutil
 
@@ -253,14 +251,10 @@ class MoinAuth(BaseAuth):
 
     def login_hint(self, request):
         _ = request.getText
-        #if request.cfg.openidrp_registration_url:
-        #    register_url = request.cfg.openidrp_registration_url
-        #else:
         register_url = url_for('frontend.register')
         recover_url = url_for('frontend.recoverpass')
 
         msg = ''
-        #if request.cfg.openidrp_allow_registration:
         msg = _('If you do not have an account, <a href="%(register_url)s">you can create one now</a>. ') % {
               'register_url': register_url}
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>') % {
@@ -378,7 +372,7 @@ class GivenAuth(BaseAuth):
 
 
 def handle_login(request, userobj=None, username=None, password=None,
-                 attended=True, openid_identifier=None, stage=None):
+                 attended=True, stage=None):
     """
     Process a 'login' request by going through the configured authentication
     methods in turn. The passable keyword arguments are explained in more
@@ -388,10 +382,9 @@ def handle_login(request, userobj=None, username=None, password=None,
         'username': username,
         'password': password,
         'attended': attended,
-        'openid_identifier': openid_identifier,
         'multistage': (stage and True) or None
     }
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue
         ret = authmethod.login(request, userobj, **params)
@@ -428,13 +421,7 @@ def handle_logout(request, userobj):
         # not logged in
         return userobj
 
-    if userobj.auth_method == 'setuid':
-        # we have no authmethod object for setuid
-        userobj = request._setuid_real_user
-        del request._setuid_real_user
-        return userobj
-
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.logout(request, userobj, cookie=request.cookies)
         if not cont:
             break
@@ -442,39 +429,21 @@ def handle_logout(request, userobj):
 
 def handle_request(request, userobj):
     """ Handle the per-request callbacks of the configured authentication methods. """
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.request(request, userobj, cookie=request.cookies)
         if not cont:
             break
     return userobj
 
-def setup_setuid(request, userobj):
-    """ Check for setuid conditions in the session and setup an user
-    object accordingly. Returns a tuple of the new user objects.
-
-    @param request: a moin request object
-    @param userobj: a moin user object
-    @rtype: boolean
-    @return: (new_user, user) or (user, None)
-    """
-    old_user = None
-    if 'setuid' in request.session and userobj and userobj.isSuperUser():
-        old_user = userobj
-        uid = request.session['setuid']
-        userobj = user.User(request, uid, auth_method='setuid')
-        userobj.valid = True
-    logging.debug("setup_suid returns %r, %r" % (userobj, old_user))
-    return (userobj, old_user)
-
-def setup_from_session(request, session):
+def setup_from_session(request):
     userobj = None
     if 'user.id' in session:
         auth_userid = session['user.id']
         auth_method = session['user.auth_method']
         auth_attrs = session['user.auth_attribs']
         logging.debug("got from session: %r %r" % (auth_userid, auth_method))
-        logging.debug("current auth methods: %r" % request.cfg.auth_methods)
-        if auth_method and auth_method in request.cfg.auth_methods:
+        logging.debug("current auth methods: %r" % app.cfg.auth_methods)
+        if auth_method and auth_method in app.cfg.auth_methods:
             userobj = user.User(request, id=auth_userid,
                                 auth_method=auth_method,
                                 auth_attribs=auth_attrs)

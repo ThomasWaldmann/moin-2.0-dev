@@ -78,7 +78,7 @@ class Attributes(object):
             # We convert xml:id
             elif key.uri == xml.namespace:
                 if key.name == 'id' or key.name == 'lang':
-                   new[ET.QName(key.name, html.namespace)] = value
+                    new[ET.QName(key.name, html.namespace)] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')

@@ -25,7 +25,7 @@ umask = 0770
 # Default value for the static stuff URL prefix (css, img, js).
 # Caution:
 # * do NOT use this directly, it is only the DEFAULT value to be used by
-#   server Config classes and by multiconfig.py for request.cfg.
+#   server Config classes and by MoinMoin.config.default for app.cfg.
 # * must NOT end with '/'!
 # * some servers expect '/' at beginning and only 1 level deep.
 url_prefix_static = '/static'

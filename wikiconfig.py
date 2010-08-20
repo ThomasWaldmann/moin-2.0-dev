@@ -8,11 +8,12 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 
 import sys, os
 
-from MoinMoin.config import multiconfig, url_prefix_static
+from MoinMoin.config import url_prefix_static
+from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
 
-class LocalConfig(multiconfig.DefaultConfig):
+class Config(DefaultConfig):
     # vvv DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO vvv
     # Directory containing THIS wikiconfig:
     wikiconfig_dir = os.path.abspath(os.path.dirname(__file__))
@@ -52,7 +53,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
-    logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
+    logo_string = u'<img src="%s/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">' % url_prefix_static
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #page_front_page = u'FrontPage' # change to some better value
@@ -60,20 +61,24 @@ class LocalConfig(multiconfig.DefaultConfig):
     # Add your configuration items here.
     secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'
 
-# DEVELOPERS! Do not add your configuration items there,
-# you could accidentally commit them! Instead, create a
-# wikiconfig_local.py file containing this:
-#
-# from wikiconfig import LocalConfig
-#
-# class Config(LocalConfig):
-#     configuration_item_1 = 'value1'
-#
+MOINCFG = Config # Flask only likes uppercase stuff
+# Flask settings - see the flask documentation about their meaning
+SECRET_KEY = 'you need to change this so it is really secret'
+#DEBUG = False # use True for development only, not for public sites!
+#TESTING = False
+#SESSION_COOKIE_NAME = 'session'
+#PERMANENT_SESSION_LIFETIME = timedelta(days=31)
+#USE_X_SENDFILE = False
+#LOGGER_NAME = 'MoinMoin'
 
-try:
-    from wikiconfig_local import Config
-except ImportError, err:
-    if not str(err).endswith('wikiconfig_local'):
-        raise
-    Config = LocalConfig
+# DEVELOPERS! Do not add your configuration items here - you could accidentally
+# commit them! Instead, create a wikiconfig_local.py file containing this:
+#
+#from wikiconfig import *
+#
+#class LocalConfig(Config):
+#    configuration_item_1 = 'value1'
+#
+#MOINCFG = LocalConfig
+#DEBUG = True
 

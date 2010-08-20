@@ -12,13 +12,15 @@
 
 import urllib
 
+from flask import current_app as app
+
 from werkzeug import http_date
 
 from MoinMoin import caching
 
 def execute(pagename, request):
     status = []
-    for sistername, sisterurl in request.cfg.sistersites:
+    for sistername, sisterurl in app.cfg.sistersites:
         arena = 'sisters'
         key = sistername
         cache = caching.CacheEntry(request, arena, key, scope='farm', use_pickle=True)

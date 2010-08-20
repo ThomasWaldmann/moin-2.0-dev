@@ -7,10 +7,12 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from flask import flaskg
+
 from MoinMoin.macro2.Date import MacroDateTimeBase
 
 class Macro(MacroDateTimeBase):
     def macro(self, stamp=None):
         tm = self.parse_time(stamp)
-        return self.request.user.getFormattedDateTime(tm)
+        return flaskg.user.getFormattedDateTime(tm)
 

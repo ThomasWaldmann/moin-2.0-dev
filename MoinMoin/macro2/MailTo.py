@@ -7,6 +7,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import flaskg
+
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.macro2._base import MacroInlineBase
 
@@ -17,7 +19,7 @@ class Macro(MacroInlineBase):
 
         from MoinMoin.mail.sendmail import decodeSpamSafeEmail
 
-        if self.request.user.valid:
+        if flaskg.user.valid:
             # decode address and generate mailto: link
             email = decodeSpamSafeEmail(email)
             result = moin_page.a(attrib={xlink.href: u'mailto:%s' % email}, children=[text or email])

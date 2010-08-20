@@ -19,6 +19,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
+from flask import flaskg
+
 from MoinMoin import user
 
 
@@ -57,9 +61,9 @@ class Permissions:
         @return: checking function for that right, accepting an itemname
         """
         request = self.request
-        if attr not in request.cfg.acl_rights_valid:
+        if attr not in app.cfg.acl_rights_valid:
             raise AttributeError(attr)
-        ns_content = request.cfg.ns_content
+        ns_content = app.cfg.ns_content
         may = request.storage.get_backend(ns_content)._may
         return lambda itemname: may(itemname, attr)
 
@@ -270,8 +274,8 @@ class AccessControlList:
             Does not work for subsription emails that should be sent to <user>,
             as he is not logged in in that case.
         """
-        if (request.user.name == name and
-            request.user.auth_method in self.auth_methods_trusted):
+        if (flaskg.user.name == name and
+            flaskg.user.auth_method in self.auth_methods_trusted):
             return rightsdict.get(dowhat)
         return None
 

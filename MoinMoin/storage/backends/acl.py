@@ -44,6 +44,10 @@
 
 from UserDict import DictMixin
 
+from flask import current_app as app
+
+from flask import flaskg
+
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
@@ -83,7 +87,7 @@ class AclWrapperBackend(object):
                       If None is give, the global wiki default is used.
         """
         self.request = request
-        cfg = request.cfg
+        cfg = app.cfg
         self.backend = backend
         self.hierarchic = hierarchic
         self.valid = valid
@@ -112,7 +116,7 @@ class AclWrapperBackend(object):
         @see: Backend.get_item.__doc__
         """
         if not self._may(itemname, READ):
-            raise AccessDeniedError(self.request.user.name, READ, itemname)
+            raise AccessDeniedError(flaskg.user.name, READ, itemname)
         real_item = self.backend.get_item(itemname)
         # Wrap the item here as well.
         wrapped_item = AclWrapperItem(real_item, self)
@@ -131,7 +135,7 @@ class AclWrapperBackend(object):
         @see: Backend.create_item.__doc__
         """
         if not self._may(itemname, CREATE):
-            raise AccessDeniedError(self.request.user.name, CREATE, itemname)
+            raise AccessDeniedError(flaskg.user.name, CREATE, itemname)
         real_item = self.backend.create_item(itemname)
         # Wrap item.
         wrapped_item = AclWrapperItem(real_item, self)
@@ -174,7 +178,7 @@ class AclWrapperBackend(object):
         if not isinstance(acls, (tuple, list)):
             acls = (acls, )
         default = self.default.default
-        return AccessControlList(self.request.cfg, acls, default=default, valid=self.valid)
+        return AccessControlList(app.cfg, acls, default=default, valid=self.valid)
 
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.
@@ -200,7 +204,7 @@ class AclWrapperBackend(object):
         @return: True if you have permission or False
         """
         request = self.request
-        username = request.user.name
+        username = flaskg.user.name
 
         allowed = self.before.may(request, username, right)
         if allowed is not None:
@@ -291,7 +295,7 @@ class AclWrapperItem(Item):
             def wrapped_f(self, *args, **kwargs):
                 for privilege in privileges:
                     if not self._may(self.name, privilege):
-                        username = self._backend.request.user.name
+                        username = flaskg.user.name
                         raise AccessDeniedError(username, privilege, self.name)
                 return f(self, *args, **kwargs)
             return wrapped_f
@@ -374,7 +378,7 @@ class AclWrapperItem(Item):
         """
         # Special case since we need to check newname as well. Easier to special-case than
         # adjusting the decorator.
-        username = self._backend.request.user.name
+        username = flaskg.user.name
         if not self._may(newname, CREATE):
             raise AccessDeniedError(username, CREATE, newname)
         if not self._may(newname, WRITE):
@@ -495,7 +499,7 @@ class AclWrapperRevision(object, DictMixin):
             acl_changed = value != last_acl
 
             if acl_changed and not self._may(self._item.name, ADMIN):
-                username = self._item._backend.request.user.name
+                username = flaskg.user.name
                 raise AccessDeniedError(username, ADMIN, self._item.name)
         return self._revision.__setitem__(key, value)
 
@@ -528,7 +532,7 @@ class AclWrapperRevision(object, DictMixin):
         @see: Backend._destroy_revision.__doc__
         """
         if not self._may(self._item.name, DESTROY):
-            username = self._item._backend.request.user.name
+            username = flaskg.user.name
             raise AccessDeniedError(username, DESTROY + " revisions of", self._item.name)
         return self._revision.destroy()
 

@@ -13,7 +13,9 @@
 
 import os, re, codecs
 
-from flask import flash
+from flask import flash, flaskg
+
+from flask import current_app as app
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -48,7 +50,7 @@ class Page(object):
         @keyword include_self: if 1, include current user (default: 0)
         """
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.page_name = page_name
         self.rev = kw.get('rev', -1) # revision of this page
         self.include_self = kw.get('include_self', 0)
@@ -313,7 +315,7 @@ class Page(object):
         try:
             time = rev['ed_time_usecs']
             time = wikiutil.version2timestamp(time)
-            time = request.user.getFormattedDateTime(time) # Use user time format
+            time = flaskg.user.getFormattedDateTime(time) # Use user time format
             return {'editor': rev['editor'], 'time': time}
         except KeyError:
             return {}
@@ -385,7 +387,7 @@ class Page(object):
         if self._rev is not None:
             timestamp = self._rev.timestamp
             if printable:
-                timestamp = self.request.user.getFormattedDateTime(timestamp)
+                timestamp = flaskg.user.getFormattedDateTime(timestamp)
             return timestamp
         return 0
 
@@ -455,7 +457,7 @@ class Page(object):
                     pass
         if not isinstance(acls, (list, tuple)):
             acls = (acls, )
-        return AccessControlList(self.request.cfg, acls)
+        return AccessControlList(app.cfg, acls)
 
     def url(self, request, querystr=None, anchor=None, relative=False, **kw):
         """ Return complete URL for this page, including scriptname.
@@ -557,7 +559,7 @@ class Page(object):
         userlist = user.getUserList(request)
         subscriber_list = {}
         for uid in userlist:
-            if uid == request.user.id and not include_self:
+            if uid == flaskg.user.id and not include_self:
                 continue # no self notification
             subscriber = user.User(request, uid)
 
@@ -651,10 +653,6 @@ class Page(object):
             elif verb == "deprecated":
                 pi['deprecated'] = True
 
-            elif verb == "openiduser":
-                if request.cfg.openid_server_enable_user:
-                    pi['openid.user'] = args
-
         return pi
 
     def send_page(self, **keywords):
@@ -710,7 +708,7 @@ class Page(object):
                 body += oldpage.get_data()
                 del oldpage
 
-        lang = self.pi.get('language', request.cfg.language_default)
+        lang = self.pi.get('language', app.cfg.language_default)
         request.setContentLanguage(lang)
 
         # start document output
@@ -719,14 +717,14 @@ class Page(object):
             if emit_headers:
                 request.content_type = "%s; charset=%s" % (self.output_mimetype, self.output_charset)
                 if page_exists:
-                    if not request.user.may.read(self.page_name):
+                    if not flaskg.user.may.read(self.page_name):
                         request.status_code = 403
                     else:
                         request.status_code = 200
                     if not request.cacheable:
                         # use "nocache" headers if we're using a method that is not simply "display"
                         request.disableHttpCaching(level=2)
-                    elif request.user.valid:
+                    elif flaskg.user.valid:
                         # use nocache headers if a user is logged in (which triggers personalisation features)
                         request.disableHttpCaching(level=1)
                     else:
@@ -738,10 +736,6 @@ class Page(object):
                         pass
                 else:
                     request.status_code = 404
-
-            if not page_exists and self.request.isSpiderAgent:
-                # don't send any 404 content to bots
-                return
 
             # TODO: request.write(self.formatter.startDocument(self.page_name))
 
@@ -768,33 +762,6 @@ class Page(object):
                 title = self.page_name
 
                 html_head = ''
-                if request.cfg.openid_server_enabled:
-                    openid_username = self.page_name
-                    userid = user.getUserId(request, openid_username)
-
-                    if userid is None and 'openid.user' in self.pi:
-                        openid_username = self.pi['openid.user']
-                        userid = user.getUserId(request, openid_username)
-
-                    openid_group_name = request.cfg.openid_server_restricted_users_group
-                    if userid is not None and (
-                        not openid_group_name or (
-                            openid_group_name in request.groups and
-                            openid_username in request.groups[openid_group_name])):
-                        html_head = '<link rel="openid2.provider" href="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid'})), True)
-                        html_head += '<link rel="openid.server" href="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid'})), True)
-                        html_head += '<meta http-equiv="x-xrds-location" content="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid', 'yadis': 'ep'})), True)
-                    elif self.page_name == request.cfg.page_front_page:
-                        html_head = '<meta http-equiv="x-xrds-location" content="%s">' % \
-                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'do': 'serveopenid', 'yadis': 'idp'})), True)
-
                 request.theme.send_title(title, page=self,
                                     print_mode=print_mode,
                                     media=media, pi_refresh=pi.get('refresh'),
@@ -808,7 +775,7 @@ class Page(object):
         if not send_special:
             if not page_exists and not body:
                 special = 'missing'
-            elif not request.user.may.read(self.page_name):
+            elif not flaskg.user.may.read(self.page_name):
                 special = 'denied'
 
             # if we have a special page, output it, unless
@@ -1000,8 +967,8 @@ class Page(object):
         _ = request.getText
 
         if special_type == 'missing':
-            if request.user.valid and request.user.name == self.page_name and \
-               request.cfg.user_homewiki in ('Self', request.cfg.interwikiname):
+            if flaskg.user.valid and flaskg.user.name == self.page_name and \
+               app.cfg.user_homewiki in ('Self', app.cfg.interwikiname):
                 page = wikiutil.getLocalizedPage(request, 'MissingHomePage')
             else:
                 page = wikiutil.getLocalizedPage(request, 'MissingPage')
@@ -1179,7 +1146,7 @@ class RootPage(Item):
 
         request = self.request
         if user is None:
-            user = request.user
+            user = flaskg.user
 
         search_term = term.AND()
         if filter:
