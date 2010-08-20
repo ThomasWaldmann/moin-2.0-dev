@@ -475,13 +475,13 @@ options_no_group_name = {
      """
      List of tuples (media, csshref, title, alternate_stylesheet) 
      to insert after theme css, before user css, see HelpOnThemes.
-     Usage: [('screen', 'http://www.moinmo.in/alternate.css', 'Moin Other Style', True)]
+     Usage: [('screen', 'http://moinmo.in/static/alternate.css', 'Moin Other Style', True)]
      """),
      
      ('external_scripts', [],
       """
       List of tuples (type, href) to insert after Moin javascript.
-      Usage: [('text/javascript', 'http://www.moinmo.in/script.js')]
+      Usage: [('text/javascript', 'http://moinmo.in/static/script.js')]
       """),
 
     ('supplementation_item_names', [u'Discussion', ],
