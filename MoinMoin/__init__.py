@@ -205,15 +205,17 @@ def setup_user(context):
     # then handle login/logout forms
     form = context.request.values
 
-    if 'login' in form:
+    if 'login_submit' in form:
+        # this is a real form, submitted by POST
         params = {
-            'username': form.get('name'),
-            'password': form.get('password'),
+            'username': form.get('login_username'),
+            'password': form.get('login_password'),
             'attended': True,
             'stage': form.get('stage')
         }
         userobj = auth.handle_login(context, userobj, **params)
-    elif 'logout' in form:
+    elif 'logout_submit' in form:
+        # currently just a GET link
         userobj = auth.handle_logout(context, userobj)
     else:
         userobj = auth.handle_request(context, userobj)
