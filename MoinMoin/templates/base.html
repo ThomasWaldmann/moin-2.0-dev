@@ -55,7 +55,7 @@
     {% endfor %}
     
     {% for type, src in cfg.external_scripts -%}
-        <script type="{{ type }}" src="{{ src }}"></script>
+        <script type="{{ type }}" src="{{ src|e }}"></script>
     {% endfor %}
     
     {% for media, name in theme.stylesheets -%}
@@ -63,7 +63,7 @@
     {% endfor %}
     {% for media, url, title, alternate in cfg.stylesheets -%}
         <link media="{{ media }}" href="{{ url|e }}"
-        {%- if title %} title="{{ title }}" {% endif -%}
+        {%- if title %} title="{{ title|e }}" {% endif -%}
         rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
         />
     {%- endfor %}
