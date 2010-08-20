@@ -13,6 +13,8 @@
 from flask import request, url_for, render_template, flash, redirect
 from flask import flaskg
 
+from flask import current_app as app
+
 from MoinMoin.apps.admin import admin
 from MoinMoin import user, wikiutil
 
@@ -27,7 +29,7 @@ def userbrowser():
     User Account Browser
     """
     # XXX add superuser check
-    #isgroup = flaskg.context.cfg.cache.page_group_regexact.search
+    #isgroup = app.cfg.cache.page_group_regexact.search
     #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
     for uid in user.getUserList(flaskg.context):
@@ -58,7 +60,7 @@ def userprofile(user_name):
         if wikiutil.checkTicket(flaskg.context, request.form.get('ticket', '')):
             key = request.form.get('key', '')
             val = request.form.get('val', '')
-            if key in flaskg.context.cfg.user_checkbox_fields:
+            if key in app.cfg.user_checkbox_fields:
                 val = int(val)
             oldval = getattr(u, key)
             setattr(u, key, val)

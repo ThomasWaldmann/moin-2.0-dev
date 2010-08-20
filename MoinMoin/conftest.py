@@ -20,17 +20,26 @@ use a Config class to define the required configuration within the test class.
 @license: GNU GPL, see COPYING for details.
 """
 
+# exclude some directories from py.test test discovery, pathes relative to this file
+collect_ignore = ['support', # do not test 3rd party stuff
+                  'static',  # same
+                  '../wiki', # no tests there
+                  '../instance', # tw likes to use this for wiki data (non-revisioned)
+                 ]
+
 import atexit
+import os
 import sys
 
 import py
 
-rootdir = py.magic.autopath().dirpath()
+rootdir = py.path.local(__file__)
 moindir = rootdir.join("..")
-sys.path.insert(0, str(moindir))
 
+from flask import flaskg
+
+from MoinMoin import create_app, protect_backends, before
 from MoinMoin.web.request import TestRequest
-from . import app, protect_backends, before, flaskg
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -65,21 +74,21 @@ except ImportError:
     coverage = None
 
 
-def init_test_request(given_config):
-    with app.test_client() as c:
-        rv = c.get('/') #Run a test request in flask
-        request = TestRequest() #Same thing for moin
-        # XXX: We need a way to merge the two requests
-        #      or see which one is the best.
-        content_acl = given_config.content_acl
-        given_config.namespace_mapping, given_config.router_index_uri = \
-            create_simple_mapping("memory:", content_acl)
-        request.given_config = given_config
-        before()
-        request.cfg = flaskg.context.cfg #XXX: Should not be set up manually normally.
-        return request
+def init_test_app(given_config):
+    namespace_mapping, router_index_uri = create_simple_mapping("memory:", given_config.content_acl)
+    more_config = dict(
+        namespace_mapping=namespace_mapping,
+        router_index_uri=router_index_uri,
+    )
+    app = create_app(flask_config_dict=dict(SECRET_KEY='foo'),
+                     moin_config_class=given_config,
+                     **more_config)
+    ctx = app.test_request_context('/')
+    ctx.push()
+    before()
+    request = flaskg.context
+    return app, ctx, request
 
-# py.test customization starts here
 
 # py.test-1.0 provides "funcargs" natively
 def pytest_funcarg__request(request):
@@ -107,32 +116,46 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = cls.Config
         else:
             given_config = wikiconfig.Config
-        cls.request = init_test_request(given_config)
-        # XXX: We probably need a cls.client
+        cls.app, cls.ctx, cls.request = init_test_app(given_config)
 
-        # In order to provide fresh backends for each and every testcase,
-        # we wrap the setup_method in a decorator that performs the freshening
-        # operation. setup_method is invoked by py.test automatically prior to
-        # executing any testcase.
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
-                self.request = init_test_request(given_config)
+                self.app, self.ctx, self.request = init_test_app(given_config)
                 # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
 
+        def teardown_method(f):
+            def wrapper(self, *args, **kwargs):
+                self.ctx.pop()
+                # Don't forget to call the class' teardown_method if it has one.
+                return f(self, *args, **kwargs)
+            return wrapper
+
         try:
-            # Wrap the actual setup_method in our refresher-decorator.
+            # Wrap the actual setup_method in our decorator.
             cls.setup_method = setup_method(cls.setup_method)
         except AttributeError:
             # Perhaps the test class did not define a setup_method.
-            # We want to provide fresh backends nevertheless, so we
-            # provide a setup_method ourselves.
             def no_setup(self, method):
-                self.request = init_test_request(given_config)
+                self.app, self.ctx, self.request = init_test_app(given_config)
             cls.setup_method = no_setup
 
+        try:
+            # Wrap the actual teardown_method in our decorator.
+            cls.teardown_method = setup_method(cls.teardown_method)
+        except AttributeError:
+            # Perhaps the test class did not define a teardown_method.
+            def no_teardown(self, method):
+                self.ctx.pop()
+            cls.teardown_method = no_teardown
+
         super(MoinClassCollector, self).setup()
+
+    def teardown(self):
+        cls = self.obj
+        cls.ctx.pop()
+        super(MoinClassCollector, self).teardown()
 
 
 class Module(py.test.collect.Module):
@@ -141,7 +164,8 @@ class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
         given_config = wikiconfig.Config
-        self.request = init_test_request(given_config)
+        self.app, self.ctx, self.request = init_test_app(given_config)
+        # XXX do ctx.pop() in ... (where?)
         super(Module, self).__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):

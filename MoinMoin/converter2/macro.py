@@ -10,6 +10,8 @@ Expands all macro elements in a internal Moin document.
 
 from __future__ import absolute_import
 
+from flask import current_app as app
+
 from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
@@ -60,7 +62,7 @@ class Converter(object):
         elem_body = context_block and moin_page.body() or moin_page.inline_body()
         elem_error = moin_page.error()
 
-        cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
+        cls = wikiutil.importPlugin(app.cfg, 'macro2', name, function='Macro')
 
         try:
             macro = cls(self.request)

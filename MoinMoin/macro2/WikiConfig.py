@@ -7,7 +7,11 @@
     @license: GNU GPL, see COPYING for details
 """
 
-from MoinMoin.config import multiconfig
+from flask import current_app as app
+
+from flask import flaskg
+
+from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
 
@@ -16,21 +20,21 @@ class Macro(MacroBlockBase):
         request = self.request
         _ = request.getText
 
-        if not request.user or not request.user.isSuperUser():
+        if not flaskg.user or not flaskg.user.isSuperUser():
             return ''
 
         settings = {}
-        for groupname in multiconfig.options:
-            heading, desc, opts = multiconfig.options[groupname]
+        for groupname in defaultconfig.options:
+            heading, desc, opts = defaultconfig.options[groupname]
             for name, default, description in opts:
                 name = groupname + '_' + name
-                if isinstance(default, multiconfig.DefaultExpression):
+                if isinstance(default, defaultconfig.DefaultExpression):
                     default = default.value
                 settings[name] = default
-        for groupname in multiconfig.options_no_group_name:
-            heading, desc, opts = multiconfig.options_no_group_name[groupname]
+        for groupname in defaultconfig.options_no_group_name:
+            heading, desc, opts = defaultconfig.options_no_group_name[groupname]
             for name, default, description in opts:
-                if isinstance(default, multiconfig.DefaultExpression):
+                if isinstance(default, defaultconfig.DefaultExpression):
                     default = default.value
                 settings[name] = default
 
@@ -66,7 +70,7 @@ class Macro(MacroBlockBase):
                 dedup[name] = True
                 yield name, cfg.__dict__[name]
             for cls in cfg.__class__.mro():
-                if cls == multiconfig.ConfigFunctionality:
+                if cls == defaultconfig.ConfigFunctionality:
                     break
                 for name in cls.__dict__:
                     if not name in dedup:
@@ -74,8 +78,8 @@ class Macro(MacroBlockBase):
                         yield name, cls.__dict__[name]
 
         found = []
-        for vname, value in iter_vnames(request.cfg):
-            if hasattr(multiconfig.ConfigFunctionality, vname):
+        for vname, value in iter_vnames(app.cfg):
+            if hasattr(defaultconfig.ConfigFunctionality, vname):
                 continue
             if vname in settings and settings[vname] == value:
                 continue

@@ -6,6 +6,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil
 
@@ -54,7 +56,7 @@ class Formatter(FormatterBase):
             if not on:
                 if not pagename and page:
                     pagename = page.page_name
-                pagename = wikiutil.normalize_pagename(pagename, self.request.cfg)
+                pagename = wikiutil.normalize_pagename(pagename, app.cfg)
                 self._new_member += pagename
         return self.null()
 

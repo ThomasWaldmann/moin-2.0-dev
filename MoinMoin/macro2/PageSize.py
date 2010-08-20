@@ -12,9 +12,6 @@ from MoinMoin.macro2._base import MacroNumberPageLinkListBase
 
 class Macro(MacroNumberPageLinkListBase):
     def macro(self):
-        if self.request.isSpiderAgent: # reduce bot cpu usage
-            return ''
-
         # get list of pages and their objects
         pages = self.request.rootpage.getPageList()
 

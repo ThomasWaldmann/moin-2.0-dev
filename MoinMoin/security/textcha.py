@@ -27,6 +27,10 @@ import random
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
+from flask import flaskg
+
 from MoinMoin import wikiutil
 
 class TextCha(object):
@@ -39,7 +43,7 @@ class TextCha(object):
             @param question: see _init_qa()
         """
         self.request = request
-        self.user_info = request.user.valid and request.user.name or request.remote_addr
+        self.user_info = flaskg.user.valid and flaskg.user.name or request.remote_addr
         self.textchas = self._get_textchas()
         self._init_qa(question)
 
@@ -47,8 +51,8 @@ class TextCha(object):
         """ get textchas from the wiki config for the user's language (or default_language or en) """
         request = self.request
         groups = request.groups
-        cfg = request.cfg
-        user = request.user
+        cfg = app.cfg
+        user = flaskg.user
         disabled_group = cfg.textchas_disabled_group
         textchas = cfg.textchas
         use_textchas = disabled_group and user.name and user.name in groups.get(disabled_group, [])

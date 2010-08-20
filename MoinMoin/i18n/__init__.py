@@ -28,6 +28,8 @@ from StringIO import StringIO
 
 from flask import flaskg
 
+from flask import current_app as app
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -56,7 +58,7 @@ def po_filename(request, language, domain, i18n_dir='i18n'):
         TODO: later, when we have a farm scope plugin dir, we can also load
               language data from there.
     """
-    return os.path.join(request.cfg.moinmoin_dir, i18n_dir, "%s.%s.po" % (language, domain))
+    return os.path.join(app.cfg.moinmoin_dir, i18n_dir, "%s.%s.po" % (language, domain))
 
 def i18n_init(request):
     """ this is called early from request initialization and makes sure we
@@ -73,7 +75,7 @@ def i18n_init(request):
         # have http links (to some help pages) and they must not point to another
         # wiki in the farm (confusing and maybe not even readable due to ACLs):
         meta_cache = caching.CacheEntry(request, 'i18n', 'meta', scope='wiki', use_pickle=True)
-        i18n_dir = os.path.join(request.cfg.moinmoin_dir, 'i18n')
+        i18n_dir = os.path.join(app.cfg.moinmoin_dir, 'i18n')
         i18n_dir_mtime = os.path.getmtime(i18n_dir)
         if meta_cache.needsUpdate(i18n_dir_mtime):
             logging.debug("cache needs update")
@@ -284,7 +286,7 @@ def get_browser_language(request):
     @return: ISO language code, e.g. 'en'
     """
     available = wikiLanguages()
-    if available and not request.cfg.language_ignore_browser:
+    if available and not app.cfg.language_ignore_browser:
             for lang in browserLanguages(request):
                 if lang in available:
                     return lang

@@ -13,6 +13,9 @@
 
 from mercurial.templatefilters import json
 
+from flask import current_app as app
+from flask import flaskg
+
 from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.widget import html
@@ -25,7 +28,7 @@ def execute(pagename, request):
     """Show page history drawing revision graph."""
     page = Page(request, pagename)
 
-    if not request.user.may.read(pagename) or not page.exists():
+    if not flaskg.user.may.read(pagename) or not page.exists():
         page.send_page()
         return
 
@@ -37,7 +40,7 @@ def execute(pagename, request):
             kw.update(dict(rel='nofollow'))
             return page.link_to(request, text, querystr=query, **kw)
 
-        default_count, limit_max_count = request.cfg.history_count
+        default_count, limit_max_count = app.cfg.history_count
         try:
             max_count = int(request.form.get('max_count', [default_count])[0])
         except:
@@ -114,7 +117,7 @@ def execute(pagename, request):
             url = page.url(request, {'action': 'recall', 'rev': '%d' % revno})
             editor = user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR],
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
-            date = request.user.getFormattedDateTime(float(revision.timestamp))
+            date = flaskg.user.getFormattedDateTime(float(revision.timestamp))
             comment = wikiutil.escape(comment) or '&nbsp;'
             node = "%d:%s" % (revno, request.storage._get_revision_node(revision)[1])
 
@@ -137,7 +140,7 @@ def execute(pagename, request):
         div.append(buttons)
         div.append(html.INPUT(type="hidden", name="action", value="diff"))
 
-        div.append('<!--[if IE]><script type="text/javascript" src="%s/graph/excanvas.js"></script><![endif]-->' % request.cfg.url_prefix_static)
+        div.append('<!--[if IE]><script type="text/javascript" src="%s/graph/excanvas.js"></script><![endif]-->' % app.cfg.url_prefix_static)
         noscript = html.DIV(id="noscript")
         noscript.append("This action only works with JavaScript-enabled browsers.")
         wrapper = html.DIV(id="wrapper")
@@ -146,7 +149,7 @@ def execute(pagename, request):
         wrapper.append(nodebgs)
         wrapper.append('<canvas id="graph" width="%d" height="%d"></canvas>' % (canvaswidth, canvasheight, ))
         wrapper.append(graphnodes)
-        graph = '<script type="text/javascript", src="%s/graph/graph.js"></script>' % request.cfg.url_prefix_static
+        graph = '<script type="text/javascript", src="%s/graph/graph.js"></script>' % app.cfg.url_prefix_static
         div.append(noscript)
         div.append(wrapper)
         div.append(graph)
@@ -213,7 +216,7 @@ graph.render(data);
 
     _ = request.getText
     f = request.formatter
-    request.cfg.stylesheets = [('all', request.cfg.url_prefix_static + '/graph/graph.css', )]
+    app.cfg.stylesheets = [('all', app.cfg.url_prefix_static + '/graph/graph.css', )]
     request.emit_http_headers()
     request.setContentLanguage(request.lang)
     request.theme.send_title(_('Info for "%s"') % (page.page_name, ), page=page)

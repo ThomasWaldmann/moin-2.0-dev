@@ -15,7 +15,7 @@
 
     Note that there are more config options than you'll find in
     the version of this file that is installed by default; see
-    the module MoinMoin.config.multiconfig for a full list of names and their
+    the module MoinMoin.config.default for a full list of names and their
     default values.
 
     Also, the URL http://moinmo.in/HelpOnConfiguration has
@@ -27,11 +27,12 @@
 
 import os
 
-from MoinMoin.config import multiconfig, url_prefix_static
+from MoinMoin.config import url_prefix_static
+from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
 
-class Config(multiconfig.DefaultConfig):
+class Config(DefaultConfig):
 
     # Critical setup  ---------------------------------------------------
 

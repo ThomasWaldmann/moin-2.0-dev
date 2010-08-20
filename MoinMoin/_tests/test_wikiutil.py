@@ -9,6 +9,8 @@
 
 import py
 
+from flask import current_app as app
+
 from MoinMoin import config, wikiutil
 from MoinMoin._tests import wikiconfig
 
@@ -101,7 +103,7 @@ class TestSystemPage:
         )
 
     class Config(wikiconfig.Config):
-        preloaded_xml = wikiconfig.Config._test_items_xml
+        load_xml = wikiconfig.Config._test_items_xml
 
     def testSystemPage(self):
         """wikiutil: good system page names accepted, bad rejected"""
@@ -982,7 +984,7 @@ class TestNormalizePagename(object):
         """
         test = u'\u0000\u202a\u202b\u202c\u202d\u202e'
         expected = u''
-        result = wikiutil.normalize_pagename(test, self.request.cfg)
+        result = wikiutil.normalize_pagename(test, app.cfg)
         assert result == expected
 
     def testNormalizeSlashes(self):
@@ -995,7 +997,7 @@ class TestNormalizePagename(object):
             (u'a b/////c d/////e f', u'a b/c d/e f'),
             )
         for test, expected in cases:
-            result = wikiutil.normalize_pagename(test, self.request.cfg)
+            result = wikiutil.normalize_pagename(test, app.cfg)
             assert result == expected
 
     def testNormalizeWhitespace(self):
@@ -1010,7 +1012,7 @@ class TestNormalizePagename(object):
             (config.chars_spaces, u''),
             )
         for test, expected in cases:
-            result = wikiutil.normalize_pagename(test, self.request.cfg)
+            result = wikiutil.normalize_pagename(test, app.cfg)
             assert result == expected
 
     def testUnderscoreTestCase(self):
@@ -1027,7 +1029,7 @@ class TestNormalizePagename(object):
             (u'a  b  /  c  d  /  e  f', u'a b/c d/e f'),
             )
         for test, expected in cases:
-            result = wikiutil.normalize_pagename(test, self.request.cfg)
+            result = wikiutil.normalize_pagename(test, app.cfg)
             assert result == expected
 
 class TestGroupPages(object):
@@ -1045,8 +1047,8 @@ class TestGroupPages(object):
             )
         for test, expected in cases:
             # validate we are testing valid group names
-            if wikiutil.isGroupPage(test, self.request.cfg):
-                result = wikiutil.normalize_pagename(test, self.request.cfg)
+            if wikiutil.isGroupPage(test, app.cfg):
+                result = wikiutil.normalize_pagename(test, app.cfg)
                 assert result == expected
 
 class TestVersion(object):

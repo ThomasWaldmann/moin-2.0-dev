@@ -1,11 +1,8 @@
 {% extends "modify_applet.html" %}
 {% block data_editor %}
 <p>
-{% if t.drawpath %}
-<object data="{{ t.url_prefix_static }}/applets/svg-edit/svg-editor.html?paramurl={{ t.draw_url }}?do=get&amp;member=drawing.svg&amp;item=/{{ t.itemname }}" type="text/html" width="100%" height="600">
-    {% else %}
-    <object data="{{ t.url_prefix_static }}/applets/svg-edit/svg-editor.html?paramurl={{ t.drawpath }}&amp;item=/{{ t.itemname }}" type="text/html" width="100%" height="600">
-{% endif %}
+<object data="{{ url_for('.static', filename='applets/svg-edit/svg-editor.html') }}?paramurl={{ url_for('frontend.get_item', item_name=item_name, member='drawing.svg') }}&amp;savepath={{ url_for('frontend.modify_item', item_name=item_name) }}&amp;viewpath={{ url_for('frontend.show_item', item_name=item_name) }}"
+	width="100%" height="600">
 </object>
 </p>
 <br />

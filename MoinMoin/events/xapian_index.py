@@ -6,6 +6,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 import MoinMoin.events as ev
 
 
@@ -22,7 +24,7 @@ def handle_renamed(event):
 
     request = event.request
 
-    if request.cfg.xapian_search:
+    if app.cfg.xapian_search:
         index = _get_index(request)
         if index and index.exists():
             index.update_item(event.old_page.page_name, now=False)
@@ -34,7 +36,7 @@ def handle_copied(event):
 
     request = event.request
 
-    if request.cfg.xapian_search:
+    if app.cfg.xapian_search:
         index = _get_index(request)
         if index and index.exists():
             index.update_item(event.page.page_name)
@@ -45,7 +47,7 @@ def handle_changed(event):
 
     request = event.request
 
-    if request.cfg.xapian_search:
+    if app.cfg.xapian_search:
         index = _get_index(request)
         if index and index.exists():
             index.update_item(event.page.page_name)

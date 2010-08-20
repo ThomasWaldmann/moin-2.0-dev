@@ -12,9 +12,6 @@ from MoinMoin.macro2._base import MacroPageLinkListBase
 
 class Macro(MacroPageLinkListBase):
     def macro(self):
-        if self.request.isSpiderAgent: # reduce bot cpu usage
-            return ''
-
         from MoinMoin.Page import Page
         from MoinMoin.items import IS_SYSPAGE
 

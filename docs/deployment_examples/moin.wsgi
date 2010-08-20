@@ -13,37 +13,26 @@
     # use the daemons we defined above to process requests!
     WSGIProcessGroup daemonname
 
-    @copyright: 2008 by MoinMoin:ThomasWaldmann
+    @copyright: 2010 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
+# hint: use None as value if the code already is in sys.path
+moin_code = None # '/path/to/code'
+
+wiki_config = '/path/to/config/wikiconfig.py'
+
 import sys, os
 
-# a) Configuration of Python's code search path
-#    If you already have set up the PYTHONPATH environment variable for the
-#    stuff you see below, you don't need to do a1) and a2).
+if moin_code:
+    # add the parent dir of the MoinMoin code to sys.path,
+    # to make import work:
+    sys.path.insert(0, moin_code)
 
-# a1) Path of the directory where the MoinMoin code package is located.
-#     Needed if you installed with --prefix=PREFIX or you didn't use setup.py.
-#sys.path.insert(0, 'PREFIX/lib/python2.3/site-packages')
+# application is the Flask application
+from MoinMoin import create_app
+application = create_app(wiki_config)
 
-# a2) Path of the directory where wikiconfig.py / farmconfig.py is located.
-#     See wiki/config/... for some sample config files.
-#sys.path.insert(0, '/path/to/wikiconfigdir')
-#sys.path.insert(0, '/path/to/farmconfigdir')
-
-# b) Configuration of moin's logging
-#    If you have set up MOINLOGGINGCONF environment variable, you don't need this!
-#    You also don't need this if you are happy with the builtin defaults.
-#    See wiki/config/logging/... for some sample config files.
-#from MoinMoin import log
-#log.load_config('/path/to/logging_configuration_file')
-
-from MoinMoin.web.serving import make_application
-
-# Creating the WSGI application
-# use shared=True to have moin serve the builtin static docs
-# use shared=False to not have moin serve static docs
-# use shared='/my/path/to/htdocs' to serve static docs from that path
-application = make_application(shared=True)
+# please note: if you want to do some wsgi app wrapping, do it like shown below:
+#application.wsgi_app = somewrapper(application.wsgi_app)
 

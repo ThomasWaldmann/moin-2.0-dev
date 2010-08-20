@@ -16,6 +16,8 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import flaskg
+
 from MoinMoin import wikiutil
 from MoinMoin.items import Item
 from MoinMoin.util.mime import type_moin_document
@@ -214,7 +216,7 @@ class Converter(object):
                         div.append(ET.XML(w))
                         continue
                     # TODO: Is this correct?
-                    if not self.request.user.may.read(page.name):
+                    if not flaskg.user.may.read(page.name):
                         continue
 
                     if xp_include_heading is not None:

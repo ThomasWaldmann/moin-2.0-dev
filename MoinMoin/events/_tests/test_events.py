@@ -9,6 +9,8 @@
 import py
 py.test.skip("Needs Page -> Item refactoring. MoinMoin.items needs to call event code.")
 
+from flask import current_app as app
+
 import MoinMoin.events as events
 import MoinMoin.events.notification as notification
 from MoinMoin.Page import Page
@@ -17,7 +19,7 @@ from MoinMoin.user import User
 def test_get_handlers(request):
     """Test if there are any event handlers. There should be some internal ones"""
 
-    assert events.get_handlers(request.cfg)
+    assert events.get_handlers(app.cfg)
 
 def test_send_event(request):
     """Test if event handlers are called and if proper messages are returned"""
@@ -28,7 +30,7 @@ def test_send_event(request):
     def event_handler(event):
         return notification.Failure("Just a test")
 
-    request.cfg.event_handlers = [event_handler]
+    app.cfg.event_handlers = [event_handler]
     event = events.Event(request)
 
     print "A proper event handler must be called and an 1-element list of results returned"

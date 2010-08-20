@@ -9,6 +9,9 @@
 
 import os, shutil
 
+from flask import current_app as app
+from flask import flaskg
+
 from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
@@ -20,26 +23,26 @@ from MoinMoin import config, security
 # need more privs...
 
 def become_valid(request, username=u"ValidUser"):
-    """ modify request.user to make the user valid.
+    """ modify flaskg.user to make the user valid.
         Note that a valid user will only be in ACL special group "Known", if
         we have a user profile for this user as the ACL system will check if
         there is a userid for this username.
         Thus, for testing purposes (e.g. if you need delete rights), it is
         easier to use become_trusted().
     """
-    request.user.name = username
-    request.user.may.name = username
-    request.user.valid = 1
+    flaskg.user.name = username
+    flaskg.user.may.name = username
+    flaskg.user.valid = 1
 
 
 def become_trusted(request, username=u"TrustedUser"):
-    """ modify request.user to make the user valid and trusted, so it is in acl group Trusted """
+    """ modify flaskg.user to make the user valid and trusted, so it is in acl group Trusted """
     become_valid(request, username)
-    request.user.auth_method = request.cfg.auth_methods_trusted[0]
+    flaskg.user.auth_method = app.cfg.auth_methods_trusted[0]
 
 
 def become_superuser(request):
-    """ modify request.user so it is in the superuser list,
+    """ modify flaskg.user so it is in the superuser list,
         also make the user valid (see notes in become_valid()),
         also make the user trusted (and thus in "Trusted" ACL pseudo group).
 
@@ -48,8 +51,8 @@ def become_superuser(request):
     """
     su_name = u"SuperUser"
     become_trusted(request, su_name)
-    if su_name not in request.cfg.superuser:
-        request.cfg.superuser.append(su_name)
+    if su_name not in app.cfg.superuser:
+        app.cfg.superuser.append(su_name)
 
 # Creating and destroying test pages --------------------------------
 
@@ -96,7 +99,7 @@ def make_macro(request, page):
 
 def nuke_xapian_index(request):
     """ completely delete everything in xapian index dir """
-    fpath = os.path.join(request.cfg.cache_dir, 'xapian')
+    fpath = os.path.join(app.cfg.cache_dir, 'xapian')
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 
