@@ -9,6 +9,9 @@
 
 import py
 
+from flask import current_app as app
+from flask import flaskg
+
 from MoinMoin import user, caching
 
 
@@ -38,11 +41,11 @@ class TestLoginWithPassword(object):
     def setup_method(self, method):
         # Save original user and cookie
         self.saved_cookie = self.request.cookies
-        self.saved_user = self.request.user
+        self.saved_user = flaskg.user
 
         # Create anon user for the tests
         self.request.cookies = {}
-        self.request.user = user.User(self.request)
+        flaskg.user = user.User(self.request)
 
         self.user = None
 
@@ -57,12 +60,12 @@ class TestLoginWithPassword(object):
 
         # Restore original user
         self.request.cookies = self.saved_cookie
-        self.request.user = self.saved_user
+        flaskg.user = self.saved_user
 
         # Remove user name to id cache, or next test will fail
         caching.CacheEntry(self.request, 'user', 'name2id', scope='wiki').remove()
         try:
-            del self.request.cfg.cache.name2id
+            del app.cfg.cache.name2id
         except:
             pass
 

@@ -1,38 +1,18 @@
 {% extends "layout.html" %}
+{% import "forms.html" as forms %}
+
 {% block item %}
 <h1>{{ _("Create Account") }}</h1>
-<form action="{{ url_for('frontend.register')|e }}" name="newaccountform" method="POST" enctype="multipart/form-data">
-    <div class="userpref">
-        <input type="hidden" name="do" value="newaccount" />
-        <input type="hidden" name="ticket" value="{{ ticket }}" />
-        <table border="0">
-            <tr>
-                <td><b>Name</b></td>
-                <td><input type="text" size="32" name="name" /></td>
-            </tr>
-            <tr>
-                <td><b>Password</b></td>
-                <td><input type="password" size="32" name="password1" /></td>
-            </tr>
-            <tr>
-                <td><b>Password repeat</b></td>
-                <td><input type="password" size="32" name="password2" /></td>
-            </tr>
-            <tr>
-                <td><b>EMail</b></td>
-                <td><input type="text" size="32" name="email" /></td>
-            </tr>
-            {% if textcha %}
-            <tr>
-                <td><b>TextCha (required)</b></td>
-                <td>{{ textcha }}</td>
-            </tr>
-            {% endif %}
-            <tr>
-                <td></td>
-                <td><input type="submit" name="create" value="Create Profile" /></td>
-            </tr>
-        </table>
-    </div>
-</form>
+{{ gen.form.open(form, method="post", action=url_for('frontend.register')) }}
+  <input type="hidden" name="do" value="newaccount" />
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['username'], 'text') }}
+    {{ forms.render_field(gen, form['password1'], 'password') }}
+    {{ forms.render_field(gen, form['password2'], 'password') }}
+    {{ forms.render_field(gen, form['email'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
 {% endblock %}
+

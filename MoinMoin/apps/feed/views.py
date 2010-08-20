@@ -11,8 +11,10 @@
 
 from datetime import datetime
 
-from flask import url_for
+from flask import url_for, Response
 from flask import flaskg
+
+from flask import current_app as app
 
 from werkzeug.contrib.atom import AtomFeed
 
@@ -36,7 +38,7 @@ def atom(item_name):
     # - diffs in textmode are OK, but look very simple
     # - full-item content in textmode is OK, but looks very simple
     request = flaskg.context
-    title = request.cfg.sitename
+    title = app.cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
     for rev in request.storage.history(item_name=item_name):
         this_rev = rev
@@ -69,5 +71,5 @@ def atom(item_name):
                  url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
                  updated=datetime.utcfromtimestamp(rev.timestamp),
                 )
-    return feed.to_string()
+    return Response(feed.to_string(), content_type='application/atom+xml')
 

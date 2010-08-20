@@ -10,13 +10,12 @@
 
 import sys
 
-from flask import flaskg
-
 from werkzeug import create_environ
+
+from flask import current_app as app
 
 from MoinMoin import i18n, user, config
 from MoinMoin.formatter import text_html
-from MoinMoin.theme import load_theme_fallback
 from MoinMoin.web.request import Request
 from MoinMoin.web.utils import UniqueIDGenerator
 
@@ -109,7 +108,7 @@ class BaseContext(Context):
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
     lang = EnvironProxy('lang')
-    content_lang = EnvironProxy('content_lang', lambda o: o.cfg.language_default)
+    content_lang = EnvironProxy('content_lang', lambda o: app.cfg.language_default)
     current_lang = EnvironProxy('current_lang')
 
     html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
@@ -138,25 +137,10 @@ class BaseContext(Context):
         return Item(self, u'')
     rootitem = EnvironProxy(rootitem)
 
-    def _theme(self):
-        self.initTheme()
-        return self.theme
-    theme = EnvironProxy('theme', _theme)
-
-    def initTheme(self):
-        """ Set theme - forced theme, user theme or wiki default """
-        if self.cfg.theme_force:
-            theme_name = self.cfg.theme_default
-        else:
-            theme_name = self.user.theme_name
-        load_theme_fallback(self, theme_name)
-
 
 class HTTPContext(BaseContext):
     """ Context that holds attributes and methods for manipulation of
     incoming and outgoing HTTP data. """
-
-    session = EnvironProxy('session')
 
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
@@ -175,7 +159,6 @@ class AuxilaryMixin(object):
     _login_messages = EnvironProxy('_login_messages', lambda o: [])
     _login_multistage = EnvironProxy('_login_multistage', None)
     _login_multistage_name = EnvironProxy('_login_multistage_name', None)
-    _setuid_real_user = EnvironProxy('_setuid_real_user', None)
 
     def uid_generator(self):
         pagename = None
@@ -186,18 +169,18 @@ class AuxilaryMixin(object):
 
     def dicts(self):
         """ Lazy initialize the dicts on the first access """
-        dicts = self.cfg.dicts(self)
+        dicts = app.cfg.dicts(self)
         return dicts
     dicts = EnvironProxy(dicts)
 
     def groups(self):
         """ Lazy initialize the groups on the first access """
-        groups = self.cfg.groups(self)
+        groups = app.cfg.groups(self)
         return groups
     groups = EnvironProxy(groups)
 
     def reset(self):
-        self.current_lang = self.cfg.language_default
+        self.current_lang = app.cfg.language_default
         if hasattr(self, 'uid_generator'):
             del self.uid_generator
 

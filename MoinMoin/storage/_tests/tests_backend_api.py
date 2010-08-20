@@ -55,6 +55,8 @@ class TestBackendAPI(object):
                 pass
             def _get_revision_metadata(self, rev):
                 return {'__asdf': 'xx'}
+            def _list_revisions(self, item):
+                return [0]
 
         be = ReservedMetaDataBackend()
         item = be.get_item('a')

@@ -9,6 +9,8 @@
 
 import time
 
+from flask import flaskg
+
 from MoinMoin.macro2._base import MacroInlineBase
 
 class MacroDateTimeBase(MacroInlineBase):
@@ -57,5 +59,5 @@ class MacroDateTimeBase(MacroInlineBase):
 class Macro(MacroDateTimeBase):
     def macro(self, stamp=None):
         tm = self.parse_time(stamp)
-        return self.request.user.getFormattedDate(tm)
+        return flaskg.user.getFormattedDate(tm)
 
