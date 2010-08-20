@@ -9,7 +9,7 @@
 """
 import time
 
-from flask import flash
+from flask import flash, flaskg
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
@@ -17,7 +17,7 @@ from MoinMoin.Page import Page
 def execute(pagename, request):
     """ set bookmarks (in time) for RecentChanges or delete them """
     _ = request.getText
-    if not request.user.valid:
+    if not flaskg.user.valid:
         actname = __name__.split('.')[-1]
         flash(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")
         return Page(request, pagename).send_page()
@@ -35,7 +35,7 @@ def execute(pagename, request):
         tm = wikiutil.timestamp2version(time.time())
 
     if tm is None:
-        request.user.delBookmark()
+        flaskg.user.delBookmark()
     else:
-        request.user.setBookmark(tm)
+        flaskg.user.setBookmark(tm)
     request.page.send_page()

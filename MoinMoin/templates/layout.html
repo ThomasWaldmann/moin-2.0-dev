@@ -35,7 +35,7 @@
                 {%- endif %}
             {%- endif %}
             {% if user.auth_method in cfg.auth_can_logout %}
-                <a href="{{ url_for('frontend.logout')|e }}" class="moin-logout" rel="nofollow">
+                <a href="{{ url_for('frontend.logout', logout_submit=1)|e }}" class="moin-logout" rel="nofollow">
                     {{ _('Logout') }}
                 </a>
             {% endif %}

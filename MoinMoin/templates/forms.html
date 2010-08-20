@@ -1,0 +1,28 @@
+{#
+Helpers for using flatland with jinja2 to create html forms.
+
+@copyright: Thomas Waldmann, Jason Kirtland, Scott Wilson
+@license: see flatland license
+#}
+
+{% macro render_errors(field) %}
+  {% if field.errors %}
+    <ul class="error">
+      {% for error in field.errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_field(gen, field, field_type) %}
+  {% set f_class = "optional" if field.optional else "required" %}
+  <dt>
+    {{ gen.label(field, class=f_class) }}
+  </dt>
+  <dd>
+    {{ gen.input(field, class=f_class, type=field_type) }}
+    {{ render_errors(field) }}
+  </dd>
+{% endmacro %}
+

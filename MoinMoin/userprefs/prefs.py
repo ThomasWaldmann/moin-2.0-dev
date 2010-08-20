@@ -10,9 +10,14 @@
 
 import time
 
+from flask import flaskg
+
 from MoinMoin import user, util, wikiutil, events
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.userprefs import UserPrefBase
+
+from flask import current_app as app
+
 from flask import render_template
 
 #################################################################
@@ -35,7 +40,7 @@ _date_formats = {# datetime_fmt & date_fmt
 def _user(request):
     """ Create elementary user attributes """
     _ = request.getText
-    u = request.user
+    u = flaskg.user
     user_params = dict(name=dict(param=u.name, title=_("Name"), comment=_("(Use FirstnameLastname)")),
                        aliasname=dict(param=u.aliasname, title=_("Alias-Name"), comment=""),
                        email=dict(param=u.email, title=_("Email"), comment=""),
@@ -46,7 +51,7 @@ def _dtfmt_select(request):
     """ Create date format selection. """
     _ = request.getText
     date_formats = [dict(value="", text=_('Default'))]
-    dt_d_combined = '%s & %s' % (request.user.datetime_fmt, request.user.date_fmt)
+    dt_d_combined = '%s & %s' % (flaskg.user.datetime_fmt, flaskg.user.date_fmt)
 
     for key in _date_formats.keys():
         selected = ""
@@ -58,10 +63,10 @@ def _dtfmt_select(request):
 def _theme_select(request):
     """ Create theme selection. """
     _ = request.getText
-    cur_theme = request.user.valid and request.user.theme_name or request.cfg.theme_default
+    cur_theme = flaskg.user.valid and flaskg.user.theme_name or app.cfg.theme_default
 
     theme_selection = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="")]
-    for theme in wikiutil.getPlugins('theme', request.cfg):
+    for theme in wikiutil.getPlugins('theme', app.cfg):
         selected = ""
         if theme == cur_theme:
             selected = "selected"
@@ -73,7 +78,7 @@ def _theme_select(request):
 def _editor_default_select(request):
     """ Create editor selection. """
     _ = request.getText
-    editor_default = request.user.valid and request.user.editor_default or request.cfg.editor_default
+    editor_default = flaskg.user.valid and flaskg.user.editor_default or app.cfg.editor_default
     options = [("<default>", "&lt;%s&gt;" % _("Default"))]
     editor_default_selection = []
     for editor in ['text', 'gui', ]:
@@ -88,7 +93,7 @@ def _editor_default_select(request):
 def _prefered_editor(request):
     """ Create editor selection. """
     _ = request.getText
-    editor_ui = request.user.valid and request.user.editor_ui or request.cfg.editor_ui
+    editor_ui = flaskg.user.valid and flaskg.user.editor_ui or app.cfg.editor_ui
     prefered_editor = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="selected"),
                        dict(value="theonepreferred", text=_("the one preferred"), selected=""),
                        dict(value="freechoice", text=_("free choice"), selected="")]
@@ -98,8 +103,8 @@ def _tz_select(request, enabled=True):
     """ Create time zone selection. """
     _ = request.getText
     tz = 0
-    if request.user.valid:
-        tz_offset = int(request.user.tz_offset)
+    if flaskg.user.valid:
+        tz_offset = int(flaskg.user.tz_offset)
 
     time_zone = []
     now = time.time()
@@ -112,7 +117,7 @@ def _tz_select(request, enabled=True):
         time_zone.append(dict(value=str(offset),
                               selected=selected,
                               text='%s [%s%s:%s]' % (
-                time.strftime(request.cfg.datetime_fmt, time.gmtime(t)),
+                time.strftime(app.cfg.datetime_fmt, time.gmtime(t)),
                 "+-"[offset < 0],
                 "%02d" % (abs(offset) / 3600),
                 "%02d" % (abs(offset) % 3600 / 60),
@@ -124,7 +129,7 @@ def _lang_select(request, enabled=True):
     """ Create language selection. """
     from MoinMoin import i18n
     _ = request.getText
-    cur_lang = request.user.language
+    cur_lang = flaskg.user.language
 
     langs = i18n.wikiLanguages().items()
     langs.sort(lambda x, y: cmp(x[1]['x-language'], y[1]['x-language']))
@@ -141,15 +146,15 @@ def _lang_select(request, enabled=True):
 
 def get_userprefs_info(request):
     _ = request.getText
-    u = request.user
+    u = flaskg.user
     # boolean user options
     general_options = []
-    checkbox_fields = request.cfg.user_checkbox_fields
+    checkbox_fields = app.cfg.user_checkbox_fields
     checkbox_fields.sort(lambda a, b: cmp(a[1](_), b[1](_)))
     for key, label in checkbox_fields:
-        if not key in request.cfg.user_checkbox_remove:
+        if not key in app.cfg.user_checkbox_remove:
             disabled = ""
-            if key in request.cfg.user_checkbox_disable:
+            if key in app.cfg.user_checkbox_disable:
                 disabled = "disabled"
             checked = ""
             if getattr(u, key, False):
@@ -159,8 +164,8 @@ def get_userprefs_info(request):
                                         disabled=disabled,
                                         text=label(_)))
 
-    server_time = "%s %s (UTC)" % (_('Server time is'), time.strftime(request.cfg.datetime_fmt, time.gmtime()))
-    your_time = "%s %s" % (_('Your time is'), time.strftime(request.cfg.datetime_fmt, time.gmtime(time.time())))
+    server_time = "%s %s (UTC)" % (_('Server time is'), time.strftime(app.cfg.datetime_fmt, time.gmtime()))
+    your_time = "%s %s" % (_('Your time is'), time.strftime(app.cfg.datetime_fmt, time.gmtime(time.time())))
 
     return dict(user=_user(request),
                 date_formats=dict(title=_("Date format"), param=_dtfmt_select(request)),
@@ -181,7 +186,7 @@ class Settings(UserPrefBase):
         UserPrefBase.__init__(self, request)
         self.request = request
         self._ = request.getText
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         _ = self._
         self.title = _("Preferences")
         self.name = 'prefs'
@@ -209,7 +214,7 @@ class Settings(UserPrefBase):
         _ = self._
         request = self.request
         form = request.form
-        u = request.user
+        u = flaskg.user
 
         if not 'name' in u.auth_attribs:
             # Require non-empty name
@@ -239,12 +244,12 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
             new_email = wikiutil.clean_input(form.get('email', u.email)).strip()
 
             # Require email
-            if not new_email and 'email' not in request.cfg.user_form_remove:
+            if not new_email and 'email' not in app.cfg.user_form_remove:
                 return 'error', _("Please provide your email address. If you lose your"
                                   " login information, you can get it by email.")
 
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
-            if new_email and request.cfg.user_email_unique:
+            if new_email and app.cfg.user_email_unique:
                 other = user.get_by_email_address(request, new_email)
                 if other is not None and other.id != u.id:
                     return 'error', _("This email already belongs to somebody else.")
@@ -360,7 +365,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         """ Create date format selection. """
         _ = self._
         try:
-            dt_d_combined = '%s & %s' % (self.request.user.datetime_fmt, self.request.user.date_fmt)
+            dt_d_combined = '%s & %s' % (flaskg.user.datetime_fmt, flaskg.user.date_fmt)
             selected = [
                 k for k, v in _date_formats.items()
                     if v == dt_d_combined][0]

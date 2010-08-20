@@ -15,6 +15,8 @@ import xappy
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin.search.builtin import BaseIndex
 from MoinMoin.search.Xapian.tokenizer import WikiAnalyzer
 from MoinMoin.util import filesys
@@ -112,7 +114,7 @@ class MoinIndexerConnection(xappy.IndexerConnection):
 class StemmedField(xappy.Field):
 
     def __init__(self, name, value, request):
-        analyzer = WikiAnalyzer(request=request, language=request.cfg.language_default)
+        analyzer = WikiAnalyzer(request=request, language=app.cfg.language_default)
         value = ' '.join(unicode('%s %s' % (word, stemmed)).strip() for word, stemmed in analyzer.tokenize(value))
         super(StemmedField, self).__init__(name, value)
 
@@ -125,11 +127,11 @@ class XapianIndex(BaseIndex):
 
     def _main_dir(self):
         """ Get the directory of the xapian index """
-        if self.request.cfg.xapian_index_dir:
-            return os.path.join(self.request.cfg.xapian_index_dir,
-                    self.request.cfg.siteid)
+        if app.cfg.xapian_index_dir:
+            return os.path.join(app.cfg.xapian_index_dir,
+                    app.cfg.siteid)
         else:
-            return os.path.join(self.request.cfg.cache_dir, 'xapian')
+            return os.path.join(app.cfg.cache_dir, 'xapian')
 
     def exists(self):
         """ Check if index exists """
@@ -159,7 +161,7 @@ class XapianIndex(BaseIndex):
         """
         while True:
             try:
-                searcher, timestamp = self.request.cfg.xapian_searchers.pop()
+                searcher, timestamp = app.cfg.xapian_searchers.pop()
                 if timestamp != self.mtime():
                     searcher.close()
                 else:
@@ -182,7 +184,7 @@ class XapianIndex(BaseIndex):
 
         hits = searcher.search(query, 0, document_count, **kw)
 
-        self.request.cfg.xapian_searchers.append((searcher, timestamp))
+        app.cfg.xapian_searchers.append((searcher, timestamp))
         return hits
 
     def do_queued_updates(self, amount=-1):
@@ -271,10 +273,10 @@ class XapianIndex(BaseIndex):
         @param page: the page instance
         """
         lang = None
-        default_lang = page.request.cfg.language_default
+        default_lang = app.cfg.language_default
 
         # if we should stem, we check if we have a stemmer for the language available
-        if page.request.cfg.xapian_stemming:
+        if app.cfg.xapian_stemming:
             lang = page.pi['language']
             try:
                 xapian.Stem(lang)
@@ -308,7 +310,7 @@ class XapianIndex(BaseIndex):
         if not prev or prev == 1:
             return []
         # for CategoryFoo, group 'all' matched CategoryFoo, group 'key' matched just Foo
-        return [m.group('all') for m in self.request.cfg.cache.page_category_regex.finditer(body[pos:])]
+        return [m.group('all') for m in app.cfg.cache.page_category_regex.finditer(body[pos:])]
 
     def _get_domains(self, page):
         """ Returns a generator with all the domains the page belongs to
@@ -338,7 +340,7 @@ class XapianIndex(BaseIndex):
         if not revlist:
             # we have an empty revision list, that means the page is not there any more,
             # likely it (== all of its revisions, all of its attachments) got either renamed or nuked
-            wikiname = request.cfg.interwikiname or u'Self'
+            wikiname = app.cfg.interwikiname or u'Self'
 
             sc = self.get_search_connection()
             docs_to_delete = sc.get_all_documents_with_fields(wikiname=wikiname, pagename=pagename)
@@ -350,7 +352,7 @@ class XapianIndex(BaseIndex):
             logging.debug('page %s (all revs, all attachments) removed from xapian index' % pagename)
 
         else:
-            if request.cfg.xapian_index_history:
+            if app.cfg.xapian_index_history:
                 index_revs, remove_revs = revlist, []
             else:
                 if page.exists(): # is current rev not deleted?
@@ -388,7 +390,7 @@ class XapianIndex(BaseIndex):
         page = Page(request, pagename, rev=revno)
         request.page = page # XXX for what is this needed?
 
-        wikiname = request.cfg.interwikiname or u"Self"
+        wikiname = app.cfg.interwikiname or u"Self"
         revision = str(page.get_real_rev())
         itemid = "%s:%s:%s" % (wikiname, pagename, revision)
         #mtime = wikiutil.timestamp2version(page.mtime())
@@ -434,7 +436,7 @@ class XapianIndex(BaseIndex):
         @param pagename: the page name
         @param revno: a real revision number (int), > 0
         """
-        wikiname = request.cfg.interwikiname or u"Self"
+        wikiname = app.cfg.interwikiname or u"Self"
         revision = str(revno)
         itemid = "%s:%s:%s" % (wikiname, pagename, revision)
         connection.delete(itemid)
@@ -451,7 +453,7 @@ class XapianIndex(BaseIndex):
                      'update' = check if already in index and update if needed (mtime)
         """
         from MoinMoin.action import AttachFile
-        wikiname = request.cfg.interwikiname or u"Self"
+        wikiname = app.cfg.interwikiname or u"Self"
         itemid = "%s:%s//%s" % (wikiname, pagename, attachmentname)
 
         filename = AttachFile.getFilename(request, pagename, attachmentname)
@@ -497,7 +499,7 @@ class XapianIndex(BaseIndex):
         @param mode: 'add' = just add, no checks
                      'update' = check if already in index and update if needed (mtime)
         """
-        wikiname = request.cfg.interwikiname or u"Self"
+        wikiname = app.cfg.interwikiname or u"Self"
         fs_rootpage = 'FS' # XXX FS hardcoded
 
         try:

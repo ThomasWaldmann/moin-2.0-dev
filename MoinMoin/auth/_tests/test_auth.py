@@ -7,6 +7,8 @@
 """
 import py.test
 
+from flask import flaskg
+
 from MoinMoin.web.request import TestRequest, evaluate_request
 from MoinMoin import wsgiapp
 from MoinMoin._tests import wikiconfig
@@ -42,7 +44,7 @@ class TestNoAuth(AuthTest):
         request = self.run_request()
 
         # anon user?
-        assert not request.user.valid
+        assert not flaskg.user.valid
 
         appiter, status, headers = evaluate_request(request.request)
         # check if the request resulted in normal status, result headers and content
@@ -82,10 +84,10 @@ class TestAnonSession(AuthTest):
                                        environ_overrides=environ_overrides)
 
             # anon user?
-            assert not request.user.valid
+            assert not flaskg.user.valid
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -120,13 +122,13 @@ class TestAnonSession(AuthTest):
                 first = False
                 continue
 
-            assert not request.session.is_new
+            assert not session.is_new
 
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 
 class TestHttpAuthSession(AuthTest):
@@ -150,11 +152,11 @@ class TestHttpAuthSession(AuthTest):
                                        environ_overrides=environ_overrides)
 
             # Login worked?
-            assert request.user.valid
-            assert request.user.name == username
+            assert flaskg.user.valid
+            assert flaskg.user.name == username
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -191,8 +193,8 @@ class TestHttpAuthSession(AuthTest):
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 
 class TestMoinAuthSession(AuthTest):
@@ -224,11 +226,11 @@ class TestMoinAuthSession(AuthTest):
                                            environ_overrides=environ_overrides)
 
             # Login worked?
-            assert request.user.valid
-            assert request.user.name == username
+            assert flaskg.user.valid
+            assert flaskg.user.name == username
 
             # Do we have a session?
-            assert request.session is not None
+            assert session is not None
 
             appiter, status, headers = evaluate_request(request.request)
             # check if the request resulted in normal status, result headers and content
@@ -265,7 +267,7 @@ class TestMoinAuthSession(AuthTest):
             trail_expected.append(unicode(pagename))
 
             # Requested pagenames get into trail?
-            assert 'trail' in request.session
-            trail = request.session['trail']
+            assert 'trail' in session
+            trail = session['trail']
             assert trail == trail_expected
 

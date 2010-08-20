@@ -10,8 +10,16 @@ This creates the WSGI application (using Flask) as "app".
             2010 MoinMoin:DiogenesAugusto
 @license: GNU GPL, see COPYING for details.
 """
+import os
+import sys
 
-from flask import Flask, request, url_for, render_template, flash
+# XXX temporary sys.path hack for convenience:
+support_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'support'))
+if support_dir not in sys.path:
+    sys.path.insert(0, support_dir)
+
+from flask import Flask, request, url_for, render_template, flash, session
+from flask import current_app as app
 
 # HACK: creating a custom alias for the single-letter "g"
 # Note: this should be done with a *standard* longer name in flask and
@@ -29,19 +37,69 @@ class MoinFlask(Flask):
         autoescape=False,
     )
 
-    secret_key = "thisisnotsecret"
-
-
-app = MoinFlask('MoinMoin')
-
-from werkzeug.routing import PathConverter
-app.url_map.converters['itemname'] = PathConverter
-
-
-import os, sys
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
+
+
+def create_app(flask_config_file=None, flask_config_dict=None,
+               moin_config_class=None, warn_default=True, **kwargs
+              ):
+    """
+    Factory for moin wsgi apps
+
+    @param flask_config_file: a flask config file name (may have a MOINCFG class),
+                              if not given, a config pointed to by MOINCFG env var
+                              will be loaded (if possible).
+    @param flask_config_dict: a dict used to update flask config (applied after
+                              flask_config_file was loaded [if given])
+    @param moin_config_class: if you give this, it'll be instantiated as app.cfg,
+                              otherwise it'll use MOINCFG from flask config. If that
+                              also is not there, it'll use the DefaultConfig built
+                              into MoinMoin.
+    @oaram warn_default: emit a warning if moin falls back to its builtin default
+                         config (maybe user forgot to specify MOINCFG?)
+    @param **kwargs: if you give additional key/values here, they'll get patched
+                     into the moin configuration class (before it instance is created)
+    """
+    app = MoinFlask('MoinMoin')
+    if flask_config_file:
+        app.config.from_pyfile(flask_config_file)
+    else:
+        app.config.from_envvar('MOINCFG', silent=True)
+    if flask_config_dict:
+        app.config.update(flask_config_dict)
+    Config = moin_config_class
+    if not Config:
+        Config = app.config.get('MOINCFG')
+    if not Config:
+        if warn_default:
+            logging.warning("using builtin default configuration")
+        from MoinMoin.config.default import DefaultConfig as Config
+    for key, value in kwargs.iteritems():
+        setattr(Config, key, value)
+    app.cfg = Config()
+    # register converters
+    from werkzeug.routing import PathConverter
+    app.url_map.converters['itemname'] = PathConverter
+    # register modules
+    from MoinMoin.apps.frontend import frontend
+    app.register_module(frontend)
+    from MoinMoin.apps.admin import admin
+    app.register_module(admin, url_prefix='/+admin')
+    from MoinMoin.apps.feed import feed
+    app.register_module(feed, url_prefix='/+feed')
+    from MoinMoin.apps.misc import misc
+    app.register_module(misc, url_prefix='/+misc')
+    from MoinMoin.theme import theme
+    app.register_module(theme)
+    # register filters
+    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+    # register before/after request functions
+    app.before_request(before)
+    app.after_request(after)
+    return app
+
 
 from MoinMoin.util.clock import Clock
 from MoinMoin.web.contexts import AllContext
@@ -73,10 +131,10 @@ def init_unprotected_backends(context):
     # A ns_mapping consists of several lines, where each line is made up like this:
     # mountpoint, unprotected backend, protection to apply as a dict
     # We don't consider the protection here. That is done in protect_backends.
-    ns_mapping = context.cfg.namespace_mapping
+    ns_mapping = app.cfg.namespace_mapping
     # Just initialize with unprotected backends.
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
-    index_uri = context.cfg.router_index_uri
+    index_uri = app.cfg.router_index_uri
     context.unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
 
     # This makes the first request after server restart potentially much slower...
@@ -86,9 +144,9 @@ def init_unprotected_backends(context):
 def import_export_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
-    xmlfile = context.cfg.load_xml
+    xmlfile = app.cfg.load_xml
     if xmlfile:
-        context.cfg.load_xml = None
+        app.cfg.load_xml = None
         tmp_backend = router.RouterBackend([('/', memory.MemoryBackend())],
                                            index_uri='sqlite://')
         unserialize(tmp_backend, xmlfile)
@@ -116,11 +174,11 @@ def import_export_xml(context):
 
     # XXX wrong place / name - this is a generic preload functionality, not just for tests
     # To make some tests happy
-    context.cfg.test_num_pages = item_count
+    app.cfg.test_num_pages = item_count
 
-    xmlfile = context.cfg.save_xml
+    xmlfile = app.cfg.save_xml
     if xmlfile:
-        context.cfg.save_xml = None
+        app.cfg.save_xml = None
         backend = context.unprotected_storage
         serialize(backend, xmlfile)
 
@@ -133,33 +191,33 @@ def protect_backends(context):
     backends after the user has been set up.
     """
     amw = acl.AclWrapperBackend
-    ns_mapping = context.cfg.namespace_mapping
+    ns_mapping = app.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
     protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
-    index_uri = context.cfg.router_index_uri
+    index_uri = app.cfg.router_index_uri
     context.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
 
 
-def setup_user(context, session):
+def setup_user(context):
     """ Try to retrieve a valid user object from the request, be it
     either through the session or through a login. """
     # first try setting up from session
-    userobj = auth.setup_from_session(context, session)
-    userobj, olduser = auth.setup_setuid(context, userobj)
-    context._setuid_real_user = olduser
+    userobj = auth.setup_from_session(context)
 
     # then handle login/logout forms
     form = context.request.values
 
-    if 'login' in form:
+    if 'login_submit' in form:
+        # this is a real form, submitted by POST
         params = {
-            'username': form.get('name'),
-            'password': form.get('password'),
+            'username': form.get('login_username'),
+            'password': form.get('login_password'),
             'attended': True,
             'stage': form.get('stage')
         }
         userobj = auth.handle_login(context, userobj, **params)
-    elif 'logout' in form:
+    elif 'logout_submit' in form:
+        # currently just a GET link
         userobj = auth.handle_logout(context, userobj)
     else:
         userobj = auth.handle_request(context, userobj)
@@ -178,7 +236,7 @@ def setup_i18n_preauth(context):
 
     lang = None
     if i18n.languages:
-        cfg = context.cfg
+        cfg = app.cfg
         if not cfg.language_ignore_browser:
             for l, w in context.request.accept_languages:
                 logging.debug("client accepts language %r, weight %r" % (l, w))
@@ -205,7 +263,6 @@ def setup_i18n_postauth(context):
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 
-@app.template_filter()
 def shorten_item_name(name, length=25):
     """
     Shorten item names
@@ -229,29 +286,33 @@ def shorten_item_name(name, length=25):
     return name
 
 
-def setup_jinja_env(request):
+def setup_jinja_env(context):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
-    app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-    app.jinja_env.filters['user_format'] = lambda rev, request = request: \
-                                          user.get_printable_editor(request,
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['user_format'] = lambda rev, context = context: \
+                                          user.get_printable_editor(context,
                                                                     rev.get(EDIT_LOG_USERID),
                                                                     rev.get(EDIT_LOG_ADDR),
                                                                     rev.get(EDIT_LOG_HOSTNAME))
+
+    from MoinMoin.theme import load_theme_fallback
+    theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
+    flaskg.theme = load_theme_fallback(context, theme_name)
+
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
                             'list': list,
-                            'theme': request.theme,
-                            'user': request.user,
-                            'cfg': request.cfg,
-                            '_': request.getText,
+                            'theme': flaskg.theme,
+                            'user': flaskg.user,
+                            'cfg': app.cfg,
+                            '_': context.getText,
                             'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': request.theme.translated_item_name,
+                            'translated_item_name': flaskg.theme.translated_item_name,
                             })
 
 
-@app.before_request
 def before():
     """
     Wraps an incoming WSGI request in a Context object and initializes
@@ -266,17 +327,10 @@ def before():
 
     context = AllContext(Request(request.environ))
 
-    flaskg.clock.start('create_cfg_instance')
-    # Note: we could give the context to Config.__init__():
-    context.cfg = app.config['MOINCFG']()
-    flaskg.clock.stop('create_cfg_instance')
-
     context.lang = setup_i18n_preauth(context)
 
-    context.session = context.cfg.session_service.get_session(context)
-
     init_unprotected_backends(context)
-    context.user = setup_user(context, context.session)
+    flaskg.user = setup_user(context)
 
     context.lang = setup_i18n_postauth(context)
 
@@ -297,25 +351,8 @@ def before():
     # if return value is not None, it is the final response
 
 
-@app.after_request
 def after(response):
     context = flaskg.context
-    context.cfg.session_service.finalize(context, context.session)
     context.finish()
     return response
 
-
-from MoinMoin.apps.frontend import frontend
-app.register_module(frontend)
-
-from MoinMoin.apps.admin import admin
-app.register_module(admin, url_prefix='/+admin')
-
-from MoinMoin.apps.feed import feed
-app.register_module(feed, url_prefix='/+feed')
-
-from MoinMoin.apps.misc import misc
-app.register_module(misc, url_prefix='/+misc')
-
-from MoinMoin.theme import theme
-app.register_module(theme)
