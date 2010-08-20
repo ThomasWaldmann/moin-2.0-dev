@@ -31,19 +31,15 @@ from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
 
 
-def create_user(request):
-    """ create a user using POST form data """
+def create_user(request, username, password, email):
+    """ create a user """
     _ = request.getText
     form = request.form
 
     # Create user profile
     theuser = User(request, auth_method="new-user")
 
-    # Require non-empty name
-    try:
-        theuser.name = form['name']
-    except KeyError:
-        return _("Empty user name. Please enter a user name.")
+    theuser.name = username
 
     # Don't allow creating users with invalid names
     if not isValidName(request, theuser.name):
@@ -54,16 +50,6 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     # Name required to be unique. Check if name belong to another user.
     if getUserId(request, theuser.name):
         return _("This user name already belongs to somebody else.")
-
-    # try to get the password and pw repeat
-    password = form.get('password1', '')
-    password2 = form.get('password2', '')
-
-    # Check if password is given and matches with password repeat
-    if password != password2:
-        return _("Passwords don't match!")
-    if not password:
-        return _("Please specify a password!")
 
     pw_checker = app.cfg.password_checker
     if pw_checker:
@@ -80,8 +66,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
             return "Can't encode password: %s" % wikiutil.escape(str(err))
 
     # try to get the email, for new users it is required
-    email = wikiutil.clean_input(form.get('email', ''))
-    theuser.email = email.strip()
+    theuser.email = email
     if not theuser.email and 'email' not in app.cfg.user_form_remove:
         return _("Please provide your email address. If you lose your"
                  " login information, you can get it by email.")
