@@ -388,7 +388,7 @@ class Converter(object):
         """
         key = html('class')
         attrib = {}
-        attrib[key] = ''.join(['html-',element.tag.name])
+        attrib[key] = ''.join(['html-', element.tag.name])
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_list(self, element):
