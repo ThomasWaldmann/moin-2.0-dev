@@ -12,7 +12,7 @@ import os
 
 from flask import current_app as app
 
-from flask import flash, url_for, render_template, flaskg, Module
+from flask import flash, url_for, render_template, flaskg
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -23,9 +23,6 @@ from MoinMoin.items import Item
 from MoinMoin.util import pysupport
 
 modules = pysupport.getPackageModules(__file__)
-
-
-theme = Module(__name__)
 
 
 class ThemeBase(object):
