@@ -18,7 +18,7 @@ from flask import flaskg
 from flask import current_app as app
 
 from flatland import String, Form
-from flatland.validation import Validator, Present
+from flatland.validation import Validator, Present, IsEmail
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
@@ -424,16 +424,42 @@ def subscribe_item(item_name):
     return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
+class ValidRegistration(Validator):
+    """Validator for a valid registration form
+    """
+    passwords_mismatch_msg = N_('The passwords do not match.')
+
+    def validate(self, element, state):
+        if not (element['username'].valid and
+                element['password1'].valid and element['password2'].valid and
+                element['email'].valid):
+            return False
+        if element['password1'].value != element['password2'].value:
+            return self.note_error(element, state, 'passwords_mismatch_msg')
+        return True
+
+
+class RegistrationForm(Form):
+    """a simple user registration form"""
+    name = 'register'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password1 = String.using(label=N_('Password')).validated_by(Present())
+    password2 = String.using(label=N_('Password')).validated_by(Present())
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    submit = String.using(default=N_('Register'), optional=True)
+
+    validators = [ValidRegistration()]
+
+
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
-    # TODO use ?next=next_location check if target is in the wiki and not outside domain
     request = flaskg.context
     _ = request.getText
     cfg = app.cfg
     item_name = 'Register' # XXX
 
     from MoinMoin.auth import MoinAuth
-    from MoinMoin.security.textcha import TextCha
 
     for auth in cfg.auth:
         if isinstance(auth, MoinAuth):
@@ -442,29 +468,32 @@ def register():
         return Response('No MoinAuth in auth list', 403)
 
     if request.method == 'GET':
-        textcha = TextCha(request)
-        if textcha.is_enabled():
-            textcha = textcha and textcha.render()
-        else:
-            textcha = None
+        form = RegistrationForm.from_defaults()
         return render_template('register.html',
                                title=_("Create Account"),
-                               textcha=textcha,
-                               ticket=wikiutil.createTicket(request),
+                               gen=make_generator(),
+                               form=form,
                               )
     if request.method == 'POST':
-        if 'create' in request.form:
-            if False: # TODO re-add this later: not wikiutil.checkTicket(request, request.form.get('ticket', '')):
-                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'register'}
-            elif not TextCha(request).check_answer_from_form():
-                msg = _('TextCha: Wrong answer! Go back and try again...')
-            else:
-                msg = user.create_user(request)
+        form = RegistrationForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            msg = user.create_user(request,
+                                   username=form['username'].value,
+                                   password=form['password1'].value,
+                                   email=form['email'].value,
+                                  )
             if msg:
                 flash(msg, "error")
             else:
                 flash(_('Account created, please log in now.'), "info")
-        return redirect(url_for('frontend.show_root'))
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('register.html',
+                                   title=_("Create Account"),
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])
