@@ -15,12 +15,17 @@ import difflib
 
 from flask import request, url_for, flash, render_template, Response, redirect, session
 from flask import flaskg
-
 from flask import current_app as app
+
+from flatland import String, Form
+from flatland.validation import Validator, Present
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
+from MoinMoin.util.forms import make_generator
+
+N_ = lambda x: x
 
 
 @frontend.route('/+dispatch', methods=['GET', ])
@@ -482,6 +487,35 @@ def userprefs():
         return "NotImplemented"
 
 
+class ValidLogin(Validator):
+    """Validator for a valid login
+
+    If username is wrong or password is wrong, we do not tell exactly what was
+    wrong, to prevent username phishing attacks.
+    """
+    fail_msg = N_('Either your username or password was invalid.')
+
+    def validate(self, element, state):
+        if not (element['username'].valid and element['password'].valid):
+            return False
+        # the real login happens at another place. if it worked, we have a valid user
+        if flaskg.user.valid:
+            return True
+        else:
+            return self.note_error(element, state, 'fail_msg')
+
+
+class LoginForm(Form):
+    """a simple login form"""
+    name = 'login'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password = String.using(label=N_('Password')).validated_by(Present())
+    submit = String.using(default=N_('Log in'), optional=True)
+
+    validators = [ValidLogin()]
+
+
 @frontend.route('/+login', methods=['GET', 'POST'])
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
@@ -493,23 +527,34 @@ def login():
             hint = authmethod.login_hint(request)
             if hint:
                 flash(hint, "info")
+        form = LoginForm.from_defaults()
         return render_template('login.html',
                                login_inputs=app.cfg.auth_login_inputs,
                                title=_("Login"),
+                               gen=make_generator(),
+                               form=form,
                               )
     if request.method == 'POST':
-        if 'login' in request.form:
-            if hasattr(request, '_login_messages'):
-                for msg in request._login_messages:
-                    flash(msg, "error")
-
-        userobj = flaskg.user
-        if userobj.valid:
-            # we have a logged-in user
+        if hasattr(request, '_login_messages'):
+            for msg in request._login_messages:
+                flash(msg, "error")
+        form = LoginForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            # we have a logged-in, valid user
+            userobj = flaskg.user
             session['user.id'] = userobj.id
             session['user.auth_method'] = userobj.auth_method
             session['user.auth_attribs'] = userobj.auth_attribs
-        return redirect(url_for('frontend.show_root'))
+            return redirect(url_for('frontend.show_root'))
+        else:
+            # if no valid user, show form again (with hints)
+            return render_template('login.html',
+                                   login_inputs=app.cfg.auth_login_inputs,
+                                   title=_("Login"),
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+logout')
