@@ -91,7 +91,7 @@ minimum: 0.5.1 will work, maybe 0.5 also
 
 jinja2
 ======
-shipped: 2.5
+shipped: 2.5.2
 minimum: 2.5
 
 
