@@ -13,6 +13,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
+from flask import flaskg
 
 from MoinMoin.util import pysupport
 from MoinMoin import wikiutil
@@ -74,12 +75,12 @@ class FormatterBase:
 
     def startContent(self, content_id="content", **kw):
         if self.page:
-            self.request.uid_generator.begin(self.page.page_name)
+            flaskg.uid_generator.begin(self.page.page_name)
         return ""
 
     def endContent(self):
         if self.page:
-            self.request.uid_generator.end()
+            flaskg.uid_generator.end()
         return ""
 
     # Links ##############################################################
@@ -327,11 +328,11 @@ class FormatterBase:
         '''
         Take an ID and make it unique in the current namespace.
         '''
-        ns = self.request.uid_generator.include_id
+        ns = flaskg.uid_generator.include_id
         if not ns is None:
             ns = self.sanitize_to_id(ns)
         id = self.sanitize_to_id(id)
-        id = self.request.uid_generator(id, ns)
+        id = flaskg.uid_generator(id, ns)
         return id
 
     def qualify_id(self, id):
@@ -341,7 +342,7 @@ class FormatterBase:
         is suitable if the dot ('.') is valid in IDs for your
         formatter.
         '''
-        ns = self.request.uid_generator.include_id
+        ns = flaskg.uid_generator.include_id
         if not ns is None:
             ns = self.sanitize_to_id(ns)
             return '%s.%s' % (ns, id)

@@ -16,7 +16,6 @@ from flask import current_app as app
 
 from MoinMoin.formatter import text_html
 from MoinMoin.web.request import Request
-from MoinMoin.web.utils import UniqueIDGenerator
 
 NoDefault = object()
 
@@ -94,17 +93,6 @@ class AllContext(object):
             return getattr(self.request, name)
         except AttributeError, e:
             return super(AllContext, self).__getattribute__(name)
-
-    def uid_generator(self):
-        pagename = None
-        if hasattr(self, 'page') and hasattr(self.page, 'page_name'):
-            pagename = self.page.page_name
-        return UniqueIDGenerator(pagename=pagename)
-    uid_generator = EnvironProxy(uid_generator)
-
-    def reset(self):
-        if hasattr(self, 'uid_generator'):
-            del self.uid_generator
 
 
 class ScriptContext(AllContext):

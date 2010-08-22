@@ -103,6 +103,7 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 
 from MoinMoin.util.clock import Clock
+from MoinMoin.web.utils import UniqueIDGenerator
 from MoinMoin.web.contexts import AllContext
 from MoinMoin.web.request import Request
 from MoinMoin.storage.error import StorageError
@@ -351,7 +352,9 @@ def before():
 
     context.finish = finish
 
-    context.reset()
+    def uid_generator():
+        return UniqueIDGenerator()
+    flaskg.uid_generator = uid_generator
 
     protect_backends(context)
 
