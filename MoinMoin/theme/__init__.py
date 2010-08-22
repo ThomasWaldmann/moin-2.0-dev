@@ -178,19 +178,17 @@ class ThemeBase(object):
         request = self.request
         user = self.user
         breadcrumbs = []
-        if not user.valid or user.show_trail:
-            trail = user.getTrail()
-            if trail:
-                for interwiki_item_name in trail:
-                    wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
-                    wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
-                    href = wikiutil.join_wiki(wiki_base_url, item_name)
-                    if wiki_name in [app.cfg.interwikiname, 'Self', ]:
-                        exists = self.item_exists(item_name)
-                        wiki_name = ''  # means "this wiki" for the theme code
-                    else:
-                        exists = True  # we can't detect existance of remote items
-                    breadcrumbs.append((wiki_name, item_name, href, exists, err))
+        trail = user.getTrail()
+        for interwiki_item_name in trail:
+            wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
+            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+            href = wikiutil.join_wiki(wiki_base_url, item_name)
+            if wiki_name in [app.cfg.interwikiname, 'Self', ]:
+                exists = self.item_exists(item_name)
+                wiki_name = ''  # means "this wiki" for the theme code
+            else:
+                exists = True  # we can't detect existance of remote items
+            breadcrumbs.append((wiki_name, item_name, href, exists, err))
         return breadcrumbs
 
     def userhome(self):

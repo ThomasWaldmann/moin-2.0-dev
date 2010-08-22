@@ -865,27 +865,21 @@ class User:
     # -----------------------------------------------------------------
     # Trail
 
-    def _wantTrail(self):
-        return (not self.valid # anon session
-                or
-                self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
-
     def addTrail(self, item_name):
         """ Add item name to trail.
 
         @param item_name: the item name (unicode) to add to the trail
         """
-        if self._wantTrail():
-            # Save interwiki links internally
-            if self._cfg.interwikiname:
-                item_name = self._interWikiName(item_name)
-            trail_in_session = session.get('trail', [])
-            trail = trail_in_session[:]
-            trail = [i for i in trail if i != item_name] # avoid dupes
-            trail.append(item_name) # append current item name at end
-            trail = trail[-self._cfg.trail_size:] # limit trail length
-            if trail != trail_in_session:
-                session['trail'] = trail
+        # Save interwiki links internally
+        if self._cfg.interwikiname:
+            item_name = self._interWikiName(item_name)
+        trail_in_session = session.get('trail', [])
+        trail = trail_in_session[:]
+        trail = [i for i in trail if i != item_name] # avoid dupes
+        trail.append(item_name) # append current item name at end
+        trail = trail[-self._cfg.trail_size:] # limit trail length
+        if trail != trail_in_session:
+            session['trail'] = trail
 
     def getTrail(self):
         """ Return list of recently visited item names.
@@ -893,11 +887,7 @@ class User:
         @rtype: list
         @return: item names (unicode) in trail
         """
-        if self._wantTrail():
-            trail = session.get('trail', [])
-        else:
-            trail = []
-        return trail
+        return session.get('trail', [])
 
     # -----------------------------------------------------------------
     # Other
