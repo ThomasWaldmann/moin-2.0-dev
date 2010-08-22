@@ -107,7 +107,6 @@ class BaseContext(Context):
     action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
-    lang = EnvironProxy('lang')
     content_lang = EnvironProxy('content_lang', lambda o: app.cfg.language_default)
     current_lang = EnvironProxy('current_lang')
 
