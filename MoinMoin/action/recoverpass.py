@@ -61,7 +61,7 @@ Contact the owner of the wiki, who can enable email.""")
 
 
 def _create_form(request):
-    url = request.page.url(request)
+    url = XXX.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
     ui_lang = request.theme.ui_lang
@@ -95,7 +95,7 @@ def _create_form(request):
 
 
 def _create_token_form(request, name=None, token=None):
-    url = request.page.url(request)
+    url = XXX.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
     ui_lang = request.theme.ui_lang

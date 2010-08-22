@@ -109,8 +109,6 @@ class BaseContext(Context):
     html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
     formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
 
-    page = EnvironProxy('page', None) # TODO deprecated, get rid of this
-
     def rootpage(self):
         # DEPRECATED, use rootitem!
         from MoinMoin.Page import RootPage

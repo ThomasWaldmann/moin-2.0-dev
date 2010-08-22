@@ -222,7 +222,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
                     titlesearch and ''.join([
                         '<br>',
                         _("Consider performing a"), ' ',
-                        f.url(1, href=request.page.url(request, querydict, escape=0)),
+                        f.url(1, href=XXX.page.url(request, querydict, escape=0)),
                         _('full-text search with your search terms'),
                         f.url(0), '.',
                     ]) or ''), "error")
@@ -246,7 +246,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             _("You're performing a title search that might not include "
               "all related results of your search query in this wiki."),
             ' ',
-            f.url(1, href=request.page.url(request, querydict, escape=0)),
+            f.url(1, href=XXX.page.url(request, querydict, escape=0)),
             f.text(_('Click here to perform a full-text search with your '
                 'search terms!')),
             f.url(0),
