@@ -103,8 +103,6 @@ class Context(object):
 class BaseContext(Context):
     """ Implements a basic context, that provides some common attributes.
     Most attributes are lazily initialized via descriptors. """
-
-    action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
     content_lang = EnvironProxy('content_lang', lambda o: app.cfg.language_default)
