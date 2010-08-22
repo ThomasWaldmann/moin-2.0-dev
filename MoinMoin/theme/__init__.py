@@ -11,7 +11,6 @@
 import os
 
 from flask import current_app as app
-
 from flask import flash, url_for, render_template, flaskg
 
 from MoinMoin import log
@@ -90,7 +89,7 @@ class ThemeBase(object):
         self.output_charset = 'utf-8'  # was: page.output_charset
         self.ui_lang = 'en'
         self.ui_dir = i18n.getDirection(self.ui_lang)
-        self.content_lang = request.content_lang
+        self.content_lang = flaskg.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
         # for html head:
         self.meta_keywords = ''

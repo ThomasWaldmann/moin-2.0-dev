@@ -11,7 +11,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-
 from flask import flaskg
 
 from MoinMoin import _, N_
@@ -216,10 +215,10 @@ class Formatter(FormatterBase):
         @return: language attributes
         """
         if not lang:
-            lang = self.request.current_lang
+            lang = flaskg.current_lang
             # Actions that generate content in user language should change
             # the content lang from the default defined in cfg.
-            if lang == self.request.content_lang:
+            if lang == flaskg.content_lang:
                 # lang is inherited from content div
                 return {}
 
@@ -413,7 +412,7 @@ class Formatter(FormatterBase):
 
         result = []
         # Use the content language
-        attr = self._langAttr(self.request.content_lang)
+        attr = self._langAttr(flaskg.content_lang)
         attr['id'] = content_id
         result.append(self._open('div', newline=False, attr=attr,
                                  allowed_attrs=['align'], **kw))
@@ -443,7 +442,7 @@ class Formatter(FormatterBase):
             the current lang
         """
         tag = 'span'
-        if lang_name != self.request.current_lang:
+        if lang_name != flaskg.current_lang:
             # Enclose text in span using lang attributes
             if on:
                 attr = self._langAttr(lang=lang_name)

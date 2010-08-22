@@ -333,7 +333,7 @@ def before():
 
     context = AllContext(Request(request.environ))
 
-    context.lang = setup_i18n_preauth(context)
+    lang = setup_i18n_preauth(context)
 
     init_unprotected_backends(context)
     flaskg.user = setup_user(context)
@@ -341,7 +341,10 @@ def before():
     flaskg.dicts = app.cfg.dicts(context)
     flaskg.groups = app.cfg.groups(context)
 
-    context.lang = setup_i18n_postauth(context)
+    flaskg.content_lang = app.cfg.language_default
+    flaskg.current_lang = app.cfg.language_default
+
+    lang = setup_i18n_postauth(context)
 
     def finish():
         pass

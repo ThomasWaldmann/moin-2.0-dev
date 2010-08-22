@@ -74,9 +74,6 @@ class AllContext(object):
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.personalities)
 
-    content_lang = EnvironProxy('content_lang', lambda o: app.cfg.language_default)
-    current_lang = EnvironProxy('current_lang')
-
     html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
     formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
 
@@ -106,7 +103,6 @@ class AllContext(object):
     uid_generator = EnvironProxy(uid_generator)
 
     def reset(self):
-        self.current_lang = app.cfg.language_default
         if hasattr(self, 'uid_generator'):
             del self.uid_generator
 
