@@ -14,6 +14,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
@@ -806,7 +807,6 @@ function togglenumber(did, nstart, nstep) {
 
         the msg string is not escaped
         """
-        _ = self.request.getText
         res = []
         if on:
             code_id = self.sanitize_to_id('CA-%s' % code_id)

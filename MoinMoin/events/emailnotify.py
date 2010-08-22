@@ -33,7 +33,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
 
     """
     change = notification.page_change_message("page_changed", request, page, email_lang, comment=comment, revisions=revisions)
-    _ = lambda text: request.getText(text, lang=email_lang)
+    _ = lambda x: x # FIXME, was: lambda text: request.getText(text, lang=email_lang)
 
     if len(revisions) >= 2:
         querystr = {'do': 'diff',

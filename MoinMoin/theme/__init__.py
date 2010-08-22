@@ -17,6 +17,7 @@ from flask import flash, url_for, render_template, flaskg
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
@@ -35,7 +36,6 @@ class ThemeBase(object):
     """
     name = 'base'
 
-    _ = lambda x: x  # We don't have gettext at this moment, so we fake it
     icons = {
         # key         alt                        icon filename      w   h
         # FileAttach
@@ -63,7 +63,6 @@ class ThemeBase(object):
         'searchbutton': ("[?]",                  "moin-search.png",   16, 16),
         'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",    16, 16),
     }
-    del _
 
     # Style sheets - usually there is no need to override this in sub
     # classes. Simply supply the css files in the css directory.
@@ -133,11 +132,11 @@ class ThemeBase(object):
         @rtype: unicode
         """
         request = self.request
-        item_lang_request = request.getText(item_en)
+        item_lang_request = _(item_en)
         if self.item_exists(item_lang_request):
             return item_lang_request
 
-        item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
+        item_lang_default = item_en # FIXME, was: i18n.getText(item_en, request, self.cfg.language_default)
         if self.item_exists(item_lang_default):
             return item_lang_default
         return item_en
@@ -377,7 +376,7 @@ class ThemeBase(object):
             alt = alt % vars
         except KeyError, err:
             alt = 'KeyError: %s' % str(err)
-        alt = self.request.getText(alt)
+        alt = _(alt)
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
@@ -427,7 +426,6 @@ class ThemeBase(object):
         @return: options of actions menu
         """
         request = self.request
-        _ = request.getText
 
         menu = [
             # XXX currently everything is dispatching to frontend.show_item,

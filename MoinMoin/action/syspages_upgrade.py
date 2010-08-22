@@ -12,12 +12,12 @@
 """
 from flask import render_template
 
+from MoinMoin import _, N_
 from MoinMoin.storage.backends import upgrade_syspages
 from MoinMoin.storage.error import BackendError
 
 
 def execute(item_name, request):
-    _ = request.getText
     if request.method == 'GET':
         action = 'syspages_upgrade'
         label = 'Upgrade System Pages'

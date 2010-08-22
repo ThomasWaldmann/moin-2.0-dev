@@ -16,6 +16,7 @@ import sys
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import config, error, util, wikiutil, web
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
@@ -24,12 +25,6 @@ import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.security import AccessControlList
-
-
-# This is a way to mark some text for the gettext tools so that they don't
-# get orphaned. See http://www.python.org/doc/current/lib/node278.html.
-def _(text):
-    return text
 
 
 class CacheClass(object):
@@ -376,7 +371,6 @@ def _default_password_checker(cfg, request, username, password):
         @return: None if there is no problem with the password,
                  some unicode object with an error msg, if the password is problematic.
     """
-    _ = request.getText
     # in any case, do a very simple built-in check to avoid the worst passwords
     if len(password) < 6:
         return _("Password is too short.")
@@ -828,7 +822,4 @@ def _add_options_to_defconfig(opts, addgroup=True):
 
 _add_options_to_defconfig(options)
 _add_options_to_defconfig(options_no_group_name, False)
-
-# remove the gettext pseudo function
-del _
 

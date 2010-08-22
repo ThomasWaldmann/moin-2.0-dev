@@ -16,6 +16,7 @@ from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.converter2._args import Arguments
 from MoinMoin.util import iri
@@ -75,7 +76,6 @@ class Converter(object):
             # thus, in case of exceptions, we just log the problem and return
             # some standard text.
             logger.exception("Macro %s raised an exception:" % name)
-            _ = self.request.getText
             elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
                     'macro_name': name,
                     'error_msg': unicode(e),

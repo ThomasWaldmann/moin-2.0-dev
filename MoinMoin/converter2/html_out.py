@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink, xml
 
@@ -508,8 +509,6 @@ class ConverterPage(Converter):
         return cls(request)
 
     def __call__(self, element):
-        _ = self.request.getText
-
         special_root = SpecialPage()
         self._special = [special_root]
         self._special_stack = [special_root]

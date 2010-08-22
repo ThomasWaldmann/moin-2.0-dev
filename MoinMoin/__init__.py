@@ -41,6 +41,9 @@ class MoinFlask(Flask):
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+# FIXME dummy i18n for now XXX
+_ = lambda x: x
+N_ = lambda s, p, n: s if n == 1 else p
 
 def create_app(flask_config_file=None, flask_config_dict=None,
                moin_config_class=None, warn_default=True, **kwargs
@@ -304,7 +307,7 @@ def setup_jinja_env(context):
                             'theme': flaskg.theme,
                             'user': flaskg.user,
                             'cfg': app.cfg,
-                            '_': context.getText,
+                            '_': _,
                             'flaskg': flaskg,
                             'item_name': 'handlers need to give it',
                             'translated_item_name': flaskg.theme.translated_item_name,

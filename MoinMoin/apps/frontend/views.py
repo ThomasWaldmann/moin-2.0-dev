@@ -20,6 +20,7 @@ from flask import current_app as app
 from flatland import String, Form
 from flatland.validation import Validator, Present, IsEmail
 
+from MoinMoin import _, N_
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
@@ -378,7 +379,6 @@ def global_history():
 def quicklink_item(item_name):
     """ Add/Remove the current wiki page to/from the user quicklinks """
     request = flaskg.context
-    _ = request.getText
     u = flaskg.user
     msg = None
     if not u.valid:
@@ -398,7 +398,6 @@ def quicklink_item(item_name):
 def subscribe_item(item_name):
     """ Add/Remove the current wiki item to/from the user's subscriptions """
     request = flaskg.context
-    _ = request.getText
     u = flaskg.user
     cfg = app.cfg
     msg = None
@@ -455,7 +454,6 @@ class RegistrationForm(Form):
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     request = flaskg.context
-    _ = request.getText
     cfg = app.cfg
     item_name = 'Register' # XXX
 
@@ -550,7 +548,6 @@ def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'LoggedIn' # XXX
     request = flaskg.context
-    _ = request.getText
     if request.method == 'GET':
         for authmethod in app.cfg.auth:
             hint = authmethod.login_hint(request)
@@ -590,7 +587,6 @@ def login():
 def logout():
     item_name = 'LoggedOut' # XXX
     request = flaskg.context
-    _ = request.getText
     flash(_("You are now logged out."), "info")
     for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
         if key in session:
@@ -692,7 +688,6 @@ def similar_names(item_name):
                 2001 Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
     """
-    _ = flaskg.context.getText
     start, end, matches = findMatches(item_name)
     keys = matches.keys()
     keys.sort()

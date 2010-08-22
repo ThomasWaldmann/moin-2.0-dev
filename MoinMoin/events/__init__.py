@@ -14,16 +14,13 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.util import pysupport
 from MoinMoin.wikiutil import PluginAttributeError
 
 # Create a list of extension actions from the package directory
 modules = pysupport.getPackageModules(__file__)
-
-# Dummy pseudo-getText function used in event descriptions,
-# so that they get into .po files
-_ = lambda x: x
 
 
 class Event(object):
@@ -242,7 +239,3 @@ def get_subscribable_events():
             subscribable_events[ev.name] = {'desc': ev.description, 'superuser': ev.req_superuser}
 
     return subscribable_events
-
-# Get rid of the dummy getText so that it doesn't get imported with *
-del _
-

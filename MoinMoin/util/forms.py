@@ -5,8 +5,7 @@
     @copyright: 2010 Thomas Waldmann, Jason Kirtland, Scott Wilson
     @license: see flatland license
 """
-
-N_ = lambda x: x
+from MoinMoin import _, N_
 
 from operator import attrgetter
 _find_ugettext = attrgetter('ugettext')

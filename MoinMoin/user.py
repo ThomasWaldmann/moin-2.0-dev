@@ -27,13 +27,13 @@ from flask import current_app as app
 
 from flask import flaskg, session
 
+from MoinMoin import _, N_
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
 
 
 def create_user(request, username, password, email):
     """ create a user """
-    _ = request.getText
     form = request.form
 
     # Create user profile
@@ -141,8 +141,6 @@ def getUserIdentification(request, username=None):
     @rtype: string
     @return: user name or IP or unknown indicator
     """
-    _ = request.getText
-
     if username is None:
         username = flaskg.user.name
 
@@ -174,7 +172,6 @@ def get_printable_editor(request, userid, addr, hostname, mode='html'):
     mode=='html': Return a HTML-safe string representing the user that did the edit.
     mode=='text': Return a simple text string.
     """
-    _ = request.getText
     if app.cfg.show_hosts and hostname and addr:
         title = " @ %s[%s]" % (hostname, addr)
     else:
@@ -552,7 +549,7 @@ class User:
 
     def getText(self, text):
         """ translate a text to the language of this user """
-        return self._request.getText(text, lang=self.getLang())
+        return text # FIXME, was: self._request.getText(text, lang=self.getLang())
 
     def getLang(self):
         """ Get the language this user likely wants (limited by what we can support).
@@ -923,7 +920,6 @@ class User:
 
     def host(self):
         """ Return user host """
-        _ = self._request.getText
         host = self.isCurrentUser() and self._cfg.show_hosts and self._request.remote_addr
         return host or _("<unknown>")
 
@@ -988,7 +984,6 @@ class User:
         """
         from MoinMoin.mail import sendmail
         from MoinMoin.wikiutil import getLocalizedPage
-        _ = self._request.getText
 
         tok = self.generate_recovery_token()
 

@@ -14,6 +14,7 @@ import StringIO, time
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 
 ############################################################################
@@ -277,8 +278,6 @@ class SearchResults(object):
         @rtype: unicode
         @return formatted statistics
         """
-        _ = request.getText
-
         if not self.estimated_hits:
             self.estimated_hits = ('', len(self.hits))
 
@@ -400,7 +399,6 @@ class SearchResults(object):
         self._reset(request, formatter)
         f = formatter
         write = self.buffer.write
-        _ = request.getText
 
         if paging and len(self.hits) <= app.cfg.search_results_per_page:
             paging = False
@@ -674,7 +672,6 @@ class SearchResults(object):
         @rtype: unicode
         @return: links to previous and next pages (if exist)
         """
-        _ = self.request.getText
         f = self.formatter
         querydict = dict(wikiutil.parseQueryString(self.request.query_string))
 
@@ -738,7 +735,6 @@ class SearchResults(object):
         """
         request = self.request
         f = self.formatter
-        _ = request.getText
         p = page.page
 
         rev = p.get_real_rev()
@@ -810,7 +806,6 @@ class SearchResults(object):
         self.formatter = formatter
         self.request = request
         # Use 1 match, 2 matches...
-        _ = request.getText
         self.matchLabel = (_('match'), _('matches'))
 
 

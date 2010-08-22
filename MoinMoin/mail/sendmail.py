@@ -15,6 +15,7 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import config
 
 _transdict = {"AT": "@", "DOT": ".", "DASH": "-"}
@@ -74,7 +75,6 @@ def sendmail(request, to, subject, text, mail_from=None):
     from email.Charset import Charset, QP
     from email.Utils import formatdate, make_msgid
 
-    _ = request.getText
     cfg = app.cfg
     mail_from = mail_from or cfg.mail_from
 

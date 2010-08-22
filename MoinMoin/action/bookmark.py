@@ -11,12 +11,12 @@ import time
 
 from flask import flash, flaskg
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 
 def execute(pagename, request):
     """ set bookmarks (in time) for RecentChanges or delete them """
-    _ = request.getText
     if not flaskg.user.valid:
         actname = __name__.split('.')[-1]
         flash(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")

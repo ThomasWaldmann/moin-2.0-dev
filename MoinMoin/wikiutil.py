@@ -23,6 +23,7 @@ from flask import current_app as app
 
 from flask import flaskg, session
 
+from MoinMoin import _, N_
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
@@ -650,7 +651,7 @@ def getLocalizedPage(request, pagename): # was: getSysPage
              if it exists
     """
     from MoinMoin.Page import Page
-    i18n_name = request.getText(pagename)
+    i18n_name = _(pagename)
     pageobj = None
     if i18n_name != pagename:
         if request.page and i18n_name == request.page.page_name:
@@ -1466,7 +1467,6 @@ def get_bool(request, arg, name=None, default=None):
     @returns: the boolean value of the string according to above rules
               (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, bool)
     if arg is None:
         return default
@@ -1501,7 +1501,6 @@ def get_int(request, arg, name=None, default=None):
     @rtype: int or None
     @returns: the integer value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long))
     if arg is None:
         return default
@@ -1532,7 +1531,6 @@ def get_float(request, arg, name=None, default=None):
     @rtype: float or None
     @returns: the float value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long, float))
     if arg is None:
         return default
@@ -1563,7 +1561,6 @@ def get_complex(request, arg, name=None, default=None):
     @rtype: complex or None
     @returns: the complex value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long, float, complex))
     if arg is None:
         return default
@@ -1632,7 +1629,6 @@ def get_choice(request, arg, name=None, choices=[None], default_none=False):
     elif not isinstance(arg, unicode):
         raise TypeError('Argument must be None or unicode')
     elif not arg in choices:
-        _ = request.getText
         if name:
             raise ValueError(
                 _('Argument "%s" must be one of "%s", not "%s"') % (
@@ -1799,8 +1795,6 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
 
     assert isinstance(fixed_args, (list, tuple))
 
-    _ = request.getText
-
     kwargs = {}
     kwargs_to_pass = {}
     trailing_args = []
@@ -1925,8 +1919,6 @@ def parseAttributes(request, attrstring, endtoken=None, extension=None):
     @return: a dict plus a possible error message
     """
     import shlex, StringIO
-
-    _ = request.getText
 
     parser = shlex.shlex(StringIO.StringIO(attrstring))
     parser.commenters = ''

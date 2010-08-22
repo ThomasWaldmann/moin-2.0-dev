@@ -10,6 +10,7 @@
 """
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin.util import pysupport
 from MoinMoin.widget import html
 
@@ -33,7 +34,6 @@ class UserPrefBase(object):
             possible settings)
         '''
         self.request = request
-        self._ = request.getText
         self.name = None
         self.title = 'No name set'
 

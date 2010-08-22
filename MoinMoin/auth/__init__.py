@@ -138,6 +138,7 @@ from flask import url_for, session
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 
 
@@ -234,8 +235,6 @@ class MoinAuth(BaseAuth):
         if not username and not password:
             return ContinueLogin(user_obj)
 
-        _ = request.getText
-
         logging.debug("%s: performing login action" % self.name)
 
         if username and not password:
@@ -250,7 +249,6 @@ class MoinAuth(BaseAuth):
             return ContinueLogin(user_obj, _("Invalid username or password."))
 
     def login_hint(self, request):
-        _ = request.getText
         register_url = url_for('frontend.register')
         recover_url = url_for('frontend.recoverpass')
 
@@ -335,7 +333,6 @@ class GivenAuth(BaseAuth):
 
     def request(self, request, user_obj, **kw):
         u = None
-        _ = request.getText
         # always revalidate auth
         if user_obj and user_obj.auth_method == self.name:
             user_obj = None

@@ -14,6 +14,7 @@ import re, time
 from flask import flash, flaskg
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
 from parsedatetime.parsedatetime import Calendar
@@ -63,7 +64,6 @@ def searchHints(f, hints):
 
 
 def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
-    _ = request.getText
     titlesearch = checkTitleSearch(request)
     if titlesearch < 0:
         check_surge_protect(request, kick=True) # get rid of spammer

@@ -11,14 +11,13 @@ from flask import flash
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.auth import MoinAuth
 
 def _do_email(request, u):
-    _ = request.getText
-
     if u and u.valid:
         is_ok, msg = u.mailAccountData()
         if not is_ok:
@@ -28,7 +27,6 @@ def _do_email(request, u):
 
 
 def _do_recover(request):
-    _ = request.getText
     form = request.form
     if not app.cfg.mail_enabled:
         return _("""This wiki is not enabled for mail processing.
@@ -63,7 +61,6 @@ Contact the owner of the wiki, who can enable email.""")
 
 
 def _create_form(request):
-    _ = request.getText
     url = request.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
@@ -98,7 +95,6 @@ def _create_form(request):
 
 
 def _create_token_form(request, name=None, token=None):
-    _ = request.getText
     url = request.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
@@ -158,7 +154,6 @@ def execute(pagename, request):
         return
 
     page = Page(request, pagename)
-    _ = request.getText
     form = request.values # link in mail -> GET request
 
     if not app.cfg.mail_enabled:

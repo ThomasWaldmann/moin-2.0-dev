@@ -32,8 +32,6 @@ class FormatterBase:
 
     def __init__(self, request, **kw):
         self.request = request
-        self._ = request.getText
-
         self._store_pagelinks = kw.get('store_pagelinks', 0)
         self._terse = kw.get('terse', 0)
         self.pagelinks = []
