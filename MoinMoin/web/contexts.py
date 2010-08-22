@@ -110,7 +110,6 @@ class BaseContext(Context):
     formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
 
     page = EnvironProxy('page', None) # TODO deprecated, get rid of this
-    item_name = EnvironProxy('item_name', None) # TODO deprecated, get rid of this
 
     def rootpage(self):
         # DEPRECATED, use rootitem!
