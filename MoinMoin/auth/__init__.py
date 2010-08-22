@@ -135,7 +135,7 @@ logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
 from flask import url_for, session
-
+from flask import flaskg
 from flask import current_app as app
 
 from MoinMoin import _, N_
@@ -389,8 +389,8 @@ def handle_login(request, userobj=None, username=None, password=None,
             del params['multistage']
 
         if ret.multistage:
-            request._login_multistage = ret.multistage
-            request._login_multistage_name = authmethod.name
+            flaskg._login_multistage = ret.multistage
+            flaskg._login_multistage_name = authmethod.name
             return userobj
 
         if ret.redirect_to:
@@ -400,8 +400,8 @@ def handle_login(request, userobj=None, username=None, password=None,
             url = url.replace('%return', url_quote(nextstage))
             abort(redirect(url))
         msg = ret.message
-        if msg and not msg in request._login_messages:
-            request._login_messages.append(msg)
+        if msg and not msg in flaskg._login_messages:
+            flaskg._login_messages.append(msg)
 
         if not cont:
             break

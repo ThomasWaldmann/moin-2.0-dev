@@ -202,6 +202,11 @@ def protect_backends(context):
 def setup_user(context):
     """ Try to retrieve a valid user object from the request, be it
     either through the session or through a login. """
+    # init some stuff for auth processing:
+    flaskg._login_multistage = None
+    flaskg._login_multistage_name = None
+    flaskg._login_messages = []
+
     # first try setting up from session
     userobj = auth.setup_from_session(context)
 
