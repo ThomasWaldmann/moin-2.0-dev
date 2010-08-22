@@ -561,9 +561,8 @@ def login():
                                form=form,
                               )
     if request.method == 'POST':
-        if hasattr(request, '_login_messages'):
-            for msg in request._login_messages:
-                flash(msg, "error")
+        for msg in flaskg._login_messages:
+            flash(msg, "error")
         form = LoginForm.from_flat(request.form)
         valid = form.validate()
         if valid:

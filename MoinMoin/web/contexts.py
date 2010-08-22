@@ -98,11 +98,6 @@ class AllContext(object):
         except AttributeError, e:
             return super(AllContext, self).__getattribute__(name)
 
-    # several attributes used by other code to hold state across calls
-    _login_messages = EnvironProxy('_login_messages', lambda o: [])
-    _login_multistage = EnvironProxy('_login_multistage', None)
-    _login_multistage_name = EnvironProxy('_login_multistage_name', None)
-
     def uid_generator(self):
         pagename = None
         if hasattr(self, 'page') and hasattr(self.page, 'page_name'):
