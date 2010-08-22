@@ -2414,7 +2414,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
     """ Create a ticket using a configured secret
 
         @param tm: unix timestamp (optional, uses current time if not given)
-        @param action: action name (optional, uses current action if not given)
+        @param action: action name (default: show)
                        Note: if you create a ticket for a form that calls another
                              action than the current one, you MUST specify the
                              action you call when posting the form.
@@ -2437,7 +2437,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
             pagename = ''
 
     if action is None:
-        action = request.action
+        action = 'show'
 
     if session:
         # either a user is logged in or we have a anon session -

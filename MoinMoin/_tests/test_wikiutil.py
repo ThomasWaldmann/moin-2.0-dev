@@ -46,14 +46,8 @@ class TestTickets:
         self.request.page = Page(self.request, u'\xc4rger')
         ticket2 = wikiutil.createTicket(self.request)
         assert wikiutil.checkTicket(self.request, ticket2)
-        # same page with another action
-        self.request.page = Page(self.request, u'\xc4rger')
-        self.request.action = 'another'
-        ticket3 = wikiutil.createTicket(self.request)
-        assert wikiutil.checkTicket(self.request, ticket3)
 
         assert ticket1 != ticket2
-        assert ticket2 != ticket3
 
 
 class TestCleanInput:
