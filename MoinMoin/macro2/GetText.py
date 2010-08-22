@@ -12,11 +12,12 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin import _, N_
 from MoinMoin.macro2._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
     """ Return a translation of args, or args as is """
     def macro(self, content, args, page_url, alt):
-        translation = self.request.getText(' '.join(args.positional))
+        translation = _(' '.join(args.positional))
         return translation
 

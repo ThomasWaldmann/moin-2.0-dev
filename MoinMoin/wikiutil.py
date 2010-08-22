@@ -19,6 +19,11 @@ import time
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
+from flask import flaskg, session
+
+from MoinMoin import _, N_
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
@@ -424,7 +429,7 @@ def set_edit_lock(item, request):
     addr = request.remote_addr
     hostname = wikiutil.get_hostname(request, addr)
     if hasattr(request, "user"):
-        userid = request.user.valid and request.user.id or ''
+        userid = flaskg.user.valid and flaskg.user.id or ''
     else:
         userid = ''
 
@@ -446,12 +451,12 @@ def generate_file_list(request):
 
     # order is important here, intermap files read later overwrite
     # data from files read earlier!
-    intermap_files = request.cfg.shared_intermap
+    intermap_files = app.cfg.shared_intermap
     if not isinstance(intermap_files, list):
         intermap_files = [intermap_files]
     else:
         intermap_files = intermap_files[:]
-    request.cfg.shared_intermap_files = [filename for filename in intermap_files
+    app.cfg.shared_intermap_files = [filename for filename in intermap_files
                                          if filename and os.path.isfile(filename)]
 
 
@@ -471,23 +476,23 @@ def load_wikimap(request):
     from MoinMoin.Page import Page
 
     now = int(time.time())
-    if getattr(request.cfg, "shared_intermap_files", None) is None:
+    if getattr(app.cfg, "shared_intermap_files", None) is None:
         generate_file_list(request)
 
     try:
-        _interwiki_list = request.cfg.cache.interwiki_list
-        old_mtime = request.cfg.cache.interwiki_mtime
-        if request.cfg.cache.interwiki_ts + (1*60) < now: # 1 minutes caching time
-            max_mtime = get_max_mtime(request.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
+        _interwiki_list = app.cfg.cache.interwiki_list
+        old_mtime = app.cfg.cache.interwiki_mtime
+        if app.cfg.cache.interwiki_ts + (1*60) < now: # 1 minutes caching time
+            max_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
             if max_mtime > old_mtime:
                 raise AttributeError # refresh cache
             else:
-                request.cfg.cache.interwiki_ts = now
+                app.cfg.cache.interwiki_ts = now
     except AttributeError:
         _interwiki_list = {}
         lines = []
 
-        for filename in request.cfg.shared_intermap_files:
+        for filename in app.cfg.shared_intermap_files:
             f = codecs.open(filename, "r", config.charset)
             lines.extend(f.readlines())
             f.close()
@@ -510,13 +515,13 @@ def load_wikimap(request):
 
         # add own wiki as "Self" and by its configured name
         _interwiki_list['Self'] = request.script_root + '/'
-        if request.cfg.interwikiname:
-            _interwiki_list[request.cfg.interwikiname] = request.script_root + '/'
+        if app.cfg.interwikiname:
+            _interwiki_list[app.cfg.interwikiname] = request.script_root + '/'
 
         # save for later
-        request.cfg.cache.interwiki_list = _interwiki_list
-        request.cfg.cache.interwiki_ts = now
-        request.cfg.cache.interwiki_mtime = get_max_mtime(request.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
+        app.cfg.cache.interwiki_list = _interwiki_list
+        app.cfg.cache.interwiki_ts = now
+        app.cfg.cache.interwiki_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
 
     return _interwiki_list
 
@@ -600,7 +605,7 @@ def isTemplatePage(request, pagename):
     @rtype: bool
     @return: true if page is a template page
     """
-    return request.cfg.cache.page_template_regexact.search(pagename) is not None
+    return app.cfg.cache.page_template_regexact.search(pagename) is not None
 
 
 def isGroupPage(pagename, cfg):
@@ -627,7 +632,7 @@ def filterCategoryPages(request, pagelist):
     @rtype: list
     @return: only the category pages of pagelist
     """
-    func = request.cfg.cache.page_category_regexact.search
+    func = app.cfg.cache.page_category_regexact.search
     return [pn for pn in pagelist if func(pn)]
 
 
@@ -646,7 +651,7 @@ def getLocalizedPage(request, pagename): # was: getSysPage
              if it exists
     """
     from MoinMoin.Page import Page
-    i18n_name = request.getText(pagename)
+    i18n_name = _(pagename)
     pageobj = None
     if i18n_name != pagename:
         if request.page and i18n_name == request.page.page_name:
@@ -677,7 +682,7 @@ def getFrontPage(request):
     @rtype: Page object
     @return localized page_front_page, if there is a translation
     """
-    return getLocalizedPage(request, request.cfg.page_front_page)
+    return getLocalizedPage(request, app.cfg.page_front_page)
 
 
 def getHomePage(request, username=None):
@@ -694,8 +699,8 @@ def getHomePage(request, username=None):
     """
     from MoinMoin.Page import Page
     # default to current user
-    if username is None and request.user.valid:
-        username = request.user.name
+    if username is None and flaskg.user.valid:
+        username = flaskg.user.name
 
     # known user?
     if username:
@@ -723,13 +728,13 @@ def getInterwikiHomePage(request, username=None):
     @return: (wikiname, pagename)
     """
     # default to current user
-    if username is None and request.user.valid:
-        username = request.user.name
+    if username is None and flaskg.user.valid:
+        username = flaskg.user.name
     if not username:
         return None # anon user
 
-    homewiki = request.cfg.user_homewiki
-    if homewiki == request.cfg.interwikiname:
+    homewiki = app.cfg.user_homewiki
+    if homewiki == app.cfg.interwikiname:
         homewiki = u'Self'
 
     return homewiki, username
@@ -1462,7 +1467,6 @@ def get_bool(request, arg, name=None, default=None):
     @returns: the boolean value of the string according to above rules
               (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, bool)
     if arg is None:
         return default
@@ -1497,7 +1501,6 @@ def get_int(request, arg, name=None, default=None):
     @rtype: int or None
     @returns: the integer value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long))
     if arg is None:
         return default
@@ -1528,7 +1531,6 @@ def get_float(request, arg, name=None, default=None):
     @rtype: float or None
     @returns: the float value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long, float))
     if arg is None:
         return default
@@ -1559,7 +1561,6 @@ def get_complex(request, arg, name=None, default=None):
     @rtype: complex or None
     @returns: the complex value of the string (or default value)
     """
-    _ = request.getText
     assert default is None or isinstance(default, (int, long, float, complex))
     if arg is None:
         return default
@@ -1628,7 +1629,6 @@ def get_choice(request, arg, name=None, choices=[None], default_none=False):
     elif not isinstance(arg, unicode):
         raise TypeError('Argument must be None or unicode')
     elif not arg in choices:
-        _ = request.getText
         if name:
             raise ValueError(
                 _('Argument "%s" must be one of "%s", not "%s"') % (
@@ -1795,8 +1795,6 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
 
     assert isinstance(fixed_args, (list, tuple))
 
-    _ = request.getText
-
     kwargs = {}
     kwargs_to_pass = {}
     trailing_args = []
@@ -1921,8 +1919,6 @@ def parseAttributes(request, attrstring, endtoken=None, extension=None):
     @return: a dict plus a possible error message
     """
     import shlex, StringIO
-
-    _ = request.getText
 
     parser = shlex.shlex(StringIO.StringIO(attrstring))
     parser.commenters = ''
@@ -2237,12 +2233,12 @@ def mapURL(request, url):
     @return: mapped URL
     """
     # check whether we have to map URLs
-    if request.cfg.url_mappings:
+    if app.cfg.url_mappings:
         # check URL for the configured prefixes
-        for prefix in request.cfg.url_mappings:
+        for prefix in app.cfg.url_mappings:
             if url.startswith(prefix):
                 # substitute prefix with replacement value
-                return request.cfg.url_mappings[prefix] + url[len(prefix):]
+                return app.cfg.url_mappings[prefix] + url[len(prefix):]
 
     # return unchanged url
     return url
@@ -2443,15 +2439,15 @@ def createTicket(request, tm=None, action=None, pagename=None):
     if action is None:
         action = request.action
 
-    if request.session:
+    if session:
         # either a user is logged in or we have a anon session -
         # if session times out, ticket will get invalid
-        sid = request.session.sid
+        sid = session.sid
     else:
         sid = ''
 
-    if request.user.valid:
-        uid = request.user.id
+    if flaskg.user.valid:
+        uid = flaskg.user.id
     else:
         uid = ''
 
@@ -2461,7 +2457,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
             value = value.encode('utf-8')
         hmac_data.append(value)
 
-    h = hmac.new(request.cfg.secrets['wikiutil/tickets'],
+    h = hmac.new(app.cfg.secrets['wikiutil/tickets'],
                  ''.join(hmac_data), digestmod=hashlib.sha1)
     return "%s.%s" % (tm, h.hexdigest())
 
@@ -2557,7 +2553,7 @@ def get_hostname(request, addr):
     """
     Looks up the hostname depending on the configuration.
     """
-    if request.cfg.log_reverse_dns_lookups:
+    if app.cfg.log_reverse_dns_lookups:
         import socket
         try:
             hostname = socket.gethostbyaddr(addr)[0]

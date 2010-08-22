@@ -8,6 +8,9 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import flaskg
+
+from MoinMoin import _, N_
 from MoinMoin.util import pysupport
 from MoinMoin.widget import html
 
@@ -31,7 +34,6 @@ class UserPrefBase(object):
             possible settings)
         '''
         self.request = request
-        self._ = request.getText
         self.name = None
         self.title = 'No name set'
 
@@ -65,7 +67,7 @@ class UserPrefBase(object):
             title should be listed or not and whether
             submissions are accepted.
         '''
-        return self.request.user and self.request.user.valid
+        return flaskg.user and flaskg.user.valid
 
     def make_form(self, explanation=None):
         '''
@@ -81,8 +83,8 @@ class UserPrefBase(object):
         self._table = html.TABLE(border="0")
 
         # Use the user interface language and direction
-        ui_lang = self.request.theme.ui_lang
-        ui_dir = self.request.theme.ui_dir
+        ui_lang = flaskg.theme.ui_lang
+        ui_dir = flaskg.theme.ui_dir
         _form.append(html.Raw('<div class="userpref" lang="%s" dir="%s">' % (ui_lang, ui_dir)))
         para = html.P()
         _form.append(para)

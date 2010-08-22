@@ -9,6 +9,8 @@
 import py
 py.test.skip("Broken. Needs Page -> Item refactoring.")
 
+from flask import current_app as app
+
 from MoinMoin.Page import Page
 
 class TestPage:
@@ -71,7 +73,7 @@ class TestRootPage:
                 have_frontpage = True
             assert pg != u''
             cnt += 1
-        assert cnt >= self.request.cfg.test_num_pages
+        assert cnt >= app.cfg.test_num_pages
         assert have_frontpage
 
 

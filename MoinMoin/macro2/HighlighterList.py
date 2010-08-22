@@ -13,6 +13,7 @@
 
 import pygments.lexers
 
+from MoinMoin import _, N_
 from MoinMoin.util.tree import moin_page
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.converter2._table import TableMixin
@@ -21,8 +22,6 @@ from MoinMoin.converter2._table import TableMixin
 class Macro(TableMixin, MacroBlockBase):
     def macro(self, content, arguments, page_url, alternative):
         request = self.request
-        _ = request.getText
-
         column_titles = [_('Lexer description'),
                          _('Lexer names'),
                          _('File patterns'),

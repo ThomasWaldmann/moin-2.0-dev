@@ -10,10 +10,13 @@ Expands all macro elements in a internal Moin document.
 
 from __future__ import absolute_import
 
+from flask import current_app as app
+
 from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.converter2._args import Arguments
 from MoinMoin.util import iri
@@ -60,7 +63,7 @@ class Converter(object):
         elem_body = context_block and moin_page.body() or moin_page.inline_body()
         elem_error = moin_page.error()
 
-        cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
+        cls = wikiutil.importPlugin(app.cfg, 'macro2', name, function='Macro')
 
         try:
             macro = cls(self.request)
@@ -73,7 +76,6 @@ class Converter(object):
             # thus, in case of exceptions, we just log the problem and return
             # some standard text.
             logger.exception("Macro %s raised an exception:" % name)
-            _ = self.request.getText
             elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
                     'macro_name': name,
                     'error_msg': unicode(e),

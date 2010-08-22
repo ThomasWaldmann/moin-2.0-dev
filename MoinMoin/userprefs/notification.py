@@ -8,17 +8,20 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin import _, N_
 from MoinMoin import events, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
-from flask import render_template
+
+from flask import current_app as app
+
+from flask import render_template, flaskg
 
 def get_notify_info(request):
-    _ = request.getText
     types = []
-    if request.cfg.mail_enabled and request.user.email:
+    if app.cfg.mail_enabled and flaskg.user.email:
         types.append(('email', _("Email")))
-    isSuperUser = request.user.isSuperUser()
+    isSuperUser = flaskg.user.isSuperUser()
     notify_infos = []
     event_list = events.get_subscribable_events()
     allowed = []
@@ -29,12 +32,12 @@ def get_notify_info(request):
     for evname, evdescr in allowed:
         for notiftype, notifdescr in types:
             checked = ""
-            if evname in getattr(request.user,
+            if evname in getattr(flaskg.user,
                                  '%s_subscribed_events' % notiftype):
                 checked = "checked"
             notify_infos.append(dict(name='subscribe:%s:%s' % (notiftype, evname),
                                      checked=checked,
-                                     text=html.Raw(request.getText(evdescr)))
+                                     text=html.Raw(_(evdescr)))
                       )
     return notify_infos
 
@@ -44,9 +47,8 @@ class Settings(UserPrefBase):
         """ Initialize user settings form. """
         UserPrefBase.__init__(self, request)
         self.request = request
-        self._ = request.getText
-        self.cfg = request.cfg
-        self.title = self._("Notification")
+        self.cfg = app.cfg
+        self.title = _("Notification")
         self.name = 'notification'
 
     def _decode_pagelist(self, key):
@@ -72,7 +74,7 @@ class Settings(UserPrefBase):
         _ = self._
         form = self.request.form
 
-        theuser = self.request.user
+        theuser = flaskg.user
         if not theuser:
             return
 

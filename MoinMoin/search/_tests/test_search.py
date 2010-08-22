@@ -88,7 +88,7 @@ class BaseSearchTest(object):
     doesnotexist = u'jfhsdaASDLASKDJ'
 
     class Config(wikiconfig.Config):
-        preloaded_xml = wikiconfig.Config._test_items_xml
+        load_xml = wikiconfig.Config._test_items_xml
 
     # key - page name, value - page content. If value is None page
     # will not be created but will be used for a search. None should

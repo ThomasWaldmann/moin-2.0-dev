@@ -8,6 +8,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
+from flask import flaskg
+
+from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
@@ -18,9 +23,7 @@ class Settings(UserPrefBase):
         """ Initialize password change form. """
         UserPrefBase.__init__(self, request)
         self.request = request
-        self._ = request.getText
-        _ = request.getText
-        self.cfg = request.cfg
+        self.cfg = app.cfg
         self.title = _("Change password")
         self.name = 'changepass'
 
@@ -29,7 +32,7 @@ class Settings(UserPrefBase):
         return (not 'password' in self.cfg.user_form_remove and
                 not 'password' in self.cfg.user_form_disable and
                 UserPrefBase.allowed(self) and
-                not 'password' in self.request.user.auth_attribs)
+                not 'password' in flaskg.user.auth_attribs)
 
 
     def handle_form(self):
@@ -55,15 +58,15 @@ class Settings(UserPrefBase):
         if not password:
             return 'error', _("Please specify a password!")
 
-        pw_checker = request.cfg.password_checker
+        pw_checker = app.cfg.password_checker
         if pw_checker:
-            pw_error = pw_checker(request, request.user.name, password)
+            pw_error = pw_checker(request, flaskg.user.name, password)
             if pw_error:
                 return 'error', _("Password not acceptable: %s") % pw_error
 
         try:
-            self.request.user.enc_password = user.encodePassword(password)
-            self.request.user.save()
+            flaskg.user.enc_password = user.encodePassword(password)
+            flaskg.user.save()
             return 'info', _("Your password has been changed.")
         except UnicodeError, err:
             # Should never happen

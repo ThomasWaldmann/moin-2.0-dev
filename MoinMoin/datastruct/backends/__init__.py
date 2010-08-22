@@ -8,6 +8,7 @@ MoinMoin - base classes for datastructs.
 
 from UserDict import DictMixin
 
+from flask import current_app as app
 
 class GroupDoesNotExistError(Exception):
     """
@@ -54,7 +55,7 @@ class BaseGroupsBackend(object):
 
     def __init__(self, request):
         self.request = request
-        self.page_group_regex = request.cfg.cache.page_group_regexact
+        self.page_group_regex = app.cfg.cache.page_group_regexact
 
     def is_group_name(self, member):
         return self.page_group_regex.match(member)
@@ -306,7 +307,7 @@ class BaseDictsBackend(object):
 
     def __init__(self, request):
         self.request = request
-        self.page_dict_regex = request.cfg.cache.page_dict_regexact
+        self.page_dict_regex = app.cfg.cache.page_dict_regexact
 
     def is_dict_name(self, name):
         return self.page_dict_regex.match(name)

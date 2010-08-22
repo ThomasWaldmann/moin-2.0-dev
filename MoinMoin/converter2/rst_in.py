@@ -21,6 +21,8 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import flaskg
+
 from MoinMoin import config, wikiutil
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
@@ -674,7 +676,7 @@ class MoinDirectives:
         if len(content):
             pagename = content[0]
             page = Page(page_name=pagename, request=self.request)
-            if not self.request.user.may.read(pagename):
+            if not flaskg.user.may.read(pagename):
                 lines =\
                     ["**You are not allowed to read the page: %s**"\
                         % (pagename, )]

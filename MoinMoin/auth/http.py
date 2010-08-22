@@ -44,6 +44,7 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import config, user
 from MoinMoin.auth import BaseAuth, GivenAuth
 
@@ -68,7 +69,6 @@ class HTTPAuthMoin(BaseAuth):
 
     def request(self, request, user_obj, **kw):
         u = None
-        _ = request.getText
         # always revalidate auth
         if user_obj and user_obj.auth_method == self.name:
             user_obj = None

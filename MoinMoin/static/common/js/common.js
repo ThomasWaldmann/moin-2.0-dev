@@ -796,7 +796,45 @@ function runASAP(func) {
         }
     }
 }
+
+
 runASAP(runScrollTextareaInitOnce);
 // ensure init will be run by obsolete browsers
 addLoadEvent(runScrollTextareaInitOnce);
 
+// ===========================================================================
+// The following functions are part of jQuery code
+
+$(function() {
+    // Only submit actions menu form if option of select is not first
+    $('#moin-actionsmenu-select').change(function(){
+        if ((this.selectedIndex != 0) &&
+                 (this.options[this.selectedIndex].disabled == false)) {
+            $("#moin-actionsmenu-form").submit();
+        }
+        this.selectedIndex = 0;
+    });
+
+    // Functions related to search form
+    var e = document.getElementById('searchinput');
+    searchChange(e);
+    searchBlur(e);
+    
+    $('#searchinput').blur(function(){
+        searchBlur(this);
+    });
+
+    $('#searchinput').focus(function(){
+        searchFocus(this);
+    });
+
+    $('#searchinput').change(function(){
+        searchChange(this);
+    });
+
+    $('#searchinput').keyup(function(){
+        searchChange(this);
+    });
+
+    
+});

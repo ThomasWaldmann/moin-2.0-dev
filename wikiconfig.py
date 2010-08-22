@@ -53,7 +53,7 @@ class Config(DefaultConfig):
     DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
-    logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
+    logo_string = u'<img src="%s/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">' % url_prefix_static
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #page_front_page = u'FrontPage' # change to some better value
@@ -61,17 +61,24 @@ class Config(DefaultConfig):
     # Add your configuration items here.
     secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'
 
-# Flask wants uppercase stuff
-MOINCFG = Config
+MOINCFG = Config # Flask only likes uppercase stuff
+# Flask settings - see the flask documentation about their meaning
+SECRET_KEY = 'you need to change this so it is really secret'
+#DEBUG = False # use True for development only, not for public sites!
+#TESTING = False
+#SESSION_COOKIE_NAME = 'session'
+#PERMANENT_SESSION_LIFETIME = timedelta(days=31)
+#USE_X_SENDFILE = False
+#LOGGER_NAME = 'MoinMoin'
 
-# DEVELOPERS! Do not add your configuration items there,
-# you could accidentally commit them! Instead, create a
-# wikiconfig_local.py file containing this:
+# DEVELOPERS! Do not add your configuration items here - you could accidentally
+# commit them! Instead, create a wikiconfig_local.py file containing this:
 #
-# from wikiconfig import Config as WikiConfig
+#from wikiconfig import *
 #
-# class Config(WikiConfig):
-#     configuration_item_1 = 'value1'
+#class LocalConfig(Config):
+#    configuration_item_1 = 'value1'
 #
-# MOINCFG = Config
+#MOINCFG = LocalConfig
+#DEBUG = True
 
