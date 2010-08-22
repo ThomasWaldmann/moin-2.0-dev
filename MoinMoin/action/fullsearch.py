@@ -11,8 +11,10 @@
 
 import re, time
 
-from flask import flash
+from flask import flash, flaskg
+from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
 from parsedatetime.parsedatetime import Calendar
@@ -62,7 +64,6 @@ def searchHints(f, hints):
 
 
 def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
-    _ = request.getText
     titlesearch = checkTitleSearch(request)
     if titlesearch < 0:
         check_surge_protect(request, kick=True) # get rid of spammer
@@ -107,9 +108,9 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             mtime_parsed = None
 
             # get mtime from known date/time formats
-            for fmt in (request.user.datetime_fmt,
-                    request.cfg.datetime_fmt, request.user.date_fmt,
-                    request.cfg.date_fmt):
+            for fmt in (flaskg.user.datetime_fmt,
+                    app.cfg.datetime_fmt, flaskg.user.date_fmt,
+                    app.cfg.date_fmt):
                 try:
                     mtime_parsed = time.strptime(mtime, fmt)
                 except ValueError:
@@ -136,7 +137,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             if mtime_parsed:
                 # XXX mtime_msg is not shown in some cases
                 mtime_msg = _("Only pages changed since '%s' are being displayed!",
-                             ) % request.user.getFormattedDateTime(mtime)
+                             ) % flaskg.user.getFormattedDateTime(mtime)
             else:
                 mtime_msg = _('The modification date you entered was not '
                         'recognized and is therefore not considered for the '

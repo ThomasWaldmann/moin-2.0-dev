@@ -13,12 +13,20 @@
 import re
 import difflib
 
-from flask import request, url_for, flash, render_template, Response, redirect
+from flask import request, url_for, flash, render_template, Response, redirect, session
 from flask import flaskg
+from flask import current_app as app
 
+from flatland import String, Form
+from flatland.validation import Validator, Present, IsEmail
+
+from MoinMoin import _, N_
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
+from MoinMoin.util.forms import make_generator
+
+N_ = lambda x: x
 
 
 @frontend.route('/+dispatch', methods=['GET', ])
@@ -30,7 +38,7 @@ def dispatch():
 
 @frontend.route('/')
 def show_root():
-    item_name = flaskg.context.cfg.page_front_page
+    item_name = app.cfg.page_front_page
     location = url_for('frontend.show_item', item_name=item_name)
     return redirect(location)
 
@@ -66,10 +74,17 @@ Allow: /
 """, mimetype='text/plain')
 
 
+@frontend.route('/favicon.ico')
+def favicon():
+    # although we tell that favicon.ico is at /static/favicon.ico,
+    # some browsers still request it from /favicon.ico...
+    return app.send_static_file('favicon.ico')
+
+
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
-    flaskg.context.user.addTrail(item_name)
+    flaskg.user.addTrail(item_name)
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
@@ -117,7 +132,7 @@ def show_dom(item_name, rev):
 @frontend.route('/+meta/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+meta/<int:rev>/<itemname:item_name>')
 def show_item_meta(item_name, rev):
-    flaskg.context.user.addTrail(item_name)
+    flaskg.user.addTrail(item_name)
     item = Item.create(flaskg.context, item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
@@ -364,12 +379,11 @@ def global_history():
 def quicklink_item(item_name):
     """ Add/Remove the current wiki page to/from the user quicklinks """
     request = flaskg.context
-    _ = request.getText
-    u = request.user
+    u = flaskg.user
     msg = None
     if not u.valid:
         msg = _("You must login to use this action: %(action)s.") % {"action": "quicklink/quickunlink"}, "error"
-    elif not request.user.isQuickLinkedTo([item_name]):
+    elif not flaskg.user.isQuickLinkedTo([item_name]):
         if not u.addQuicklink(item_name):
             msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
@@ -384,9 +398,8 @@ def quicklink_item(item_name):
 def subscribe_item(item_name):
     """ Add/Remove the current wiki item to/from the user's subscriptions """
     request = flaskg.context
-    _ = request.getText
-    u = request.user
-    cfg = request.cfg
+    u = flaskg.user
+    cfg = app.cfg
     msg = None
     if not u.valid:
         msg = _("You must login to use this action: %(action)s.") % {"action": "subscribe/unsubscribe"}, "error"
@@ -410,16 +423,41 @@ def subscribe_item(item_name):
     return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
+class ValidRegistration(Validator):
+    """Validator for a valid registration form
+    """
+    passwords_mismatch_msg = N_('The passwords do not match.')
+
+    def validate(self, element, state):
+        if not (element['username'].valid and
+                element['password1'].valid and element['password2'].valid and
+                element['email'].valid):
+            return False
+        if element['password1'].value != element['password2'].value:
+            return self.note_error(element, state, 'passwords_mismatch_msg')
+        return True
+
+
+class RegistrationForm(Form):
+    """a simple user registration form"""
+    name = 'register'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password1 = String.using(label=N_('Password')).validated_by(Present())
+    password2 = String.using(label=N_('Password')).validated_by(Present())
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    submit = String.using(default=N_('Register'), optional=True)
+
+    validators = [ValidRegistration()]
+
+
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
-    # TODO use ?next=next_location check if target is in the wiki and not outside domain
     request = flaskg.context
-    _ = request.getText
-    cfg = request.cfg
+    cfg = app.cfg
     item_name = 'Register' # XXX
 
     from MoinMoin.auth import MoinAuth
-    from MoinMoin.security.textcha import TextCha
 
     for auth in cfg.auth:
         if isinstance(auth, MoinAuth):
@@ -428,29 +466,32 @@ def register():
         return Response('No MoinAuth in auth list', 403)
 
     if request.method == 'GET':
-        textcha = TextCha(request)
-        if textcha.is_enabled():
-            textcha = textcha and textcha.render()
-        else:
-            textcha = None
+        form = RegistrationForm.from_defaults()
         return render_template('register.html',
                                title=_("Create Account"),
-                               textcha=textcha,
-                               ticket=wikiutil.createTicket(request),
+                               gen=make_generator(),
+                               form=form,
                               )
     if request.method == 'POST':
-        if 'create' in request.form:
-            if False: # TODO re-add this later: not wikiutil.checkTicket(request, request.form.get('ticket', '')):
-                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'register'}
-            elif not TextCha(request).check_answer_from_form():
-                msg = _('TextCha: Wrong answer! Go back and try again...')
-            else:
-                msg = user.create_user(request)
+        form = RegistrationForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            msg = user.create_user(request,
+                                   username=form['username'].value,
+                                   password=form['password1'].value,
+                                   email=form['email'].value,
+                                  )
             if msg:
                 flash(msg, "error")
             else:
                 flash(_('Account created, please log in now.'), "info")
-        return redirect(url_for('frontend.show_root'))
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('register.html',
+                                   title=_("Create Account"),
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])
@@ -473,42 +514,83 @@ def userprefs():
         return "NotImplemented"
 
 
+class ValidLogin(Validator):
+    """Validator for a valid login
+
+    If username is wrong or password is wrong, we do not tell exactly what was
+    wrong, to prevent username phishing attacks.
+    """
+    fail_msg = N_('Either your username or password was invalid.')
+
+    def validate(self, element, state):
+        if not (element['username'].valid and element['password'].valid):
+            return False
+        # the real login happens at another place. if it worked, we have a valid user
+        if flaskg.user.valid:
+            return True
+        else:
+            return self.note_error(element, state, 'fail_msg')
+
+
+class LoginForm(Form):
+    """a simple login form"""
+    name = 'login'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password = String.using(label=N_('Password')).validated_by(Present())
+    submit = String.using(default=N_('Log in'), optional=True)
+
+    validators = [ValidLogin()]
+
+
 @frontend.route('/+login', methods=['GET', 'POST'])
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'LoggedIn' # XXX
     request = flaskg.context
-    _ = request.getText
     if request.method == 'GET':
-        for authmethod in request.cfg.auth:
+        for authmethod in app.cfg.auth:
             hint = authmethod.login_hint(request)
             if hint:
                 flash(hint, "info")
+        form = LoginForm.from_defaults()
         return render_template('login.html',
-                               login_inputs=request.cfg.auth_login_inputs,
+                               login_inputs=app.cfg.auth_login_inputs,
                                title=_("Login"),
+                               gen=make_generator(),
+                               form=form,
                               )
     if request.method == 'POST':
-        if 'login' in request.form:
-            if hasattr(request, '_login_messages'):
-                for msg in request._login_messages:
-                    flash(msg, "error")
-        return redirect(url_for('frontend.show_root'))
+        if hasattr(request, '_login_messages'):
+            for msg in request._login_messages:
+                flash(msg, "error")
+        form = LoginForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            # we have a logged-in, valid user
+            userobj = flaskg.user
+            session['user.id'] = userobj.id
+            session['user.auth_method'] = userobj.auth_method
+            session['user.auth_attribs'] = userobj.auth_attribs
+            return redirect(url_for('frontend.show_root'))
+        else:
+            # if no valid user, show form again (with hints)
+            return render_template('login.html',
+                                   login_inputs=app.cfg.auth_login_inputs,
+                                   title=_("Login"),
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+logout')
 def logout():
     item_name = 'LoggedOut' # XXX
     request = flaskg.context
-    _ = request.getText
-    # if the user really was logged out say so,
-    # but if the user manually added ?do=logout
-    # and that isn't really supported, then don't
-    if request.user.valid:
-        # something went wrong
-        flash(_("You are still logged in."), "warning")
-    else:
-        flash(_("You are now logged out."), "info")
+    flash(_("You are now logged out."), "info")
+    for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
+        if key in session:
+            del session[key]
     return redirect(url_for('frontend.show_root'))
 
 
@@ -606,7 +688,6 @@ def similar_names(item_name):
                 2001 Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
     """
-    _ = flaskg.context.getText
     start, end, matches = findMatches(item_name)
     keys = matches.keys()
     keys.sort()
@@ -789,7 +870,7 @@ class NestedItemListBuilder(object):
 
     def is_ok(self, child):
         if child not in self.children:
-            if not self.request.user.may.read(child):
+            if not flaskg.user.may.read(child):
                 return False
             if self.request.storage.has_item(child):
                 self.children.add(child)

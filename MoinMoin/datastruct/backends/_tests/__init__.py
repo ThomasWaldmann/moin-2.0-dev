@@ -12,6 +12,8 @@
 
 from py.test import raises
 
+from flask import current_app as app
+
 from MoinMoin import security
 from MoinMoin.datastruct import GroupDoesNotExistError
 
@@ -91,7 +93,7 @@ class GroupsBackendTest(object):
         request = self.request
 
         acl_rights = ["AdminGroup:admin,read,write"]
-        acl = security.AccessControlList(request.cfg, acl_rights)
+        acl = security.AccessControlList(app.cfg, acl_rights)
 
         for user in self.expanded_groups['AdminGroup']:
             for permission in ["read", "write", "admin"]:
@@ -105,7 +107,7 @@ class GroupsBackendTest(object):
         request = self.request
 
         acl_rights = ["AdminGroup:read,write"]
-        acl = security.AccessControlList(request.cfg, acl_rights)
+        acl = security.AccessControlList(app.cfg, acl_rights)
 
         assert u"SomeUser" not in request.groups['AdminGroup']
         for permission in ["read", "write"]:
@@ -118,7 +120,7 @@ class GroupsBackendTest(object):
         request = self.request
 
         acl_rights = ["EditorGroup:read,write,admin All:read"]
-        acl = security.AccessControlList(request.cfg, acl_rights)
+        acl = security.AccessControlList(app.cfg, acl_rights)
 
         for member in self.expanded_groups[u'EditorGroup']:
             for permission in ["read", "write", "admin"]:
@@ -133,7 +135,7 @@ class GroupsBackendTest(object):
         assert u'NotExistingGroup' not in request.groups
 
         acl_rights = ["NotExistingGroup:read,write,admin All:read"]
-        acl = security.AccessControlList(request.cfg, acl_rights)
+        acl = security.AccessControlList(app.cfg, acl_rights)
 
         assert not acl.may(request, u"Someone", "write")
 

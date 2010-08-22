@@ -10,6 +10,11 @@ import os.path, re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
+from flask import flaskg
+
+from MoinMoin import _, N_
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
@@ -191,7 +196,7 @@ class Formatter(FormatterBase):
 
         self._is_included = kw.get('is_included', False)
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = app.cfg
 
     # Primitive formatter functions #####################################
 
@@ -802,7 +807,6 @@ function togglenumber(did, nstart, nstep) {
 
         the msg string is not escaped
         """
-        _ = self.request.getText
         res = []
         if on:
             code_id = self.sanitize_to_id('CA-%s' % code_id)
@@ -933,7 +937,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
     # Images / Transclusion ##############################################
 
     def icon(self, type):
-        return self.request.theme.make_icon(type)
+        return flaskg.theme.make_icon(type)
 
     smiley = icon
 
@@ -1218,7 +1222,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
         # the display of comment class divs depends on a user setting:
         if css_class and 'comment' in css_class.split():
             style = kw.get('style')
-            display = self.request.user.show_comments and "display:''" or "display:none"
+            display = flaskg.user.show_comments and "display:''" or "display:none"
             if not style:
                 style = display
             else:
@@ -1234,7 +1238,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
         # the display of comment class spans depends on a user setting:
         if css_class and 'comment' in css_class.split():
             style = kw.get('style')
-            display = self.request.user.show_comments and "display:''" or "display:none"
+            display = flaskg.user.show_comments and "display:''" or "display:none"
             if not style:
                 style = display
             else:

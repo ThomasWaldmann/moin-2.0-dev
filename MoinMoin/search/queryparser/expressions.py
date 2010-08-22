@@ -16,6 +16,8 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
 from MoinMoin import config, wikiutil
 from MoinMoin.search.results import Match, TitleMatch, TextMatch
 
@@ -311,13 +313,13 @@ class BaseTextFieldSearch(BaseExpression):
         else:
             queries = []
             stemmed = []
-            analyzer = WikiAnalyzer(request=request, language=request.cfg.language_default)
+            analyzer = WikiAnalyzer(request=request, language=app.cfg.language_default)
 
             for term in self._pattern.split():
                 query_term = connection.query_field(self._field_to_search, term)
                 tokens = analyzer.tokenize(term)
 
-                if request.cfg.xapian_stemming:
+                if app.cfg.xapian_stemming:
                     query_token = []
                     for token, stemmed_ in tokens:
                         if token != term.lower():

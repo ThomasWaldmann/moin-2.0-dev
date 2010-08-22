@@ -6,13 +6,15 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from flask import flaskg
+
 from MoinMoin.macro2._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
     def macro(self, page=unicode, key=unicode):
         if page is None or key is None:
             raise ValueError("GetVal: you have to give pagename, key.")
-        if not self.request.user.may.read(page):
+        if not flaskg.user.may.read(page):
             raise ValueError("You don't have enough rights on this page")
         d = self.request.dicts.dict(page)
         result = d.get(key, '')

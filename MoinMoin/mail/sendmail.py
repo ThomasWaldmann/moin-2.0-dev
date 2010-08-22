@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 """
     MoinMoin - email helper functions
 
@@ -13,6 +13,9 @@ from email.Header import Header
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import current_app as app
+
+from MoinMoin import _, N_
 from MoinMoin import config
 
 _transdict = {"AT": "@", "DOT": ".", "DASH": "-"}
@@ -21,7 +24,7 @@ _transdict = {"AT": "@", "DOT": ".", "DASH": "-"}
 def encodeAddress(address, charset):
     """ Encode email address to enable non ascii names
 
-    e.g. '"Jürgen Hermann" <jh@web.de>'. According to the RFC, the name
+    e.g. '"JÃ¼rgen Hermann" <jh@web.de>'. According to the RFC, the name
     part should be encoded, the address should not.
 
     @param address: email address, possibly using '"name" <address>' format
@@ -72,8 +75,7 @@ def sendmail(request, to, subject, text, mail_from=None):
     from email.Charset import Charset, QP
     from email.Utils import formatdate, make_msgid
 
-    _ = request.getText
-    cfg = request.cfg
+    cfg = app.cfg
     mail_from = mail_from or cfg.mail_from
 
     logging.debug("send mail, from: %r, subj: %r" % (mail_from, subject))
@@ -106,7 +108,7 @@ def sendmail(request, to, subject, text, mail_from=None):
 
     # Create message headers
     # Don't expose emails addreses of the other subscribers, instead we
-    # use the same mail_from, e.g. u"Jürgen Wiki <noreply@mywiki.org>"
+    # use the same mail_from, e.g. u"JÃ¼rgen Wiki <noreply@mywiki.org>"
     address = encodeAddress(mail_from, charset)
     msg['From'] = address
     msg['To'] = address

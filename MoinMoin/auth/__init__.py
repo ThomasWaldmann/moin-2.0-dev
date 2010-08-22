@@ -134,8 +134,11 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
-from flask import url_for
+from flask import url_for, session
 
+from flask import current_app as app
+
+from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 
 
@@ -232,8 +235,6 @@ class MoinAuth(BaseAuth):
         if not username and not password:
             return ContinueLogin(user_obj)
 
-        _ = request.getText
-
         logging.debug("%s: performing login action" % self.name)
 
         if username and not password:
@@ -248,7 +249,6 @@ class MoinAuth(BaseAuth):
             return ContinueLogin(user_obj, _("Invalid username or password."))
 
     def login_hint(self, request):
-        _ = request.getText
         register_url = url_for('frontend.register')
         recover_url = url_for('frontend.recoverpass')
 
@@ -333,7 +333,6 @@ class GivenAuth(BaseAuth):
 
     def request(self, request, user_obj, **kw):
         u = None
-        _ = request.getText
         # always revalidate auth
         if user_obj and user_obj.auth_method == self.name:
             user_obj = None
@@ -382,7 +381,7 @@ def handle_login(request, userobj=None, username=None, password=None,
         'attended': attended,
         'multistage': (stage and True) or None
     }
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue
         ret = authmethod.login(request, userobj, **params)
@@ -419,13 +418,7 @@ def handle_logout(request, userobj):
         # not logged in
         return userobj
 
-    if userobj.auth_method == 'setuid':
-        # we have no authmethod object for setuid
-        userobj = request._setuid_real_user
-        del request._setuid_real_user
-        return userobj
-
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.logout(request, userobj, cookie=request.cookies)
         if not cont:
             break
@@ -433,39 +426,21 @@ def handle_logout(request, userobj):
 
 def handle_request(request, userobj):
     """ Handle the per-request callbacks of the configured authentication methods. """
-    for authmethod in request.cfg.auth:
+    for authmethod in app.cfg.auth:
         userobj, cont = authmethod.request(request, userobj, cookie=request.cookies)
         if not cont:
             break
     return userobj
 
-def setup_setuid(request, userobj):
-    """ Check for setuid conditions in the session and setup an user
-    object accordingly. Returns a tuple of the new user objects.
-
-    @param request: a moin request object
-    @param userobj: a moin user object
-    @rtype: boolean
-    @return: (new_user, user) or (user, None)
-    """
-    old_user = None
-    if 'setuid' in request.session and userobj and userobj.isSuperUser():
-        old_user = userobj
-        uid = request.session['setuid']
-        userobj = user.User(request, uid, auth_method='setuid')
-        userobj.valid = True
-    logging.debug("setup_suid returns %r, %r" % (userobj, old_user))
-    return (userobj, old_user)
-
-def setup_from_session(request, session):
+def setup_from_session(request):
     userobj = None
     if 'user.id' in session:
         auth_userid = session['user.id']
         auth_method = session['user.auth_method']
         auth_attrs = session['user.auth_attribs']
         logging.debug("got from session: %r %r" % (auth_userid, auth_method))
-        logging.debug("current auth methods: %r" % request.cfg.auth_methods)
-        if auth_method and auth_method in request.cfg.auth_methods:
+        logging.debug("current auth methods: %r" % app.cfg.auth_methods)
+        if auth_method and auth_method in app.cfg.auth_methods:
             userobj = user.User(request, id=auth_userid,
                                 auth_method=auth_method,
                                 auth_attribs=auth_attrs)

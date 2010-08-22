@@ -9,6 +9,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin import user
 from MoinMoin.Page import Page
 from MoinMoin.mail import sendmail
@@ -31,7 +33,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
 
     """
     change = notification.page_change_message("page_changed", request, page, email_lang, comment=comment, revisions=revisions)
-    _ = lambda text: request.getText(text, lang=email_lang)
+    _ = lambda x: x # FIXME, was: lambda text: request.getText(text, lang=email_lang)
 
     if len(revisions) >= 2:
         querystr = {'do': 'diff',
@@ -108,8 +110,8 @@ def handle_user_created(event):
     """Sends an email to super users that have subscribed to this event type"""
 
     request = event.request
-    sitename = request.cfg.sitename
-    from_address = request.cfg.mail_from
+    sitename = app.cfg.sitename
+    from_address = app.cfg.mail_from
     event_name = event.name
     email = event.user.email or u"NOT SET"
     username = event.user.name
@@ -127,7 +129,7 @@ def handle_user_created(event):
 def handle(event):
     """An event handler"""
 
-    if not event.request.cfg.mail_enabled:
+    if not app.cfg.mail_enabled:
         return
 
     if isinstance(event, (ev.PageChangedEvent, ev.TrivialPageChangedEvent)):

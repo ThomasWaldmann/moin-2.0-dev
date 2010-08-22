@@ -7,6 +7,11 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from flask import current_app as app
+
+from flask import flaskg
+
+from MoinMoin import _, N_
 from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
@@ -14,9 +19,8 @@ from MoinMoin.util.tree import moin_page
 class Macro(MacroBlockBase):
     def macro(self):
         request = self.request
-        _ = request.getText
 
-        if not request.user or not request.user.isSuperUser():
+        if not flaskg.user or not flaskg.user.isSuperUser():
             return ''
 
         settings = {}
@@ -74,7 +78,7 @@ class Macro(MacroBlockBase):
                         yield name, cls.__dict__[name]
 
         found = []
-        for vname, value in iter_vnames(request.cfg):
+        for vname, value in iter_vnames(app.cfg):
             if hasattr(defaultconfig.ConfigFunctionality, vname):
                 continue
             if vname in settings and settings[vname] == value:

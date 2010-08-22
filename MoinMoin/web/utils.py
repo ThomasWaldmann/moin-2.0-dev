@@ -9,6 +9,8 @@
 
 from werkzeug import abort, redirect, Response
 
+from flask import flaskg
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -17,7 +19,7 @@ from MoinMoin.Page import Page
 
 
 def redirect_last_visited(request):
-    pagetrail = request.user.getTrail()
+    pagetrail = flaskg.user.getTrail()
     if pagetrail:
         # Redirect to last page visited
         last_visited = pagetrail[-1]

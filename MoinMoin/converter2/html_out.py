@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink, xml
 
@@ -78,7 +79,7 @@ class Attributes(object):
             # We convert xml:id
             elif key.uri == xml.namespace:
                 if key.name == 'id' or key.name == 'lang':
-                   new[ET.QName(key.name, html.namespace)] = value
+                    new[ET.QName(key.name, html.namespace)] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
@@ -401,9 +402,10 @@ class Converter(object):
                 key = html('class')
                 attribute[key] = 'big'
                 return self.new_copy(html.span, elem, attribute)
-        generate = attrib.get('element')
+        generate = attrib.get(html('class'))
         if generate:
-            if generate in self.direct_inline_tags:
+            class_element = generate.split("-")[1]
+            if class_element in self.direct_inline_tags:
                 return self.new_copy(html(generate), elem)
             else:
                 attribute = {}
@@ -507,8 +509,6 @@ class ConverterPage(Converter):
         return cls(request)
 
     def __call__(self, element):
-        _ = self.request.getText
-
         special_root = SpecialPage()
         self._special = [special_root]
         self._special_stack = [special_root]

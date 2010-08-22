@@ -26,6 +26,7 @@ except ImportError, err:
     logging.error("You need to have python-ldap installed (%s)." % str(err))
     raise
 
+from MoinMoin import _, N_
 from MoinMoin import user
 from MoinMoin.auth import BaseAuth, CancelLogin, ContinueLogin
 
@@ -120,7 +121,6 @@ class LDAPAuth(BaseAuth):
     def login(self, request, user_obj, **kw):
         username = kw.get('username')
         password = kw.get('password')
-        _ = request.getText
 
 
         # we require non-empty password as ldap bind does a anon (not password

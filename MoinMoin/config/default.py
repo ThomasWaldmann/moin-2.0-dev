@@ -16,6 +16,7 @@ import sys
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import config, error, util, wikiutil, web
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
@@ -23,14 +24,7 @@ import MoinMoin.auth as authmodule
 import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
-import MoinMoin.web.session
 from MoinMoin.security import AccessControlList
-
-
-# This is a way to mark some text for the gettext tools so that they don't
-# get orphaned. See http://www.python.org/doc/current/lib/node278.html.
-def _(text):
-    return text
 
 
 class CacheClass(object):
@@ -74,11 +68,6 @@ class ConfigFunctionality(object):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
-        # directories below cache_dir (using __dirname__ to avoid conflicts)
-        for dirname in ('session', ):
-            name = dirname + '_dir'
-            if not getattr(self, name, None):
-                setattr(self, name, os.path.abspath(os.path.join(self.cache_dir, '__%s__' % dirname)))
 
         # Try to decode certain names which allow unicode
         self._decode()
@@ -101,32 +90,6 @@ class ConfigFunctionality(object):
                      Please change it in your wiki configuration and try again."""
             raise error.ConfigurationError(msg)
 
-        # moin < 1.9 used cookie_lifetime = <float> (but converted it to int) for logged-in users and
-        # anonymous_session_lifetime = <float> or None for anon users
-        # moin >= 1.9 uses cookie_lifetime = (<float>, <float>) - first is anon, second is logged-in
-        if not (isinstance(self.cookie_lifetime, tuple) and len(self.cookie_lifetime) == 2):
-            logging.error("wiki configuration has an invalid setting: " +
-                          "cookie_lifetime = %r" % (self.cookie_lifetime, ))
-            try:
-                anon_lifetime = self.anonymous_session_lifetime
-                logging.warning("wiki configuration has an unsupported setting: " +
-                                "anonymous_session_lifetime = %r - " % anon_lifetime +
-                                "please remove it.")
-                if anon_lifetime is None:
-                    anon_lifetime = 0
-                anon_lifetime = float(anon_lifetime)
-            except:
-                # if anything goes wrong, use default value
-                anon_lifetime = 0
-            try:
-                logged_in_lifetime = int(self.cookie_lifetime)
-            except:
-                # if anything goes wrong, use default value
-                logged_in_lifetime = 12
-            self.cookie_lifetime = (anon_lifetime, logged_in_lifetime)
-            logging.warning("using cookie_lifetime = %r - " % (self.cookie_lifetime, ) +
-                            "please fix your wiki configuration.")
-
         self._loadPluginModule()
 
         # Preparse user dicts
@@ -141,8 +104,7 @@ class ConfigFunctionality(object):
 
         # post process
 
-        # 'setuid' special auth method auth method can log out
-        self.auth_can_logout = ['setuid']
+        self.auth_can_logout = []
         self.auth_login_inputs = []
         found_names = []
         for auth in self.auth:
@@ -409,7 +371,6 @@ def _default_password_checker(cfg, request, username, password):
         @return: None if there is no problem with the password,
                  some unicode object with an error msg, if the password is problematic.
     """
-    _ = request.getText
     # in any case, do a very simple built-in check to avoid the worst passwords
     if len(password) < 6:
         return _("Password is too short.")
@@ -451,23 +412,6 @@ options_no_group_name = {
      "function f(cfg, request) that returns a backend which is used to access dicts definitions."),
     ('groups', lambda cfg, request: datastruct.WikiGroups(request),
      "function f(cfg, request) that returns a backend which is used to access groups definitions."),
-  )),
-  # ==========================================================================
-  'session': ('Session settings', "Session-related settings, see HelpOnSessions.", (
-    ('session_service', DefaultExpression('web.session.FileSessionService()'),
-     "The session service."),
-    ('cookie_name', None,
-     'The variable part of the session cookie name. (None = determine from URL, siteidmagic = use siteid, any other string = use that)'),
-    ('cookie_secure', None,
-     'Use secure cookie. (None = auto-enable secure cookie for https, True = ever use secure cookie, False = never use secure cookie).'),
-    ('cookie_httponly', False,
-     'Use a httponly cookie that can only be used by the server, not by clientside scripts.'),
-    ('cookie_domain', None,
-     'Domain used in the session cookie. (None = do not specify domain).'),
-    ('cookie_path', None,
-     'Path used in the session cookie (None = auto-detect). Please only set if you know exactly what you are doing.'),
-    ('cookie_lifetime', (0, 12),
-     'Session lifetime [h] of (anonymous, logged-in) users (see HelpOnSessions for details).'),
   )),
   # ==========================================================================
   'auth': ('Authentication / Authorization / Security settings', None, (
@@ -522,7 +466,17 @@ options_no_group_name = {
      "if True, do not allow to change the theme"),
 
     ('stylesheets', [],
-     "List of tuples (media, csshref) to insert after theme css, before user css, see HelpOnThemes."),
+     """
+     List of tuples (media, csshref, title, alternate_stylesheet)
+     to insert after theme css, before user css, see HelpOnThemes.
+     Usage: [('screen', 'http://moinmo.in/static/alternate.css', 'Moin Other Style', True)]
+     """),
+
+     ('external_scripts', [],
+      """
+      List of tuples (type, href) to insert after Moin javascript.
+      Usage: [('text/javascript', 'http://moinmo.in/static/script.js')]
+      """),
 
     ('supplementation_item_names', [u'Discussion', ],
      "List of names of the supplementation (sub)items [unicode]"),
@@ -582,7 +536,6 @@ options_no_group_name = {
   'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
-    ('session_dir', None, "Directory for session storage, by default computed to be `cache_dir`/__session__."),
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
@@ -869,7 +822,4 @@ def _add_options_to_defconfig(opts, addgroup=True):
 
 _add_options_to_defconfig(options)
 _add_options_to_defconfig(options_no_group_name, False)
-
-# remove the gettext pseudo function
-del _
 

@@ -19,6 +19,8 @@
 
 import random
 
+from flask import flaskg
+
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroInlineBase
 
@@ -26,7 +28,7 @@ class Macro(MacroInlineBase):
     def macro(self, pagename=u'FortuneCookies'):
         request = self.request
 
-        if request.user.may.read(pagename):
+        if flaskg.user.may.read(pagename):
             page = Page(request, pagename)
             raw = page.get_raw_body()
         else:
