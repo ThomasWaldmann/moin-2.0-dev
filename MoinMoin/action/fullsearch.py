@@ -229,9 +229,6 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         Page(request, pagename).send_page()
         return
 
-    # This action generates data using the user language
-    request.setContentLanguage(request.lang)
-
     request.theme.send_title(title % needle, pagename=pagename)
 
     # Start content (important for RTL support)

@@ -88,7 +88,7 @@ class ThemeBase(object):
         self.storage = request.storage
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
         self.output_charset = 'utf-8'  # was: page.output_charset
-        self.ui_lang = request.lang
+        self.ui_lang = 'en'
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)

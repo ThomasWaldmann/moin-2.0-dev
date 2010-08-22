@@ -216,7 +216,6 @@ graph.render(data);
     f = request.formatter
     app.cfg.stylesheets = [('all', app.cfg.url_prefix_static + '/graph/graph.css', )]
     request.emit_http_headers()
-    request.setContentLanguage(request.lang)
     request.theme.send_title(_('Info for "%s"') % (page.page_name, ), page=page)
     request.write(f.div(1, id="content"))
     history(page, pagename, request)
