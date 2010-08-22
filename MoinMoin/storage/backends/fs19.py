@@ -682,9 +682,6 @@ class FsUserItem(Item):
         # int last_saved timestamp should be enough:
         metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
 
-        # rename show_page_trail to show_trail
-        metadata['show_trail'] = metadata['show_page_trail']
-
         # rename subscribed_pages to subscribed_items
         metadata['subscribed_items'] = metadata['subscribed_pages']
 
@@ -698,7 +695,7 @@ class FsUserItem(Item):
                 'show_toolbar', # not used any more
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
-                'show_page_trail', # renamed to show_trail
+                'show_page_trail', # theme decides whether to show trail
                 'subscribed_pages', # renamed to subscribed_items
                 'edit_cols', # not used any more
                 'jid', # no jabber support
