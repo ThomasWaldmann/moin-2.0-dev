@@ -14,13 +14,9 @@ from werkzeug import create_environ
 
 from flask import current_app as app
 
-from MoinMoin import i18n, user, config
 from MoinMoin.formatter import text_html
 from MoinMoin.web.request import Request
 from MoinMoin.web.utils import UniqueIDGenerator
-
-from MoinMoin import log
-logging = log.getLogger(__name__)
 
 NoDefault = object()
 
@@ -63,46 +59,21 @@ class EnvironProxy(property):
         del obj.environ[self.name]
 
     def __repr__(self):
-        return "<%s for '%s'>" % (self.__class__.__name__,
-                                  self.name)
+        return "<%s for '%s'>" % (self.__class__.__name__, self.name)
 
-class Context(object):
-    """ Standard implementation for the context interface.
 
-    This one wraps up a Moin-Request object and the associated
-    environ and also keeps track of it's changes.
-    """
+class AllContext(object):
     def __init__(self, request):
         assert isinstance(request, Request)
 
         self.request = request
         self.environ = environ = request.environ
-        self.personalities = self.environ.setdefault(
-            'context.personalities', []
-        )
+        self.personalities = self.environ.setdefault('context.personalities', [])
         self.personalities.append(self.__class__.__name__)
-
-    def become(self, cls):
-        """ Become another context, based on given class.
-
-        @param cls: class to change to, must be a sister class
-        @rtype: boolean
-        @return: wether a class change took place
-        """
-        if self.__class__ is cls:
-            return False
-        else:
-            self.personalities.append(cls)
-            self.__class__ = cls
-            return True
 
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.personalities)
 
-
-class BaseContext(Context):
-    """ Implements a basic context, that provides some common attributes.
-    Most attributes are lazily initialized via descriptors. """
     content_lang = EnvironProxy('content_lang', lambda o: app.cfg.language_default)
     current_lang = EnvironProxy('current_lang')
 
@@ -120,24 +91,13 @@ class BaseContext(Context):
         return Item(self, u'')
     rootitem = EnvironProxy(rootitem)
 
-
-class HTTPContext(BaseContext):
-    """ Context that holds attributes and methods for manipulation of
-    incoming and outgoing HTTP data. """
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:
             return getattr(self.request, name)
         except AttributeError, e:
-            return super(HTTPContext, self).__getattribute__(name)
+            return super(AllContext, self).__getattribute__(name)
 
-
-class AuxilaryMixin(object):
-    """
-    Mixin for diverse attributes and methods that aren't clearly assignable
-    to a particular phase of the request.
-    """
     # several attributes used by other code to hold state across calls
     _login_messages = EnvironProxy('_login_messages', lambda o: [])
     _login_multistage = EnvironProxy('_login_multistage', None)
@@ -167,8 +127,6 @@ class AuxilaryMixin(object):
         if hasattr(self, 'uid_generator'):
             del self.uid_generator
 
-class AllContext(HTTPContext, AuxilaryMixin):
-    """ Catchall context to be able to quickly test old Moin code. """
 
 class ScriptContext(AllContext):
     """ Context to act in scripting environments (e.g. former request_cli).
@@ -186,4 +144,3 @@ class ScriptContext(AllContext):
         super(ScriptContext, self).__init__(request)
         from MoinMoin import wsgiapp
         wsgiapp.init(self)
-
