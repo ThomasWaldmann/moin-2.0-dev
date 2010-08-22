@@ -338,6 +338,9 @@ def before():
     init_unprotected_backends(context)
     flaskg.user = setup_user(context)
 
+    flaskg.dicts = app.cfg.dicts(context)
+    flaskg.groups = app.cfg.groups(context)
+
     context.lang = setup_i18n_postauth(context)
 
     def finish():

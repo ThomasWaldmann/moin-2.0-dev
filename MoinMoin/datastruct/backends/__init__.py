@@ -9,6 +9,7 @@ MoinMoin - base classes for datastructs.
 from UserDict import DictMixin
 
 from flask import current_app as app
+from flask import flaskg
 
 class GroupDoesNotExistError(Exception):
     """
@@ -208,7 +209,7 @@ class GreedyGroup(BaseGroup):
         if member in self.members or member in self.member_groups:
             return True
         else:
-            groups = self.request.groups
+            groups = flaskg.groups
             for group_name in self.member_groups:
                 if group_name not in processed_groups and group_name in groups and groups[group_name].__contains__(member, processed_groups):
                     return True
@@ -241,7 +242,7 @@ class GreedyGroup(BaseGroup):
                 yielded_members.add(member)
                 yield member
 
-        groups = self.request.groups
+        groups = flaskg.groups
         for group_name in self.member_groups:
             if group_name not in processed_groups:
                 if group_name in groups:

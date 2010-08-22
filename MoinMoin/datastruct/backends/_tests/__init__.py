@@ -13,6 +13,7 @@
 from py.test import raises
 
 from flask import current_app as app
+from flask import flaskg
 
 from MoinMoin import security
 from MoinMoin.datastruct import GroupDoesNotExistError
@@ -44,7 +45,7 @@ class GroupsBackendTest(object):
         """
         Test group_wiki Backend and Group containment methods.
         """
-        groups = self.request.groups
+        groups = flaskg.groups
 
         for group, members in self.expanded_groups.iteritems():
             assert group in groups
@@ -54,13 +55,13 @@ class GroupsBackendTest(object):
         raises(GroupDoesNotExistError, lambda: groups[u'NotExistingGroup'])
 
     def test_contains_group(self):
-        groups = self.request.groups
+        groups = flaskg.groups
 
         assert u'AdminGroup' in groups[u'EditorGroup']
         assert u'EditorGroup' not in groups[u'AdminGroup']
 
     def test_iter(self):
-        groups = self.request.groups
+        groups = flaskg.groups
 
         for group, members in self.expanded_groups.iteritems():
             returned_members = list(groups[group])
@@ -69,7 +70,7 @@ class GroupsBackendTest(object):
                 assert member in returned_members
 
     def test_get(self):
-        groups = self.request.groups
+        groups = flaskg.groups
 
         assert groups.get(u'AdminGroup')
         assert u'NotExistingGroup' not in groups
@@ -77,7 +78,7 @@ class GroupsBackendTest(object):
         assert groups.get(u'NotExistingGroup', []) == []
 
     def test_groups_with_member(self):
-        groups = self.request.groups
+        groups = flaskg.groups
 
         john_groups = list(groups.groups_with_member(u'John'))
         assert 2 == len(john_groups)
@@ -109,11 +110,11 @@ class GroupsBackendTest(object):
         acl_rights = ["AdminGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
-        assert u"SomeUser" not in request.groups['AdminGroup']
+        assert u"SomeUser" not in flaskg.groups['AdminGroup']
         for permission in ["read", "write"]:
             assert not acl.may(request, u"SomeUser", permission), 'SomeUser must not have %s permission because he is not listed in the AdminGroup' % permission
 
-        assert u'Admin1' in request.groups['AdminGroup']
+        assert u'Admin1' in flaskg.groups['AdminGroup']
         assert not acl.may(request, u"Admin1", "admin")
 
     def test_backend_acl_with_all(self):
@@ -132,7 +133,7 @@ class GroupsBackendTest(object):
 
     def test_backend_acl_not_existing_group(self):
         request = self.request
-        assert u'NotExistingGroup' not in request.groups
+        assert u'NotExistingGroup' not in flaskg.groups
 
         acl_rights = ["NotExistingGroup:read,write,admin All:read"]
         acl = security.AccessControlList(app.cfg, acl_rights)
@@ -151,7 +152,7 @@ class DictsBackendTest(object):
 
     def test_getitem(self):
         expected_dicts = self.dicts
-        dicts = self.request.dicts
+        dicts = flaskg.dicts
 
         for dict_name, expected_dict in expected_dicts.items():
             test_dict = dicts[dict_name]
@@ -160,7 +161,7 @@ class DictsBackendTest(object):
                 assert test_dict[key] == value
 
     def test_contains(self):
-        dicts = self.request.dicts
+        dicts = flaskg.dicts
 
         for key in self.dicts:
             assert key in dicts
@@ -168,7 +169,7 @@ class DictsBackendTest(object):
         assert u'SomeNotExistingDict' not in dicts
 
     def test_update(self):
-        dicts = self.request.dicts
+        dicts = flaskg.dicts
 
         d = {}
         d.update(dicts['SomeTestDict'])
@@ -176,7 +177,7 @@ class DictsBackendTest(object):
         assert u'First' in d
 
     def test_get(self):
-        dicts = self.request.dicts
+        dicts = flaskg.dicts
 
         for dict_name in self.dicts:
             assert dicts.get(dict_name)

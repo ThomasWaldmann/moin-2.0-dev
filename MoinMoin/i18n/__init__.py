@@ -226,7 +226,7 @@ def getText(original, request, lang, **kw):
                     raise KeyError
                 language = languages[lang]['x-language-in-english']
                 dictpagename = "%sDict" % language.replace(' ', '')
-                dicts = request.dicts
+                dicts = flaskg.dicts
                 if dictpagename in dicts:
                     userdict = dicts[dictpagename]
                     translated = userdict[original]

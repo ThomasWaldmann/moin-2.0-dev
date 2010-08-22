@@ -105,18 +105,6 @@ class AllContext(object):
         return UniqueIDGenerator(pagename=pagename)
     uid_generator = EnvironProxy(uid_generator)
 
-    def dicts(self):
-        """ Lazy initialize the dicts on the first access """
-        dicts = app.cfg.dicts(self)
-        return dicts
-    dicts = EnvironProxy(dicts)
-
-    def groups(self):
-        """ Lazy initialize the groups on the first access """
-        groups = app.cfg.groups(self)
-        return groups
-    groups = EnvironProxy(groups)
-
     def reset(self):
         self.current_lang = app.cfg.language_default
         if hasattr(self, 'uid_generator'):

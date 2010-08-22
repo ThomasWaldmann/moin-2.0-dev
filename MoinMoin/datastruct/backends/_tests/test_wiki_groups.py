@@ -44,10 +44,10 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page = create_item(request, u'SomeGroup', u" * ExampleUser")
         page.rename(u'AnotherGroup')
 
-        result = u'ExampleUser' in request.groups[u'AnotherGroup']
+        result = u'ExampleUser' in flaskg.groups[u'AnotherGroup']
         assert result
 
-        py.test.raises(GroupDoesNotExistError, lambda: request.groups[u'SomeGroup'])
+        py.test.raises(GroupDoesNotExistError, lambda: flaskg.groups[u'SomeGroup'])
 
     def test_copy_group_page(self):
         """
@@ -59,10 +59,10 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page = create_item(request, u'SomeGroup', u" * ExampleUser")
         page.copy(u'SomeOtherGroup')
 
-        result = u'ExampleUser' in request.groups[u'SomeOtherGroup']
+        result = u'ExampleUser' in flaskg.groups[u'SomeOtherGroup']
         assert result
 
-        result = u'ExampleUser' in request.groups[u'SomeGroup']
+        result = u'ExampleUser' in flaskg.groups[u'SomeGroup']
         assert result
 
     def test_appending_group_page(self):
@@ -77,7 +77,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         test_user = create_random_string_list(length=15, count=1)[0]
         create_item(request, u'UserGroup', "\n".join(page_content))
         append_item(request, u'UserGroup', u' * %s' % test_user)
-        result = test_user in request.groups['UserGroup']
+        result = test_user in flaskg.groups['UserGroup']
 
         assert result
 
@@ -98,7 +98,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         if not user.exists():
             User(request, name=new_user, password=new_user).save()
 
-        result = new_user in request.groups[u'UserGroup']
+        result = new_user in flaskg.groups[u'UserGroup']
         assert result
 
     def test_member_removed_from_group_page(self):
@@ -117,12 +117,12 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
         create_item(request, u'UserGroup', page_content + '\n * %s' % test_user)
-        result = test_user in request.groups[u'UserGroup']
+        result = test_user in flaskg.groups[u'UserGroup']
         assert result
 
         # updates the text without test_user
         create_item(request, u'UserGroup', page_content)
-        result = test_user in request.groups[u'UserGroup']
+        result = test_user in flaskg.groups[u'UserGroup']
         assert not result
 
     def test_group_page_user_addition_trivial_change(self):
@@ -141,7 +141,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         member = u" * %s\n" % test_user
         page = create_item(request, u'UserGroup', member)
 
-        result = test_user in request.groups[u'UserGroup']
+        result = test_user in flaskg.groups[u'UserGroup']
 
         assert result
 

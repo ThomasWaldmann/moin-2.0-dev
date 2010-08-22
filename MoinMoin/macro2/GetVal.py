@@ -16,7 +16,7 @@ class Macro(MacroInlineBase):
             raise ValueError("GetVal: you have to give pagename, key.")
         if not flaskg.user.may.read(page):
             raise ValueError("You don't have enough rights on this page")
-        d = self.request.dicts.dict(page)
+        d = flaskg.dicts.dict(page)
         result = d.get(key, '')
         return result
 
