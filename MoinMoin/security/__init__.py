@@ -235,7 +235,7 @@ class AccessControlList:
             Note: this just checks THIS ACL, the before/default/after ACL must
                   be handled elsewhere, if needed.
         """
-        groups = request.groups
+        groups = flaskg.groups
         allowed = None
         for entry, rightsdict in self.acl:
             if entry in self.special_users:

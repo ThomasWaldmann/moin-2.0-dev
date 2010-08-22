@@ -34,7 +34,7 @@ def userbrowser():
     user_accounts = []
     for uid in user.getUserList(flaskg.context):
         u = user.User(flaskg.context, uid)
-        #groups = [groupname for groupname in groupnames if flaskg.context.dicts.has_member(groupname, account.name)])
+        #groups = [groupname for groupname in groupnames if flaskg.dicts.has_member(groupname, account.name)])
         user_accounts.append(dict(
             uid=uid,
             name=u.name,

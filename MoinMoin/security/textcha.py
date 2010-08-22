@@ -50,7 +50,7 @@ class TextCha(object):
     def _get_textchas(self):
         """ get textchas from the wiki config for the user's language (or default_language or en) """
         request = self.request
-        groups = request.groups
+        groups = flaskg.groups
         cfg = app.cfg
         user = flaskg.user
         disabled_group = cfg.textchas_disabled_group

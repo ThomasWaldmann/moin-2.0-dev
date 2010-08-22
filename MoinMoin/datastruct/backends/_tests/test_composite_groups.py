@@ -9,6 +9,8 @@ MoinMoin.datastruct.backends.composite_groups test
 
 from py.test import raises
 
+from flask import flaskg
+
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
 from MoinMoin.datastruct import ConfigGroups, CompositeGroups, GroupDoesNotExistError
 from MoinMoin._tests import wikiconfig
@@ -55,7 +57,7 @@ class TestCompositeGroup(object):
                                    ConfigGroups(request, self.second_backend_groups))
 
     def setup_method(self, method):
-        self.groups = self.request.groups
+        self.groups = flaskg.groups
 
     def test_getitem(self):
         raises(GroupDoesNotExistError, lambda: self.groups[u'NotExistingGroup'])
