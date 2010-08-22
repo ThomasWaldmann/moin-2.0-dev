@@ -167,7 +167,7 @@ class DataBrowserWidget(base.Widget):
 
         result = []
         if method:
-            result.append(fmt.rawHTML('<form action="%s/%s" method="%s" name="%sform">' % (self.request.script_root, wikiutil.quoteWikinameURL(self.request.page.page_name), method, self.data_id)))
+            result.append(fmt.rawHTML('<form action="%s/%s" method="%s" name="%sform">' % (self.request.script_root, wikiutil.quoteWikinameURL(self.XXX.page.page_name), method, self.data_id)))
         result.append(fmt.div(1))
 
         havefilters = False

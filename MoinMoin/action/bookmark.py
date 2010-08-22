@@ -38,4 +38,4 @@ def execute(pagename, request):
         flaskg.user.delBookmark()
     else:
         flaskg.user.setBookmark(tm)
-    request.page.send_page()
+    XXX.page.send_page()

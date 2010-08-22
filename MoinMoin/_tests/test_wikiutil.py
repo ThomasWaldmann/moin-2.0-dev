@@ -37,15 +37,12 @@ class TestQueryStringSupport:
 
 class TestTickets:
     def testTickets(self):
-        from MoinMoin.Page import Page
         # page name with double quotes
-        self.request.page = Page(self.request, u'bla"bla')
-        ticket1 = wikiutil.createTicket(self.request)
-        assert wikiutil.checkTicket(self.request, ticket1)
+        ticket1 = wikiutil.createTicket(self.request, pagename=u'bla"bla')
+        assert wikiutil.checkTicket(self.request, ticket1, pagename=u'bla"bla')
         # page name with non-ASCII chars
-        self.request.page = Page(self.request, u'\xc4rger')
-        ticket2 = wikiutil.createTicket(self.request)
-        assert wikiutil.checkTicket(self.request, ticket2)
+        ticket2 = wikiutil.createTicket(self.request, pagename=u'\xc4rger')
+        assert wikiutil.checkTicket(self.request, ticket2, pagename=u'\xc4rger')
 
         assert ticket1 != ticket2
 

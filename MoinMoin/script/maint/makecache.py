@@ -42,6 +42,5 @@ General syntax: moin [options] maint makecache
         pages = request.rootpage.getPageList(user='', exists=1)
         for pagename in pages:
             page = Page(request, pagename)
-            request.page = page
             p = page.getPageLinks(request)
 

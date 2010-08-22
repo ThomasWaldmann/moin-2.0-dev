@@ -388,7 +388,6 @@ class XapianIndex(BaseIndex):
                      'update' = check if already in index and update if needed (mtime)
         """
         page = Page(request, pagename, rev=revno)
-        request.page = page # XXX for what is this needed?
 
         wikiname = app.cfg.interwikiname or u"Self"
         revision = str(page.get_real_rev())

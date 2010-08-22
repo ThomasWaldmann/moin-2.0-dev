@@ -677,7 +677,7 @@ class SearchResults(object):
 
         def page_url(n):
             querydict.update({'from': n * hitsPerPage})
-            return self.request.page.url(self.request, querydict, escape=0)
+            return XXX.page.url(self.request, querydict, escape=0)
 
         pages = hitsNum // hitsPerPage
         remainder = hitsNum % hitsPerPage

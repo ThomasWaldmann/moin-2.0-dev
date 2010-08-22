@@ -654,24 +654,14 @@ def getLocalizedPage(request, pagename): # was: getSysPage
     i18n_name = _(pagename)
     pageobj = None
     if i18n_name != pagename:
-        if request.page and i18n_name == request.page.page_name:
-            # do not create new object for current page
-            i18n_page = request.page
-            if i18n_page.exists():
-                pageobj = i18n_page
-        else:
-            i18n_page = Page(request, i18n_name)
-            if i18n_page.exists():
-                pageobj = i18n_page
+        i18n_page = Page(request, i18n_name)
+        if i18n_page.exists():
+            pageobj = i18n_page
 
     # if we failed getting a translated version of <pagename>,
     # we fall back to english
     if not pageobj:
-        if request.page and pagename == request.page.page_name:
-            # do not create new object for current page
-            pageobj = request.page
-        else:
-            pageobj = Page(request, pagename)
+        pageobj = Page(request, pagename)
     return pageobj
 
 
@@ -2431,10 +2421,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
 
     # make the ticket very specific:
     if pagename is None:
-        try:
-            pagename = request.page.page_name
-        except:
-            pagename = ''
+        pagename = ''
 
     if action is None:
         action = 'show'

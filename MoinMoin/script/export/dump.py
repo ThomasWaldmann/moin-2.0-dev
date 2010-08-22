@@ -174,7 +174,6 @@ General syntax: moin [options] export dump [dump-options]
                 pagehtml = ''
                 request.url = urlbase + pagename # add current pagename to url base
                 page = Page.Page(request, pagename)
-                request.page = page
                 try:
                     request.reset()
                     pagehtml = request.redirectedOutput(page.send_page, count_hit=0, content_only=1)

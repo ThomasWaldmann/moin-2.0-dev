@@ -56,7 +56,7 @@ def _create_prefs_page(request, sel=None):
         obj = cls(request)
         if not obj.allowed():
             continue
-        url = request.page.url(request, {'do': 'userprefs', 'sub': sub})
+        url = XXX.page.url(request, {'do': 'userprefs', 'sub': sub})
         lnk = html.LI().append(html.A(href=url).append(html.Text(obj.title)))
         items.append(lnk)
     return unicode(ret)
@@ -64,7 +64,7 @@ def _create_prefs_page(request, sel=None):
 
 def _create_page(request, cancel=False):
     # returns text, title
-    pagename = request.page.page_name
+    pagename = None # XXX
 
     sub = request.args.get('sub', '')
     cls = None
