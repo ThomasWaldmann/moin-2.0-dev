@@ -117,15 +117,6 @@ class BaseContext(Context):
     page = EnvironProxy('page', None) # TODO deprecated, get rid of this
     item_name = EnvironProxy('item_name', None) # TODO deprecated, get rid of this
 
-    def getText(self):
-        lang = self.lang
-        def _(text, i18n=i18n, request=self, lang=lang, **kw):
-            return i18n.getText(text, request, lang, **kw)
-        return _
-
-    getText = property(getText)
-    _ = getText
-
     def rootpage(self):
         # DEPRECATED, use rootitem!
         from MoinMoin.Page import RootPage
