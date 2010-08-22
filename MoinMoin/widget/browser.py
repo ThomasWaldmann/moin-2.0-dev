@@ -7,6 +7,8 @@
                 2010 MoinMoin:EugeneSyromyatnikov
     @license: GNU GPL, see COPYING for details.
 """
+
+from MoinMoin import _, N_
 from MoinMoin.widget import base
 from MoinMoin import wikiutil
 
@@ -50,7 +52,6 @@ def sort_table(rows, sort_columns=None, reverse=None):
 class DataBrowserWidget(base.Widget):
 
     def __init__(self, request, show_header=True, **kw):
-        _ = request.getText
         base.Widget.__init__(self, request, **kw)
         self.data = None
         self.unqual_data_id = 'dbw.'

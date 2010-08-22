@@ -12,6 +12,7 @@ import time
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin import user, util, wikiutil, events
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.userprefs import UserPrefBase
@@ -39,7 +40,6 @@ _date_formats = {# datetime_fmt & date_fmt
 
 def _user(request):
     """ Create elementary user attributes """
-    _ = request.getText
     u = flaskg.user
     user_params = dict(name=dict(param=u.name, title=_("Name"), comment=_("(Use FirstnameLastname)")),
                        aliasname=dict(param=u.aliasname, title=_("Alias-Name"), comment=""),
@@ -49,7 +49,6 @@ def _user(request):
 
 def _dtfmt_select(request):
     """ Create date format selection. """
-    _ = request.getText
     date_formats = [dict(value="", text=_('Default'))]
     dt_d_combined = '%s & %s' % (flaskg.user.datetime_fmt, flaskg.user.date_fmt)
 
@@ -62,7 +61,6 @@ def _dtfmt_select(request):
 
 def _theme_select(request):
     """ Create theme selection. """
-    _ = request.getText
     cur_theme = flaskg.user.valid and flaskg.user.theme_name or app.cfg.theme_default
 
     theme_selection = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="")]
@@ -77,7 +75,6 @@ def _theme_select(request):
 
 def _editor_default_select(request):
     """ Create editor selection. """
-    _ = request.getText
     editor_default = flaskg.user.valid and flaskg.user.editor_default or app.cfg.editor_default
     options = [("<default>", "&lt;%s&gt;" % _("Default"))]
     editor_default_selection = []
@@ -92,7 +89,6 @@ def _editor_default_select(request):
 
 def _prefered_editor(request):
     """ Create editor selection. """
-    _ = request.getText
     editor_ui = flaskg.user.valid and flaskg.user.editor_ui or app.cfg.editor_ui
     prefered_editor = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="selected"),
                        dict(value="theonepreferred", text=_("the one preferred"), selected=""),
@@ -101,7 +97,6 @@ def _prefered_editor(request):
 
 def _tz_select(request, enabled=True):
     """ Create time zone selection. """
-    _ = request.getText
     tz = 0
     if flaskg.user.valid:
         tz_offset = int(flaskg.user.tz_offset)
@@ -128,7 +123,6 @@ def _tz_select(request, enabled=True):
 def _lang_select(request, enabled=True):
     """ Create language selection. """
     from MoinMoin import i18n
-    _ = request.getText
     cur_lang = flaskg.user.language
 
     langs = i18n.wikiLanguages().items()
@@ -145,7 +139,6 @@ def _lang_select(request, enabled=True):
     return languages
 
 def get_userprefs_info(request):
-    _ = request.getText
     u = flaskg.user
     # boolean user options
     general_options = []
@@ -185,7 +178,6 @@ class Settings(UserPrefBase):
         """ Initialize user settings form. """
         UserPrefBase.__init__(self, request)
         self.request = request
-        self._ = request.getText
         self.cfg = app.cfg
         _ = self._
         self.title = _("Preferences")

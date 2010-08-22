@@ -16,6 +16,7 @@ from mercurial.templatefilters import json
 from flask import current_app as app
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.widget import html
@@ -34,8 +35,6 @@ def execute(pagename, request):
 
     def history(page, pagename, request):
         """Render graphical information about page revisions."""
-        _ = request.getText
-
         def render_action(text, query, **kw):
             kw.update(dict(rel='nofollow'))
             return page.link_to(request, text, querystr=query, **kw)
@@ -214,7 +213,6 @@ graph.render(data);
         form.append(div)
         request.write(unicode(form))
 
-    _ = request.getText
     f = request.formatter
     app.cfg.stylesheets = [('all', app.cfg.url_prefix_static + '/graph/graph.css', )]
     request.emit_http_headers()

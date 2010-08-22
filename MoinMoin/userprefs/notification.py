@@ -8,6 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin import _, N_
 from MoinMoin import events, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
@@ -17,7 +18,6 @@ from flask import current_app as app
 from flask import render_template, flaskg
 
 def get_notify_info(request):
-    _ = request.getText
     types = []
     if app.cfg.mail_enabled and flaskg.user.email:
         types.append(('email', _("Email")))
@@ -37,7 +37,7 @@ def get_notify_info(request):
                 checked = "checked"
             notify_infos.append(dict(name='subscribe:%s:%s' % (notiftype, evname),
                                      checked=checked,
-                                     text=html.Raw(request.getText(evdescr)))
+                                     text=html.Raw(_(evdescr)))
                       )
     return notify_infos
 
@@ -47,9 +47,8 @@ class Settings(UserPrefBase):
         """ Initialize user settings form. """
         UserPrefBase.__init__(self, request)
         self.request = request
-        self._ = request.getText
         self.cfg = app.cfg
-        self.title = self._("Notification")
+        self.title = _("Notification")
         self.name = 'notification'
 
     def _decode_pagelist(self, key):

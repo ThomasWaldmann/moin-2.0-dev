@@ -20,6 +20,7 @@ from flask import current_app as app
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
@@ -666,7 +667,6 @@ class Page(object):
         @keyword omit_footnotes: if True, do not send footnotes (used by include macro)
         """
         request = self.request
-        _ = request.getText
         emit_headers = keywords.get('emit_headers', 1)
         content_only = keywords.get('content_only', 0)
         omit_footnotes = keywords.get('omit_footnotes', 0)
@@ -964,8 +964,6 @@ class Page(object):
 
         @param request: the request object
         """
-        _ = request.getText
-
         if special_type == 'missing':
             if flaskg.user.valid and flaskg.user.name == self.page_name and \
                app.cfg.user_homewiki in ('Self', app.cfg.interwikiname):

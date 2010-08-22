@@ -38,6 +38,7 @@ from emeraldtree import ElementTree as ET
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import html
 from MoinMoin import wikiutil
@@ -45,12 +46,11 @@ from MoinMoin import wikiutil
 class Macro(MacroBlockBase):
     def macro(self, template=u'', button_label=u'', parent_page=u'', name_template=u'%s'):
         request = self.request
-        _ = request.getText
         self.template = template
         if button_label:
             # Try to get a translation, this will probably not work in
             # most cases, but better than nothing.
-            self.label = request.getText(button_label)
+            self.label = _(button_label)
         else:
             self.label = _("Create New Page")
         if parent_page == '@ME' and flaskg.user.valid:

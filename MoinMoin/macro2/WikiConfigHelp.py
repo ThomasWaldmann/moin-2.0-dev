@@ -7,6 +7,7 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from MoinMoin import _, N_
 from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
@@ -14,7 +15,6 @@ from MoinMoin.util.tree import moin_page
 class Macro(MacroBlockBase):
     def macro(self):
         request = self.request
-        _ = request.getText
 
         groups = []
         for groupname in defaultconfig.options:

@@ -15,6 +15,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
 from MoinMoin import action, macro
@@ -49,7 +50,6 @@ class Macro(MacroDefinitionListBase):
         return dirsize
 
     def get_items(self):
-        _ = self.request.getText
         request = self.request
 
         desc_list = []

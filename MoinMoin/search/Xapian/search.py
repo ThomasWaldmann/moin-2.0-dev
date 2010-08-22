@@ -14,6 +14,7 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin import _, N_
 from MoinMoin.search.builtin import BaseSearch, MoinSearch, BaseIndex
 from MoinMoin.search.Xapian.indexing import XapianIndex
 
@@ -60,7 +61,7 @@ class XapianSearch(BaseSearch):
                  for r in search_results]
         if not self.query.xapian_need_postproc():
             # xapian handled the full query
-            _ = self.request.getText
+
             return self._getHits(pages), (search_results.estimate_is_exact and '' or _('about'), search_results.matches_estimated)
 
         # some postprocessing by MoinSearch is required

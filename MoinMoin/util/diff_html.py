@@ -9,6 +9,7 @@
 
 import difflib
 
+from MoinMoin import _, N_
 from MoinMoin.wikiutil import escape
 
 def indent(line):
@@ -39,7 +40,6 @@ def diff(request, old, new, old_top='', new_top='', old_bottom='', new_bottom=''
         @param old_bottom_class: Custom class for <td> with old_bottom content (optional)
         @param new_bottom_class: Custom class for <td> with new_bottom content (optional)
     """
-    _ = request.getText
     t_line = _("Line") + " %d"
 
     seq1 = old.splitlines()

@@ -74,7 +74,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
     @rtype: dict
 
     """
-    _ = lambda text: request.getText(text, lang=lang)
+    _ = lambda x: x # FIXME, was: lambda text: request.getText(text, lang=lang)
     changes = {'page_name': page.page_name, 'revision': str(page.getRevList()[0])}
 
     if msgtype == "page_changed":

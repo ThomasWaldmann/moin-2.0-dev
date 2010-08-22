@@ -11,6 +11,7 @@ from flask import render_template, flash, flaskg
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin import Page, wikiutil
 from MoinMoin.widget import html
 
@@ -19,7 +20,6 @@ def _handle_submission(request):
 
     Return error msg_class, msg tuple or None, None.
     """
-    _ = request.getText
     sub = request.values.get('handler')
 
     if sub in app.cfg.userprefs_disabled:
@@ -43,7 +43,6 @@ def _handle_submission(request):
     return None, res
 
 def _create_prefs_page(request, sel=None):
-    _ = request.getText
     plugins = wikiutil.getPlugins('userprefs', app.cfg)
     ret = html.P()
     ret.append(html.Text(_("Please choose:")))
@@ -85,7 +84,6 @@ def _create_page(request, cancel=False):
 
 
 def execute(pagename, request):
-    _ = request.getText
     if not flaskg.user.valid:
         actname = __name__.split('.')[-1]
         flash(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")

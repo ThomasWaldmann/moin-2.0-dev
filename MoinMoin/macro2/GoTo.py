@@ -9,13 +9,12 @@ Provides a goto box.
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import _, N_
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import html
 
 class Macro(MacroBlockBase):
     def macro(self):
-        _ = self.request.getText
-
         return ET.XML("""
 <form xmlns="%s" method="get" action="%s/%s">
     <input type="hidden" name="do" value="goto" />

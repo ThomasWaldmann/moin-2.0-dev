@@ -12,6 +12,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
@@ -22,8 +23,6 @@ class Settings(UserPrefBase):
         """ Initialize password change form. """
         UserPrefBase.__init__(self, request)
         self.request = request
-        self._ = request.getText
-        _ = request.getText
         self.cfg = app.cfg
         self.title = _("Change password")
         self.name = 'changepass'

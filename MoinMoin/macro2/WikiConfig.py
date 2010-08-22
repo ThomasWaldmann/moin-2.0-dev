@@ -11,6 +11,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro2._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
@@ -18,7 +19,6 @@ from MoinMoin.util.tree import moin_page
 class Macro(MacroBlockBase):
     def macro(self):
         request = self.request
-        _ = request.getText
 
         if not flaskg.user or not flaskg.user.isSuperUser():
             return ''

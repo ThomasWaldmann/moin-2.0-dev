@@ -32,6 +32,7 @@ from flask import flaskg
 from flask import request, url_for, send_file, render_template, Response, abort, escape
 from werkzeug import is_resource_modified
 
+from MoinMoin import _, N_
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
@@ -71,9 +72,6 @@ EDIT_LOG_EXTRA = "edit_log_extra"
 EDIT_LOG_COMMENT = "edit_log_comment"
 
 EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
-
-# dummy getText function until we have a real one:
-_ = lambda x: x
 
 
 class DummyRev(dict):
