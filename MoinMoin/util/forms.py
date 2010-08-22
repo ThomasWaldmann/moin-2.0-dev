@@ -5,26 +5,18 @@
     @copyright: 2010 Thomas Waldmann, Jason Kirtland, Scott Wilson
     @license: see flatland license
 """
-from MoinMoin import _, N_
-
-from operator import attrgetter
-_find_ugettext = attrgetter('ugettext')
 
 from jinja2 import Markup
 
 from flatland.out.markup import Generator
 from flatland.schema.util import find_i18n_function
 
+from MoinMoin import _, N_
 
 def label_filter(tagname, attributes, contents, context, bind):
     """Provide a translated, generated fallback for field labels."""
     if bind is not None and not contents:
-        contents = bind.label
-        # jek: this is the most flexible, but in practice you'd probably
-        #      import a configured '_' statically from your own package or
-        #      from a per-HTTP-request context local or something.
-        _ = find_i18n_function(bind, _find_ugettext) or N_
-        contents = _(contents)
+        contents = _(bind.label)
     return contents
 label_filter.tags = set(['label'])
 
@@ -33,7 +25,6 @@ def button_filter(tagname, attributes, contents, context, bind):
     """Show translated text in clickable buttons and submits."""
     if bind is None:
         return contents
-    _ = find_i18n_function(bind, _find_ugettext) or N_
     if tagname == 'input':
         if ('value' not in attributes and
             attributes.get('type') in ['submit', 'reset', ]):
