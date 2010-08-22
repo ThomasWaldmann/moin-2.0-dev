@@ -260,7 +260,7 @@ def setup_i18n_preauth(context):
 
 def setup_i18n_postauth(context):
     """ Determine language for the request after user-id is established. """
-    lang = context.user.getLang()
+    lang = flaskg.user.getLang()
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 
