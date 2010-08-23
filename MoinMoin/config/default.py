@@ -737,7 +737,6 @@ options = {
        [
         ('mailto_author', lambda _: _('Publish my email (not my wiki homepage) in author info')),
         ('edit_on_doubleclick', lambda _: _('Open editor on double click')),
-        ('remember_last_visit', lambda _: _('After login, jump to last visited page')),
         ('show_comments', lambda _: _('Show comment sections')),
         ('show_fancy_diff', lambda _: _('Show fancy diffs')),
         ('remember_me', lambda _: _('Remember login information')),
@@ -753,7 +752,6 @@ options = {
        {
         'mailto_author': False,
         'edit_on_doubleclick': True,
-        'remember_last_visit': False,
         'show_comments': False,
         'show_fancy_diff': True,
         'remember_me': True,

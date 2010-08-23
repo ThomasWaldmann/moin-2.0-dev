@@ -7,33 +7,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from werkzeug import abort, redirect, Response
-
-from flask import flaskg
-
 from MoinMoin import log
 logging = log.getLogger(__name__)
-
-from MoinMoin import wikiutil
-from MoinMoin.Page import Page
-
-
-def redirect_last_visited(request):
-    pagetrail = flaskg.user.getTrail()
-    if pagetrail:
-        # Redirect to last page visited
-        last_visited = pagetrail[-1]
-        wikiname, pagename = wikiutil.split_interwiki(last_visited)
-        if wikiname != 'Self':
-            wikitag, wikiurl, wikitail, error = wikiutil.resolve_interwiki(request, wikiname, pagename)
-            url = wikiurl + wikiutil.quoteWikinameURL(wikitail)
-        else:
-            url = Page(request, pagename).url(request)
-    else:
-        # Or to localized FrontPage
-        url = wikiutil.getFrontPage(request).url(request)
-    url = request.getQualifiedURL(url)
-    return abort(redirect(url))
 
 
 class UniqueIDGenerator(object):
