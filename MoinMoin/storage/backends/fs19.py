@@ -658,7 +658,6 @@ class FsUserItem(Item):
             ('show_fancy_diff', 'True'), # XXX kill this? usability for vision impaired?
             ('edit_on_doubleclick', 'True'),
             ('remember_me', 'True'),
-            ('remember_last_visit', 'False'),
             ('want_trivial', 'False'),
             ('mailto_author', 'False'),
             ('disabled', 'False'),
@@ -696,6 +695,7 @@ class FsUserItem(Item):
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
                 'show_page_trail', # theme decides whether to show trail
+                'remember_last_visit', # we show trail, user can click there
                 'subscribed_pages', # renamed to subscribed_items
                 'edit_cols', # not used any more
                 'jid', # no jabber support
