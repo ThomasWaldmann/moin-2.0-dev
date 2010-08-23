@@ -6,34 +6,15 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from StringIO import StringIO
-
 from werkzeug import Request as RequestBase
 from werkzeug import BaseResponse, ETagResponseMixin, \
                      CommonResponseDescriptorsMixin, WWWAuthenticateMixin
-from werkzeug.wrappers import ResponseStream
-from werkzeug import EnvironHeaders, Headers
-from werkzeug import Href, create_environ, url_encode, cached_property
-from werkzeug import Client # used by tests
+from werkzeug import Headers, Href
 
 from MoinMoin import config
 
-from MoinMoin import log
-logging = log.getLogger(__name__)
 
-
-class ModifiedResponseStreamMixin(object):
-    """
-    to avoid .stream attributes name collision when we mix together Request
-    and Response, we use "out_stream" instead of "stream" in the original
-    ResponseStreamMixin
-    """
-    @cached_property
-    def out_stream(self):
-        """The response iterable as write-only stream."""
-        return ResponseStream(self)
-
-class ResponseBase(BaseResponse, ETagResponseMixin, ModifiedResponseStreamMixin,
+class ResponseBase(BaseResponse, ETagResponseMixin,
                    CommonResponseDescriptorsMixin,
                    WWWAuthenticateMixin):
     """
@@ -47,10 +28,7 @@ class Request(ResponseBase, RequestBase):
     incoming versions are prefixed with 'in_' in contrast to
     original Werkzeug implementation.
     """
-    charset = config.charset
-    encoding_errors = 'replace'
     default_mimetype = 'text/html'
-    given_config = None # if None, load wiki config from disk
 
     # get rid of some inherited descriptors
     headers = None
@@ -72,8 +50,8 @@ class Request(ResponseBase, RequestBase):
                 'do': 0, # nice to have this first (but not technically required)
                 'member': 99, # TWikiDraw searches a "file extension" at URL end
             }.get(item[0], 50) # 50 -> other stuff is somewhere in the middle
-        self.href = Href(self.script_root or '/', self.charset, sort=True, key=sort_key)
-        self.abs_href = Href(self.url_root, self.charset, sort=True, key=sort_key)
+        self.href = Href(self.script_root or '/', config.charset, sort=True, key=sort_key)
+        self.abs_href = Href(self.url_root, config.charset, sort=True, key=sort_key)
         self.headers = Headers([('Content-Type', 'text/html')])
         self.response = []
         self.status_code = 200
@@ -81,63 +59,5 @@ class Request(ResponseBase, RequestBase):
     # Note: we inherit a .stream attribute from RequestBase and this needs
     # to refer to the input stream because inherited functionality of werkzeug
     # base classes will access it as .stream.
-    # The output stream is .out_stream (see above).
     # TODO keep request and response separate, don't mix them together
-
-    @cached_property
-    def in_headers(self):
-        return EnvironHeaders(self.environ)
-
-
-class TestRequest(Request):
-    """ Request with customized `environ` for test purposes. """
-    def __init__(self, path="/", query_string=None, method='GET',
-                 content_type=None, content_length=0, form_data=None,
-                 environ_overrides=None):
-        """
-        For parameter reference see the documentation of the werkzeug
-        package, especially the functions `url_encode` and `create_environ`.
-        """
-        input_stream = None
-
-        if form_data is not None:
-            form_data = url_encode(form_data)
-            content_type = 'application/x-www-form-urlencoded'
-            content_length = len(form_data)
-            input_stream = StringIO(form_data)
-        environ = create_environ(path=path, query_string=query_string,
-                                 method=method, input_stream=input_stream,
-                                 content_type=content_type,
-                                 content_length=content_length)
-
-        environ['HTTP_USER_AGENT'] = 'MoinMoin/TestRequest'
-        # must have reverse lookup or tests will be extremely slow:
-        environ['REMOTE_ADDR'] = '127.0.0.1'
-
-        if environ_overrides:
-            environ.update(environ_overrides)
-
-        super(TestRequest, self).__init__(environ)
-
-    # werkzeug thinks this comes via http
-    @property
-    def url_root(self):
-        return './'
-
-def evaluate_request(request):
-    """ Evaluate a request and returns a tuple of application iterator,
-    status code and list of headers. This method is meant for testing
-    purposes.
-    """
-    output = []
-    headers_set = []
-    def start_response(status, headers, exc_info=None):
-        headers_set[:] = [status, headers]
-        return output.append
-    result = request(request.environ, start_response)
-
-    # any output via (WSGI-deprecated) write-callable?
-    if output:
-        result = output
-    return (result, headers_set[0], headers_set[1])
 

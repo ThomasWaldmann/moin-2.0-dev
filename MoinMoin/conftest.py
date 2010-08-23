@@ -39,7 +39,6 @@ moindir = rootdir.join("..")
 from flask import flaskg
 
 from MoinMoin import create_app, protect_backends, before
-from MoinMoin.web.request import TestRequest
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
