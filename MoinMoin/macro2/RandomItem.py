@@ -27,7 +27,8 @@ class Macro(MacroInlineBase):
         else:
             item_count = 1
 
-        all_item_names = [i.name for i in request.rootitem.list_items()]
+        rootitem = Item(request, u'')
+        all_item_names = [i.name for i in rootitem.list_items()]
 
         # Now select random item from the full list, and if it exists and
         # we can read it, save.
