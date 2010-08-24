@@ -347,9 +347,6 @@ def before():
 
     lang = setup_i18n_postauth(context)
 
-    def finish():
-        pass
-
     def uid_generator():
         return UniqueIDGenerator()
     flaskg.uid_generator = uid_generator
