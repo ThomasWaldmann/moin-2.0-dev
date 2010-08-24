@@ -76,12 +76,6 @@ class AllContext(object):
     html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
     formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
 
-    def rootpage(self):
-        # DEPRECATED, use rootitem!
-        from MoinMoin.Page import RootPage
-        return RootPage(self)
-    rootpage = EnvironProxy(rootpage)
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:
