@@ -4,9 +4,6 @@
 
     Page is used for read-only access to a wiki page.
 
-    The RootPage is some virtual page located at / and is mainly used to do namespace
-    operations like getting the page list.
-
     DEPRECATED - move stuff you need out of here, to MoinMoin.items or another
     place that makes sense.
 """
@@ -1095,75 +1092,4 @@ class Page(object):
         else:
             cache.remove()
 
-
-# compatibility hack until we refactored all code using it from here:
-from MoinMoin.items import Item
-
-class RootPage(Item):
-    supported_mimetypes = []
-
-    def __init__(self, request):
-        Item.__init__(self, request, name=u'')
-
-    def getPageList(self, user=None, filter=None, include_syspages=True, return_objects=False):
-        """
-        List user readable pages under current page.
-
-        Currently only request.rootpage is used to list pages, but if we
-        have true sub pages, any page can list its sub pages.
-
-        The default behavior is listing all the pages readable by the
-        current user. If you want to get a page list for another user,
-        specify the user name.
-
-        If you want to get the full page list, without user filtering,
-        call with user="". Use this only if really needed, and do not
-        display pages the user can not read.
-
-        filter is usually compiled re match or search method, but can be
-        any method that get a unicode argument and return bool. If you
-        want to filter the page list, do it with this filter function,
-        and NOT on the output of this function.
-
-        @param user: the user requesting the pages (MoinMoin.user.User)
-        @param filter: filter function
-        @param return_objects: lets it return a list of Page objects instead of
-                               names
-        @rtype: list of unicode strings
-        @return: user readable wiki page names
-        """
-        # XXX: better update this docstring
-
-        from MoinMoin.search import term
-
-        request = self.request
-        if user is None:
-            user = flaskg.user
-
-        search_term = term.AND()
-        if filter:
-            search_term.add(term.NameFn(filter))
-
-        items = self.list_items(search_term)
-
-        if user or return_objects:
-            for item in items:
-                if not include_syspages:
-                    try:
-                        rev = item.get_revision(-1)
-                        if rev[IS_SYSPAGE]:
-                            continue
-                    except KeyError:
-                        # No syspage. Go on.
-                        pass
-
-                # XXX ACL check when user given?
-                if return_objects:
-                    page = Page.from_item(request, item)
-                    yield page
-                else:
-                    yield item.name
-        else:
-            for item in items:
-                yield item.name
 
