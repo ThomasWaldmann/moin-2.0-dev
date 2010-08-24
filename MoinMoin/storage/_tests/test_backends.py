@@ -175,7 +175,7 @@ class BackendTest(object):
         self.create_meta_item_helper(u"new_song_player")
         query_string = u"song"
         query = term.Name(query_string, True)
-        for num, item in enumerate(self.backend.search_item(query)):
+        for num, item in enumerate(self.backend.search_items(query)):
             assert item.name.find(query_string) != -1
         assert num == 2
 
@@ -186,7 +186,7 @@ class BackendTest(object):
         self.create_rev_item_helper(u'abcdefgh')
 
         def _test_search(term, expected):
-            found = list(self.backend.search_item(term))
+            found = list(self.backend.search_items(term))
             assert len(found) == expected
 
         # must be /part/ of the name
