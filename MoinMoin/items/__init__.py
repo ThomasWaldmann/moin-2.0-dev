@@ -440,25 +440,23 @@ class Item(object):
         if flaskg.user.valid:
             newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
 
-    def search_item(self, term=None):
+    def search_items(self, term=None):
         """ search items matching the term or,
             if term is None, return all items
-
-            TODO: rename this method and backend method to search_items
         """
         if term:
-            backend_items = self.request.storage.search_item(term)
+            backend_items = self.request.storage.search_items(term)
         else:
             # special case: we just want all items
             backend_items = self.request.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 
-    list_items = search_item  # just for cosmetics
+    list_items = search_items  # just for cosmetics
 
     def count_items(self, term=None):
         """
-        Return item count for matching items. See search_item() for details.
+        Return item count for matching items. See search_items() for details.
         """
         count = 0
         # we intentionally use a loop to avoid creating a list with all item objects:
@@ -480,7 +478,7 @@ class Item(object):
         sub_item_re = u"^%s.*" % re.escape(prefix)
         regex = re.compile(sub_item_re, re.UNICODE)
 
-        item_iterator = self.search_item(NameRE(regex))
+        item_iterator = self.search_items(NameRE(regex))
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
@@ -586,7 +584,7 @@ There is no help, you're doomed!
         term = NameRE(regex)
         if mimetype:
             term = AND(term, LastRevisionMetaDataMatch(MIMETYPE, mimetype))
-        item_iterator = self.search_item(term)
+        item_iterator = self.search_items(term)
         items = [item.name for item in item_iterator]
         return sorted(items)
 

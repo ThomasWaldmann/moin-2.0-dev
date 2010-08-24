@@ -56,7 +56,7 @@ class PluginScript(MoinScript):
 
         pattern = self.options.pattern
         query = term.NameRE(compile(pattern))
-        for item in storage.search_item(query):
+        for item in storage.search_items(query):
             try:
                 last_rev = item.get_revision(-1)
             except NoSuchRevisionError:

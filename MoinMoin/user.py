@@ -104,7 +104,7 @@ def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     from MoinMoin.search import term
     filter = term.ItemMetaDataMatch(key, value)
-    items = get_user_backend(request).search_item(filter)
+    items = get_user_backend(request).search_items(filter)
     users = [User(request, item.name) for item in items]
     return users
 
@@ -126,7 +126,7 @@ def getUserId(request, searchName):
     from MoinMoin.search import term
     try:
         backend = get_user_backend(request)
-        for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
+        for user in backend.search_items(term.ItemMetaDataMatch('name', searchName)):
             return user.name
         return None
     except IndexError:
