@@ -82,11 +82,6 @@ class AllContext(object):
         return RootPage(self)
     rootpage = EnvironProxy(rootpage)
 
-    def rootitem(self):
-        from MoinMoin.items import Item
-        return Item(self, u'')
-    rootitem = EnvironProxy(rootitem)
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:
