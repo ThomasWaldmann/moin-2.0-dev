@@ -350,8 +350,6 @@ def before():
     def finish():
         pass
 
-    context.finish = finish
-
     def uid_generator():
         return UniqueIDGenerator()
     flaskg.uid_generator = uid_generator
@@ -367,7 +365,5 @@ def before():
 
 
 def after(response):
-    context = flaskg.context
-    context.finish()
     return response
 
