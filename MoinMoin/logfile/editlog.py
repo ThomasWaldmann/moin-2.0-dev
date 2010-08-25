@@ -58,11 +58,6 @@ class EditLogLine(object):
         """
         return user.get_editor(request, self.userid, self.addr, self.hostname)
 
-    def getEditor(self, request):
-        """ Return a HTML-safe string representing the user that did the edit.
-        """
-        return user.get_printable_editor(request, self.userid, self.addr, self.hostname)
-
 
 class LocalEditLog(object):
     """
