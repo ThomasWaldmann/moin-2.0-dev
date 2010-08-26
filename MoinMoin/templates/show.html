@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import "utils.html" as utils %}
 
 {% block head %}
 {{ super() }}
@@ -63,7 +64,7 @@
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
             {{ item_name }}
             (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
-            {{ _("was edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }}
+            {{ _("last edit:") }} {{ utils.editor_info(rev) }} {{ rev.timestamp|datetime_format }}
         </p>
     </div>
     {% endif %}

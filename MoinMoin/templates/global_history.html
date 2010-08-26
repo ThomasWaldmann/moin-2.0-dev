@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import "utils.html" as utils %}
 
 {% block head %}
 {{ super() }}
@@ -28,7 +29,7 @@
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
             <td>{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
-            <td>{{ rev|user_format }}</td>
+            <td>{{ utils.editor_info(rev) }}</td>
             <td>{{ rev.edit_log_comment }}</td>
         </tr>
         {% endfor %}

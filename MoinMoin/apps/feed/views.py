@@ -26,7 +26,7 @@ from MoinMoin.apps.feed import feed
 from MoinMoin.items import NAME, ACL, MIMETYPE, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_COMMENT
-from MoinMoin import user
+from MoinMoin import get_editor_info
 from MoinMoin.items import Item
 
 @feed.route('/atom/<itemname:item_name>')
@@ -65,9 +65,7 @@ def atom(item_name):
         feed.add(title=name, title_type='text',
                  summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
                  content=content, content_type=content_type,
-                 author=user.get_printable_editor(request,
-                             rev.get(EDIT_LOG_USERID), rev.get(EDIT_LOG_ADDR), rev.get(EDIT_LOG_HOSTNAME),
-                             mode='text'),
+                 author=get_editor_info(request, rev, external=True),
                  url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
                  updated=datetime.utcfromtimestamp(rev.timestamp),
                 )
