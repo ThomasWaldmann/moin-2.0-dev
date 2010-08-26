@@ -1,5 +1,5 @@
 {% extends "show.html" %}
-
+{% import "utils.html" as utils %}
 {% block content %}
     {% if history %}
     <h1>{{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}</h1>
@@ -27,7 +27,7 @@
                     <input type="radio" name="rev1" value="{{ rev.revno }}" />
                     <input type="radio" name="rev2" value="{{ rev.revno }}" />
                 </td>
-                <td>{{ rev|user_format }}</td>
+                <td>{{ utils.editor_info(rev) }}</td>
                 <td>{{ rev.mimetype|e }}</td>
                 <td>{{ rev.edit_log_comment|e }}</td>
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
