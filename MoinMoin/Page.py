@@ -277,41 +277,6 @@ class Page(object):
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
-    # Last Edit stuff
-
-    def last_edit(self, printable=False):
-        """
-        Return the last edit.
-
-        @param printable: whether to return the date in printable form
-        @rtype: dict
-        @return: timestamp and editor information
-        """
-        if not self.exists():
-            return None
-
-        result = {
-            'timestamp': self.mtime(printable),
-            'editor': self.last_editor(printable),
-        }
-        return result
-
-    def last_edit_info(self):
-        """
-        Return the last edit info.
-
-        @rtype: dict
-        @return: timestamp and editor information
-        """
-        rev = self._item.get_revision(-1)
-        try:
-            time = rev['ed_time_usecs']
-            time = wikiutil.version2timestamp(time)
-            time = flaskg.user.getFormattedDateTime(time) # Use user time format
-            return {'editor': rev['editor'], 'time': time}
-        except KeyError:
-            return {}
-
     def editlog_entry(self):
         """ Return the edit-log entry for this Page object (can be an old revision).
         """
@@ -323,50 +288,6 @@ class Page(object):
         else:
             line = None
         return line
-
-    def edit_info(self):
-        """ Return timestamp/editor info for this Page object (can be an old revision).
-
-        @rtype: dict
-        @return: timestamp and editor information
-        """
-        line = self.editlog_entry()
-        if line:
-            editordata = line.getInterwikiEditorData(self.request)
-            if editordata[0] == 'interwiki':
-                editor = "%s:%s" % editordata[1]
-            else:
-                editor = editordata[1] # ip or email or anon
-            result = {
-                'timestamp': line.mtime,
-                'editor': editor,
-            }
-            for a in dir(line):
-                print a, getattr(line, a)
-            del line
-        else:
-            result = None
-        return result
-
-    def last_editor(self, printable=False):
-        """
-        Return the last editor.
-
-        @param printable: whether to return the date in printable form
-        @rtype: string
-        @return: the last editor, either printable or not.
-        """
-        if not printable:
-            editordata = user.get_editor(self.request, self._rev[EDIT_LOG_USERID], self._rev[EDIT_LOG_ADDR], self._rev[EDIT_LOG_HOSTNAME])
-            if editordata[0] == 'interwiki':
-                return "%s:%s" % editordata[1]
-            else:
-                return editordata[1]
-        else:
-            try:
-                return user.get_printable_editor(self.request, self._rev[EDIT_LOG_USERID], self._rev[EDIT_LOG_ADDR], self._rev[EDIT_LOG_HOSTNAME])
-            except KeyError:
-                logging.debug("Fix ErrorHandling in Page.py, Page.last_editor")
 
     def mtime(self, printable=False):
         """
