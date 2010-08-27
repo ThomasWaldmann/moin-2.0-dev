@@ -998,10 +998,19 @@ class Text(Binary):
         return self.data_storage_to_internal(self.data).split(u'\n')
 
     def _render_data_diff(self, oldrev, newrev):
-        from MoinMoin.util import diff_html
-        return diff_html.diff(self.request,
-                              self.data_storage_to_internal(oldrev.read()),
-                              self.data_storage_to_internal(newrev.read()))
+        from MoinMoin.util.diff_html import diff
+        old_text = self.data_storage_to_internal(oldrev.read())
+        new_text = self.data_storage_to_internal(newrev.read())
+        storage_item = self.request.storage.get_item(self.name)
+        revs = storage_item.list_revisions()
+        return render_template('diff_text.html',
+                               item_name=self.name,
+                               oldrev=oldrev,
+                               newrev=newrev,
+                               min_revno=revs[0],
+                               max_revno=revs[-1],
+                               diffs=diff(old_text, new_text),
+                              )
 
     def _render_data_diff_text(self, oldrev, newrev):
         from MoinMoin.util import diff_text
