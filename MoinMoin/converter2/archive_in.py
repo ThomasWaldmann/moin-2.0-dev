@@ -35,9 +35,8 @@ class ArchiveConverter(TableMixin):
         return cls()
 
     def process_name(self, member_name):
-        item_name = "foo" # TODO
         attrib = {
-            xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get&member=%s' % member_name),
+            xlink.href: Iri(scheme='wiki', authority='', path='/'+self.item_name, query='do=get&member=%s' % member_name),
         }
         return moin_page.a(attrib=attrib, children=[member_name, ])
 
@@ -48,6 +47,8 @@ class ArchiveConverter(TableMixin):
         return unicode(size)
 
     def __call__(self, fileobj):
+        # we get a revision as fileobj
+        self.item_name = fileobj.item.name
         try:
             contents = self.list_contents(fileobj)
             contents = [(self.process_size(size),
