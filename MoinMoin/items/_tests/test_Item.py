@@ -8,6 +8,8 @@
 
 import py
 
+from flask import flaskg
+
 from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, \
                            MIMETYPE, \
@@ -136,7 +138,7 @@ class TestTarItems:
         content_length = len(filecontent)
         item.put_member('example1.txt', filecontent, content_length, expected_members=members)
 
-        item = request.storage.get_item(item_name)
+        item = flaskg.storage.get_item(item_name)
         assert item.next_revno == 2
 
         item = Item.create(request, item_name, mimetype='application/x-tar')

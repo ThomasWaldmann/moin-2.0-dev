@@ -64,7 +64,7 @@ class Permissions:
         if attr not in app.cfg.acl_rights_valid:
             raise AttributeError(attr)
         ns_content = app.cfg.ns_content
-        may = request.storage.get_backend(ns_content)._may
+        may = flaskg.storage.get_backend(ns_content)._may
         return lambda itemname: may(itemname, attr)
 
 

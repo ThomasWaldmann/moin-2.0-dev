@@ -358,7 +358,7 @@ def _search(**args):
 
 @frontend.route('/+history/<itemname:item_name>')
 def history(item_name):
-    history = flaskg.context.storage.history(item_name=item_name)
+    history = flaskg.storage.history(item_name=item_name)
     return render_template('history.html',
                            item_name=item_name, # XXX no item here
                            history=history,
@@ -367,7 +367,7 @@ def history(item_name):
 
 @frontend.route('/+history')
 def global_history():
-    history = flaskg.context.storage.history(item_name='')
+    history = flaskg.storage.history(item_name='')
     item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_history.html',
                            item_name=item_name, # XXX no item
@@ -598,7 +598,7 @@ def diffsince(item_name, timestamp):
     date = timestamp
     # this is how we get called from "recent changes"
     # try to find the latest rev1 before bookmark <date>
-    item = flaskg.context.storage.get_item(item_name)
+    item = flaskg.storage.get_item(item_name)
     revnos = item.list_revisions()
     revnos.reverse()  # begin with latest rev
     for revno in revnos:
@@ -617,7 +617,7 @@ def diff(item_name):
     # TODO get_item and get_revision calls may raise an AccessDeniedError.
     #      If this happens for get_item, don't show the diff at all
     #      If it happens for get_revision, we may just want to skip that rev in the list
-    item = flaskg.context.storage.get_item(item_name)
+    item = flaskg.storage.get_item(item_name)
     rev1 = flaskg.context.values.get('rev1')
     rev2 = flaskg.context.values.get('rev2')
     return _diff(item, rev1, rev2)
@@ -719,7 +719,7 @@ def findMatches(item_name, s_re=None, e_re=None):
     @return: start word, end word, matches dict
     """
     request = flaskg.context
-    item_names = [item.name for item in request.storage.iteritems()]
+    item_names = [item.name for item in flaskg.storage.iteritems()]
     if item_name in item_names:
         item_names.remove(item_name)
     # Get matches using wiki way, start and end of word
@@ -862,7 +862,7 @@ class NestedItemListBuilder(object):
 
     def childs(self, name):
         # does not recurse
-        item = self.request.storage.get_item(name)
+        item = flaskg.storage.get_item(name)
         rev = item.get_revision(-1)
         itemlinks = rev.get(ITEMLINKS, [])
         return [child for child in itemlinks if self.is_ok(child)]
@@ -871,7 +871,7 @@ class NestedItemListBuilder(object):
         if child not in self.children:
             if not flaskg.user.may.read(child):
                 return False
-            if self.request.storage.has_item(child):
+            if flaskg.storage.has_item(child):
                 self.children.add(child)
                 return True
         return False

@@ -47,7 +47,7 @@ def execute(pagename, request):
         max_count = min(max_count, limit_max_count)
 
         try:
-            item = request.storage.get_item(pagename)
+            item = flaskg.storage.get_item(pagename)
         except NoSuchItemError:
             pass  # TODO: move from storage branch, when done there
 
@@ -118,7 +118,7 @@ def execute(pagename, request):
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
             date = flaskg.user.getFormattedDateTime(float(revision.timestamp))
             comment = wikiutil.escape(comment) or '&nbsp;'
-            node = "%d:%s" % (revno, request.storage._get_revision_node(revision)[1])
+            node = "%d:%s" % (revno, flaskg.storage._get_revision_node(revision)[1])
 
             history.append((url, (idx, color), edges, node, editor, date, comment, "%d B" % size, diff, "&nbsp;".join(actions)))
             if cnt >= max_count:

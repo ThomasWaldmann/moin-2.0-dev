@@ -12,6 +12,8 @@
 
 from re import compile
 
+from flask import flaskg
+
 from MoinMoin.wsgiapp import init_unprotected_backends
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.search import term
@@ -30,7 +32,7 @@ class PluginScript(MoinScript):
         self.init_request()
         request = self.request
         init_unprotected_backends(request)
-        storage = request.unprotected_storage
+        storage = flaskg.unprotected_storage
 
         pattern = self.options.pattern
         query = term.NameRE(compile(pattern))

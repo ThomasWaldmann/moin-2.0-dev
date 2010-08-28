@@ -14,6 +14,8 @@ import py
 
 from StringIO import StringIO
 
+from flask import flaskg
+
 from MoinMoin._tests import become_trusted
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.storage.serialization import Entry, create_value_object, serialize, unserialize
@@ -23,9 +25,9 @@ XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 def update_item(request, name, revno, meta, data):
     become_trusted(request)
     try:
-        item = request.storage.create_item(name)
+        item = flaskg.storage.create_item(name)
     except ItemAlreadyExistsError:
-        item = request.storage.get_item(name)
+        item = flaskg.storage.get_item(name)
     rev = item.create_revision(revno)
     for k, v in meta.items():
         rev[k] = v
@@ -103,7 +105,7 @@ class TestSerializeBackend(object):
         for params in testparams:
             update_item(self.request, *params)
         xmlfile = StringIO()
-        serialize(self.request.storage, xmlfile)
+        serialize(flaskg.storage, xmlfile)
         xml = xmlfile.getvalue()
         assert xml.startswith(XML_DECL + '<backend>')
         assert xml.endswith('</backend>\n')

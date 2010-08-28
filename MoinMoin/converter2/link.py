@@ -10,6 +10,7 @@ special wiki links.
 
 from __future__ import absolute_import
 
+from flask import flaskg
 from werkzeug import url_decode, url_encode
 
 from MoinMoin import wikiutil
@@ -132,7 +133,7 @@ class ConverterExternOutput(ConverterBase):
                 # ../sisteritem
                 path = page.path[1:] + path[1:]
 
-            if not self.request.storage.has_item(unicode(path)):
+            if not flaskg.storage.has_item(unicode(path)):
                 elem.set(html.class_, 'nonexistent')
         else:
             path = page.path[1:]

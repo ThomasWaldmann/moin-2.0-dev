@@ -7,6 +7,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import flaskg
+
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroPageLinkListBase
 
@@ -18,7 +20,7 @@ class Macro(MacroPageLinkListBase):
         # Get page list for current user (use this as admin), filter
         # pages that are syspages
         def filterfn(name):
-            item = self.request.storage.get_item(name)
+            item = flaskg.storage.get_item(name)
             try:
                 return item.get_revision(-1)[IS_SYSPAGE]
             except KeyError:

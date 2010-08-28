@@ -16,6 +16,7 @@
 import shutil, sys
 from os.path import join
 
+from flask import flaskg
 from flask import current_app as app
 
 from MoinMoin.script import MoinScript, fatal
@@ -56,7 +57,7 @@ Please, configure in your wiki config:
 """)
 
         page_backend = fs19.FSPageBackend(data_dir_old)
-        dest_content = request.unprotected_storage.get_backend(cfg.ns_content)
+        dest_content = flaskg.unprotected_storage.get_backend(cfg.ns_content)
         sys.stdout.write("Starting backend migration.\nConverting data.\n")
         content_fails = dest_content.clone(page_backend, self.options.verbose)[2]
         if self.options.show_failed and len(content_fails):
@@ -67,7 +68,7 @@ Please, configure in your wiki config:
 
         if user_dir_old:
             user_backend = fs19.FSUserBackend(user_dir_old)
-            dest_userprofile = request.unprotected_storage.get_backend(cfg.ns_user_profile)
+            dest_userprofile = flaskg.unprotected_storage.get_backend(cfg.ns_user_profile)
             sys.stdout.write("Converting users.\n")
             user_fails = dest_userprofile.clone(user_backend, self.options.verbose)[2]
             if self.options.show_failed and len(user_fails):

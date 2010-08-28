@@ -17,6 +17,8 @@
 
 import py.test, re
 
+from flask import flaskg
+
 from MoinMoin.storage import Item, NewRevision
 from MoinMoin.storage.backends import memory
 from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
@@ -694,7 +696,7 @@ class BackendTest(object):
             assert not (rev.item.name == itemname and rev.revno == 2)
 
     def test_clone_backend(self):
-        src = self.request.storage
+        src = flaskg.storage
         dst = memory.MemoryBackend()
 
         dollys_name = "Dolly The Sheep"
