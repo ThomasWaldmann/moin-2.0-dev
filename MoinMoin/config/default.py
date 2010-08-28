@@ -17,7 +17,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin import config, error, util, wikiutil, web
+from MoinMoin import config, error, util, wikiutil
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule

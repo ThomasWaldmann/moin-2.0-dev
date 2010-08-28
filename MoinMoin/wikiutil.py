@@ -28,7 +28,6 @@ from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-from MoinMoin import web # needed so that next line works:
 import werkzeug
 
 # Exceptions
