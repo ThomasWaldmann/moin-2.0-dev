@@ -2293,8 +2293,6 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
     @rtype: string
     @return: formatted link tag
     """
-    if formatter is None:
-        formatter = request.html_formatter
     if 'css_class' in kw:
         css_class = kw['css_class']
         del kw['css_class'] # one time is enough
@@ -2327,7 +2325,7 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
             tag = '<a%s href="%s/%s">' % (attrs, request.script_root, params)
             if not on:
                 tag = "%s%s</a>" % (tag, text)
-        logging.warning("wikiutil.link_tag called without formatter and without request.html_formatter. tag=%r" % (tag, ))
+        logging.warning("wikiutil.link_tag called without formatter. tag=%r" % (tag, ))
     return tag
 
 def containsConflictMarker(text):

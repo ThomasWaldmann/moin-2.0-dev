@@ -403,7 +403,7 @@ class Page(object):
 
         # Add anchor
         if anchor:
-            fmt = getattr(self, 'formatter', request.html_formatter)
+            fmt = getattr(self, 'formatter')
             if fmt:
                 anchor = fmt.sanitize_to_id(anchor)
             url = "%s#%s" % (url, anchor)
@@ -648,8 +648,6 @@ class Page(object):
                         pass
                 else:
                     request.status_code = 404
-
-            # TODO: request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header
             if self.default_formatter:
