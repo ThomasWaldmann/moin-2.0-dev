@@ -46,7 +46,7 @@ class TestNoAuth(AuthTest):
         # anon user?
         assert not flaskg.user.valid
 
-        appiter, status, headers = evaluate_request(request.request)
+        appiter, status, headers = evaluate_request(request)
         # check if the request resulted in normal status, result headers and content
         assert status[:3] == '200'
         has_ct = has_v = has_cc = False
@@ -89,7 +89,7 @@ class TestAnonSession(AuthTest):
             # Do we have a session?
             assert session is not None
 
-            appiter, status, headers = evaluate_request(request.request)
+            appiter, status, headers = evaluate_request(request)
             # check if the request resulted in normal status, result headers and content
             assert status[:3] == '200'
             has_ct = has_v = has_cc = False
@@ -158,7 +158,7 @@ class TestHttpAuthSession(AuthTest):
             # Do we have a session?
             assert session is not None
 
-            appiter, status, headers = evaluate_request(request.request)
+            appiter, status, headers = evaluate_request(request)
             # check if the request resulted in normal status, result headers and content
             assert status[:3] == '200'
             has_ct = has_v = has_cc = False
@@ -232,7 +232,7 @@ class TestMoinAuthSession(AuthTest):
             # Do we have a session?
             assert session is not None
 
-            appiter, status, headers = evaluate_request(request.request)
+            appiter, status, headers = evaluate_request(request)
             # check if the request resulted in normal status, result headers and content
             assert status[:3] == '200'
             has_ct = has_v = has_cc = False
