@@ -104,7 +104,6 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 from MoinMoin.util.clock import Clock
 from MoinMoin.web.utils import UniqueIDGenerator
-from MoinMoin.web.contexts import AllContext
 from MoinMoin.web.request import Request
 from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.serialization import serialize, unserialize
@@ -383,7 +382,8 @@ def before():
     set_umask() # do it once per request because maybe some server
                 # software sets own umask
 
-    context = AllContext(Request(request.environ))
+    context = Request(request.environ)
+    context.request = context # XXX put it there because some code still expects it there
 
     lang = setup_i18n_preauth(context)
 
