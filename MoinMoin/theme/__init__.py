@@ -84,7 +84,6 @@ class ThemeBase(object):
         self.request = request
         self.cfg = app.cfg
         self.user = flaskg.user
-        self.storage = request.storage
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
         self.output_charset = 'utf-8'  # was: page.output_charset
         self.ui_lang = 'en'
@@ -102,7 +101,7 @@ class ThemeBase(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return self.storage.has_item(item_name)
+        return flaskg.storage.has_item(item_name)
 
     def item_readable(self, item_name):
         """

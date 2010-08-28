@@ -86,7 +86,7 @@ def get_user_backend(request):
     by returning the proper user backend.
     """
     ns_user_profile = app.cfg.ns_user_profile
-    return request.unprotected_storage.get_backend(ns_user_profile)
+    return flaskg.unprotected_storage.get_backend(ns_user_profile)
 
 
 def getUserList(request):

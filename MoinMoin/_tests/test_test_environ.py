@@ -9,6 +9,7 @@
 import py
 
 from flask import current_app as app
+from flask import flaskg
 
 from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
 from MoinMoin.storage.error import NoSuchItemError
@@ -24,7 +25,7 @@ class TestStorageEnvironWithoutConfig(object):
 
         assert isinstance(app.cfg, wikiconfig.Config)
 
-        storage = self.request.storage
+        storage = flaskg.storage
         assert storage
         assert hasattr(storage, 'get_item')
         assert hasattr(storage, 'history')
@@ -56,7 +57,7 @@ class TestStorageEnvironWithConfig(object):
     def test_fresh_backends_with_content(self):
         assert isinstance(app.cfg, wikiconfig.Config)
 
-        storage = self.request.storage
+        storage = flaskg.storage
         should_be_there = (u"FrontPage", u"HelpOnLinking", u"HelpOnMoinWikiSyntax", )
         for pagename in should_be_there:
             assert storage.has_item(pagename)

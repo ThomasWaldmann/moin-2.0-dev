@@ -7,14 +7,17 @@
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
 """
+
+import py
+
+from flask import flaskg
+
 from MoinMoin.items import ACL
 from MoinMoin.wsgiapp import protect_backends
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.conftest import init_test_request
 from MoinMoin._tests import wikiconfig
-
-import py
 
 
 class TestACLMiddleware(BackendTest):
@@ -26,7 +29,7 @@ class TestACLMiddleware(BackendTest):
 
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.
-        return self.request.storage
+        return flaskg.storage
 
     def kill_backend(self):
         pass
@@ -34,10 +37,10 @@ class TestACLMiddleware(BackendTest):
 
     def get_item(self, name):
         # Just as a shortcut
-        return self.request.storage.get_item(name)
+        return flaskg.storage.get_item(name)
 
     def create_item_acl(self, name, acl):
-        item = self.request.storage.create_item(name)
+        item = flaskg.storage.create_item(name)
         rev = item.create_revision(0)
         rev[ACL] = acl
         item.commit()
@@ -55,7 +58,7 @@ class TestACLMiddleware(BackendTest):
             content_acl = dict(default=u"All:admin,read,write,destroy")
 
         request = init_test_request(Config)
-        backend = request.storage
+        backend = flaskg.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
         item = self.create_item_acl("i will exist!", "All:read,write")
@@ -101,7 +104,7 @@ class TestACLMiddleware(BackendTest):
     def test_write_without_read(self):
         name = "write_but_not_read"
         acl = "All:write"
-        item = self.request.storage.create_item(name)
+        item = flaskg.storage.create_item(name)
         rev = item.create_revision(0)
         rev[ACL] = acl
         rev.write("My name is " + name)

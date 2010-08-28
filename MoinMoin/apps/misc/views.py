@@ -31,9 +31,8 @@ def sitemap():
         return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts))
 
     request = flaskg.context
-    storage = request.storage
     sitemap = []
-    for item in storage.iteritems():
+    for item in flaskg.storage.iteritems():
         try:
             rev = item.get_revision(-1)
         except NoSuchRevisionError:
@@ -53,7 +52,7 @@ def sitemap():
         sitemap.append((item.name, format_timestamp(rev.timestamp), changefreq, priority))
     # add an entry for root url
     try:
-        item = storage.get_item(app.cfg.page_front_page)
+        item = flaskg.storage.get_item(app.cfg.page_front_page)
         rev = item.get_revision(-1)
         sitemap.append((u'', format_timestamp(rev.timestamp), "hourly", "1.0"))
     except NoSuchItemError:
@@ -72,9 +71,8 @@ def urls_names():
     can implement SisterWiki functionality easily.
     See: http://usemod.com/cgi-bin/mb.pl?SisterSitesImplementationGuide
     """
-    request = flaskg.context
     # XXX we currently also get user items, fix this
-    item_names = [item.name for item in request.storage.iteritems()]
+    item_names = [item.name for item in flaskg.storage.iteritems()]
     item_names.sort()
     content = render_template('misc/urls_names.txt', item_names=item_names)
     return Response(content, mimetype='text/plain')

@@ -40,7 +40,7 @@ def atom(item_name):
     request = flaskg.context
     title = app.cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
-    for rev in request.storage.history(item_name=item_name):
+    for rev in flaskg.storage.history(item_name=item_name):
         this_rev = rev
         this_revno = rev.revno
         item = rev.item

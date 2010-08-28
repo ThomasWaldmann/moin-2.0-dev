@@ -16,6 +16,8 @@
 
 import sys, time
 
+from flask import flaskg
+
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
 
@@ -80,7 +82,7 @@ class PluginScript(MoinScript):
         self.init_request()
         request = self.request
         init_unprotected_backends(request)
-        storage = request.unprotected_storage
+        storage = flaskg.unprotected_storage
 
         ndays = self.options.ndays
         exceptndays = self.options.exceptndays

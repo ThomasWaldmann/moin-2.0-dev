@@ -118,7 +118,7 @@ def set_umask(new_mask=0777^config.umask):
         pass
 
 
-def init_unprotected_backends(context):
+def init_unprotected_backends():
     """ initialize the backend
 
         This is separate from init because the conftest request setup needs to be
@@ -131,13 +131,13 @@ def init_unprotected_backends(context):
     # Just initialize with unprotected backends.
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
     index_uri = app.cfg.router_index_uri
-    context.unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
+    flaskg.unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
 
     # This makes the first request after server restart potentially much slower...
-    import_export_xml(context)
+    import_export_xml()
 
 
-def import_export_xml(context):
+def import_export_xml():
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
     xmlfile = app.cfg.load_xml
@@ -156,7 +156,7 @@ def import_export_xml(context):
             # the xml data already exists in the target backend.
             # Hence we check the existence of the items before we unserialize
             # them to the backend.
-            backend = context.unprotected_storage
+            backend = flaskg.unprotected_storage
             for item in tmp_backend.iteritems():
                 item = backend.get_item(item.name)
         except StorageError:
@@ -175,7 +175,7 @@ def import_export_xml(context):
     xmlfile = app.cfg.save_xml
     if xmlfile:
         app.cfg.save_xml = None
-        backend = context.unprotected_storage
+        backend = flaskg.unprotected_storage
         serialize(backend, xmlfile)
 
 
@@ -191,7 +191,7 @@ def protect_backends(context):
     # Protect each backend with the acls provided for it in the mapping at position 2
     protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
     index_uri = app.cfg.router_index_uri
-    context.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
+    flaskg.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
 
 
 def setup_user(context):
@@ -381,7 +381,7 @@ def before():
 
     lang = setup_i18n_preauth(context)
 
-    init_unprotected_backends(context)
+    init_unprotected_backends()
     flaskg.user = setup_user(context)
 
     flaskg.dicts = app.cfg.dicts(context)

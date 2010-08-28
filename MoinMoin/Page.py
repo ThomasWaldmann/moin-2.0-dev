@@ -66,7 +66,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._backend = request.storage
+        self._backend = flaskg.storage
 
         self.reset()
 

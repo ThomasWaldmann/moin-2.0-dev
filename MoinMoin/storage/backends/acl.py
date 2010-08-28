@@ -13,7 +13,7 @@
     to make sure that no object of the real backend is (directly or indirectly)
     made accessible to the user of the API.
     The real backend is still available as an attribute of the request and can
-    be used by conversion utilities or for similar tasks (request.unprotected_storage).
+    be used by conversion utilities or for similar tasks (flaskg.unprotected_storage).
     Regular users of the storage API, such as the views that modify an item,
     *MUST NOT*, in any way, use the real backend unless the author knows *exactly*
     what he's doing (as this may introduce security bugs without the code actually

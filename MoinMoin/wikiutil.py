@@ -589,7 +589,7 @@ def isSystemPage(request, pagename):
     """
     from MoinMoin.items import IS_SYSPAGE
     try:
-        item = request.storage.get_item(pagename)
+        item = flaskg.storage.get_item(pagename)
         return item.get_revision(-1)[IS_SYSPAGE]
     except (NoSuchItemError, NoSuchRevisionError, KeyError):
         pass

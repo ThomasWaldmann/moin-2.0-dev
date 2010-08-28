@@ -108,7 +108,7 @@ class Item(object):
 
         try:
             if item is None:
-                item = request.storage.get_item(name)
+                item = flaskg.storage.get_item(name)
             else:
                 name = item.name
         except NoSuchItemError:
@@ -311,8 +311,7 @@ class Item(object):
         copy this item to item <name>
         """
         old_item = self.rev.item
-        backend = self.request.storage
-        backend.copy_item(old_item, name=name)
+        flaskg.storage.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
         self._save(current_rev, current_rev, name=name, action='SAVE/COPY', comment=comment)
@@ -379,7 +378,7 @@ class Item(object):
         request = self.request
         if name is None:
             name = self.name
-        backend = request.storage
+        backend = flaskg.storage
         try:
             storage_item = backend.get_item(name)
         except NoSuchItemError:
@@ -445,10 +444,10 @@ class Item(object):
             if term is None, return all items
         """
         if term:
-            backend_items = self.request.storage.search_items(term)
+            backend_items = flaskg.storage.search_items(term)
         else:
             # special case: we just want all items
-            backend_items = self.request.storage.iteritems()
+            backend_items = flaskg.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 
@@ -1001,7 +1000,7 @@ class Text(Binary):
         from MoinMoin.util.diff_html import diff
         old_text = self.data_storage_to_internal(oldrev.read())
         new_text = self.data_storage_to_internal(newrev.read())
-        storage_item = self.request.storage.get_item(self.name)
+        storage_item = flaskg.storage.get_item(self.name)
         revs = storage_item.list_revisions()
         return render_template('diff_text.html',
                                item_name=self.name,

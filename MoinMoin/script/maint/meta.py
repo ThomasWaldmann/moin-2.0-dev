@@ -14,6 +14,8 @@ from shutil import copyfileobj
 from os.path import splitext
 from re import compile
 
+from flask import flaskg
+
 from MoinMoin.wsgiapp import init_unprotected_backends
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
@@ -45,7 +47,7 @@ class PluginScript(MoinScript):
         self.init_request()
         request = self.request
         init_unprotected_backends(request)
-        storage = request.unprotected_storage
+        storage = flaskg.unprotected_storage
 
         key = self.options.key
         val = self.options.value

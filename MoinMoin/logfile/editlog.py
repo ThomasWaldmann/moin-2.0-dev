@@ -13,7 +13,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-
 from flask import flaskg
 
 from MoinMoin import wikiutil, user
@@ -150,7 +149,7 @@ class GlobalEditLog(object):
         Init stuff.
         """
         self.request = request
-        self.backend = request.storage
+        self.backend = flaskg.storage
         self.items = self.backend.history()
         self.pos = 0
 
