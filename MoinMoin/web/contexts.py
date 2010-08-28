@@ -73,9 +73,6 @@ class AllContext(object):
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.personalities)
 
-    html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
-    formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
-
     # proxy further attribute lookups to the underlying request first
     def __getattr__(self, name):
         try:

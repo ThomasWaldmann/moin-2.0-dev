@@ -93,7 +93,6 @@ def make_macro(request, page):
     from MoinMoin.formatter.text_html import Formatter
     p = _PseudoParser(self.request, Formatter(self.request))
     p.formatter.page = self.page
-    self.request.formatter = p.formatter
     m = macro.Macro(p)
     return m
 
