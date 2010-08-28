@@ -206,7 +206,7 @@ def setup_user(context):
     userobj = auth.setup_from_session(context)
 
     # then handle login/logout forms
-    form = context.request.values
+    form = request.values
 
     if 'login_submit' in form:
         # this is a real form, submitted by POST
@@ -239,7 +239,7 @@ def setup_i18n_preauth(context):
     if i18n.languages:
         cfg = app.cfg
         if not cfg.language_ignore_browser:
-            for l, w in context.request.accept_languages:
+            for l, w in request.accept_languages:
                 logging.debug("client accepts language %r, weight %r" % (l, w))
                 if l in i18n.languages:
                     logging.debug("moin supports language %r" % l)
@@ -377,8 +377,7 @@ def before():
     set_umask() # do it once per request because maybe some server
                 # software sets own umask
 
-    context = request
-    context.request = request # XXX put it there because some code still expects it there
+    context = request # werkzeug contextlocal request object
 
     lang = setup_i18n_preauth(context)
 
