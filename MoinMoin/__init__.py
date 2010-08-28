@@ -18,15 +18,11 @@ support_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'support')
 if support_dir not in sys.path:
     sys.path.insert(0, support_dir)
 
-from flask import Flask, request, url_for, render_template, flash, session
-from flask import current_app as app
+# monkey patching needs to be done after sys.path setup
+from MoinMoin.util import monkeypatch
 
-# HACK: creating a custom alias for the single-letter "g"
-# Note: this should be done with a *standard* longer name in flask and
-#       documented as an official alternative to g, but Armin likes g and g only.
-import flask
-flask.flaskg = flaskg = flask.g
-del flask
+from flask import Flask, request, url_for, render_template, flash, session, flaskg
+from flask import current_app as app
 
 from werkzeug import ImmutableDict
 
