@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - MoinMoin.web.utils Tests
+    MoinMoin - UID generator tests
 
     @copyright: 2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
 import py
 
-from MoinMoin.web import utils
+from MoinMoin.util.uidgen import UniqueIDGenerator
 
 class TestUniqueIDGenerator(object):
 
     def setup_method(self, method):
-        self.uid_gen = utils.UniqueIDGenerator('TestPage')
+        self.uid_gen = UniqueIDGenerator('TestPage')
 
     def testGeneration(self):
         TESTCASES = [('somebase', 'somebase'), ('other', 'other'),

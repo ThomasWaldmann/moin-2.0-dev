@@ -99,7 +99,7 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 
 from MoinMoin.util.clock import Clock
-from MoinMoin.web.utils import UniqueIDGenerator
+from MoinMoin.util.uidgen import UniqueIDGenerator
 from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.serialization import serialize, unserialize
 from MoinMoin.storage.backends import router, acl, memory

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Utility functions for the web-layer
+    MoinMoin - Unique ID Generator
 
     @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
                 2008-2008 MoinMoin:FlorianKrupicka
