@@ -78,17 +78,18 @@ class Macro(MacroDefinitionListBase):
             # TODO add python-xml check and display it
 
             # Get the full pagelist of the wiki
-            pagelist = request.rootpage.getPageList(user='')
-            systemPages = []
+            itemlist = request.rootpage.getPageList(user='')
+            itemcount = len(itemlist)
+            systemItems = []
             totalsize = 0
-            for num, page in enumerate(pagelist):
-                if wikiutil.isSystemPage(request, page):
-                    systemPages.append(page)
-                totalsize += Page(request, page).size()
-            pagecount = num + 1
+            for itemname in itemlist:
+                if wikiutil.isSystemItem(itemname):
+                    systemItems.append(itemname)
+                totalsize += Page(request, itemname).size()
+            systemitemcount = len(systemItems)
 
-            row(_('Number of pages'), str(pagecount - len(systemPages)))
-            row(_('Number of system pages'), str(len(systemPages)))
+            row(_('Number of items'), str(itemcount - systemitemcount))
+            row(_('Number of system items'), str(systemitemcount))
 
             row(_('Accumulated page sizes'), self.formatInReadableUnits(totalsize))
 

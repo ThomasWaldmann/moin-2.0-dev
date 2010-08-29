@@ -39,7 +39,7 @@ def sitemap():
             # XXX we currently also get user items, they have no revisions -
             # but in the end, they should not be readable by the user anyways
             continue
-        if wikiutil.isSystemPage(request, item.name):
+        if wikiutil.isSystemItem(item.name):
             if not SITEMAP_HAS_SYSTEM_ITEMS:
                 continue
             # system items are rather boring

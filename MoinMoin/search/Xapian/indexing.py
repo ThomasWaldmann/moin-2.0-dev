@@ -319,7 +319,7 @@ class XapianIndex(BaseIndex):
         """
         if page.isStandardPage():
             yield 'standard'
-        if wikiutil.isSystemPage(self.request, page.page_name):
+        if wikiutil.isSystemItem(page.page_name):
             yield 'system'
 
     def _index_page(self, request, connection, pagename, mode='update'):

@@ -35,7 +35,7 @@ from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                           IS_SYSPAGE, SYSPAGE_VERSION
+                           IS_SYSITEM, SYSITEM_VERSION
 
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -376,8 +376,8 @@ class FsPageRevision(StoredRevision):
         hash_name, hash_digest = hash_hexdigest(data)
         meta[hash_name] = hash_digest
         if item._syspages:
-            meta[IS_SYSPAGE] = True
-            meta[SYSPAGE_VERSION] = item._syspages
+            meta[IS_SYSITEM] = True
+            meta[SYSITEM_VERSION] = item._syspages
         self._fs_meta = {}
         for k, v in meta.iteritems():
             if isinstance(v, list):
@@ -446,8 +446,8 @@ class FsAttachmentRevision(StoredRevision):
         hash_name, hash_digest = hash_hexdigest(open(attpath, 'rb'))
         meta[hash_name] = hash_digest
         if item._syspages:
-            meta[IS_SYSPAGE] = True
-            meta[SYSPAGE_VERSION] = item._syspages
+            meta[IS_SYSITEM] = True
+            meta[SYSITEM_VERSION] = item._syspages
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None

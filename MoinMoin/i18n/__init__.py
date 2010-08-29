@@ -47,7 +47,7 @@ languages = None
 
 # system_pages has a dictionary containing all english
 # system page names and also all translated system pages names as keys,
-# see also wikiutil.isSystemPage:
+# see also wikiutil.isSystemItem:
 system_pages = {}
 
 translations = {}

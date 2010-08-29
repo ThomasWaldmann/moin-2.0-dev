@@ -18,7 +18,6 @@ from flask import flaskg
 
 from MoinMoin.wsgiapp import init_unprotected_backends
 from MoinMoin.script import MoinScript, fatal
-from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
 from MoinMoin.search import term
 from MoinMoin.storage.error import NoSuchRevisionError
 
