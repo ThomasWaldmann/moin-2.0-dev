@@ -592,7 +592,7 @@ class DomainSearch(BaseFieldSearch):
 
     def _get_matches(self, page):
         checks = {'standard': page.isStandardPage,
-                  'system': lambda page=page: wikiutil.isSystemPage(page.request, page.page_name),
+                  'system': lambda page=page: wikiutil.isSystemItem(page.page_name),
                  }
 
         try:

@@ -576,45 +576,44 @@ def join_wiki(wikiurl, wikitail):
         return wikiurl + wikitail
 
 #############################################################################
-### Page types (based on page names)
+### Item types (based on item names)
 #############################################################################
 
-def isSystemPage(request, pagename):
+def isSystemItem(itemname):
     """ Is this a system page?
 
-    @param request: the request object
-    @param pagename: the page name
+    @param itemname: the item name
     @rtype: bool
-    @return: true if page is a system page
+    @return: True if page is a system item
     """
-    from MoinMoin.items import IS_SYSPAGE
+    from MoinMoin.items import IS_SYSITEM
     try:
-        item = flaskg.storage.get_item(pagename)
-        return item.get_revision(-1)[IS_SYSPAGE]
+        item = flaskg.storage.get_item(itemname)
+        return item.get_revision(-1)[IS_SYSITEM]
     except (NoSuchItemError, NoSuchRevisionError, KeyError):
         pass
 
-    return isTemplatePage(request, pagename)
+    return isTemplateItem(itemname)
 
 
-def isTemplatePage(request, pagename):
-    """ Is this a template page?
+def isTemplateItem(itemname):
+    """ Is this a template item?
 
-    @param pagename: the page name
+    @param itemname: the item name
     @rtype: bool
-    @return: true if page is a template page
+    @return: True if item is a template item
     """
-    return app.cfg.cache.page_template_regexact.search(pagename) is not None
+    return app.cfg.cache.page_template_regexact.search(itemname) is not None
 
 
-def isGroupPage(pagename, cfg):
-    """ Is this a name of group page?
+def isGroupItem(itemname):
+    """ Is this a name of group item?
 
-    @param pagename: the page name
+    @param itemname: the item name
     @rtype: bool
-    @return: true if page is a form page
+    @return: True if item is a group item
     """
-    return cfg.cache.page_group_regexact.search(pagename) is not None
+    return app.cfg.cache.page_group_regexact.search(itemname) is not None
 
 
 def filterCategoryPages(request, pagelist):
@@ -2169,7 +2168,7 @@ def normalize_pagename(name, cfg):
 
         # Cleanup group pages.
         # Strip non alpha numeric characters, keep white space
-        if isGroupPage(page, cfg):
+        if isGroupItem(page):
             page = u''.join([c for c in page
                              if c.isalnum() or c.isspace()])
 

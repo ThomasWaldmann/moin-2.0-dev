@@ -11,7 +11,7 @@ import py
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
+from MoinMoin.items import IS_SYSITEM, SYSITEM_VERSION
 from MoinMoin.storage.error import NoSuchItemError
 
 from MoinMoin._tests import wikiconfig
@@ -64,8 +64,8 @@ class TestStorageEnvironWithConfig(object):
             item = storage.get_item(pagename)
             rev = item.get_revision(-1)
             assert rev.revno == 0
-            assert rev[IS_SYSPAGE]
-            assert rev[SYSPAGE_VERSION] == 1
+            assert rev[IS_SYSITEM]
+            assert rev[SYSITEM_VERSION] == 1
             # check whether this dirties the backend for the second iteration of the test
             new_rev = item.create_revision(1)
             new_rev['name'] = pagename

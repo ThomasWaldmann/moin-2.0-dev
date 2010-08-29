@@ -223,7 +223,7 @@ def isValidName(name):
     @param name: user name, unicode
     """
     normalized = normalizeName(name)
-    return (name == normalized) and not wikiutil.isGroupPage(name, app.cfg)
+    return (name == normalized) and not wikiutil.isGroupItem(name)
 
 
 class User:

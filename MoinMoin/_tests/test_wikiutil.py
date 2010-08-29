@@ -84,27 +84,27 @@ class TestInterWiki:
         assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
 
 
-class TestSystemPage:
-    systemPages = (
+class TestSystemItem:
+    systemItems = (
         'HelpOnMoinWikiSyntax',
         'HelpOnLinking',
         )
-    notSystemPages = (
+    notSystemItems = (
         'NoSuchPageYetAndWillNeverBe',
         )
 
     class Config(wikiconfig.Config):
         load_xml = wikiconfig.Config._test_items_xml
 
-    def testSystemPage(self):
-        """wikiutil: good system page names accepted, bad rejected"""
-        for name in self.systemPages:
-            assert wikiutil.isSystemPage(self.request, name)
-        for name in self.notSystemPages:
-            assert not wikiutil.isSystemPage(self.request, name)
+    def testSystemItem(self):
+        """wikiutil: good system item names accepted, bad rejected"""
+        for name in self.systemItems:
+            assert wikiutil.isSystemItem(name)
+        for name in self.notSystemItems:
+            assert not wikiutil.isSystemItem(name)
 
 
-class TestTemplatePage:
+class TestTemplateItem:
     good = (
         'aTemplate',
         'MyTemplate',
@@ -117,12 +117,12 @@ class TestTemplatePage:
         'XTemplateInFront',
     )
 
-    def testTemplatePage(self):
+    def testTemplateItem(self):
         """wikiutil: good template names accepted, bad rejected"""
         for name in self.good:
-            assert  wikiutil.isTemplatePage(self.request, name)
+            assert  wikiutil.isTemplateItem(name)
         for name in self.bad:
-            assert not wikiutil.isTemplatePage(self.request, name)
+            assert not wikiutil.isTemplateItem(name)
 
 
 class TestParmeterParser:
@@ -1023,10 +1023,10 @@ class TestNormalizePagename(object):
             result = wikiutil.normalize_pagename(test, app.cfg)
             assert result == expected
 
-class TestGroupPages(object):
+class TestGroupItems(object):
 
     def testNormalizeGroupName(self):
-        """ request: normalize pagename: restrict groups to alpha numeric Unicode
+        """ request: normalize itemname: restrict groups to alpha numeric Unicode
 
         Spaces should normalize after invalid chars removed!
         """
@@ -1038,7 +1038,7 @@ class TestGroupPages(object):
             )
         for test, expected in cases:
             # validate we are testing valid group names
-            if wikiutil.isGroupPage(test, app.cfg):
+            if wikiutil.isGroupItem(test):
                 result = wikiutil.normalize_pagename(test, app.cfg)
                 assert result == expected
 

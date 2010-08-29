@@ -15,14 +15,14 @@ from MoinMoin.macro2._base import MacroPageLinkListBase
 class Macro(MacroPageLinkListBase):
     def macro(self):
         from MoinMoin.Page import Page
-        from MoinMoin.items import IS_SYSPAGE
+        from MoinMoin.items import IS_SYSITEM
 
-        # Get page list for current user (use this as admin), filter
-        # pages that are syspages
+        # Get item list for current user (use this as admin), filter
+        # items that are sysitems
         def filterfn(name):
             item = flaskg.storage.get_item(name)
             try:
-                return item.get_revision(-1)[IS_SYSPAGE]
+                return item.get_revision(-1)[IS_SYSITEM]
             except KeyError:
                 return False
 

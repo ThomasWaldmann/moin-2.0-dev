@@ -53,10 +53,10 @@ REVERTED_TO = "reverted_to"
 # some metadata key constants:
 ACL = "acl"
 
-# This says: I am a system page
-IS_SYSPAGE = "is_syspage"
-# This says: original syspage as contained in release: <release>
-SYSPAGE_VERSION = "syspage_version"
+# This says: I am a system item
+IS_SYSITEM = "is_syspage"
+# This says: original sysitem as contained in release: <release>
+SYSITEM_VERSION = "syspage_version"
 
 MIMETYPE = "mimetype"
 SIZE = "size"
@@ -259,7 +259,7 @@ class Item(object):
         """ kill metadata entries that we set automatically when saving """
         hash_name = app.cfg.hash_algorithm
         kill_keys = [# shall not get copied from old rev to new rev
-                     SYSPAGE_VERSION,
+                     SYSITEM_VERSION,
                      NAME_OLD,
                      # are automatically implanted when saving
                      NAME,
