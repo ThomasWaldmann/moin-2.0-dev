@@ -59,6 +59,9 @@ class TestCleanInput:
 
 
 class TestInterWiki:
+    class Config(wikiconfig.Config):
+        interwiki_map = dict(MoinMoin='http://moinmo.in/', )
+
     def testSplitWiki(self):
         tests = [('SomePage', ('Self', 'SomePage')),
                  ('OtherWiki:OtherPage', ('OtherWiki', 'OtherPage')),
@@ -78,10 +81,11 @@ class TestInterWiki:
         for (baseurl, pagename), url in tests:
             assert wikiutil.join_wiki(baseurl, pagename) == url
 
-
     def testResolveInterWiki(self):
-        result = wikiutil.resolve_interwiki(self.request, 'MoinMoin', 'SomePage')
+        result = wikiutil.resolve_interwiki('MoinMoin', 'SomePage')
         assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
+        result = wikiutil.resolve_interwiki('Self', 'SomePage')
+        assert result == ('Self', u'/', 'SomePage', False)
 
 
 class TestSystemItem:

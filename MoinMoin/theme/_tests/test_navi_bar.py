@@ -10,6 +10,9 @@ from MoinMoin.theme import ThemeBase
 
 
 class TestNaviBar(object):
+    class Config(wikiconfig.Config):
+        interwiki_map = dict(MoinMoin='http://moinmo.in/', )
+
     def setup_method(self, method):
         self.theme = ThemeBase(self.request)
 

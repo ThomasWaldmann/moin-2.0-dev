@@ -104,7 +104,7 @@ class ConverterFormat19(Converter):
             text = freelink_email
 
         else:
-            wikitag_bad = wikiutil.resolve_interwiki(self.request,
+            wikitag_bad = wikiutil.resolve_interwiki(
                     freelink_interwiki_ref, freelink_interwiki_page)[3]
             if wikitag_bad:
                 stack.top_append(freelink)

@@ -92,7 +92,7 @@ class ConverterExternOutput(ConverterBase):
 
         if input.authority:
             # interwiki link
-            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
+            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(input.authority, input.path[1:])
             if not err:
                 elem.set(html.class_, 'interwiki')
                 if do is not None:

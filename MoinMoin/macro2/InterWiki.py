@@ -6,14 +6,15 @@
     @license: GNU GPL, see COPYING for details
 """
 
+from flask import current_app as app
+
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin import wikiutil
 from MoinMoin.macro2._base import MacroBlockBase
 
 class Macro(MacroBlockBase):
     def macro(self):
-        interwiki_list = wikiutil.load_wikimap(self.request)
-        iwlist = interwiki_list.items() # this is where we cached it
+        iwlist = app.cfg.interwiki_map.items()
         iwlist.sort()
 
         iw_list = moin_page.list()

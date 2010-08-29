@@ -180,7 +180,7 @@ class ThemeBase(object):
         trail = user.getTrail()
         for interwiki_item_name in trail:
             wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
-            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
             href = wikiutil.join_wiki(wiki_base_url, item_name)
             if wiki_name in [app.cfg.interwikiname, 'Self', ]:
                 exists = self.item_exists(item_name)
@@ -213,7 +213,7 @@ class ThemeBase(object):
             # We cannot check if wiki pages exists in remote wikis
             exists = True
         wiki_name, item_name = wikiutil.split_interwiki(itemname)
-        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
         wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
         return wiki_href, aliasname, title, exists
 
@@ -266,7 +266,7 @@ class ThemeBase(object):
 
         # try handling interwiki links
         wiki_name, item_name = wikiutil.split_interwiki(target)
-        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
         if wiki_name not in [app.cfg.interwikiname, 'Self', ]:
             if not title:
