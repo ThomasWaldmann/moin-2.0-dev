@@ -200,7 +200,7 @@ class ThemeBase(object):
         user = self.user
         request = self.request
 
-        wikiname, itemname = wikiutil.getInterwikiHomePage(request)
+        wikiname, itemname = wikiutil.getInterwikiHomePage()
         name = user.name
         aliasname = user.aliasname
         if not aliasname:

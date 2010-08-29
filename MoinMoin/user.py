@@ -162,7 +162,7 @@ def get_editor(request, userid, addr, hostname):
         if userdata.mailto_author and userdata.email:
             return ('email', userdata.email)
         elif userdata.name:
-            interwiki = wikiutil.getInterwikiHomePage(request, username=userdata.name)
+            interwiki = wikiutil.getInterwikiHomePage(userdata.name)
             if interwiki:
                 result = ('interwiki', interwiki)
     return result
@@ -858,7 +858,7 @@ class User:
         """ Return wiki markup usable as a link to the user homepage,
             it doesn't matter whether it already exists or not.
         """
-        wikiname, pagename = wikiutil.getInterwikiHomePage(self._request, self.name)
+        wikiname, pagename = wikiutil.getInterwikiHomePage(self.name)
         if wikiname == 'Self':
             markup = '[[%s]]' % pagename
         else:

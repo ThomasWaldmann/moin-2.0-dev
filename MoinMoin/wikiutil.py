@@ -595,7 +595,7 @@ def getFrontPage(request):
     return getLocalizedPage(request, app.cfg.page_front_page)
 
 
-def getInterwikiHomePage(request, username=None):
+def getInterwikiHomePage(username=None):
     """
     Get a user's homepage.
 
@@ -605,7 +605,6 @@ def getInterwikiHomePage(request, username=None):
 
     'SomeOtherWiki' means we store user homepages in another wiki.
 
-    @param request: the request object
     @param username: the user's name
     @rtype: tuple (or None for anon users)
     @return: (wikiname, pagename)
