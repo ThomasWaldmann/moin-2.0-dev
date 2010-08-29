@@ -126,7 +126,7 @@ def init_unprotected_backends():
     """
     # A ns_mapping consists of several lines, where each line is made up like this:
     # mountpoint, unprotected backend, protection to apply as a dict
-    # We don't consider the protection here. That is done in protect_backends.
+    # We don't consider the protection here. That is done in init_protected_backends.
     ns_mapping = app.cfg.namespace_mapping
     # Just initialize with unprotected backends.
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
