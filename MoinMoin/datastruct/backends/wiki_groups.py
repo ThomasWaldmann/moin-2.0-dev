@@ -64,9 +64,9 @@ class WikiGroups(BaseGroupsBackend):
 
     def __iter__(self):
         """
-        To find group pages, app.cfg.cache.page_group_regexact pattern is used.
+        To find group pages, app.cfg.cache.item_group_regexact pattern is used.
         """
-        return iter(self.request.rootpage.getPageList(user='', filter=self.page_group_regex.search))
+        return iter(self.request.rootpage.getPageList(user='', filter=self.item_group_regex.search))
 
     def __getitem__(self, group_name):
         return WikiGroup(request=self.request, name=group_name, backend=self)

@@ -56,10 +56,10 @@ class BaseGroupsBackend(object):
 
     def __init__(self, request):
         self.request = request
-        self.page_group_regex = app.cfg.cache.page_group_regexact
+        self.item_group_regex = app.cfg.cache.item_group_regexact
 
     def is_group_name(self, member):
-        return self.page_group_regex.match(member)
+        return self.item_group_regex.match(member)
 
     def __contains__(self, group_name):
         """
@@ -308,10 +308,10 @@ class BaseDictsBackend(object):
 
     def __init__(self, request):
         self.request = request
-        self.page_dict_regex = app.cfg.cache.page_dict_regexact
+        self.item_dict_regex = app.cfg.cache.item_dict_regexact
 
     def is_dict_name(self, name):
-        return self.page_dict_regex.match(name)
+        return self.item_dict_regex.match(name)
 
     def __contains__(self, dict_name):
         """

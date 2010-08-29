@@ -154,10 +154,10 @@ class Config(DefaultConfig):
     # e.g. CategoryFoo -> group 'all' ==  CategoryFoo, group 'key' == Foo
     # moin's code will add ^ / $ at beginning / end when needed
     # You must use Unicode strings here [Unicode]
-    page_category_regex = ur'(?P<all>Category(?P<key>(?!Template)\S+))'
-    page_dict_regex = ur'(?P<all>(?P<key>\S+)Dict)'
-    page_group_regex = ur'(?P<all>(?P<key>\S+)Group)'
-    page_template_regex = ur'(?P<all>(?P<key>\S+)Template)'
+    item_category_regex = ur'(?P<all>Category(?P<key>(?!Template)\S+))'
+    item_dict_regex = ur'(?P<all>(?P<key>\S+)Dict)'
+    item_group_regex = ur'(?P<all>(?P<key>\S+)Group)'
+    item_template_regex = ur'(?P<all>(?P<key>\S+)Template)'
 
     # Content options ---------------------------------------------------
 
