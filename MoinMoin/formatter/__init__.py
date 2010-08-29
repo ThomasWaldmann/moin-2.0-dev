@@ -104,7 +104,7 @@ class FormatterBase:
             IMPORTANT: on and off must be called with same parameters, see
                        also the text_html formatter.
         """
-        wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
+        wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(interwiki, pagename)
         if wikitag == 'Self' or wikitag == app.cfg.interwikiname:
             return self.pagelink(on, wikitail, **kw)
         return ''

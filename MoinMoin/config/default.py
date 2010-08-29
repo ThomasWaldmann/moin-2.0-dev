@@ -50,8 +50,6 @@ class ConfigFunctionality(object):
     _site_plugin_lists = None
     xapian_searchers = None
     moinmoin_dir = None
-    # will be lazily loaded by interwiki code when needed (?)
-    shared_intermap_files = None
 
     def __init__(self):
         """ Init Config instance """
@@ -538,8 +536,8 @@ options_no_group_name = {
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
-    ('shared_intermap', None,
-     "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
+    ('interwiki_map', {},
+     "Dictionary of wiki_name -> wiki_url"),
     ('namespace_mapping', None,
     "This needs to point to a (correctly ordered!) list of tuples, each tuple containing: Namespace identifier, backend, acl protection to be applied to that backend. " + \
     "E.g.: [('/', FSBackend('wiki/data'), dict(default='All:read,write,create')), ]. Please see HelpOnStorageConfiguration for further reference."),

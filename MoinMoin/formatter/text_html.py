@@ -474,7 +474,7 @@ class Formatter(FormatterBase):
         @keyword title: override using the interwiki wikiname as title
         """
         querystr = kw.get('querystr', {})
-        wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
+        wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(interwiki, pagename)
         wikiurl = wikiutil.mapURL(self.request, wikiurl)
         if wikitag == 'Self': # for own wiki, do simple links
             try: # XXX this is the only place where we access self.page - do we need it? Crashes silently on actions!

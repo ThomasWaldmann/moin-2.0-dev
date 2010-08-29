@@ -20,7 +20,6 @@ class Config(DefaultConfig):
     _root = abspath(join(_here, '..', '..'))
     data_dir = join(_here, 'wiki', 'data') # needed for plugins package TODO
     _test_items_xml = join(_here, 'testitems.xml')
-    shared_intermap_files = [join(_root, 'contrib', 'interwiki', 'intermap.txt'), ]
     content_acl = None
     page_front_page = 'FrontPage'
 

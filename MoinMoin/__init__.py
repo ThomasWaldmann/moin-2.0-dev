@@ -332,7 +332,7 @@ def get_editor_info(request, rev, external=False):
                 uri = url_for('frontend.show_item', item_name=name, _external=external)
             else:
                 css = 'editor homepage interwiki'
-                wt, wu, tail, err = wikiutil.resolve_interwiki(request, homewiki, name)
+                wt, wu, tail, err = wikiutil.resolve_interwiki(homewiki, name)
                 uri = wikiutil.join_wiki(wu, tail)
 
     result = dict(name=name, text=text, css=css, title=title)

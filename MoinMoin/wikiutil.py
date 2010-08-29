@@ -20,8 +20,8 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-
-from flask import flaskg, session
+from flask import flaskg
+from flask import request, session
 
 from MoinMoin import _, N_
 from MoinMoin import config
@@ -443,86 +443,6 @@ def set_edit_lock(item, request):
 #############################################################################
 ### InterWiki
 #############################################################################
-INTERWIKI_PAGE = "InterWikiMap"
-
-def generate_file_list(request):
-    """ generates a list of all files. for internal use. """
-
-    # order is important here, intermap files read later overwrite
-    # data from files read earlier!
-    intermap_files = app.cfg.shared_intermap
-    if not isinstance(intermap_files, list):
-        intermap_files = [intermap_files]
-    else:
-        intermap_files = intermap_files[:]
-    app.cfg.shared_intermap_files = [filename for filename in intermap_files
-                                         if filename and os.path.isfile(filename)]
-
-
-def get_max_mtime(file_list, page):
-    """ Returns the highest modification time of the files in file_list and the
-    page page. """
-    timestamps = [os.stat(filename).st_mtime for filename in file_list]
-    if page.exists():
-        timestamps.append(page.mtime())
-    if timestamps:
-        return max(timestamps)
-    else:
-        return 0 # no files / pages there
-
-def load_wikimap(request):
-    """ load interwiki map (once, and only on demand) """
-    from MoinMoin.Page import Page
-
-    now = int(time.time())
-    if getattr(app.cfg, "shared_intermap_files", None) is None:
-        generate_file_list(request)
-
-    try:
-        _interwiki_list = app.cfg.cache.interwiki_list
-        old_mtime = app.cfg.cache.interwiki_mtime
-        if app.cfg.cache.interwiki_ts + (1*60) < now: # 1 minutes caching time
-            max_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
-            if max_mtime > old_mtime:
-                raise AttributeError # refresh cache
-            else:
-                app.cfg.cache.interwiki_ts = now
-    except AttributeError:
-        _interwiki_list = {}
-        lines = []
-
-        for filename in app.cfg.shared_intermap_files:
-            f = codecs.open(filename, "r", config.charset)
-            lines.extend(f.readlines())
-            f.close()
-
-        # add the contents of the InterWikiMap page
-        lines += Page(request, INTERWIKI_PAGE).get_raw_body().splitlines()
-
-        for line in lines:
-            if not line or line[0] == '#':
-                continue
-            try:
-                line = "%s %s/InterWiki" % (line, request.script_root)
-                wikitag, urlprefix, dummy = line.split(None, 2)
-            except ValueError:
-                pass
-            else:
-                _interwiki_list[wikitag] = urlprefix
-
-        del lines
-
-        # add own wiki as "Self" and by its configured name
-        _interwiki_list['Self'] = request.script_root + '/'
-        if app.cfg.interwikiname:
-            _interwiki_list[app.cfg.interwikiname] = request.script_root + '/'
-
-        # save for later
-        app.cfg.cache.interwiki_list = _interwiki_list
-        app.cfg.cache.interwiki_ts = now
-        app.cfg.cache.interwiki_mtime = get_max_mtime(app.cfg.shared_intermap_files, Page(request, INTERWIKI_PAGE))
-
-    return _interwiki_list
 
 def split_interwiki(wikiurl):
     """ Split a interwiki name, into wikiname and pagename, e.g:
@@ -542,20 +462,22 @@ def split_interwiki(wikiurl):
         wikiname, pagename = 'Self', wikiurl
     return wikiname, pagename
 
-def resolve_interwiki(request, wikiname, pagename):
+def resolve_interwiki(wikiname, pagename):
     """ Resolve an interwiki reference (wikiname:pagename).
 
-    @param request: the request object
     @param wikiname: interwiki wiki name
     @param pagename: interwiki page name
     @rtype: tuple
     @return: (wikitag, wikiurl, wikitail, err)
     """
-    _interwiki_list = load_wikimap(request)
-    if wikiname in _interwiki_list:
-        return (wikiname, _interwiki_list[wikiname], pagename, False)
+    this_wiki_url = request.script_root + '/'
+    if wikiname in ('Self', app.cfg.interwikiname):
+        return (wikiname, this_wiki_url, pagename, False)
     else:
-        return (wikiname, request.script_root, "/InterWiki", True)
+        try:
+            return (wikiname, app.cfg.interwiki_map[wikiname], pagename, False)
+        except KeyError:
+            return (wikiname, this_wiki_url, "InterWiki", True)
 
 def join_wiki(wikiurl, wikitail):
     """
