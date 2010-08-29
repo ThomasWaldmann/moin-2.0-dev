@@ -603,7 +603,7 @@ def isTemplateItem(itemname):
     @rtype: bool
     @return: True if item is a template item
     """
-    return app.cfg.cache.page_template_regexact.search(itemname) is not None
+    return app.cfg.cache.item_template_regexact.search(itemname) is not None
 
 
 def isGroupItem(itemname):
@@ -613,7 +613,7 @@ def isGroupItem(itemname):
     @rtype: bool
     @return: True if item is a group item
     """
-    return app.cfg.cache.page_group_regexact.search(itemname) is not None
+    return app.cfg.cache.item_group_regexact.search(itemname) is not None
 
 
 def filterCategoryPages(request, pagelist):
@@ -630,7 +630,7 @@ def filterCategoryPages(request, pagelist):
     @rtype: list
     @return: only the category pages of pagelist
     """
-    func = app.cfg.cache.page_category_regexact.search
+    func = app.cfg.cache.item_category_regexact.search
     return [pn for pn in pagelist if func(pn)]
 
 

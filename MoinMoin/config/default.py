@@ -73,16 +73,16 @@ class ConfigFunctionality(object):
         self._decode()
 
         # After that, pre-compile some regexes
-        self.cache.page_category_regex = re.compile(self.page_category_regex, re.UNICODE)
-        self.cache.page_dict_regex = re.compile(self.page_dict_regex, re.UNICODE)
-        self.cache.page_group_regex = re.compile(self.page_group_regex, re.UNICODE)
-        self.cache.page_template_regex = re.compile(self.page_template_regex, re.UNICODE)
+        self.cache.item_category_regex = re.compile(self.item_category_regex, re.UNICODE)
+        self.cache.item_dict_regex = re.compile(self.item_dict_regex, re.UNICODE)
+        self.cache.item_group_regex = re.compile(self.item_group_regex, re.UNICODE)
+        self.cache.item_template_regex = re.compile(self.item_template_regex, re.UNICODE)
 
         # the ..._regexact versions only match if nothing is left (exact match)
-        self.cache.page_category_regexact = re.compile(u'^%s$' % self.page_category_regex, re.UNICODE)
-        self.cache.page_dict_regexact = re.compile(u'^%s$' % self.page_dict_regex, re.UNICODE)
-        self.cache.page_group_regexact = re.compile(u'^%s$' % self.page_group_regex, re.UNICODE)
-        self.cache.page_template_regexact = re.compile(u'^%s$' % self.page_template_regex, re.UNICODE)
+        self.cache.item_category_regexact = re.compile(u'^%s$' % self.item_category_regex, re.UNICODE)
+        self.cache.item_dict_regexact = re.compile(u'^%s$' % self.item_dict_regex, re.UNICODE)
+        self.cache.item_group_regexact = re.compile(u'^%s$' % self.item_group_regex, re.UNICODE)
+        self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
 
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
@@ -251,9 +251,8 @@ file. It should match the actual charset of the configuration file.
 
         decode_names = (
             'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
-            'page_front_page', 'page_category_regex', 'page_dict_regex',
-            'page_group_regex', 'page_template_regex', 'page_license_page',
-            'page_local_spelling_words', 'mail_from'
+            'page_front_page', 'page_license_page', 'page_local_spelling_words', 'mail_from',
+            'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             )
 
         for name in decode_names:
@@ -572,14 +571,14 @@ options_no_group_name = {
     # the group 'all' shall match all, while the group 'key' shall match the key only
     # e.g. CategoryFoo -> group 'all' ==  CategoryFoo, group 'key' == Foo
     # moin's code will add ^ / $ at beginning / end when needed
-    ('page_category_regex', ur'(?P<all>Category(?P<key>(?!Template)\S+))',
-     'Pagenames exactly matching this regex are regarded as Wiki categories [Unicode]'),
-    ('page_dict_regex', ur'(?P<all>(?P<key>\S+)Dict)',
-     'Pagenames exactly matching this regex are regarded as pages containing variable dictionary definitions [Unicode]'),
-    ('page_group_regex', ur'(?P<all>(?P<key>\S+)Group)',
-     'Pagenames exactly matching this regex are regarded as pages containing group definitions [Unicode]'),
-    ('page_template_regex', ur'(?P<all>(?P<key>\S+)Template)',
-     'Pagenames exactly matching this regex are regarded as pages containing templates for new pages [Unicode]'),
+    ('item_category_regex', ur'(?P<all>Category(?P<key>(?!Template)\S+))',
+     'Item names exactly matching this regex are regarded as Wiki categories [Unicode]'),
+    ('item_dict_regex', ur'(?P<all>(?P<key>\S+)Dict)',
+     'Item names exactly matching this regex are regarded as items containing variable dictionary definitions [Unicode]'),
+    ('item_group_regex', ur'(?P<all>(?P<key>\S+)Group)',
+     'Item names exactly matching this regex are regarded as items containing group definitions [Unicode]'),
+    ('item_template_regex', ur'(?P<all>(?P<key>\S+)Template)',
+     'Item names exactly matching this regex are regarded as items containing templates for new items [Unicode]'),
 
     ('page_local_spelling_words', u'LocalSpellingWords',
      'Name of the page containing user-provided spellchecker words [Unicode]'),

@@ -578,7 +578,7 @@ There is no help, you're doomed!
     def get_templates(self, mimetype=None):
         """ create a list of templates (for some specific mimetype) """
         from MoinMoin.search.term import NameRE, AND, LastRevisionMetaDataMatch
-        regex = app.cfg.cache.page_template_regexact
+        regex = app.cfg.cache.item_template_regexact
         term = NameRE(regex)
         if mimetype:
             term = AND(term, LastRevisionMetaDataMatch(MIMETYPE, mimetype))

@@ -29,7 +29,7 @@ def userbrowser():
     User Account Browser
     """
     # XXX add superuser check
-    #isgroup = app.cfg.cache.page_group_regexact.search
+    #isgroup = app.cfg.cache.item_group_regexact.search
     #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
     for uid in user.getUserList():
