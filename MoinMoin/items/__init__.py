@@ -434,7 +434,7 @@ class Item(object):
         remote_addr = request.remote_addr
         if remote_addr:
             newrev[EDIT_LOG_ADDR] = unicode(remote_addr)
-            newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, remote_addr))
+            newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
         if flaskg.user.valid:
             newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
 
