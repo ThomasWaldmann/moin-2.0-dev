@@ -936,7 +936,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
     # Images / Transclusion ##############################################
 
     def icon(self, type):
-        return flaskg.theme.make_icon(type)
+        return flaskg.theme.make_icon(self, type)
 
     smiley = icon
 

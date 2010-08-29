@@ -281,7 +281,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
             # already loaded theme is just replaced (works cause
             # nothing has been emitted yet)
             u.theme_name = theme_name
-            if load_theme_fallback(request, theme_name) > 0:
+            if load_theme_fallback(theme_name) > 0:
                 theme_name = wikiutil.escape(theme_name)
                 return 'error', _("The theme '%(theme_name)s' could not be loaded!") % locals()
 

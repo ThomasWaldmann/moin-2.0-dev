@@ -23,7 +23,7 @@ class TestEditBarActions(object):
         self.savedMailEnabled = app.cfg.mail_enabled
         app.cfg.mail_enabled = True
         self.page = Page(self.request, u'FrontPage')
-        self.ThemeBase = ThemeBase(self.request)
+        self.ThemeBase = ThemeBase()
 
     def teardown_method(self, method):
         flaskg.user.valid = self.savedValid
