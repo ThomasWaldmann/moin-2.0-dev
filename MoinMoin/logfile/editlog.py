@@ -103,7 +103,7 @@ class LocalEditLog(object):
         if app.cfg.log_remote_addr:
             if host is None:
                 host = request.remote_addr
-            hostname = wikiutil.get_hostname(request, host)
+            hostname = wikiutil.get_hostname(host)
         else:
             host = ''
             hostname = ''

@@ -420,17 +420,14 @@ def get_edit_lock(item):
             return (True, float(item[EDIT_LOCK_TIMESTAMP]), item[EDIT_LOCK_ADDR],
                     item[EDIT_LOCK_HOSTNAME], item[EDIT_LOCK_USERID])
 
-def set_edit_lock(item, request):
+def set_edit_lock(item):
     """
     Set the lock property to True or False.
     """
     timestamp = time.time()
     addr = request.remote_addr
-    hostname = wikiutil.get_hostname(request, addr)
-    if hasattr(request, "user"):
-        userid = flaskg.user.valid and flaskg.user.id or ''
-    else:
-        userid = ''
+    hostname = wikiutil.get_hostname(addr)
+    userid = flaskg.user.valid and flaskg.user.id or ''
 
     item.change_metadata()
     item[EDIT_LOCK_TIMESTAMP] = str(timestamp)
@@ -2426,7 +2423,7 @@ def add_metadata_to_body(metadata, data):
     return metadata_data + data
 
 
-def get_hostname(request, addr):
+def get_hostname(addr):
     """
     Looks up the hostname depending on the configuration.
     """
