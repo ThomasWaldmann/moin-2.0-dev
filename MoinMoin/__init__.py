@@ -349,7 +349,7 @@ def setup_jinja_env(context):
 
     from MoinMoin.theme import load_theme_fallback
     theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
-    flaskg.theme = load_theme_fallback(context, theme_name)
+    flaskg.theme = load_theme_fallback(theme_name)
 
     app.jinja_env.globals.update({
                             'isinstance': isinstance,

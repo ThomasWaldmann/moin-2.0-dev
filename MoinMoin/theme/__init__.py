@@ -75,13 +75,10 @@ class ThemeBase(object):
         ('projection',  'projection'),
         )
 
-    def __init__(self, request):
+    def __init__(self):
         """
         Initialize the theme object.
-
-        @param request: the request object
         """
-        self.request = request
         self.cfg = app.cfg
         self.user = flaskg.user
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
@@ -105,7 +102,7 @@ class ThemeBase(object):
 
     def item_readable(self, item_name):
         """
-        Get a boolean indicating whether the user in request can read in item_name.
+        Get a boolean indicating whether the current user can read in item_name.
 
         @param item_name: unicode
         @rtype: boolean
@@ -114,7 +111,7 @@ class ThemeBase(object):
 
     def item_writable(self, item_name):
         """
-        Get a boolean indicating whether the user in request can write in item_name.
+        Get a boolean indicating whether the current user can write in item_name.
 
         @param item_name: unicode
         @rtype: boolean
@@ -129,7 +126,6 @@ class ThemeBase(object):
         @param item_name: unicode
         @rtype: unicode
         """
-        request = self.request
         item_lang_request = _(item_en)
         if self.item_exists(item_lang_request):
             return item_lang_request
@@ -149,7 +145,7 @@ class ThemeBase(object):
         """
         if html:
             if callable(html):
-                html = html(self.request)
+                html = html()
         return html
 
     def location_breadcrumbs(self, item_name):
@@ -174,7 +170,6 @@ class ThemeBase(object):
         @rtype: list
         @return: path breadcrumbs items in tuple (wiki_name, item_name, url, exists, err)
         """
-        request = self.request
         user = self.user
         breadcrumbs = []
         trail = user.getTrail()
@@ -198,7 +193,6 @@ class ThemeBase(object):
         @return: arguments of user homepage link in tuple (wiki_href, aliasname, title, exists)
         """
         user = self.user
-        request = self.request
 
         wikiname, itemname = wikiutil.getInterwikiHomePage()
         name = user.name
@@ -237,7 +231,6 @@ class ThemeBase(object):
         @rtype: tuple
         @return: pagename or url, link to page or url
         """
-        request = self.request
         title = None
         wiki_local = ''  # means local wiki
 
@@ -292,7 +285,6 @@ class ThemeBase(object):
         @rtype: list
         @return: list of tuples (css_class, url, link_text, title)
         """
-        request = self.request
         items = []  # navibar items
         current = item_name
 
@@ -354,7 +346,7 @@ class ThemeBase(object):
         img_url = url_for('static', filename='%s/img/%s' % (self.name, icon))
         return alt, img_url, w, h
 
-    def make_icon(self, icon, vars=None, **kw):
+    def make_icon(self, formatter, icon, vars=None, **kw):
         """
         This is the central routine for making <img> tags for icons!
         All icons stuff except the top left logo and search field icons are
@@ -373,7 +365,7 @@ class ThemeBase(object):
         except KeyError, err:
             alt = 'KeyError: %s' % str(err)
         alt = _(alt)
-        tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
+        tag = formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
     def parent_item(self, item_name):
@@ -398,7 +390,6 @@ class ThemeBase(object):
         @rtype: unicode
         @return: url for user login
         """
-        request = self.request
         url = ''
         if app.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
@@ -421,8 +412,6 @@ class ThemeBase(object):
         @rtype: list
         @return: options of actions menu
         """
-        request = self.request
-
         menu = [
             # XXX currently everything is dispatching to frontend.show_item,
             # fix this as soon we have the right methods there:
@@ -494,15 +483,14 @@ class ThemeNotFound(Exception):
     """
 
 
-def load_theme(request, theme_name=None):
+def load_theme(theme_name=None):
     """
-    Load a theme for this request.
+    Load a theme.
 
-    @param request: moin request
     @param theme_name: the name of the theme
     @type theme_name: str
     @rtype: Theme
-    @return: a theme initialized for the request
+    @return: a initialized theme
     """
     if theme_name is None or theme_name == '<default>':
         theme_name = app.cfg.theme_default
@@ -512,14 +500,13 @@ def load_theme(request, theme_name=None):
     except wikiutil.PluginMissingError:
         raise ThemeNotFound(theme_name)
 
-    return Theme(request)
+    return Theme()
 
 
-def load_theme_fallback(request, theme_name=None):
+def load_theme_fallback(theme_name=None):
     """
     Try loading a theme, falling back to defaults on error.
 
-    @param request: moin request
     @param theme_name: the name of the theme
     @type theme_name: str
     @rtype: int
@@ -530,14 +517,14 @@ def load_theme_fallback(request, theme_name=None):
     """
     fallback = 0
     try:
-        theme = load_theme(request, theme_name)
+        theme = load_theme(theme_name)
     except ThemeNotFound:
         fallback = 1
         try:
-            theme = load_theme(request, app.cfg.theme_default)
+            theme = load_theme(app.cfg.theme_default)
         except ThemeNotFound:
             fallback = 2
             from MoinMoin.theme.modernized import Theme
-            theme = Theme(request)
+            theme = Theme()
     return theme
 

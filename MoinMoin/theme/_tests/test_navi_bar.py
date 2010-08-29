@@ -6,6 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin._tests import wikiconfig
 from MoinMoin.theme import ThemeBase
 
 
@@ -14,7 +15,7 @@ class TestNaviBar(object):
         interwiki_map = dict(MoinMoin='http://moinmo.in/', )
 
     def setup_method(self, method):
-        self.theme = ThemeBase(self.request)
+        self.theme = ThemeBase()
 
     def test_itemname(self):
         href, link_text, interwiki = self.theme.split_navilink('ItemName')
