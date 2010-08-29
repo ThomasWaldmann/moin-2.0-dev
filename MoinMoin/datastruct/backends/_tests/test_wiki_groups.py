@@ -159,12 +159,12 @@ class TestWikiGroupBackend(GroupsBackendTest):
         acl_rights = ["NewGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
-        has_rights_before = acl.may(request, u"AnotherUser", "read")
+        has_rights_before = acl.may(u"AnotherUser", "read")
 
         # update page - add AnotherUser to a page group NewGroup
         append_item(request, u'NewGroup', u" * AnotherUser")
 
-        has_rights_after = acl.may(request, u"AnotherUser", "read")
+        has_rights_after = acl.may(u"AnotherUser", "read")
 
         assert not has_rights_before, 'AnotherUser has no read rights because in the beginning he is not a member of a group page NewGroup'
         assert has_rights_after, 'AnotherUser must have read rights because after appendage he is member of NewGroup'

@@ -19,28 +19,28 @@ class TestCaching(object):
     def test_persistence_simple(self):
         """ test if cache persists (on disk) """
         test_data = '12345abcde'
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki')
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki')
         cache.update(test_data)
         del cache
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki')
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki')
         assert test_data == cache.content()
 
     def test_persistence_pickle(self):
         """ test if cache persists (on disk), use pickle """
         test_data = {1: 2, 2: 3, 3: [4, 5, ], }
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki', use_pickle=True)
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki', use_pickle=True)
         cache.update(test_data)
         del cache
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki', use_pickle=True)
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki', use_pickle=True)
         assert test_data == cache.content()
 
     def test_persistence_encode(self):
         """ test if cache persists (on disk), use encoded string """
         test_data = u"üöäÜÖÄß"
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki', use_encode=True)
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki', use_encode=True)
         cache.update(test_data)
         del cache
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki', use_encode=True)
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki', use_encode=True)
         cache_data = cache.content()
         assert type(cache_data) == type(test_data)
         assert cache_data == test_data
@@ -49,13 +49,13 @@ class TestCaching(object):
         """ test if cache mtime yields correct values """
         test_data = '12345abcde'
         now = time.time()
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki')
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki')
         cache.update(test_data)
         assert now - 2 <= cache.mtime() <= now + 2
 
     def test_remove(self):
         """ test if cache file removal works """
-        cache = caching.CacheEntry(self.request, 'test_arena', 'test_key', 'wiki')
+        cache = caching.CacheEntry('test_arena', 'test_key', 'wiki')
         assert cache.exists()
         cache.remove()
         assert not cache.exists()
@@ -68,7 +68,7 @@ class TestCaching(object):
         become_trusted(self.request)
         item = create_item(self.request, page_name, test_data1, mimetype='text/x.moin.wiki', acl=None)
         mtime = item.rev.timestamp
-        cache = caching.CacheEntry(self.request, item.name, 'test_key', 'item')
+        cache = caching.CacheEntry(item.name, 'test_key', 'item')
         cache.update(test_data1)
         assert not cache.needsUpdate(mtime)
         time.sleep(3) # XXX fails without, due to mtime granularity
@@ -81,7 +81,7 @@ class TestCaching(object):
         key = 'nooneknowsit'
         arena = 'somethingfunny'
         data = "dontcare"
-        cacheentry = caching.CacheEntry(request, arena, key, scope='wiki', do_locking=True,
+        cacheentry = caching.CacheEntry(arena, key, scope='wiki', do_locking=True,
                  use_pickle=False, use_encode=True)
         cacheentry.open(mode='w')
         cacheentry.write(data)

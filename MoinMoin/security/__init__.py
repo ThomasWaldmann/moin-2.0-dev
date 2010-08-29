@@ -48,7 +48,6 @@ class Permissions:
 
     def __init__(self, user):
         self.name = user.name
-        self.request = user._request
 
     def __getattr__(self, attr):
         """ Shortcut to export getPermission function for all known ACL rights
@@ -60,7 +59,6 @@ class Permissions:
         @rtype: function
         @return: checking function for that right, accepting an itemname
         """
-        request = self.request
         if attr not in app.cfg.acl_rights_valid:
             raise AttributeError(attr)
         ns_content = app.cfg.ns_content
@@ -229,7 +227,7 @@ class AccessControlList:
                             rightsdict[right] = (right in rights)
                     self.acl.append((entry, rightsdict))
 
-    def may(self, request, name, dowhat):
+    def may(self, name, dowhat):
         """ May <name> <dowhat>? Returns boolean answer.
 
             Note: this just checks THIS ACL, the before/default/after ACL must
@@ -240,7 +238,7 @@ class AccessControlList:
         for entry, rightsdict in self.acl:
             if entry in self.special_users:
                 handler = getattr(self, "_special_"+entry, None)
-                allowed = handler(request, name, dowhat, rightsdict)
+                allowed = handler(name, dowhat, rightsdict)
             elif entry in groups:
                 if name in groups[entry]:
                     allowed = rightsdict.get(dowhat)
@@ -248,7 +246,7 @@ class AccessControlList:
                     for special in self.special_users:
                         if special in entry:
                             handler = getattr(self, "_special_" + special, None)
-                            allowed = handler(request, name, dowhat, rightsdict)
+                            allowed = handler(name, dowhat, rightsdict)
                             break # order of self.special_users is important
             elif entry == name:
                 allowed = rightsdict.get(dowhat)
@@ -256,19 +254,19 @@ class AccessControlList:
                 return allowed
         return allowed # should be None
 
-    def _special_All(self, request, name, dowhat, rightsdict):
+    def _special_All(self, name, dowhat, rightsdict):
         return rightsdict.get(dowhat)
 
-    def _special_Known(self, request, name, dowhat, rightsdict):
+    def _special_Known(self, name, dowhat, rightsdict):
         """ check if user <name> is known to us,
             that means that there is a valid user account present.
             works for subscription emails.
         """
-        if user.getUserId(request, name): # is a user with this name known?
+        if user.getUserId(name): # is a user with this name known?
             return rightsdict.get(dowhat)
         return None
 
-    def _special_Trusted(self, request, name, dowhat, rightsdict):
+    def _special_Trusted(self, name, dowhat, rightsdict):
         """ check if user <name> is known AND has logged in using a trusted
             authentication method.
             Does not work for subsription emails that should be sent to <user>,

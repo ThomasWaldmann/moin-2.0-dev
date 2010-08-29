@@ -74,7 +74,7 @@ def i18n_init(request):
         # the scope of the i18n cache needs to be per-wiki, because some translations
         # have http links (to some help pages) and they must not point to another
         # wiki in the farm (confusing and maybe not even readable due to ACLs):
-        meta_cache = caching.CacheEntry(request, 'i18n', 'meta', scope='wiki', use_pickle=True)
+        meta_cache = caching.CacheEntry('i18n', 'meta', scope='wiki', use_pickle=True)
         i18n_dir = os.path.join(app.cfg.moinmoin_dir, 'i18n')
         i18n_dir_mtime = os.path.getmtime(i18n_dir)
         if meta_cache.needsUpdate(i18n_dir_mtime):
@@ -164,7 +164,7 @@ class Translation(object):
     def loadLanguage(self, request, trans_dir="i18n"):
         flaskg.clock.start('loadLanguage')
         # see comment about per-wiki scope above
-        cache = caching.CacheEntry(request, arena='i18n', key=self.language, scope='wiki', use_pickle=True)
+        cache = caching.CacheEntry(arena='i18n', key=self.language, scope='wiki', use_pickle=True)
         langfilename = po_filename(request, self.language, self.domain, i18n_dir=trans_dir)
         langfile_mtime = os.path.getmtime(langfilename)
         needsupdate = cache.needsUpdate(langfile_mtime)

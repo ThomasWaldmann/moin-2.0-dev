@@ -179,7 +179,7 @@ def import_export_xml():
         serialize(backend, xmlfile)
 
 
-def protect_backends(context):
+def protect_backends():
     """
     This function is invoked after the user has been set up. setup_user needs access to
     storage and the ACL middleware needs access to the user's name. Hence we first
@@ -189,7 +189,7 @@ def protect_backends(context):
     amw = acl.AclWrapperBackend
     ns_mapping = app.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
-    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
+    protected_mapping = [(ns, amw(backend, **acls)) for ns, backend, acls in ns_mapping]
     index_uri = app.cfg.router_index_uri
     flaskg.storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
 
@@ -258,7 +258,7 @@ def setup_i18n_preauth(context):
     return lang
 
 
-def setup_i18n_postauth(context):
+def setup_i18n_postauth():
     """ Determine language for the request after user-id is established. """
     lang = flaskg.user.getLang()
     logging.debug("setup_i18n_postauth returns %r" % lang)
@@ -390,13 +390,13 @@ def before():
     flaskg.content_lang = app.cfg.language_default
     flaskg.current_lang = app.cfg.language_default
 
-    lang = setup_i18n_postauth(context)
+    lang = setup_i18n_postauth()
 
     def uid_generator():
         return UniqueIDGenerator()
     flaskg.uid_generator = uid_generator
 
-    protect_backends(context)
+    protect_backends()
 
     setup_jinja_env(context)
 

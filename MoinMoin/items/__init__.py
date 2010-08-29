@@ -26,7 +26,6 @@ from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-from flask import request
 from flask import flaskg
 
 from flask import request, url_for, send_file, render_template, Response, abort, escape
@@ -636,7 +635,7 @@ There is no help, you're doomed!
         filename = None
         if from_cache:
             content_disposition = None
-            sendcache = SendCache(request, from_cache)
+            sendcache = SendCache(from_cache)
             headers = sendcache._get_headers()
             for key, value in headers:
                 lkey = key.lower()
@@ -726,7 +725,7 @@ class TarMixin(object):
             raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
         if isinstance(name, unicode):
             name = name.encode('utf-8')
-        cache = caching.CacheEntry(self.request, "TarContainer", self.name, 'wiki')
+        cache = caching.CacheEntry("TarContainer", self.name, 'wiki')
         tmp_fname = cache._fname
         tf = tarfile.TarFile(tmp_fname, mode='a')
         ti = tarfile.TarInfo(name)
@@ -918,7 +917,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
                 ('height', height),
                 ('transpose', transpose),
             ]
-            cache = SendCache.from_meta(request, cache_meta)
+            cache = SendCache.from_meta(cache_meta)
             if not cache.exists():
                 content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
@@ -958,7 +957,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
         cache_meta = [ # we use a list to have order stability
             (hash_name, oldrev[hash_name], newrev[hash_name]),
         ]
-        cache = SendCache.from_meta(request, cache_meta)
+        cache = SendCache.from_meta(cache_meta)
         if not cache.exists():
             outfile = cache.data_cache
             outfile.open(mode='wb')

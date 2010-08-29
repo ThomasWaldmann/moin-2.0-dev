@@ -313,7 +313,7 @@ class ThemeBase(object):
             if sistername == app.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
+                cache = caching.CacheEntry('sisters', sistername, 'farm', use_pickle=True)
                 if cache.exists():
                     data = cache.content()
                     sisterpages = data['sisterpages']

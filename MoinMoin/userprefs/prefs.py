@@ -213,14 +213,14 @@ class Settings(UserPrefBase):
             new_name = wikiutil.clean_input(form.get('name', u.name)).strip()
 
             # Don't allow changing the name to an invalid one
-            if not user.isValidName(request, new_name):
+            if not user.isValidName(new_name):
                 return 'error', _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
 space between words. Group page name is not allowed.""") % wikiutil.escape(new_name)
 
             # Is this an existing user trying to change information or a new user?
             # Name required to be unique. Check if name belong to another user.
-            existing_id = user.getUserId(request, new_name)
+            existing_id = user.getUserId(new_name)
             if existing_id is not None and existing_id != u.id:
                 return 'error', _("This user name already belongs to somebody else.")
 

@@ -39,7 +39,7 @@ class WikiDict(BaseDict):
         if page.exists():
             arena = 'pagedicts'
             key = wikiutil.quoteWikinameFS(dict_name)
-            cache = caching.CacheEntry(request, arena, key, scope='wiki', use_pickle=True)
+            cache = caching.CacheEntry(arena, key, scope='wiki', use_pickle=True)
             try:
                 cache_mtime = cache.mtime()
                 page_mtime = page.mtime()
