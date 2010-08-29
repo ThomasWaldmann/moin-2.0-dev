@@ -673,33 +673,6 @@ def getFrontPage(request):
     return getLocalizedPage(request, app.cfg.page_front_page)
 
 
-def getHomePage(request, username=None):
-    """
-    Get a user's homepage, or return None for anon users and
-    those who have not created a homepage.
-
-    DEPRECATED - try to use getInterwikiHomePage (see below)
-
-    @param request: the request object
-    @param username: the user's name
-    @rtype: Page
-    @return: user's homepage object - or None
-    """
-    from MoinMoin.Page import Page
-    # default to current user
-    if username is None and flaskg.user.valid:
-        username = flaskg.user.name
-
-    # known user?
-    if username:
-        # Return home page
-        page = Page(request, username)
-        if page.exists():
-            return page
-
-    return None
-
-
 def getInterwikiHomePage(request, username=None):
     """
     Get a user's homepage.
