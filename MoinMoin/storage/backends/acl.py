@@ -68,10 +68,8 @@ class AclWrapperBackend(object):
     implementor may decide to use his own helper functions which the items and revisions
     will still try to call).
     """
-    def __init__(self, request, backend, hierarchic=False, before=u"", default=u"", after=u"", valid=None):
+    def __init__(self, backend, hierarchic=False, before=u"", default=u"", after=u"", valid=None):
         """
-        @type request: MoinMoin request object. hasattr(request, 'cfg')
-        @param request: The request that the user issued.
         @type backend: Some object that implements the storage API.
         @param backend: The unprotected backend that we want to protect.
         @type hierarchic: bool
@@ -86,7 +84,6 @@ class AclWrapperBackend(object):
         @param valid: If a list is given, only strings in the list are treated as valid acl privilege descriptors.
                       If None is give, the global wiki default is used.
         """
-        self.request = request
         cfg = app.cfg
         self.backend = backend
         self.hierarchic = hierarchic
@@ -203,10 +200,9 @@ class AclWrapperBackend(object):
         @rtype: bool
         @return: True if you have permission or False
         """
-        request = self.request
         username = flaskg.user.name
 
-        allowed = self.before.may(request, username, right)
+        allowed = self.before.may(username, right)
         if allowed is not None:
             return allowed
 
@@ -220,7 +216,7 @@ class AclWrapperBackend(object):
                 acl = self._get_acl(name)
                 if acl.has_acl():
                     some_acl = True
-                    allowed = acl.may(request, username, right)
+                    allowed = acl.may(username, right)
                     if allowed is not None:
                         return allowed
                     # If the item has an acl (even one that doesn't match) we *do not*
@@ -228,21 +224,21 @@ class AclWrapperBackend(object):
                     # the item at all.
                     break
             if not some_acl:
-                allowed = self.default.may(request, username, right)
+                allowed = self.default.may(username, right)
                 if allowed is not None:
                     return allowed
         else:
             acl = self._get_acl(itemname)
             if acl.has_acl():
-                allowed = acl.may(request, username, right)
+                allowed = acl.may(username, right)
                 if allowed is not None:
                     return allowed
             else:
-                allowed = self.default.may(request, username, right)
+                allowed = self.default.may(username, right)
                 if allowed is not None:
                     return allowed
 
-        allowed = self.after.may(request, username, right)
+        allowed = self.after.may(username, right)
         if allowed is not None:
             return allowed
 

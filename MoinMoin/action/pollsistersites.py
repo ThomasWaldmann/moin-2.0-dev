@@ -23,7 +23,7 @@ def execute(pagename, request):
     for sistername, sisterurl in app.cfg.sistersites:
         arena = 'sisters'
         key = sistername
-        cache = caching.CacheEntry(request, arena, key, scope='farm', use_pickle=True)
+        cache = caching.CacheEntry(arena, key, scope='farm', use_pickle=True)
         if cache.exists():
             data = cache.content()
         else:

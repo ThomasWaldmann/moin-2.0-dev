@@ -35,7 +35,7 @@ class WikiGroup(GreedyGroup):
         if page.exists():
             arena = 'pagegroups'
             key = wikiutil.quoteWikinameFS(group_name)
-            cache = caching.CacheEntry(request, arena, key, scope='wiki', use_pickle=True)
+            cache = caching.CacheEntry(arena, key, scope='wiki', use_pickle=True)
             try:
                 cache_mtime = cache.mtime()
                 page_mtime = page.mtime()

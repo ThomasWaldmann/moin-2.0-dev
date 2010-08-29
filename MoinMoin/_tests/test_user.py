@@ -63,7 +63,7 @@ class TestLoginWithPassword(object):
         flaskg.user = self.saved_user
 
         # Remove user name to id cache, or next test will fail
-        caching.CacheEntry(self.request, 'user', 'name2id', scope='wiki').remove()
+        caching.CacheEntry('user', 'name2id', scope='wiki').remove()
         try:
             del app.cfg.cache.name2id
         except:
@@ -161,7 +161,7 @@ class TestLoginWithPassword(object):
         password = u"ekERErwerwerh"
         email = "__TestUser2__@moinhost"
         self.createUser(name, password, email=email)
-        uid = user.getUserId(self.request, name)
+        uid = user.getUserId(name)
         theuser = user.User(self.request, uid)
         assert theuser.email == email
 
@@ -197,7 +197,7 @@ class TestGroupName(object):
     def testGroupNames(self):
         """ user: isValidName: reject group names """
         test = u'AdminGroup'
-        assert not user.isValidName(self.request, test)
+        assert not user.isValidName(test)
 
 
 class TestIsValidName(object):
@@ -211,7 +211,7 @@ class TestIsValidName(object):
         base = u'User%sName'
         for c in invalid:
             name = base % c
-            assert not user.isValidName(self.request, name)
+            assert not user.isValidName(name)
 
     def testWhitespace(self):
         """ user: isValidName: reject leading, trailing or multiple whitespace """
@@ -221,7 +221,7 @@ class TestIsValidName(object):
             u'User   Name',
             )
         for test in cases:
-            assert not user.isValidName(self.request, test)
+            assert not user.isValidName(test)
 
     def testValid(self):
         """ user: isValidName: accept names in any language, with spaces """
@@ -232,7 +232,7 @@ class TestIsValidName(object):
             u'가각간갇갈 갉갊감 갬갯걀갼' # Hangul (gibberish)
             )
         for test in cases:
-            assert user.isValidName(self.request, test)
+            assert user.isValidName(test)
 
 
 coverage_modules = ['MoinMoin.user']

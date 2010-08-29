@@ -469,7 +469,7 @@ class Page(object):
         # get email addresses of the all wiki user which have a profile stored;
         # add the address only if the user has subscribed to the page and
         # the user is not the current editor
-        userlist = user.getUserList(request)
+        userlist = user.getUserList()
         subscriber_list = {}
         for uid in userlist:
             if uid == flaskg.user.id and not include_self:
@@ -851,7 +851,7 @@ class Page(object):
 
     def load_from_cache(self, request, name):
         """ Return page content cache or None """
-        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
+        cache = caching.CacheEntry(self, name, scope='item', use_pickle=True)
         attachmentsPath = self.getPagePath('attachments', check_create=0)
         if cache.needsUpdate(self._text_filename(), attachmentsPath):
             return
@@ -866,7 +866,7 @@ class Page(object):
             return
 
     def add_to_cache(self, request, name, data):
-        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
+        cache = caching.CacheEntry(self, name, scope='item', use_pickle=True)
         cache.update(data)
 
     def _specialPageText(self, request, special_type):
@@ -997,7 +997,7 @@ class Page(object):
         @return: true if there is a known conflict.
         """
 
-        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.page_name, 'conflict', scope='item')
         return cache.exists()
 
     def setConflict(self, state):
@@ -1005,7 +1005,7 @@ class Page(object):
 
         @param state: bool, true if there is a conflict.
         """
-        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.page_name, 'conflict', scope='item')
         if state:
             cache.update("") # touch it!
         else:

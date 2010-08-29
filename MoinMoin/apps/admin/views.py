@@ -32,7 +32,7 @@ def userbrowser():
     #isgroup = app.cfg.cache.page_group_regexact.search
     #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
-    for uid in user.getUserList(flaskg.context):
+    for uid in user.getUserList():
         u = user.User(flaskg.context, uid)
         #groups = [groupname for groupname in groupnames if flaskg.dicts.has_member(groupname, account.name)])
         user_accounts.append(dict(
@@ -51,7 +51,7 @@ def userprofile(user_name):
     Set values in user profile
     """
     # XXX add superuser check
-    uid = user.getUserId(flaskg.context, user_name)
+    uid = user.getUserId(user_name)
     u = user.User(flaskg.context, uid)
     if request.method == 'GET':
         return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))

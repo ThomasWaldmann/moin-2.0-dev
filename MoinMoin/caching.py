@@ -27,7 +27,7 @@ class CacheError(Exception):
     pass
 
 
-def get_arena_dir(request, arena, scope):
+def get_arena_dir(arena, scope):
     """ Get a cache storage directory for some specific scope and arena.
 
         scope     arena
@@ -53,8 +53,8 @@ def get_arena_dir(request, arena, scope):
     return os.path.join(app.cfg.cache_dir, *path)
 
 
-def get_cache_list(request, arena, scope):
-    arena_dir = get_arena_dir(request, arena, scope)
+def get_cache_list(arena, scope):
+    arena_dir = get_arena_dir(arena, scope)
     try:
         return os.listdir(arena_dir)
     except OSError:
@@ -62,10 +62,9 @@ def get_cache_list(request, arena, scope):
 
 
 class CacheEntry:
-    def __init__(self, request, arena, key, scope='wiki', do_locking=True,
+    def __init__(self, arena, key, scope='wiki', do_locking=True,
                  use_pickle=False, use_encode=False):
         """ init a cache entry
-            @param request: the request object
             @param scope: see get_arena_dir()
             @param arena: see get_arena_dir()
             @param key: under which key we access the cache content [str, ascii]
@@ -73,12 +72,11 @@ class CacheEntry:
             @param use_pickle: if data should be pickled/unpickled (nice for arbitrary cache content)
             @param use_encode: if data should be encoded/decoded (nice for readable cache files)
         """
-        self.request = request
         self.key = key
         self.locking = do_locking
         self.use_pickle = use_pickle
         self.use_encode = use_encode
-        self.arena_dir = get_arena_dir(request, arena, scope)
+        self.arena_dir = get_arena_dir(arena, scope)
         if not os.path.exists(self.arena_dir):
             os.makedirs(self.arena_dir)
         self._fname = os.path.join(self.arena_dir, key)

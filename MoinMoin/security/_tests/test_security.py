@@ -255,10 +255,10 @@ class TestAcl(object):
                       if right not in may]
             # User should have these rights...
             for right in may:
-                assert acl.may(self.request, user, right)
+                assert acl.may(user, right)
             # But NOT these:
             for right in mayNot:
-                assert not acl.may(self.request, user, right)
+                assert not acl.may(user, right)
 
 
 class TestItemAcls(object):

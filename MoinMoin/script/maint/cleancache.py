@@ -44,7 +44,7 @@ General syntax: moin [options] maint cleancache
         pages = request.rootpage.getPageList(user='')
         for pagename in pages:
             for key in keys:
-                caching.CacheEntry(request, pagename, key, scope='item').remove()
+                caching.CacheEntry(pagename, key, scope='item').remove()
 
         # clean wiki scope cache entries
         arena_key_list = [
@@ -54,22 +54,22 @@ General syntax: moin [options] maint cleancache
             ('user', 'name2id'),
         ]
         for arena, key in arena_key_list:
-            caching.CacheEntry(request, arena, key, scope='wiki').remove()
+            caching.CacheEntry(arena, key, scope='wiki').remove()
 
         # clean dict and groups related cache
         arena_scope_list =  [('pagedicts', 'wiki'),
                              ('pagegroups', 'wiki'),
         ]
         for arena, scope in arena_scope_list:
-            for key in caching.get_cache_list(request, arena, scope):
-                caching.CacheEntry(request, arena, key, scope=scope).remove()
+            for key in caching.get_cache_list(arena, scope):
+                caching.CacheEntry(arena, key, scope=scope).remove()
 
         # clean drafts of users
-        uids = user.getUserList(request)
+        uids = user.getUserList()
         for key in uids:
-            caching.CacheEntry(request, 'drafts', key, scope='wiki').remove()
+            caching.CacheEntry('drafts', key, scope='wiki').remove()
 
         # clean language cache files
         wiki_languages = i18n.wikiLanguages().keys()
         for key in wiki_languages:
-            caching.CacheEntry(request, 'i18n', key, scope='wiki').remove()
+            caching.CacheEntry('i18n', key, scope='wiki').remove()

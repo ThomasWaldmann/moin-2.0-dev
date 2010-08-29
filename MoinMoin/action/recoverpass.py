@@ -50,7 +50,7 @@ Contact the owner of the wiki, who can enable email.""")
             # continue if name not given
             raise KeyError
 
-        u = user.User(request, user.getUserId(request, username))
+        u = user.User(request, user.getUserId(username))
 
         return _do_email(request, u)
     except KeyError:
@@ -179,7 +179,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
                 if pw_error:
                     msg = _("Password not acceptable: %s") % wikiutil.escape(pw_error)
             if not pw_error:
-                u = user.User(request, user.getUserId(request, name))
+                u = user.User(request, user.getUserId(name))
                 if u and u.valid and u.apply_recovery_token(token, newpass):
                     msg = _("Your password has been changed, you can log in now.")
                     msg_type = 'info'

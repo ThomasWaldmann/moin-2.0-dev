@@ -113,7 +113,7 @@ General syntax: moin [options] account check [check-options]
     def collect_data(self):
         import re
         request = self.request
-        for uid in user.getUserList(request):
+        for uid in user.getUserList():
             u = user.User(request, uid)
             self.users[uid] = u
 

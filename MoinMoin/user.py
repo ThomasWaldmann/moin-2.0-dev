@@ -25,7 +25,7 @@ import hmac
 
 from flask import current_app as app
 
-from flask import flaskg, session
+from flask import flaskg, session, request
 
 from MoinMoin import _, N_
 from MoinMoin import config, caching, wikiutil, i18n, events
@@ -42,13 +42,13 @@ def create_user(request, username, password, email):
     theuser.name = username
 
     # Don't allow creating users with invalid names
-    if not isValidName(request, theuser.name):
+    if not isValidName(theuser.name):
         return _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
 space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
 
     # Name required to be unique. Check if name belong to another user.
-    if getUserId(request, theuser.name):
+    if getUserId(theuser.name):
         return _("This user name already belongs to somebody else.")
 
     pw_checker = app.cfg.password_checker
@@ -80,7 +80,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     theuser.save()
 
 
-def get_user_backend(request):
+def get_user_backend():
     """
     Just a shorthand that makes the rest of the code easier
     by returning the proper user backend.
@@ -89,14 +89,14 @@ def get_user_backend(request):
     return flaskg.unprotected_storage.get_backend(ns_user_profile)
 
 
-def getUserList(request):
+def getUserList():
     """ Get a list of all (numerical) user IDs.
 
     @param request: current request
     @rtype: list
     @return: all user IDs
     """
-    all_users = get_user_backend(request).iteritems()
+    all_users = get_user_backend().iteritems()
     return [item.name for item in all_users]
 
 
@@ -104,7 +104,7 @@ def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     from MoinMoin.search import term
     filter = term.ItemMetaDataMatch(key, value)
-    items = get_user_backend(request).search_items(filter)
+    items = get_user_backend().search_items(filter)
     users = [User(request, item.name) for item in items]
     return users
 
@@ -116,7 +116,7 @@ def get_by_email_address(request, email_address):
         return users[0]
 
 
-def getUserId(request, searchName):
+def getUserId(searchName):
     """ Get the user ID for a specific user NAME.
 
     @param searchName: the user name to look up
@@ -125,7 +125,7 @@ def getUserId(request, searchName):
     """
     from MoinMoin.search import term
     try:
-        backend = get_user_backend(request)
+        backend = get_user_backend()
         for user in backend.search_items(term.ItemMetaDataMatch('name', searchName)):
             return user.name
         return None
@@ -217,7 +217,7 @@ def normalizeName(name):
     return name
 
 
-def isValidName(request, name):
+def isValidName(name):
     """ Validate user name
 
     @param name: user name, unicode
@@ -247,7 +247,7 @@ class User:
                                changeable by preferences, default: ().
                                First tuple element was used for authentication.
         """
-        self._user_backend = get_user_backend(request)
+        self._user_backend = get_user_backend()
         self._user = None
 
         self._cfg = app.cfg
@@ -297,13 +297,13 @@ class User:
         # we got an already authenticated username:
         check_password = None
         if not self.id and self.auth_username:
-            self.id = getUserId(request, self.auth_username)
+            self.id = getUserId(self.auth_username)
             if not password is None:
                 check_password = password
         if self.id:
             self.load_from_id(check_password)
         elif self.name:
-            self.id = getUserId(self._request, self.name)
+            self.id = getUserId(self.name)
             if self.id:
                 # no password given should fail
                 self.load_from_id(password or u'')
@@ -473,7 +473,7 @@ class User:
 
         arena = 'user'
         key = 'name2id'
-        caching.CacheEntry(self._request, arena, key, scope='wiki').remove()
+        caching.CacheEntry(arena, key, scope='wiki').remove()
         try:
             del app.cfg.cache.name2id
         except:
@@ -842,7 +842,6 @@ class User:
         """ Check if this user is superuser """
         if not self.valid:
             return False
-        request = self._request
         if app.cfg.DesktopEdition and request.remote_addr == '127.0.0.1':
             # the DesktopEdition gives any local user superuser powers
             return True
@@ -852,7 +851,7 @@ class User:
 
     def host(self):
         """ Return user host """
-        host = self.isCurrentUser() and self._cfg.show_hosts and self._request.remote_addr
+        host = self.isCurrentUser() and self._cfg.show_hosts and request.remote_addr
         return host or _("<unknown>")
 
     def wikiHomeLink(self):

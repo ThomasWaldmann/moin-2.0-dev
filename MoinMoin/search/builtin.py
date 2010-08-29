@@ -52,7 +52,7 @@ class IndexerQueue(object):
         self.timeout = timeout
 
     def get_cache(self, locking):
-        return caching.CacheEntry(self.request, self.xapian_dir, self.queuename,
+        return caching.CacheEntry(self.xapian_dir, self.queuename,
                                   scope='dir', use_pickle=True, do_locking=locking)
 
     def _queue(self, cache):

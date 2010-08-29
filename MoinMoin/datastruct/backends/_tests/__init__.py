@@ -98,7 +98,7 @@ class GroupsBackendTest(object):
 
         for user in self.expanded_groups['AdminGroup']:
             for permission in ["read", "write", "admin"]:
-                assert acl.may(request, u"Admin1", permission), '%s must have %s permission because he is member of the AdminGroup' % (user, permission)
+                assert acl.may(u"Admin1", permission), '%s must have %s permission because he is member of the AdminGroup' % (user, permission)
 
     def test_backend_acl_deny(self):
         """
@@ -112,10 +112,10 @@ class GroupsBackendTest(object):
 
         assert u"SomeUser" not in flaskg.groups['AdminGroup']
         for permission in ["read", "write"]:
-            assert not acl.may(request, u"SomeUser", permission), 'SomeUser must not have %s permission because he is not listed in the AdminGroup' % permission
+            assert not acl.may(u"SomeUser", permission), 'SomeUser must not have %s permission because he is not listed in the AdminGroup' % permission
 
         assert u'Admin1' in flaskg.groups['AdminGroup']
-        assert not acl.may(request, u"Admin1", "admin")
+        assert not acl.may(u"Admin1", "admin")
 
     def test_backend_acl_with_all(self):
         request = self.request
@@ -125,11 +125,11 @@ class GroupsBackendTest(object):
 
         for member in self.expanded_groups[u'EditorGroup']:
             for permission in ["read", "write", "admin"]:
-                assert acl.may(request, member, permission)
+                assert acl.may(member, permission)
 
-        assert acl.may(request, u"Someone", "read")
+        assert acl.may(u"Someone", "read")
         for permission in ["write", "admin"]:
-            assert not acl.may(request, u"Someone", permission)
+            assert not acl.may(u"Someone", permission)
 
     def test_backend_acl_not_existing_group(self):
         request = self.request
@@ -138,7 +138,7 @@ class GroupsBackendTest(object):
         acl_rights = ["NotExistingGroup:read,write,admin All:read"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
-        assert not acl.may(request, u"Someone", "write")
+        assert not acl.may(u"Someone", "write")
 
 
 class DictsBackendTest(object):

@@ -116,7 +116,7 @@ def handle_user_created(event):
     email = event.user.email or u"NOT SET"
     username = event.user.name
 
-    user_ids = getUserList(request)
+    user_ids = getUserList()
     for usr_id in user_ids:
         usr = User(request, id=usr_id)
         # Currently send this only to super users

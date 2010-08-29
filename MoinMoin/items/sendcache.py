@@ -10,7 +10,7 @@
 
     # create a cache object from some meta data values (this internally computes
     # cache.key in a non-guessable way):
-    cache = SendCache.from_meta(request, itemname=bigpic)
+    cache = SendCache.from_meta(itemname=bigpic)
 
     # check if we don't have it in cache yet
     if not cache.exists():
@@ -45,7 +45,7 @@ class SendCache(object):
     do_locking = False
 
     @classmethod
-    def from_meta(cls, request, meta, secret=None):
+    def from_meta(cls, meta, secret=None):
         """
         Calculate a (hard-to-guess) cache key from meta data
 
@@ -73,22 +73,20 @@ class SendCache(object):
         if secret is None:
             secret = app.cfg.secrets['action/cache']
         key = hmac.new(secret, hmac_data, digestmod=hashlib.sha1).hexdigest()
-        return cls(request, key)
+        return cls(key)
 
-    def __init__(self, request, key):
+    def __init__(self, key):
         """
         A cache object for http responses (e.g. for expensive-to-compute stuff)
 
-        @param request: the request object
         @param key: non-guessable key into cache (str)
         """
-        self.request = request
         self.key = key
         self._meta_cache = None
         self._data_cache = None
 
     def _get_cache(self, cache_type):
-        return caching.CacheEntry(self.request, self.cache_arena, self.key+'.'+cache_type,
+        return caching.CacheEntry(self.cache_arena, self.key+'.'+cache_type,
                                   self.cache_scope, do_locking=self.do_locking, use_pickle=(cache_type=='meta'))
     def _get_meta_cache(self):
         if self._meta_cache is None:
@@ -123,7 +121,6 @@ class SendCache(object):
                          the metadata cache "as is" and could be used for cache cleanup,
                          use (wikiname, itemname).
         """
-        request = self.request
         key = self.key
         import os.path
 
@@ -165,7 +162,6 @@ class SendCache(object):
         @param strict: if True, also check the data cache, not only meta (bool, default: False)
         @return: is object cached? (bool)
         """
-        request = self.request
         key = self.key
         if strict:
             data_cached = self.data_cache.exists()
