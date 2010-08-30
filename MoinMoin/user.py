@@ -25,7 +25,7 @@ import hmac
 
 from flask import current_app as app
 
-from flask import flaskg, session, request
+from flask import flaskg, session, request, url_for
 
 from MoinMoin import _, N_
 from MoinMoin import config, caching, wikiutil, i18n, events
@@ -916,28 +916,19 @@ class User:
         from MoinMoin.mail import sendmail
         from MoinMoin.wikiutil import getLocalizedPage
 
-        tok = self.generate_recovery_token()
-
-        text = '\n' + _("""\
-Login Name: %s
-
-Password recovery token: %s
-
-Password reset URL: %s
-""") % (self.name,
-        tok,
-        self._request.abs_href(do='recoverpass', name=self.name, token=tok))
+        token = self.generate_recovery_token()
 
         text = _("""\
-Somebody has requested to email you a password recovery token.
+Somebody has requested to email you a password recovery link.
 
-If you lost your password, please go to the password reset URL below or
-go to the password recovery page again and enter your username and the
-recovery token.
-""") + text
+Please use the link below to change your password to a known value:
 
+%(link)s
 
-        subject = _('[%(sitename)s] Your wiki account data',
+""") % {'link': url_for('frontend.recoverpass',
+                        username=self.name, token=token, _external=True)}
+
+        subject = _('[%(sitename)s] Your wiki password recovery link',
                 ) % {'sitename': self._cfg.sitename or "Wiki"}
         mailok, msg = sendmail.sendmail(self._request, [self.email], subject,
                                     text, mail_from=self._cfg.mail_from)

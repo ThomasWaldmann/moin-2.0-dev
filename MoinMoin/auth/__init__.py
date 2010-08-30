@@ -245,14 +245,10 @@ class MoinAuth(BaseAuth):
             return ContinueLogin(user_obj, _("Invalid username or password."))
 
     def login_hint(self, request):
-        register_url = url_for('frontend.register')
-        recover_url = url_for('frontend.recoverpass')
-
-        msg = ''
         msg = _('If you do not have an account, <a href="%(register_url)s">you can create one now</a>. ') % {
-              'register_url': register_url}
+              'register_url': url_for('frontend.register')}
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>') % {
-               'recover_url': recover_url}
+               'recover_url': url_for('frontend.lostpass')}
         return msg
 
         #return _('If you do not have an account, <a href="%(userprefslink)s">you can create one now</a>. '
