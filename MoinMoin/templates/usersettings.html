@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block item %}
+<h1>{{ _("User Settings") }}</h1>
+<ul>
+    <li><a href="{{ url_for('frontend.changepass')|e }}">{{ _("Change password") }}</a></li>
+</ul>
+{% endblock %}
+
