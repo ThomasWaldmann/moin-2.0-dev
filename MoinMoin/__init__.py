@@ -95,6 +95,10 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     # register before/after request functions
     app.before_request(before)
     app.after_request(after)
+    # init storage
+    app.unprotected_storage = init_unprotected_backends(app)
+    import_export_xml(app)
+    app.storage = init_protected_backends(app)
     return app
 
 
@@ -118,7 +122,7 @@ def set_umask(new_mask=0777^config.umask):
         pass
 
 
-def init_unprotected_backends():
+def init_unprotected_backends(app):
     """ initialize the backend
 
         This is separate from init because the conftest request setup needs to be
@@ -132,12 +136,10 @@ def init_unprotected_backends():
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
     index_uri = app.cfg.router_index_uri
     unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
-
-    # This makes the first request after server restart potentially much slower...
-    import_export_xml(unprotected_storage)
     return unprotected_storage
 
-def import_export_xml(unprotected_storage):
+
+def import_export_xml(app):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
     xmlfile = app.cfg.load_xml
@@ -156,7 +158,7 @@ def import_export_xml(unprotected_storage):
             # the xml data already exists in the target backend.
             # Hence we check the existence of the items before we unserialize
             # them to the backend.
-            backend = unprotected_storage
+            backend = app.unprotected_storage
             for item in tmp_backend.iteritems():
                 item = backend.get_item(item.name)
         except StorageError:
@@ -175,11 +177,11 @@ def import_export_xml(unprotected_storage):
     xmlfile = app.cfg.save_xml
     if xmlfile:
         app.cfg.save_xml = None
-        backend = unprotected_storage
+        backend = app.unprotected_storage
         serialize(backend, xmlfile)
 
 
-def init_protected_backends():
+def init_protected_backends(app):
     """
     This function is invoked after the user has been set up. setup_user needs access to
     storage and the ACL middleware needs access to the user's name. Hence we first
@@ -189,10 +191,11 @@ def init_protected_backends():
     amw = acl.AclWrapperBackend
     ns_mapping = app.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
-    protected_mapping = [(ns, amw(backend, **acls)) for ns, backend, acls in ns_mapping]
+    protected_mapping = [(ns, amw(app.cfg, backend, **acls)) for ns, backend, acls in ns_mapping]
     index_uri = app.cfg.router_index_uri
     storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
     return storage
+
 
 def setup_user(context):
     """ Try to retrieve a valid user object from the request, be it
@@ -381,7 +384,7 @@ def before():
 
     lang = setup_i18n_preauth(context)
 
-    flaskg.unprotected_storage = init_unprotected_backends()
+    flaskg.unprotected_storage = app.unprotected_storage
     flaskg.user = setup_user(context)
 
     flaskg.dicts = app.cfg.dicts(context)
@@ -396,7 +399,7 @@ def before():
         return UniqueIDGenerator()
     flaskg.uid_generator = uid_generator
 
-    flaskg.storage = init_protected_backends()
+    flaskg.storage = app.storage
 
     setup_jinja_env(context)
 

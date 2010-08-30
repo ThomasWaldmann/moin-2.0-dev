@@ -43,6 +43,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 PICKLEPROTOCOL = 1
 
 MAX_NAME_LEN = 500
+HASH_ALGORITHM = 'sha1'
 HASH_HEX_LEN = 40 # sha1 = 160 bit
 UUID_LEN = len(make_uuid().hex)
 
@@ -80,7 +81,7 @@ class StoredRevision(StoredRevisionBase):
 
     @cached_property
     def _fs_path_data(self):
-        data_hash = self._fs_metadata[app.cfg.hash_algorithm]
+        data_hash = self._fs_metadata[HASH_ALGORITHM]
         return self._backend._make_path('data', data_hash)
 
 
@@ -320,7 +321,7 @@ class FS2Backend(BackendBase):
         self._close_revision_meta(rev)
         self._close_revision_data(rev)
 
-        data_hash = metadata[app.cfg.hash_algorithm]
+        data_hash = metadata[HASH_ALGORITHM]
 
         pd = self._make_path('data', data_hash)
         if item._fs_item_id is None:
