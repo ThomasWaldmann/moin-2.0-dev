@@ -12,6 +12,7 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 from flask import flaskg
+from flask import url_for
 
 from MoinMoin import _, N_
 from MoinMoin.formatter import FormatterBase
@@ -178,6 +179,34 @@ class Formatter(FormatterBase):
 
     hardspace = '&nbsp;'
     indentspace = ' '
+
+    icons = {
+        # key         alt                        icon filename      w   h
+        # FileAttach
+        'attach':     ("%(attach_count)s",       "moin-attach.png",   16, 16),
+        'info':       ("[INFO]",                 "moin-info.png",     16, 16),
+        'attachimg':  (_("[ATTACH]"),            "attach.png",        32, 32),
+        # RecentChanges
+        'rss':        (_("[RSS]"),               "moin-rss.png",      16, 16),
+        'deleted':    (_("[DELETED]"),           "moin-deleted.png",  16, 16),
+        'updated':    (_("[UPDATED]"),           "moin-updated.png",  16, 16),
+        'renamed':    (_("[RENAMED]"),           "moin-renamed.png",  16, 16),
+        'conflict':   (_("[CONFLICT]"),          "moin-conflict.png", 16, 16),
+        'new':        (_("[NEW]"),               "moin-new.png",      16, 16),
+        'diffrc':     (_("[DIFF]"),              "moin-diff.png",     16, 16),
+        # General
+        'bottom':     (_("[BOTTOM]"),            "moin-bottom.png",   16, 16),
+        'top':        (_("[TOP]"),               "moin-top.png",      16, 16),
+        'www':        ("[WWW]",                  "moin-www.png",      16, 16),
+        'mailto':     ("[MAILTO]",               "moin-email.png",    16, 16),
+        'news':       ("[NEWS]",                 "moin-news.png",     16, 16),
+        'telnet':     ("[TELNET]",               "moin-telnet.png",   16, 16),
+        'ftp':        ("[FTP]",                  "moin-ftp.png",      16, 16),
+        'file':       ("[FILE]",                 "moin-ftp.png",      16, 16),
+        # search forms
+        'searchbutton': ("[?]",                  "moin-search.png",   16, 16),
+        'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",    16, 16),
+    }
 
     def __init__(self, request, **kw):
         FormatterBase.__init__(self, request, **kw)
@@ -936,9 +965,63 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
     # Images / Transclusion ##############################################
 
     def icon(self, type):
-        return flaskg.theme.make_icon(self, type)
+        return self.make_icon(type)
 
     smiley = icon
+
+    def get_icon(self, icon):
+        """
+        Return icon data from self.icons
+
+        If called from <<Icon(file)>> we have a filename, not a
+        key. Using filenames is deprecated, but for now, we simulate old
+        behavior.
+
+        @param icon: icon name or file name (unicode)
+        @rtype: tuple
+        @return: alt (unicode), href (unicode), width, height (int)
+        """
+        if icon in self.icons:
+            alt, icon, w, h = self.icons[icon]
+        else:
+            # Create filenames to icon data mapping on first call, then
+            # cache in class for next calls.
+            if not getattr(self.__class__, 'iconsByFile', None):
+                d = {}
+                for data in self.icons.values():
+                    d[data[1]] = data
+                self.__class__.iconsByFile = d
+
+            # Try to get icon data by file name
+            if icon in self.iconsByFile:
+                alt, icon, w, h = self.iconsByFile[icon]
+            else:
+                alt, icon, w, h = '', icon, '', ''
+
+        img_url = url_for('static', filename='%s/img/%s' % (self.name, icon))
+        return alt, img_url, w, h
+
+    def make_icon(self, icon, vars=None, **kw):
+        """
+        This is the central routine for making <img> tags for icons!
+        All icons stuff except the top left logo and search field icons are
+        handled here.
+
+        @param icon: icon id (dict key)
+        @param vars: ...
+        @rtype: unicode
+        @return: icon html (img tag)
+        """
+        if vars is None:
+            vars = {}
+        alt, img, w, h = self.get_icon(icon)
+        try:
+            alt = alt % vars
+        except KeyError, err:
+            alt = 'KeyError: %s' % str(err)
+        alt = _(alt)
+        tag = self.image(src=img, alt=alt, width=w, height=h, **kw)
+        return tag
 
     def image(self, src=None, **kw):
         """Creates an inline image with an <img> element.
