@@ -11,15 +11,14 @@
 import os
 
 from flask import current_app as app
-from flask import flash, url_for, render_template, flaskg
+from flask import flaskg
+from flask import url_for
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
 from MoinMoin import i18n, wikiutil, caching, user
-from MoinMoin import action as actionmod
-from MoinMoin.items import Item
 from MoinMoin.util import pysupport
 
 modules = pysupport.getPackageModules(__file__)
@@ -115,9 +114,8 @@ class ThemeBase(object):
         @rtype: string
         @return: string with html
         """
-        if html:
-            if callable(html):
-                html = html()
+        if html and callable(html):
+            html = html()
         return html
 
     def location_breadcrumbs(self, item_name):
@@ -331,9 +329,7 @@ class ThemeBase(object):
         @return: options of actions menu
         """
         menu = [
-            # XXX currently everything is dispatching to frontend.show_item,
-            # fix this as soon we have the right methods there:
-            # title, internal name, disabled
+            # title, internal name, endpoint, disabled
             (_('Global History'), 'global_history', 'frontend.global_history', False, ),
             (_('Global Index'), 'global_index', 'frontend.global_index', False, ),
             # Translation may need longer or shorter separator:
@@ -364,35 +360,9 @@ class ThemeBase(object):
         @rtype: list
         @return: list of item names
         """
-        item_front_page = self.translated_item_name(self.cfg.page_front_page)
-        item_title_index = self.translated_item_name('TitleIndex')
-        item_site_navigation = self.translated_item_name('SiteNavigation')
-        item_find_page = self.translated_item_name('FindPage')
-        return [item_front_page, self.cfg.page_front_page,
-                item_title_index, 'TitleIndex',
-                item_find_page, 'FindPage',
-                item_site_navigation, 'SiteNavigation',
+        return [self.cfg.page_front_page,
+                self.translated_item_name(self.cfg.page_front_page)
                ]
-
-    # Public Functions ########################################################
-
-    def send_title(self, text, **keywords):
-        """
-        Output the page header (and title).
-
-        @param text: the title text
-        @keyword page: the page instance that called us - using this is more efficient than using pagename..
-        @keyword pagename: 'PageName'
-        @keyword media: css media type, defaults to 'screen'
-        @keyword allow_doubleclick: 1 (or 0)
-        @keyword html_head: additional <head> code
-        @keyword body_attr: additional <body> attributes
-        @keyword body_onload: additional "onload" JavaScript code
-        """
-        # TODO: get rid of this
-        if keywords.get('msg', ''):
-            raise DeprecationWarning("Using send_page(msg=) and theme.msg() is deprecated! Use flash of flask instead.")
-        raise DeprecationWarning("Using send_title is deprecated! Use return_template of flask directly.")
 
 
 class ThemeNotFound(Exception):
