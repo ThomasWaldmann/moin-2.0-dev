@@ -68,7 +68,7 @@ class AclWrapperBackend(object):
     implementor may decide to use his own helper functions which the items and revisions
     will still try to call).
     """
-    def __init__(self, backend, hierarchic=False, before=u"", default=u"", after=u"", valid=None):
+    def __init__(self, cfg, backend, hierarchic=False, before=u"", default=u"", after=u"", valid=None):
         """
         @type backend: Some object that implements the storage API.
         @param backend: The unprotected backend that we want to protect.
@@ -84,7 +84,7 @@ class AclWrapperBackend(object):
         @param valid: If a list is given, only strings in the list are treated as valid acl privilege descriptors.
                       If None is give, the global wiki default is used.
         """
-        cfg = app.cfg
+        self.cfg = cfg
         self.backend = backend
         self.hierarchic = hierarchic
         self.valid = valid
@@ -175,7 +175,7 @@ class AclWrapperBackend(object):
         if not isinstance(acls, (tuple, list)):
             acls = (acls, )
         default = self.default.default
-        return AccessControlList(app.cfg, acls, default=default, valid=self.valid)
+        return AccessControlList(self.cfg, acls, default=default, valid=self.valid)
 
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.
