@@ -4,7 +4,6 @@
 {% block item %}
 <h1>{{ _("Login") }}</h1>
 {{ gen.form.open(form, method="post", action=url_for('frontend.login')) }}
-  <input type="hidden" name="do" value="login" />
   {{ forms.render_errors(form) }}
   <dl>
     {% if 'username' in login_inputs %}
