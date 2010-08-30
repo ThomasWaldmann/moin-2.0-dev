@@ -63,7 +63,7 @@ Disallow: /+subscribe/
 Disallow: /+backlinks/
 Disallow: /+register
 Disallow: /+recoverpass
-Disallow: /+userprefs
+Disallow: /+usersettings
 Disallow: /+login
 Disallow: /+changepass
 Disallow: /+logout
@@ -579,14 +579,14 @@ def recoverpass():
         return "NotImplemented"
 
 
-@frontend.route('/+userprefs', methods=['GET', 'POST'])
-def userprefs():
+@frontend.route('/+usersettings', methods=['GET', ])
+def usersettings():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'UserPrefs' # XXX
-    if request.method == 'GET':
-        return "NotImplemented"
-    if request.method == 'POST':
-        return "NotImplemented"
+    item_name = 'User Settings' # XXX
+    return render_template('usersettings.html',
+                           title=_("User Settings"),
+                           item_name=item_name,
+                          )
 
 
 class ValidLogin(Validator):

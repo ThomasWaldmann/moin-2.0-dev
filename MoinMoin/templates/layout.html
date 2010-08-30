@@ -29,8 +29,8 @@
                     {{ aliasname }}
                 </a>
                 <span class="sep"> | </span>
-                {% if 'userprefs' not in cfg.actions_excluded -%}
-                    <a href="{{ url_for('frontend.userprefs')|e }}" class="moin-userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                {% if 'usersettings' not in cfg.actions_excluded -%}
+                    <a href="{{ url_for('frontend.usersettings')|e }}" class="moin-usersettings" rel="nofollow">{{ _('Settings') }}</a>
                     <span class="sep"> | </span>
                 {%- endif %}
             {%- endif %}
