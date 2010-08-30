@@ -452,18 +452,24 @@ class RegistrationForm(Form):
     validators = [ValidRegistration()]
 
 
+def _using_moin_auth():
+    """Check if MoinAuth is being used for authentication.
+
+    Only then users can register with moin or change their password via moin.
+    """
+    from MoinMoin.auth import MoinAuth
+    for auth in app.cfg.auth:
+        if isinstance(auth, MoinAuth):
+            return True
+    return False
+
+
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     request = flaskg.context
-    cfg = app.cfg
     item_name = 'Register' # XXX
 
-    from MoinMoin.auth import MoinAuth
-
-    for auth in cfg.auth:
-        if isinstance(auth, MoinAuth):
-            break
-    else:
+    if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
     if request.method == 'GET':
@@ -533,15 +539,9 @@ class ChangePassForm(Form):
 @frontend.route('/+changepass', methods=['GET', 'POST'])
 def changepass():
     request = flaskg.context
-    cfg = app.cfg
     item_name = 'ChangePass' # XXX
 
-    from MoinMoin.auth import MoinAuth
-
-    for auth in cfg.auth:
-        if isinstance(auth, MoinAuth):
-            break
-    else:
+    if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
     if request.method == 'GET':
