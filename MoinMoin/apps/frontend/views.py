@@ -65,6 +65,7 @@ Disallow: /+register
 Disallow: /+recoverpass
 Disallow: /+userprefs
 Disallow: /+login
+Disallow: /+changepass
 Disallow: /+logout
 Disallow: /+diffsince/
 Disallow: /+diff/
@@ -489,6 +490,80 @@ def register():
         else:
             return render_template('register.html',
                                    title=_("Create Account"),
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
+
+
+class ValidChangePass(Validator):
+    """Validator for a valid password change
+    """
+    passwords_mismatch_msg = N_('The passwords do not match.')
+    current_password_wrong_msg = N_('The current password was wrong.')
+    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
+
+    def validate(self, element, state):
+        if not (element['password_current'].valid and element['password1'].valid and element['password2'].valid):
+            return False
+
+        if not element['password_current'].value: # XXX add the real pw check
+            return self.note_error(element, state, 'current_password_wrong_msg')
+
+        if element['password1'].value != element['password2'].value:
+            return self.note_error(element, state, 'passwords_mismatch_msg')
+
+        try:
+            user.encodePassword(element['password1'].value)
+        except UnicodeError:
+            return self.note_error(element, state, 'password_encoding_problem_msg')
+
+        return True
+
+
+class ChangePassForm(Form):
+    """a simple change password form"""
+    name = 'changepass'
+
+    password_current = String.using(label=N_('Current Password')).validated_by(Present())
+    password1 = String.using(label=N_('New password')).validated_by(Present())
+    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
+    submit = String.using(default=N_('Change password'), optional=True)
+
+    validators = [ValidChangePass()]
+
+
+@frontend.route('/+changepass', methods=['GET', 'POST'])
+def changepass():
+    request = flaskg.context
+    cfg = app.cfg
+    item_name = 'ChangePass' # XXX
+
+    from MoinMoin.auth import MoinAuth
+
+    for auth in cfg.auth:
+        if isinstance(auth, MoinAuth):
+            break
+    else:
+        return Response('No MoinAuth in auth list', 403)
+
+    if request.method == 'GET':
+        form = ChangePassForm.from_defaults()
+        return render_template('changepass.html',
+                               title=_("Change password"),
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = ChangePassForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            flaskg.user.enc_password = user.encodePassword(form['password1'].value)
+            flaskg.user.save()
+            flash(_("Your password has been changed."), "info")
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('changepass.html',
+                                   title=_("Change password"),
                                    gen=make_generator(),
                                    form=form,
                                   )
