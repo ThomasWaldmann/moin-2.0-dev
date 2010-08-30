@@ -17,7 +17,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin import config, error, util, wikiutil
+from MoinMoin import config, error, util
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
@@ -249,7 +249,7 @@ file. It should match the actual charset of the configuration file.
 
         decode_names = (
             'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
-            'page_front_page', 'page_license_page', 'page_local_spelling_words', 'mail_from',
+            'page_front_page', 'page_license_page', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             )
 
@@ -527,7 +527,6 @@ options_no_group_name = {
     ('edit_locking', 'warn 10', "Editor locking policy: `None`, `'warn <timeout in minutes>'`, or `'lock <timeout in minutes>'`"),
     ('edit_ticketing', True, None),
     ('edit_rows', 20, "Default height of the edit box"),
-
   )),
   # ==========================================================================
   'data': ('Data storage', None, (
@@ -577,9 +576,6 @@ options_no_group_name = {
      'Item names exactly matching this regex are regarded as items containing group definitions [Unicode]'),
     ('item_template_regex', ur'(?P<all>(?P<key>\S+)Template)',
      'Item names exactly matching this regex are regarded as items containing templates for new items [Unicode]'),
-
-    ('page_local_spelling_words', u'LocalSpellingWords',
-     'Name of the page containing user-provided spellchecker words [Unicode]'),
   )),
   # ==========================================================================
   'user': ('User Preferences related', None, (
