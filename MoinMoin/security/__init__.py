@@ -26,7 +26,7 @@ from flask import flaskg
 from MoinMoin import user
 
 
-class Permissions:
+class Permissions(object):
     """ Basic interface for user permissions and system policy.
 
     Note that you still need to allow some of the related actions, this
@@ -70,7 +70,7 @@ class Permissions:
 Default = Permissions
 
 
-class AccessControlList:
+class AccessControlList(object):
     """
     Access Control List
 
@@ -284,7 +284,7 @@ class AccessControlList:
         return self.acl_lines != other.acl_lines
 
 
-class ACLStringIterator:
+class ACLStringIterator(object):
     """ Iterator for acl string
 
     Parse acl string and return the next entry on each call to next.

@@ -193,7 +193,7 @@ class MultistageRedirectLogin(LoginReturn):
         LoginReturn.__init__(self, None, False, redirect_to=url)
 
 
-class BaseAuth:
+class BaseAuth(object):
     name = None
     login_inputs = []
     logout_possible = False

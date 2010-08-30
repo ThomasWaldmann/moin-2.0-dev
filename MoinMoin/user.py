@@ -226,7 +226,7 @@ def isValidName(name):
     return (name == normalized) and not wikiutil.isGroupItem(name)
 
 
-class User:
+class User(object):
     """ A MoinMoin User """
 
     def __init__(self, request, id=None, name="", password=None, auth_username="", **kw):

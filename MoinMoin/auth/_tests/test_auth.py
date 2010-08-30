@@ -14,7 +14,7 @@ from MoinMoin import wsgiapp
 from MoinMoin._tests import wikiconfig
 
 
-class AuthTest:
+class AuthTest(object):
     """ test misc. auth methods """
     PAGES = ['FrontPage', 'MoinMoin', 'HelpContents', 'WikiSandBox', ] # must all exist!
 
