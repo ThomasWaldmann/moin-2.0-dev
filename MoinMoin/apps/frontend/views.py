@@ -20,6 +20,9 @@ from flask import current_app as app
 from flatland import String, Form
 from flatland.validation import Validator, Present, IsEmail
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin import _, N_
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
@@ -565,14 +568,132 @@ def changepass():
                                   )
 
 
+class ValidLostPassword(Validator):
+    """Validator for a valid lost password form
+    """
+    name_or_email_needed_msg = N_('Your user name or your email address is needed.')
+
+    def validate(self, element, state):
+        if not(element['username'].valid and element['username'].value
+               or
+               element['email'].valid and element['email'].value):
+            return self.note_error(element, state, 'name_or_email_needed_msg')
+
+        return True
+
+
+class PasswordLostForm(Form):
+    """a simple password lost form"""
+    name = 'lostpass'
+
+    username = String.using(label=N_('Name'), optional=True)
+    email = String.using(label=N_('E-Mail'), optional=True).validated_by(IsEmail())
+    submit = String.using(default=N_('Recover password'), optional=True)
+
+    validators = [ValidLostPassword()]
+
+
+@frontend.route('/+lostpass', methods=['GET', 'POST'])
+def lostpass():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'LostPass' # XXX
+
+    if not _using_moin_auth():
+        return Response('No MoinAuth in auth list', 403)
+
+    if request.method == 'GET':
+        form = PasswordLostForm.from_defaults()
+        return render_template('lostpass.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = PasswordLostForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            u = None
+            username = form['username'].value
+            if username:
+                u = user.User(flaskg.context, user.getUserId(username))
+            email = form['email'].value
+            if form['email'].valid and email:
+                u = user.get_by_email_address(flaskg.context, email)
+            if u and u.valid:
+                is_ok, msg = u.mailAccountData()
+                if not is_ok:
+                    flash(msg, "error")
+            flash(_("If this account exists, you will be notified."), "info")
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('lostpass.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
+
+class ValidPasswordRecovery(Validator):
+    """Validator for a valid password recovery form
+    """
+    passwords_mismatch_msg = N_('The passwords do not match.')
+    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
+
+    def validate(self, element, state):
+        if element['password1'].value != element['password2'].value:
+            return self.note_error(element, state, 'passwords_mismatch_msg')
+
+        try:
+            user.encodePassword(element['password1'].value)
+        except UnicodeError:
+            return self.note_error(element, state, 'password_encoding_problem_msg')
+
+        return True
+
+class PasswordRecoveryForm(Form):
+    """a simple password recovery form"""
+    name = 'recoverpass'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    token = String.using(label=N_('Recovery token')).validated_by(Present())
+    password1 = String.using(label=N_('New password')).validated_by(Present())
+    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
+    submit = String.using(default=N_('Change password'), optional=True)
+
+    validators = [ValidPasswordRecovery()]
+
+
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])
 def recoverpass():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'RecoverPass' # XXX
+
+    if not _using_moin_auth():
+        return Response('No MoinAuth in auth list', 403)
+
     if request.method == 'GET':
-        return "NotImplemented"
+        form = PasswordRecoveryForm.from_defaults()
+        form.update(request.values)
+        return render_template('recoverpass.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
     if request.method == 'POST':
-        return "NotImplemented"
+        form = PasswordRecoveryForm.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            u = user.User(request, user.getUserId(form['username'].value))
+            if u and u.valid and u.apply_recovery_token(form['token'].value, form['password1'].value):
+                flash(_("Your password has been changed, you can log in now."), "info")
+            else:
+                flash(_('Your token is invalid!'), "error")
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('recoverpass.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+usersettings', methods=['GET', ])
