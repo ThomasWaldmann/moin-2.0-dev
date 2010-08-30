@@ -133,7 +133,7 @@ class TestBugDefaultPasswd(LDAPTstBase):
         u2 = handle_login(self.request, None, username='usera', password='wrong')
         assert u2 is None
 
-class TestTwoLdapServers:
+class TestTwoLdapServers(object):
     basedn = BASEDN
     rootdn = ROOTDN
     rootpw = ROOTPW
@@ -173,7 +173,7 @@ class TestTwoLdapServers:
             assert 'userb' in uids
 
 
-class TestLdapFailover:
+class TestLdapFailover(object):
     basedn = BASEDN
     rootdn = ROOTDN
     rootpw = ROOTPW

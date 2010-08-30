@@ -10,7 +10,7 @@ import py
 
 from flask import current_app as app
 
-class TestPasswordChecker:
+class TestPasswordChecker(object):
     username = u"SomeUser"
     tests_builtin = [
         (u'', False), # empty

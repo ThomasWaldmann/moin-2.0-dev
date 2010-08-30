@@ -16,7 +16,7 @@ from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Ima
                            EDIT_LOG_ADDR, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
-class TestItem:
+class TestItem(object):
     def testNonExistent(self):
         item = Item.create(self.request, 'DoesNotExist')
         assert isinstance(item, NonExistent)
@@ -101,7 +101,7 @@ class TestItem:
                              ]
 
 
-class TestTarItems:
+class TestTarItems(object):
     """
     tests for the container items
     """

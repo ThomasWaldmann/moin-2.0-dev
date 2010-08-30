@@ -61,7 +61,7 @@ def get_cache_list(arena, scope):
         return []
 
 
-class CacheEntry:
+class CacheEntry(object):
     def __init__(self, arena, key, scope='wiki', do_locking=True,
                  use_pickle=False, use_encode=False):
         """ init a cache entry

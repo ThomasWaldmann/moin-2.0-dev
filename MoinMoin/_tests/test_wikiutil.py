@@ -17,7 +17,7 @@ from MoinMoin._tests import wikiconfig
 from werkzeug import MultiDict
 
 
-class TestQueryStringSupport:
+class TestQueryStringSupport(object):
     tests = [
         ('', {}, {}),
         ('key1=value1', {'key1': 'value1'}, {'key1': u'value1'}),
@@ -35,7 +35,7 @@ class TestQueryStringSupport:
             assert wikiutil.parseQueryString(wikiutil.makeQueryString(in_str)) == MultiDict(in_unicode)
 
 
-class TestTickets:
+class TestTickets(object):
     def testTickets(self):
         # page name with double quotes
         ticket1 = wikiutil.createTicket(self.request, pagename=u'bla"bla')
@@ -47,7 +47,7 @@ class TestTickets:
         assert ticket1 != ticket2
 
 
-class TestCleanInput:
+class TestCleanInput(object):
     def testCleanInput(self):
         tests = [(u"", u""), # empty
                  (u"aaa\r\n\tbbb", u"aaa   bbb"), # ws chars -> blanks
@@ -58,7 +58,7 @@ class TestCleanInput:
             assert wikiutil.clean_input(instr) == outstr
 
 
-class TestInterWiki:
+class TestInterWiki(object):
     class Config(wikiconfig.Config):
         interwiki_map = dict(MoinMoin='http://moinmo.in/', )
 
@@ -88,7 +88,7 @@ class TestInterWiki:
         assert result == ('Self', u'/', 'SomePage', False)
 
 
-class TestSystemItem:
+class TestSystemItem(object):
     systemItems = (
         'HelpOnMoinWikiSyntax',
         'HelpOnLinking',
@@ -108,7 +108,7 @@ class TestSystemItem:
             assert not wikiutil.isSystemItem(name)
 
 
-class TestTemplateItem:
+class TestTemplateItem(object):
     good = (
         'aTemplate',
         'MyTemplate',
@@ -129,7 +129,7 @@ class TestTemplateItem:
             assert not wikiutil.isTemplateItem(name)
 
 
-class TestParmeterParser:
+class TestParmeterParser(object):
 
     def testParameterParser(self):
         tests = [
@@ -209,7 +209,7 @@ class TestParmeterParser:
         py.test.raises(ValueError, argParser.parse_parameters, args)
 
 
-class TestParamParsing:
+class TestParamParsing(object):
     def testMacroArgs(self):
         abcd = [u'a', u'b', u'c', u'd']
         abcd_dict = {u'a': u'1', u'b': u'2', u'c': u'3', u'd': u'4'}
@@ -518,7 +518,7 @@ class TestParamParsing:
         for test in tests:
             yield [_check] + list(test)
 
-class TestArgGetters:
+class TestArgGetters(object):
     def testGetBoolean(self):
         tests = [
             # default testing for None value
@@ -705,7 +705,7 @@ class TestArgGetters:
         py.test.raises(TypeError, wikiutil.get_unicode, self.request, {})
 
 
-class TestExtensionInvoking:
+class TestExtensionInvoking(object):
     def _test_invoke_bool(self, b=bool):
         assert b is False
 
@@ -901,7 +901,7 @@ class TestExtensionInvoking:
         assert ief(self.request, has_complex, u'b=2.007', [2.007])
 
 
-class TestAnchorNames:
+class TestAnchorNames(object):
     def test_anchor_name_encoding(self):
         tests = [
             # text                    expected output
@@ -921,7 +921,7 @@ class TestAnchorNames:
         encoded = wikiutil.anchor_name_from_text(text)
         assert expected == encoded
 
-class TestPageLinkMarkup:
+class TestPageLinkMarkup(object):
     def test_pagelinkmarkup(self):
         tests = [
             # pagename (no link text), expected markup
@@ -941,7 +941,7 @@ class TestPageLinkMarkup:
     def _check(self, params, expected):
         assert expected == wikiutil.pagelinkmarkup(*params)
 
-class TestRelativeTools:
+class TestRelativeTools(object):
     tests = [
         # test                      expected output
         # CHILD_PREFIX
