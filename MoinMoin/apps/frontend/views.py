@@ -469,7 +469,6 @@ def register():
     if request.method == 'GET':
         form = RegistrationForm.from_defaults()
         return render_template('register.html',
-                               title=_("Create Account"),
                                gen=make_generator(),
                                form=form,
                               )
@@ -489,7 +488,6 @@ def register():
             return redirect(url_for('frontend.show_root'))
         else:
             return render_template('register.html',
-                                   title=_("Create Account"),
                                    gen=make_generator(),
                                    form=form,
                                   )
@@ -549,7 +547,6 @@ def changepass():
     if request.method == 'GET':
         form = ChangePassForm.from_defaults()
         return render_template('changepass.html',
-                               title=_("Change password"),
                                gen=make_generator(),
                                form=form,
                               )
@@ -563,7 +560,6 @@ def changepass():
             return redirect(url_for('frontend.show_root'))
         else:
             return render_template('changepass.html',
-                                   title=_("Change password"),
                                    gen=make_generator(),
                                    form=form,
                                   )
@@ -584,7 +580,6 @@ def usersettings():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'User Settings' # XXX
     return render_template('usersettings.html',
-                           title=_("User Settings"),
                            item_name=item_name,
                           )
 
@@ -631,7 +626,6 @@ def login():
         form = LoginForm.from_defaults()
         return render_template('login.html',
                                login_inputs=app.cfg.auth_login_inputs,
-                               title=_("Login"),
                                gen=make_generator(),
                                form=form,
                               )
@@ -651,7 +645,6 @@ def login():
             # if no valid user, show form again (with hints)
             return render_template('login.html',
                                    login_inputs=app.cfg.auth_login_inputs,
-                                   title=_("Login"),
                                    gen=make_generator(),
                                    form=form,
                                   )
