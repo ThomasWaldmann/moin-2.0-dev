@@ -4,7 +4,6 @@
 {% block item %}
 <h1>{{ _("Create Account") }}</h1>
 {{ gen.form.open(form, method="post", action=url_for('frontend.register')) }}
-  <input type="hidden" name="do" value="newaccount" />
   {{ forms.render_errors(form) }}
   <dl>
     {{ forms.render_field(gen, form['username'], 'text') }}
