@@ -176,8 +176,7 @@ class ThemeBase(object):
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
-        wiki_name, item_name = wikiutil.split_interwiki(itemname)
-        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
+        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wikiname, itemname)
         wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
         return wiki_href, aliasname, title, exists
 
