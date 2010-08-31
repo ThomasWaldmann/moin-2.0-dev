@@ -615,10 +615,10 @@ def lostpass():
             u = None
             username = form['username'].value
             if username:
-                u = user.User(flaskg.context, user.getUserId(username))
+                u = user.User(user.getUserId(username))
             email = form['email'].value
             if form['email'].valid and email:
-                u = user.get_by_email_address(flaskg.context, email)
+                u = user.get_by_email_address(email)
             if u and u.valid:
                 is_ok, msg = u.mailAccountData()
                 if not is_ok:
@@ -682,7 +682,7 @@ def recoverpass():
         form = PasswordRecoveryForm.from_flat(request.form)
         valid = form.validate()
         if valid:
-            u = user.User(request, user.getUserId(form['username'].value))
+            u = user.User(user.getUserId(form['username'].value))
             if u and u.valid and u.apply_recovery_token(form['token'].value, form['password1'].value):
                 flash(_("Your password has been changed, you can log in now."), "info")
             else:

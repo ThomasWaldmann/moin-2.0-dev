@@ -230,7 +230,7 @@ def setup_user(context):
 
     # if we still have no user obj, create a dummy:
     if not userobj:
-        userobj = user.User(context, auth_method='invalid')
+        userobj = user.User(auth_method='invalid')
 
     return userobj
 
@@ -303,7 +303,7 @@ def before():
 
     flaskg.storage = app.storage
 
-    setup_jinja_env(context)
+    setup_jinja_env()
 
     flaskg.context = context
 

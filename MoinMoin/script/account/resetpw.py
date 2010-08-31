@@ -58,9 +58,9 @@ General syntax: moin [options] account resetpw [newpw-options] newpassword
 
         from MoinMoin import user
         if self.options.uid:
-            u = user.User(request, self.options.uid)
+            u = user.User(self.options.uid)
         elif self.options.uname:
-            u = user.User(request, None, self.options.uname)
+            u = user.User(None, self.options.uname)
 
         if not u.exists():
             print 'This user "%s" does not exists!' % u.name

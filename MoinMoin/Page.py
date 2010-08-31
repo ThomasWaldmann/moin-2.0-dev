@@ -474,7 +474,7 @@ class Page(object):
         for uid in userlist:
             if uid == flaskg.user.id and not include_self:
                 continue # no self notification
-            subscriber = user.User(request, uid)
+            subscriber = user.User(uid)
 
             # The following tests should be ordered in order of
             # decreasing computation complexity, in particular

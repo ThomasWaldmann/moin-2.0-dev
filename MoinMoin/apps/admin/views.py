@@ -33,7 +33,7 @@ def userbrowser():
     #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
     for uid in user.getUserList():
-        u = user.User(flaskg.context, uid)
+        u = user.User(uid)
         #groups = [groupname for groupname in groupnames if flaskg.dicts.has_member(groupname, account.name)])
         user_accounts.append(dict(
             uid=uid,
@@ -52,7 +52,7 @@ def userprofile(user_name):
     """
     # XXX add superuser check
     uid = user.getUserId(user_name)
-    u = user.User(flaskg.context, uid)
+    u = user.User(uid)
     if request.method == 'GET':
         return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))
 

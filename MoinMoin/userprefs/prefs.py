@@ -241,7 +241,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
 
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
             if new_email and app.cfg.user_email_unique:
-                other = user.get_by_email_address(request, new_email)
+                other = user.get_by_email_address(new_email)
                 if other is not None and other.id != u.id:
                     return 'error', _("This email already belongs to somebody else.")
 
