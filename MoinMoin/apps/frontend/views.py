@@ -734,7 +734,7 @@ def login():
     item_name = 'LoggedIn' # XXX
     if request.method == 'GET':
         for authmethod in app.cfg.auth:
-            hint = authmethod.login_hint(flaskg.context)
+            hint = authmethod.login_hint()
             if hint:
                 flash(hint, "info")
         form = LoginForm.from_defaults()

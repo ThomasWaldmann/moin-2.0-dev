@@ -118,7 +118,7 @@ class LDAPAuth(BaseAuth):
 
         self.report_invalid_credentials = report_invalid_credentials
 
-    def login(self, request, user_obj, **kw):
+    def login(self, user_obj, **kw):
         username = kw.get('username')
         password = kw.get('password')
 

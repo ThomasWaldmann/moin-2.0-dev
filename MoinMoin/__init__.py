@@ -199,7 +199,7 @@ def init_protected_backends(app):
     return storage
 
 
-def setup_user(context):
+def setup_user():
     """ Try to retrieve a valid user object from the request, be it
     either through the session or through a login. """
     # init some stuff for auth processing:
@@ -208,7 +208,7 @@ def setup_user(context):
     flaskg._login_messages = []
 
     # first try setting up from session
-    userobj = auth.setup_from_session(context)
+    userobj = auth.setup_from_session()
 
     # then handle login/logout forms
     form = request.values
@@ -221,12 +221,12 @@ def setup_user(context):
             'attended': True,
             'stage': form.get('stage')
         }
-        userobj = auth.handle_login(context, userobj, **params)
+        userobj = auth.handle_login(userobj, **params)
     elif 'logout_submit' in form:
         # currently just a GET link
-        userobj = auth.handle_logout(context, userobj)
+        userobj = auth.handle_logout(userobj)
     else:
-        userobj = auth.handle_request(context, userobj)
+        userobj = auth.handle_request(userobj)
 
     # if we still have no user obj, create a dummy:
     if not userobj:
@@ -287,7 +287,7 @@ def before():
     lang = setup_i18n_preauth(context)
 
     flaskg.unprotected_storage = app.unprotected_storage
-    flaskg.user = setup_user(context)
+    flaskg.user = setup_user()
 
     flaskg.dicts = app.cfg.dicts(context)
     flaskg.groups = app.cfg.groups(context)
