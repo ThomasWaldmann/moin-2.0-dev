@@ -44,6 +44,8 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from flask import request
+
 from MoinMoin import _, N_
 from MoinMoin import config, user
 from MoinMoin.auth import BaseAuth, GivenAuth
@@ -67,7 +69,7 @@ class HTTPAuthMoin(BaseAuth):
         self.coding = coding
         BaseAuth.__init__(self)
 
-    def request(self, request, user_obj, **kw):
+    def request(self, user_obj, **kw):
         u = None
         # always revalidate auth
         if user_obj and user_obj.auth_method == self.name:

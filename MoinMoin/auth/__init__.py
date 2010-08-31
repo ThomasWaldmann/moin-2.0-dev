@@ -4,10 +4,10 @@
 
     Each authentication method is an object instance containing
     four methods:
-      * login(request, user_obj, **kw)
-      * logout(request, user_obj, **kw)
-      * request(request, user_obj, **kw)
-      * login_hint(request)
+      * login(user_obj, **kw)
+      * logout(user_obj, **kw)
+      * request(user_obj, **kw)
+      * login_hint()
 
     The kw arguments that are passed in are currently:
        attended: boolean indicating whether a user (attended=True) or
@@ -65,8 +65,8 @@
 
     The multistage member must evaluate to false or be callable. If it is
     callable, this indicates that the authentication method requires a second
-    login stage. In that case, the multistage item will be called with the
-    request as the only parameter. It should return an instance of
+    login stage. In that case, the multistage item will be called and should
+    return an instance of
     MoinMoin.widget.html.FORM and the generic code will append some required
     hidden fields to it. It is also permissible to return some valid HTML,
     but that feature has very limited use since it breaks the authentication
@@ -134,7 +134,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
-from flask import url_for, session
+from flask import url_for, session, request
 from flask import flaskg
 from flask import current_app as app
 
@@ -142,25 +142,22 @@ from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
 
 
-def get_multistage_continuation_url(request, auth_name, extra_fields={}):
+def get_multistage_continuation_url(auth_name, extra_fields={}):
     """get_continuation_url - return a multistage continuation URL
 
        This function returns a URL that when loaded continues a multistage
        authentication at the auth method requesting it (parameter auth_name.)
        Additional fields are added to the URL from the extra_fields dict.
 
-       @param request: the Moin request
        @param auth_name: name of the auth method requesting the continuation
        @param extra_fields: extra GET fields to add to the URL
     """
     # logically, this belongs to request, but semantically it should
     # live in auth so people do auth.get_multistage_continuation_url()
-    fields = {'do': 'login',
-              'login': '1',
-              'stage': auth_name}
-    fields.update(extra_fields)
-    logging.debug("request.abs_href: " + request.abs_href(**fields))
-    return request.abs_href(**fields)
+    url = url_for('frontend.login', login='1', stage=auth_name, **extra_fields)
+    logging.debug("multistage_continuation_url: %s" % url)
+    return url
+
 
 class LoginReturn(object):
     """ LoginReturn - base class for auth method login() return value"""
@@ -199,16 +196,16 @@ class BaseAuth(object):
     logout_possible = False
     def __init__(self):
         pass
-    def login(self, request, user_obj, **kw):
+    def login(self, user_obj, **kw):
         return ContinueLogin(user_obj)
-    def request(self, request, user_obj, **kw):
+    def request(self, user_obj, **kw):
         return user_obj, True
-    def logout(self, request, user_obj, **kw):
+    def logout(self, user_obj, **kw):
         if self.name and user_obj and user_obj.auth_method == self.name:
             logging.debug("%s: logout - invalidating user %r" % (self.name, user_obj.name))
             user_obj.valid = False
         return user_obj, True
-    def login_hint(self, request):
+    def login_hint(self):
         return None
 
 class MoinAuth(BaseAuth):
@@ -220,7 +217,7 @@ class MoinAuth(BaseAuth):
     name = 'moin'
     logout_possible = True
 
-    def login(self, request, user_obj, **kw):
+    def login(self, user_obj, **kw):
         username = kw.get('username')
         password = kw.get('password')
 
@@ -244,7 +241,7 @@ class MoinAuth(BaseAuth):
             logging.debug("%s: could not authenticate user %r (not valid)" % (self.name, username))
             return ContinueLogin(user_obj, _("Invalid username or password."))
 
-    def login_hint(self, request):
+    def login_hint(self):
         msg = _('If you do not have an account, <a href="%(register_url)s">you can create one now</a>. ') % {
               'register_url': url_for('frontend.register')}
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>') % {
@@ -323,7 +320,7 @@ class GivenAuth(BaseAuth):
 
         return name
 
-    def request(self, request, user_obj, **kw):
+    def request(self, user_obj, **kw):
         u = None
         # always revalidate auth
         if user_obj and user_obj.auth_method == self.name:
@@ -360,7 +357,7 @@ class GivenAuth(BaseAuth):
             return user_obj, True
 
 
-def handle_login(request, userobj=None, username=None, password=None,
+def handle_login(userobj=None, username=None, password=None,
                  attended=True, stage=None):
     """
     Process a 'login' request by going through the configured authentication
@@ -376,7 +373,7 @@ def handle_login(request, userobj=None, username=None, password=None,
     for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue
-        ret = authmethod.login(request, userobj, **params)
+        ret = authmethod.login(userobj, **params)
 
         userobj = ret.user_obj
         cont = ret.continue_flag
@@ -390,7 +387,7 @@ def handle_login(request, userobj=None, username=None, password=None,
             return userobj
 
         if ret.redirect_to:
-            nextstage = get_multistage_continuation_url(request, authmethod.name)
+            nextstage = get_multistage_continuation_url(authmethod.name)
             url = ret.redirect_to
             url = url.replace('%return_form', url_quote_plus(nextstage))
             url = url.replace('%return', url_quote(nextstage))
@@ -404,27 +401,27 @@ def handle_login(request, userobj=None, username=None, password=None,
 
     return userobj
 
-def handle_logout(request, userobj):
+def handle_logout(userobj):
     """ Logout the passed user from every configured authentication method. """
     if userobj is None:
         # not logged in
         return userobj
 
     for authmethod in app.cfg.auth:
-        userobj, cont = authmethod.logout(request, userobj, cookie=request.cookies)
+        userobj, cont = authmethod.logout(userobj)
         if not cont:
             break
     return userobj
 
-def handle_request(request, userobj):
+def handle_request(userobj):
     """ Handle the per-request callbacks of the configured authentication methods. """
     for authmethod in app.cfg.auth:
-        userobj, cont = authmethod.request(request, userobj, cookie=request.cookies)
+        userobj, cont = authmethod.request(userobj)
         if not cont:
             break
     return userobj
 
-def setup_from_session(request):
+def setup_from_session():
     userobj = None
     if 'user.id' in session:
         auth_userid = session['user.id']
