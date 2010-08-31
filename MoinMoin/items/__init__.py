@@ -419,8 +419,7 @@ class Item(object):
         newrev[EDIT_LOG_ACTION] = unicode(action)
         self.before_revision_commit(newrev, data)
         storage_item.commit()
-        #event = FileAttachedEvent(request, pagename, target, new_rev.size)
-        #send_event(event)
+        # XXX Event ?
 
     def before_revision_commit(self, newrev, data):
         """

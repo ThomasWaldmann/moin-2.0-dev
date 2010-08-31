@@ -21,9 +21,6 @@ from MoinMoin import config, error, util
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
-import MoinMoin.events as events
-from MoinMoin.events import PageChangedEvent, PageRenamedEvent
-from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.security import AccessControlList
 
 
@@ -187,20 +184,6 @@ class ConfigFunctionality(object):
             if isinstance(var, (str, unicode)):
                 secret += repr(var)
         return secret
-
-    # lazily create a list of event handlers
-    _event_handlers = None
-    def make_event_handlers_prop():
-        def getter(self):
-            if self._event_handlers is None:
-                self._event_handlers = events.get_handlers(self)
-            return self._event_handlers
-
-        def setter(self, new_handlers):
-            self._event_handlers = new_handlers
-
-        return property(getter, setter)
-    event_handlers = make_event_handlers_prop()
 
     def _config_check(self):
         """ Check namespace and warn about unknown names
@@ -586,11 +569,11 @@ options_no_group_name = {
 
     ('email_subscribed_events_default',
      [
-        PageChangedEvent.__name__,
-        PageRenamedEvent.__name__,
-        PageDeletedEvent.__name__,
-        PageCopiedEvent.__name__,
-        PageRevertedEvent.__name__,
+        # XXX PageChangedEvent.__name__
+        # XXX PageRenamedEvent.__name__
+        # XXX PageDeletedEvent.__name__
+        # XXX PageCopiedEvent.__name__
+        # XXX PageRevertedEvent.__name__
      ], None),
 
     ('tz_offset', 0.0,
