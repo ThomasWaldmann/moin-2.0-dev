@@ -56,12 +56,11 @@ def encodeAddress(address, charset):
         return str(address)
 
 
-def sendmail(request, to, subject, text, mail_from=None):
+def sendmail(to, subject, text, mail_from=None):
     """ Create and send a text/plain message
 
     Return a tuple of success or error indicator and message.
 
-    @param request: the request object
     @param to: recipients (list)
     @param subject: subject of email (unicode)
     @param text: email body text (unicode)

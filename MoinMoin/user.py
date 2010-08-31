@@ -930,7 +930,6 @@ Please use the link below to change your password to a known value:
 
         subject = _('[%(sitename)s] Your wiki password recovery link',
                 ) % {'sitename': self._cfg.sitename or "Wiki"}
-        mailok, msg = sendmail.sendmail(self._request, [self.email], subject,
-                                    text, mail_from=self._cfg.mail_from)
+        mailok, msg = sendmail.sendmail([self.email], subject, text, mail_from=self._cfg.mail_from)
         return mailok, msg
 
