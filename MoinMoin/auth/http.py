@@ -2,28 +2,6 @@
 """
     MoinMoin - http authentication
 
-    HTTPAuth
-    ========
-
-    HTTPAuth is just a dummy redirecting to MoinMoin.auth.GivenAuth for backwards
-    compatibility.
-
-    Please fix your setup, this dummy will be removed soon:
-
-    Old (1.8.x):
-    ------------
-    from MoinMoin.auth.http import HTTPAuth
-    auth = [HTTPAuth(autocreate=True)]
-    # any presence (or absence) of 'http' auth name, e.g.:
-    auth_methods_trusted = ['http', ]
-
-    New (1.9.x):
-    ------------
-    from MoinMoin.auth import GivenAuth
-    auth = [GivenAuth(autocreate=True)]
-    # presence (or absence) of 'given' auth name, e.g.:
-    auth_methods_trusted = ['given', ]
-
     HTTPAuthMoin
     ============
 
@@ -49,14 +27,6 @@ from flask import request
 from MoinMoin import _, N_
 from MoinMoin import config, user
 from MoinMoin.auth import BaseAuth, GivenAuth
-
-
-class HTTPAuth(GivenAuth):
-    name = 'http'  # GivenAuth uses 'given'
-
-    def __init__(self, *args, **kwargs):
-        logging.warning("DEPRECATED use of MoinMoin.auth.http.HTTPAuth, please read instructions there or docs/CHANGES!")
-        GivenAuth.__init__(self, *args, **kwargs)
 
 
 class HTTPAuthMoin(BaseAuth):
