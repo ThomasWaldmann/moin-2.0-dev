@@ -34,10 +34,11 @@ class ThemeSupport(object):
         ('projection',  'projection'),
         )
 
-    def __init__(self, name='modernized'):
+    def __init__(self, cfg, name='modernized'):
         self.name = name
-        self.cfg = app.cfg
+        self.cfg = cfg
         self.user = flaskg.user
+        self.storage = flaskg.storage
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
         self.output_charset = 'utf-8'  # was: page.output_charset
         self.ui_lang = 'en'
@@ -55,7 +56,7 @@ class ThemeSupport(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return flaskg.storage.has_item(item_name)
+        return self.storage.has_item(item_name)
 
     def item_readable(self, item_name):
         """
@@ -64,7 +65,7 @@ class ThemeSupport(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return flaskg.user.may.read(item_name)
+        return self.user.may.read(item_name)
 
     def item_writable(self, item_name):
         """
@@ -73,7 +74,7 @@ class ThemeSupport(object):
         @param item_name: unicode
         @rtype: boolean
         """
-        return flaskg.user.may.write(item_name)
+        return self.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
         """
@@ -133,7 +134,7 @@ class ThemeSupport(object):
             wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
             wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
             href = wikiutil.join_wiki(wiki_base_url, item_name)
-            if wiki_name in [app.cfg.interwikiname, 'Self', ]:
+            if wiki_name in [self.cfg.interwikiname, 'Self', ]:
                 exists = self.item_exists(item_name)
                 wiki_name = ''  # means "this wiki" for the theme code
             else:
@@ -216,13 +217,13 @@ class ThemeSupport(object):
         wiki_name, item_name = wikiutil.split_interwiki(target)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
-        if wiki_name not in [app.cfg.interwikiname, 'Self', ]:
+        if wiki_name not in [self.cfg.interwikiname, 'Self', ]:
             if not title:
                 title = item_name
             return href, title, wiki_name
 
         # Handle regular pagename like "FrontPage"
-        item_name = wikiutil.normalize_pagename(item_name, app.cfg)
+        item_name = wikiutil.normalize_pagename(item_name, self.cfg)
 
         # Use localized pages for the current user
         if localize:
@@ -244,7 +245,7 @@ class ThemeSupport(object):
         current = item_name
 
         # Process config navi_bar
-        for text in app.cfg.navi_bar:
+        for text in self.cfg.navi_bar:
             url, link_text, title = self.split_navilink(text)
             items.append(('wikilink', url, link_text, title))
 
@@ -256,8 +257,8 @@ class ThemeSupport(object):
             items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
-        for sistername, sisterurl in app.cfg.sistersites:
-            if sistername == app.cfg.interwikiname:  # it is THIS wiki
+        for sistername, sisterurl in self.cfg.sistersites:
+            if sistername == self.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
                 cache = caching.CacheEntry('sisters', sistername, 'farm', use_pickle=True)
@@ -292,9 +293,9 @@ class ThemeSupport(object):
         @return: url for user login
         """
         url = ''
-        if app.cfg.auth_login_inputs == ['special_no_input']:
+        if self.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
-        if app.cfg.auth_have_login:
+        if self.cfg.auth_have_login:
             url = url or url_for('frontend.login')
         return url
 
@@ -330,7 +331,7 @@ class ThemeSupport(object):
         ]
         return [(title, disabled, endpoint)
                 for title, action, endpoint, disabled in menu
-                if action not in app.cfg.actions_excluded]
+                if action not in self.cfg.actions_excluded]
 
     @property
     def special_item_names(self):
@@ -431,7 +432,7 @@ def setup_jinja_env(context):
     app.jinja_env.filters['shorten_item_name'] = shorten_item_name
 
     theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
-    theme = ThemeSupport(theme_name)
+    theme = ThemeSupport(app.cfg, theme_name)
 
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
