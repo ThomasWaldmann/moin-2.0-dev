@@ -131,9 +131,8 @@
 
 {{ theme.emit_custom_html(cfg.html_after_footer) }}
 
-{%- set null = flaskg.clock.stop('total') -%}
-{%- set timing_information = flaskg.clock.dump() -%}
-
+{%- set null = clock.stop('total') -%}
+{%- set timing_information = clock.dump() -%}
 {% if cfg.show_timings -%}
     <ul id="moin-timings">
     {% for timing in timing_information -%}
