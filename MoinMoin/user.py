@@ -34,10 +34,8 @@ from MoinMoin.util import random_string
 
 def create_user(request, username, password, email):
     """ create a user """
-    form = request.form
-
     # Create user profile
-    theuser = User(request, auth_method="new-user")
+    theuser = User(auth_method="new-user")
 
     theuser.name = username
 
@@ -73,7 +71,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
     # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
     if theuser.email and app.cfg.user_email_unique:
-        if get_by_email_address(request, theuser.email):
+        if get_by_email_address(theuser.email):
             return _("This email already belongs to somebody else.")
 
     # save data
@@ -92,7 +90,6 @@ def get_user_backend():
 def getUserList():
     """ Get a list of all (numerical) user IDs.
 
-    @param request: current request
     @rtype: list
     @return: all user IDs
     """
@@ -100,18 +97,18 @@ def getUserList():
     return [item.name for item in all_users]
 
 
-def get_by_filter(request, key, value):
+def get_by_filter(key, value):
     """ Searches for an user with a given filter """
     from MoinMoin.search import term
     filter = term.ItemMetaDataMatch(key, value)
     items = get_user_backend().search_items(filter)
-    users = [User(request, item.name) for item in items]
+    users = [User(item.name) for item in items]
     return users
 
 
-def get_by_email_address(request, email_address):
+def get_by_email_address(email_address):
     """ Searches for an user with a particular e-mail address and returns it. """
-    users = get_by_filter(request, 'email', email_address)
+    users = get_by_filter('email', email_address)
     if len(users) > 0:
         return users[0]
 
@@ -133,21 +130,7 @@ def getUserId(searchName):
         return None
 
 
-def getUserIdentification(request, username=None):
-    """ Return user name or IP or '<unknown>' indicator.
-
-    @param request: the request object
-    @param username: (optional) user name
-    @rtype: string
-    @return: user name or IP or unknown indicator
-    """
-    if username is None:
-        username = flaskg.user.name
-
-    return username or (app.cfg.show_hosts and request.remote_addr) or _("<unknown>")
-
-
-def get_editor(request, userid, addr, hostname):
+def get_editor(userid, addr, hostname):
     """ Return a tuple of type id and string or Page object
         representing the user that did the edit.
 
@@ -158,7 +141,7 @@ def get_editor(request, userid, addr, hostname):
     if app.cfg.show_hosts and hostname:
         result = 'ip', hostname
     if userid:
-        userdata = User(request, userid)
+        userdata = User(userid)
         if userdata.mailto_author and userdata.email:
             return ('email', userdata.email)
         elif userdata.name:
@@ -229,13 +212,10 @@ def isValidName(name):
 class User(object):
     """ A MoinMoin User """
 
-    def __init__(self, request, id=None, name="", password=None, auth_username="", **kw):
+    def __init__(self, uid=None, name="", password=None, auth_username="", **kw):
         """ Initialize User object
 
-        TODO: when this gets refactored, use "uid" not builtin "id"
-
-        @param request: the request object
-        @param id: (optional) user ID
+        @param uid: (optional) user ID
         @param name: (optional) user name
         @param password: (optional) user password (unicode)
         @param auth_username: (optional) already authenticated user name
@@ -252,7 +232,7 @@ class User(object):
 
         self._cfg = app.cfg
         self.valid = 0
-        self.id = id
+        self.id = uid
         self.auth_username = auth_username
         self.auth_method = kw.get('auth_method', 'internal')
         self.auth_attribs = kw.get('auth_attribs', ())
@@ -292,7 +272,6 @@ class User(object):
         self.last_saved = 0
 
         # attrs not saved to profile
-        self._request = request
 
         # we got an already authenticated username:
         check_password = None

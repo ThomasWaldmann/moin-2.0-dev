@@ -55,7 +55,7 @@ class EditLogLine(object):
             The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
             or 'homepage' (Page instance of user's homepage) or 'anon' ('').
         """
-        return user.get_editor(request, self.userid, self.addr, self.hostname)
+        return user.get_editor(self.userid, self.addr, self.hostname)
 
 
 class LocalEditLog(object):

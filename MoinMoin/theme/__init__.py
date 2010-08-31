@@ -320,7 +320,7 @@ class ThemeSupport(object):
                ]
 
 
-def get_editor_info(request, rev, external=False):
+def get_editor_info(rev, external=False):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
     addr = rev.get(EDIT_LOG_ADDR)
     hostname = rev.get(EDIT_LOG_HOSTNAME)
@@ -343,7 +343,7 @@ def get_editor_info(request, rev, external=False):
 
     userid = rev.get(EDIT_LOG_USERID)
     if userid:
-        u = user.User(request, userid)
+        u = user.User(userid)
         name = u.name
         text = name
         aliasname = u.aliasname
@@ -399,7 +399,7 @@ def shorten_item_name(name, length=25):
     return name
 
 
-def setup_jinja_env(context):
+def setup_jinja_env():
     app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
     app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
     app.jinja_env.filters['shorten_item_name'] = shorten_item_name
@@ -417,7 +417,7 @@ def setup_jinja_env(context):
                             'cfg': app.cfg,
                             '_': _,
                             'item_name': 'handlers need to give it',
-                            'get_editor_info': lambda rev, request=context: get_editor_info(request, rev),
+                            'get_editor_info': lambda rev: get_editor_info(rev),
                             })
 
 

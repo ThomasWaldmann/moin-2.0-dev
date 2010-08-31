@@ -236,7 +236,7 @@ class MoinAuth(BaseAuth):
         if username and not password:
             return ContinueLogin(user_obj, _('Missing password. Please enter user name and password.'))
 
-        u = user.User(request, name=username, password=password, auth_method=self.name)
+        u = user.User(name=username, password=password, auth_method=self.name)
         if u.valid:
             logging.debug("%s: successfully authenticated user %r (valid)" % (self.name, u.name))
             return ContinueLogin(u)
@@ -345,7 +345,7 @@ class GivenAuth(BaseAuth):
             auth_username = self.decode_username(auth_username)
             auth_username = self.transform_username(auth_username)
             logging.debug("auth_username (after decode/transform) = %r" % auth_username)
-            u = user.User(request, auth_username=auth_username,
+            u = user.User(auth_username=auth_username,
                           auth_method=self.name, auth_attribs=('name', 'password'))
 
         logging.debug("u: %r" % u)
@@ -433,7 +433,7 @@ def setup_from_session(request):
         logging.debug("got from session: %r %r" % (auth_userid, auth_method))
         logging.debug("current auth methods: %r" % app.cfg.auth_methods)
         if auth_method and auth_method in app.cfg.auth_methods:
-            userobj = user.User(request, id=auth_userid,
+            userobj = user.User(auth_userid,
                                 auth_method=auth_method,
                                 auth_attribs=auth_attrs)
     logging.debug("session started for user %r", userobj)
