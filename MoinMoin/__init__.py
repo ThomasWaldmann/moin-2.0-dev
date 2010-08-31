@@ -350,9 +350,9 @@ def setup_jinja_env(context):
     app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
     app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
 
-    from MoinMoin.theme import load_theme_fallback
+    from MoinMoin.theme import ThemeSupport
     theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
-    flaskg.theme = load_theme_fallback(theme_name)
+    flaskg.theme = ThemeSupport(theme_name)
 
     app.jinja_env.globals.update({
                             'isinstance': isinstance,

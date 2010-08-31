@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Theme Package
+    MoinMoin - Theme Support
 
     @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
                 2008 MoinMoin:RadomirDopieralski,
@@ -19,24 +19,12 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
 from MoinMoin import i18n, wikiutil, caching, user
-from MoinMoin.util import pysupport
-
-modules = pysupport.getPackageModules(__file__)
 
 
-class ThemeBase(object):
+class ThemeSupport(object):
     """
-    Base class for themes
-
-    This class supplies all the standard template that sub classes can
-    use without rewriting the same code. If you want to change certain
-    elements, override them.
+    Support code for template feeding.
     """
-    name = 'base'
-
-    # Style sheets - usually there is no need to override this in sub
-    # classes. Simply supply the css files in the css directory.
-
     # Standard set of style sheets
     stylesheets = (
         # media         basename
@@ -46,10 +34,8 @@ class ThemeBase(object):
         ('projection',  'projection'),
         )
 
-    def __init__(self):
-        """
-        Initialize the theme object.
-        """
+    def __init__(self, name='modernized'):
+        self.name = name
         self.cfg = app.cfg
         self.user = flaskg.user
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
@@ -359,55 +345,4 @@ class ThemeBase(object):
                 self.translated_item_name(self.cfg.page_front_page)
                ]
 
-
-class ThemeNotFound(Exception):
-    """
-    Thrown if the supplied theme could not be found anywhere
-    """
-
-
-def load_theme(theme_name=None):
-    """
-    Load a theme.
-
-    @param theme_name: the name of the theme
-    @type theme_name: str
-    @rtype: Theme
-    @return: a initialized theme
-    """
-    if theme_name is None or theme_name == '<default>':
-        theme_name = app.cfg.theme_default
-
-    try:
-        Theme = wikiutil.importPlugin(app.cfg, 'theme', theme_name, 'Theme')
-    except wikiutil.PluginMissingError:
-        raise ThemeNotFound(theme_name)
-
-    return Theme()
-
-
-def load_theme_fallback(theme_name=None):
-    """
-    Try loading a theme, falling back to defaults on error.
-
-    @param theme_name: the name of the theme
-    @type theme_name: str
-    @rtype: int
-    @return: A status code for how successful the loading was
-             0 - theme was loaded
-             1 - fallback to default theme
-             2 - serious fallback to builtin theme
-    """
-    fallback = 0
-    try:
-        theme = load_theme(theme_name)
-    except ThemeNotFound:
-        fallback = 1
-        try:
-            theme = load_theme(app.cfg.theme_default)
-        except ThemeNotFound:
-            fallback = 2
-            from MoinMoin.theme.modernized import Theme
-            theme = Theme()
-    return theme
 

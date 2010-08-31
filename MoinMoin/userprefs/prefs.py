@@ -14,7 +14,6 @@ from flask import flaskg
 
 from MoinMoin import _, N_
 from MoinMoin import user, util, wikiutil, events
-from MoinMoin.theme import load_theme_fallback
 from MoinMoin.userprefs import UserPrefBase
 
 from flask import current_app as app
@@ -64,7 +63,7 @@ def _theme_select(request):
     cur_theme = flaskg.user.valid and flaskg.user.theme_name or app.cfg.theme_default
 
     theme_selection = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="")]
-    for theme in wikiutil.getPlugins('theme', app.cfg):
+    for theme in ['modernized', ]: # XXX hardcoded
         selected = ""
         if theme == cur_theme:
             selected = "selected"
@@ -272,18 +271,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
             pass # keep the default
 
         # try to get the (optional) theme
-        theme_name = wikiutil.clean_input(form.get('theme_name', self.cfg.theme_default))
-        if theme_name != u.theme_name:
-            # if the theme has changed, load the new theme
-            # so the user has a direct feedback
-            # WARNING: this should be refactored (i.e. theme load
-            # after userform handling), cause currently the
-            # already loaded theme is just replaced (works cause
-            # nothing has been emitted yet)
-            u.theme_name = theme_name
-            if load_theme_fallback(theme_name) > 0:
-                theme_name = wikiutil.escape(theme_name)
-                return 'error', _("The theme '%(theme_name)s' could not be loaded!") % locals()
+        u.theme_name = wikiutil.clean_input(form.get('theme_name', self.cfg.theme_default))
 
         # try to get the (optional) preferred language
         u.language = wikiutil.clean_input(form.get('language', ''))
