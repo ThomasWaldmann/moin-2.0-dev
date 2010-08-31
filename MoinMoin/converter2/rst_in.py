@@ -35,7 +35,7 @@ from docutils.parsers import rst
 from docutils.parsers.rst import directives, roles
 #####
 
-class NodeVisitor():
+class NodeVisitor(object):
     """
     Part of docutils which converts docutils DOM tree to Moin DOM tree
     """
@@ -621,7 +621,7 @@ class Writer(writers.Writer):
         self.output = visitor.tree()
 
 
-class MoinDirectives:
+class MoinDirectives(object):
     """
     Class to handle all custom directive handling. This code is called as
     part of the parsing stage.
