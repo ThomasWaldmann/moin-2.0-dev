@@ -417,7 +417,6 @@ def setup_jinja_env(context):
                             'cfg': app.cfg,
                             '_': _,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': theme.translated_item_name,
                             'get_editor_info': lambda rev, request=context: get_editor_info(request, rev),
                             })
 

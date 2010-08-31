@@ -18,7 +18,7 @@
     </form>
     
     <div id="moin-logo">
-        <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
     </div>
 
     <div id="moin-username">
@@ -48,7 +48,7 @@
     <h1 id="moin-locationline">
         {% if cfg.show_interwiki -%}
         <span id="moin-interwiki">
-            <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" rel="nofollow">
+            <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.page_front_page))|e }}" rel="nofollow">
                 {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
             </a>
             <span class="sep">: </span>
