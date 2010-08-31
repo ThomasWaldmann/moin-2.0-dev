@@ -277,18 +277,6 @@ class Page(object):
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
-    def editlog_entry(self):
-        """ Return the edit-log entry for this Page object (can be an old revision).
-        """
-        from MoinMoin.logfile import editlog
-        rev = self.get_real_rev()
-        for line in editlog.LocalEditLog(self.request, rootpagename=self.page_name):
-            if int(line.rev) == rev:
-                break
-        else:
-            line = None
-        return line
-
     def mtime(self, printable=False):
         """
         Get modification timestamp of this page.
