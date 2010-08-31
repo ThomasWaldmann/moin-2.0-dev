@@ -109,7 +109,7 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
     return namespace_mapping, router_index_uri
 
 
-def upgrade_syspages(request, packagepath):
+def upgrade_syspages(packagepath):
     """
     Upgrade the wiki's system pages from an XML file.
 
