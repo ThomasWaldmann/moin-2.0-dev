@@ -481,8 +481,7 @@ def register():
         form = RegistrationForm.from_flat(request.form)
         valid = form.validate()
         if valid:
-            msg = user.create_user(flaskg.context,
-                                   username=form['username'].value,
+            msg = user.create_user(username=form['username'].value,
                                    password=form['password1'].value,
                                    email=form['email'].value,
                                   )
