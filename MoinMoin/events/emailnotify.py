@@ -59,7 +59,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
     return {'subject': subject, 'text': change['text'] + pagelink + comment + change['diff']}
 
 
-def send_notification(request, from_address, emails, data):
+def send_notification(from_address, emails, data):
     """ Send notification email
 
     @param emails: list of email addresses
@@ -67,7 +67,7 @@ def send_notification(request, from_address, emails, data):
     @rtype int
 
     """
-    return sendmail.sendmail(request, emails, data['subject'], data['text'], mail_from=from_address)
+    return sendmail.sendmail(emails, data['subject'], data['text'], mail_from=from_address)
 
 
 def handle_page_change(event):
@@ -99,7 +99,7 @@ def handle_page_change(event):
             names = [u.name for u in users]
             data = prep_page_changed_mail(request, page, comment, lang, revisions, trivial)
 
-            if send_notification(request, mail_from, emails, data):
+            if send_notification(mail_from, emails, data):
                 recipients.update(names)
 
         if recipients:
@@ -123,7 +123,7 @@ def handle_user_created(event):
         if usr.isSuperUser() and event_name in usr.email_subscribed_events:
             _ = lambda text: usr.getText(text)
             data = notification.user_created_message(request, _, sitename, username, email)
-            send_notification(request, from_address, [usr.email], data)
+            send_notification(from_address, [usr.email], data)
 
 
 def handle(event):
