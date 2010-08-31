@@ -32,7 +32,7 @@ from MoinMoin import config, caching, wikiutil, i18n
 from MoinMoin.util import random_string
 
 
-def create_user(request, username, password, email):
+def create_user(username, password, email):
     """ create a user """
     # Create user profile
     theuser = User(auth_method="new-user")
