@@ -49,24 +49,6 @@ class ThemeSupport(object):
         self.meta_keywords = ''
         self.meta_description = ''
 
-    def item_readable(self, item_name):
-        """
-        Get a boolean indicating whether the current user can read in item_name.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return self.user.may.read(item_name)
-
-    def item_writable(self, item_name):
-        """
-        Get a boolean indicating whether the current user can write in item_name.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return self.user.may.write(item_name)
-
     def translated_item_name(self, item_en):
         """
         Get a translated item name.

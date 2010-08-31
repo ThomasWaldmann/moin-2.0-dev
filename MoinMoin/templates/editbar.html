@@ -11,7 +11,7 @@
     {%- endif %}
     {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
-        {% if theme.item_writable %}
+        {% if user.may.write(item_name) %}
             <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
         {% else %}
             {{ _('Immutable Item')}}
