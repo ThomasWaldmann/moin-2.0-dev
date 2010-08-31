@@ -817,9 +817,6 @@ class User(object):
         """ Check if this user is superuser """
         if not self.valid:
             return False
-        if app.cfg.DesktopEdition and request.remote_addr == '127.0.0.1':
-            # the DesktopEdition gives any local user superuser powers
-            return True
         superusers = app.cfg.superuser
         assert isinstance(superusers, (list, tuple))
         return self.name and self.name in superusers

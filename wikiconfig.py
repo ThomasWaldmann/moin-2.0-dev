@@ -50,9 +50,8 @@ class Config(DefaultConfig):
                                              after=u'', ),
                             )
 
-    DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
-    sitename = u'MoinMoin DesktopEdition'
+    sitename = u'My MoinMoin'
     logo_string = u'<img src="%s/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">' % url_prefix_static
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
