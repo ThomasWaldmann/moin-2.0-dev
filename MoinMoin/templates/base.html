@@ -24,7 +24,7 @@
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {%- endif %}
     {%- if item_name and allow_doubleclick and
-        theme.user.edit_on_doubleclick and theme.item_writable -%}
+        user.edit_on_doubleclick and theme.item_writable -%}
             <meta name="edit_on_doubleclick" content="1" />
     {%- endif %}
     {%- if theme.meta_keywords -%}
@@ -67,8 +67,8 @@
         rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
         />
     {%- endfor %}
-    {% if theme.user.valid and theme.user.css_url -%}
-        <link media="all" rel="stylesheet" title="{{ theme.user.name|e }}'s stylesheet" href="{{ theme.user.css_url|e }}" />
+    {% if user.valid and user.css_url -%}
+        <link media="all" rel="stylesheet" title="{{ user.name|e }}'s stylesheet" href="{{ user.css_url|e }}" />
     {%- endif %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
