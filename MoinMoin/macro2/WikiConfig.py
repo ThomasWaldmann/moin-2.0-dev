@@ -18,8 +18,6 @@ from MoinMoin.util.tree import moin_page
 
 class Macro(MacroBlockBase):
     def macro(self):
-        request = self.request
-
         if not flaskg.user or not flaskg.user.isSuperUser():
             return ''
 
