@@ -346,3 +346,105 @@ class ThemeSupport(object):
                ]
 
 
+def get_editor_info(request, rev, external=False):
+    from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+    addr = rev.get(EDIT_LOG_ADDR)
+    hostname = rev.get(EDIT_LOG_HOSTNAME)
+    text = _('anonymous')  # link text
+    title = ''  # link title
+    css = 'editor'  # link/span css class
+    name = None  # author name
+    uri = None  # author homepage uri
+    email = None  # pure email address of author
+    if app.cfg.show_hosts and addr:
+        # only tell ip / hostname if show_hosts is True
+        if hostname:
+            text = hostname[:15]  # 15 = len(ipaddr)
+            name = title = '%s[%s]' % (hostname, addr)
+            css = 'editor host'
+        else:
+            name = text = addr
+            title = '[%s]' % (addr, )
+            css = 'editor ip'
+
+    userid = rev.get(EDIT_LOG_USERID)
+    if userid:
+        u = user.User(request, userid)
+        name = u.name
+        text = name
+        aliasname = u.aliasname
+        if not aliasname:
+            aliasname = name
+        if title:
+            # we already have some address info
+            title = "%s @ %s" % (aliasname, title)
+        else:
+            title = aliasname
+        if u.mailto_author and u.email:
+            email = u.email
+            css = 'editor mail'
+        else:
+            homewiki = app.cfg.user_homewiki
+            if homewiki in ('Self', app.cfg.interwikiname):
+                homewiki = u'Self'
+                css = 'editor homepage local'
+                uri = url_for('frontend.show_item', item_name=name, _external=external)
+            else:
+                css = 'editor homepage interwiki'
+                wt, wu, tail, err = wikiutil.resolve_interwiki(homewiki, name)
+                uri = wikiutil.join_wiki(wu, tail)
+
+    result = dict(name=name, text=text, css=css, title=title)
+    if uri:
+        result['uri'] = uri
+    if email:
+        result['email'] = email
+    return result
+
+
+def shorten_item_name(name, length=25):
+    """
+    Shorten item names
+
+    Shorten very long item names that tend to break the user
+    interface. The short name is usually fine, unless really stupid
+    long names are used (WYGIWYD).
+
+    @param name: item name, unicode
+    @param length: maximum length for shortened item names, int
+    @rtype: unicode
+    @return: shortened version.
+    """
+    # First use only the sub page name, that might be enough
+    if len(name) > length:
+        name = name.split('/')[-1]
+        # If it's not enough, replace the middle with '...'
+        if len(name) > length:
+            half, left = divmod(length - 3, 2)
+            name = u'%s...%s' % (name[:half + left], name[-half:])
+    return name
+
+
+def setup_jinja_env(context):
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+
+    theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
+    theme = ThemeSupport(theme_name)
+
+    app.jinja_env.globals.update({
+                            'isinstance': isinstance,
+                            'list': list,
+                            'theme': theme,
+                            'user': flaskg.user,
+                            'cfg': app.cfg,
+                            '_': _,
+                            'flaskg': flaskg,
+                            'item_name': 'handlers need to give it',
+                            'translated_item_name': theme.translated_item_name,
+                            'get_editor_info': lambda rev, request=context: get_editor_info(request, rev),
+                            })
+
+
+

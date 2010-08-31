@@ -26,7 +26,7 @@ from MoinMoin.apps.feed import feed
 from MoinMoin.items import NAME, ACL, MIMETYPE, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_COMMENT
-from MoinMoin import get_editor_info
+from MoinMoin.theme import get_editor_info
 from MoinMoin.items import Item
 
 @feed.route('/atom/<itemname:item_name>')
