@@ -339,7 +339,7 @@ class DefaultConfig(ConfigFunctionality):
     # the options dictionary.
 
 
-def _default_password_checker(cfg, request, username, password):
+def _default_password_checker(cfg, username, password):
     """ Check if a password is secure enough.
         We use a built-in check to get rid of the worst passwords.
 

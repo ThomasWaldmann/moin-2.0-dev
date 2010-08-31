@@ -51,7 +51,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
     pw_checker = app.cfg.password_checker
     if pw_checker:
-        pw_error = pw_checker(request, theuser.name, password)
+        pw_error = pw_checker(theuser.name, password)
         if pw_error:
             return _("Password not acceptable: %s") % wikiutil.escape(pw_error)
 
