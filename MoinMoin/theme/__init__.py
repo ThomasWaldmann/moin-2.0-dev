@@ -342,13 +342,9 @@ class ThemeBase(object):
             (_('Delete Item'), 'delete', 'frontend.delete_item', False, ),
             (_('Destroy Item'), 'destroy', 'frontend.destroy_item', False, ),
         ]
-        options = []
-        for title, action, endpoint, disabled in menu:
-            # removes excluded actions from the more actions menu
-            if action in app.cfg.actions_excluded:
-                continue
-            options.append((title, disabled, endpoint))
-        return options
+        return [(title, disabled, endpoint)
+                for title, action, endpoint, disabled in menu
+                if action not in app.cfg.actions_excluded]
 
     @property
     def special_item_names(self):
