@@ -28,7 +28,7 @@ from flask import current_app as app
 from flask import flaskg, session, request, url_for
 
 from MoinMoin import _, N_
-from MoinMoin import config, caching, wikiutil, i18n, events
+from MoinMoin import config, caching, wikiutil, i18n
 from MoinMoin.util import random_string
 
 
@@ -484,10 +484,9 @@ class User(object):
 
         if not self._stored:
             self._stored = True
-            event = events.UserCreatedEvent(self._request, self)
+            # XXX UserCreatedEvent
         else:
-            event = events.UserChangedEvent(self._request, self)
-        events.send_event(event)
+            pass #  XXX UserChangedEvent
 
     def getText(self, text):
         """ translate a text to the language of this user """
@@ -670,10 +669,7 @@ class User(object):
             self.subscribed_items.append(pagename)
             self.save()
 
-            # Send a notification
-            from MoinMoin.events import SubscribedToPageEvent, send_event
-            e = SubscribedToPageEvent(self._request, pagename, self.name)
-            send_event(e)
+            # XXX SubscribedToPageEvent
             return True
 
         return False

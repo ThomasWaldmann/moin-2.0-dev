@@ -13,7 +13,7 @@ import time
 from flask import flaskg
 
 from MoinMoin import _, N_
-from MoinMoin import user, util, wikiutil, events
+from MoinMoin import user, util, wikiutil
 from MoinMoin.userprefs import UserPrefBase
 
 from flask import current_app as app
