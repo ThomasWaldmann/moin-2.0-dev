@@ -49,15 +49,6 @@ class ThemeSupport(object):
         self.meta_keywords = ''
         self.meta_description = ''
 
-    def item_exists(self, item_name):
-        """
-        Get a boolean indicating whether an item_name exists or not.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return self.storage.has_item(item_name)
-
     def item_readable(self, item_name):
         """
         Get a boolean indicating whether the current user can read in item_name.
@@ -85,11 +76,11 @@ class ThemeSupport(object):
         @rtype: unicode
         """
         item_lang_request = _(item_en)
-        if self.item_exists(item_lang_request):
+        if self.storage.has_item(item_lang_request):
             return item_lang_request
 
         item_lang_default = item_en # FIXME, was: i18n.getText(item_en, request, self.cfg.language_default)
-        if self.item_exists(item_lang_default):
+        if self.storage.has_item(item_lang_default):
             return item_lang_default
         return item_en
 
@@ -116,7 +107,7 @@ class ThemeSupport(object):
         current_item = ''
         for segment in item_name.split('/'):
             current_item += segment
-            breadcrumbs.append((segment, current_item, self.item_exists(current_item)))
+            breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
             current_item += '/'
         return breadcrumbs
 
@@ -135,7 +126,7 @@ class ThemeSupport(object):
             wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
             href = wikiutil.join_wiki(wiki_base_url, item_name)
             if wiki_name in [self.cfg.interwikiname, 'Self', ]:
-                exists = self.item_exists(item_name)
+                exists = self.storage.has_item(item_name)
                 wiki_name = ''  # means "this wiki" for the theme code
             else:
                 exists = True  # we can't detect existance of remote items
@@ -159,7 +150,7 @@ class ThemeSupport(object):
         title = "%s @ %s" % (aliasname, wikiname)
         # link to (interwiki) user homepage
         if wikiname == "Self":
-            exists = self.item_exists(itemname)
+            exists = self.storage.has_item(itemname)
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
