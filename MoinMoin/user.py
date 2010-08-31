@@ -886,8 +886,6 @@ class User(object):
             him to login again.
         """
         from MoinMoin.mail import sendmail
-        from MoinMoin.wikiutil import getLocalizedPage
-
         token = self.generate_recovery_token()
 
         text = _("""\

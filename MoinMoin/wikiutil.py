@@ -5,7 +5,7 @@
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2004 by Florian Festi,
                 2006 by Mikko Virkkil,
-                2005-2009 MoinMoin:ThomasWaldmann,
+                2005-2010 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:ReimarBauer,
                 2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
@@ -535,7 +535,7 @@ def isGroupItem(itemname):
     return app.cfg.cache.item_group_regexact.search(itemname) is not None
 
 
-def filterCategoryPages(request, pagelist):
+def filterCategoryPages(pagelist):
     """ Return category pages in pagelist
 
     WARNING: DO NOT USE THIS TO FILTER THE FULL PAGE LIST! Use
@@ -551,45 +551,6 @@ def filterCategoryPages(request, pagelist):
     """
     func = app.cfg.cache.item_category_regexact.search
     return [pn for pn in pagelist if func(pn)]
-
-
-def getLocalizedPage(request, pagename): # was: getSysPage
-    """ Get a system page according to user settings and available translations.
-
-    We include some special treatment for the case that <pagename> is the
-    currently rendered page, as this is the case for some pages used very
-    often, like FrontPage, etc. - in that case we reuse the already existing
-    page object instead creating a new one.
-
-    @param request: the request object
-    @param pagename: the name of the page
-    @rtype: Page object
-    @return: the page object of that system page, using a translated page,
-             if it exists
-    """
-    from MoinMoin.Page import Page
-    i18n_name = _(pagename)
-    pageobj = None
-    if i18n_name != pagename:
-        i18n_page = Page(request, i18n_name)
-        if i18n_page.exists():
-            pageobj = i18n_page
-
-    # if we failed getting a translated version of <pagename>,
-    # we fall back to english
-    if not pageobj:
-        pageobj = Page(request, pagename)
-    return pageobj
-
-
-def getFrontPage(request):
-    """ Convenience function to get localized front page
-
-    @param request: current request
-    @rtype: Page object
-    @return localized page_front_page, if there is a translation
-    """
-    return getLocalizedPage(request, app.cfg.page_front_page)
 
 
 def getInterwikiHomePage(username=None):
@@ -1780,82 +1741,6 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     return function(*fixed_args, **kwargs)
 
 
-def parseAttributes(request, attrstring, endtoken=None, extension=None):
-    """
-    Parse a list of attributes and return a dict plus a possible
-    error message.
-    If extension is passed, it has to be a callable that returns
-    a tuple (found_flag, msg). found_flag is whether it did find and process
-    something, msg is '' when all was OK or any other string to return an error
-    message.
-
-    @param request: the request object
-    @param attrstring: string containing the attributes to be parsed
-    @param endtoken: token terminating parsing
-    @param extension: extension function -
-                      gets called with the current token, the parser and the dict
-    @rtype: dict, msg
-    @return: a dict plus a possible error message
-    """
-    import shlex, StringIO
-
-    parser = shlex.shlex(StringIO.StringIO(attrstring))
-    parser.commenters = ''
-    msg = None
-    attrs = {}
-
-    while not msg:
-        try:
-            key = parser.get_token()
-        except ValueError, err:
-            msg = str(err)
-            break
-        if not key:
-            break
-        if endtoken and key == endtoken:
-            break
-
-        # call extension function with the current token, the parser, and the dict
-        if extension:
-            found_flag, msg = extension(key, parser, attrs)
-            #logging.debug("%r = extension(%r, parser, %r)" % (msg, key, attrs))
-            if found_flag:
-                continue
-            elif msg:
-                break
-            #else (we found nothing, but also didn't have an error msg) we just continue below:
-
-        try:
-            eq = parser.get_token()
-        except ValueError, err:
-            msg = str(err)
-            break
-        if eq != "=":
-            msg = _('Expected "=" to follow "%(token)s"') % {'token': key}
-            break
-
-        try:
-            val = parser.get_token()
-        except ValueError, err:
-            msg = str(err)
-            break
-        if not val:
-            msg = _('Expected a value for key "%(token)s"') % {'token': key}
-            break
-
-        key = escape(key) # make sure nobody cheats
-
-        # safely escape and quote value
-        if val[0] in ["'", '"']:
-            val = escape(val)
-        else:
-            val = '"%s"' % escape(val, 1)
-
-        attrs[key.lower()] = val
-
-    return attrs, msg or ''
-
-
 class ParameterParser:
     """ MoinMoin macro parameter parser
 
@@ -2220,26 +2105,6 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
 def containsConflictMarker(text):
     """ Returns true if there is a conflict marker in the text. """
     return "/!\\ '''Edit conflict" in text
-
-def pagediff(request, pagename1, rev1, pagename2, rev2, **kw):
-    """
-    Calculate the "diff" between two page contents.
-
-    @param pagename1: name of first page
-    @param rev1: revision of first page
-    @param pagename2: name of second page
-    @param rev2: revision of second page
-    @keyword ignorews: if 1: ignore pure-whitespace changes.
-    @rtype: list
-    @return: lines of diff output
-    """
-    from MoinMoin.Page import Page
-    from MoinMoin.util import diff_text
-    lines1 = Page(request, pagename1, rev=rev1).getlines()
-    lines2 = Page(request, pagename2, rev=rev2).getlines()
-
-    lines = diff_text.diff(lines1, lines2, **kw)
-    return lines
 
 def anchor_name_from_text(text):
     '''

@@ -946,7 +946,7 @@ class Page(object):
         @rtype: list
         @return: categories this page belongs to
         """
-        return wikiutil.filterCategoryPages(request, self.getPageLinks(request))
+        return wikiutil.filterCategoryPages(self.getPageLinks(request))
 
     def getParentPage(self):
         """ Return parent page or None
