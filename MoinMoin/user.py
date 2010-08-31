@@ -510,7 +510,7 @@ class User(object):
             # user did not specify his language preference explicitly
             if self.isCurrentUser():
                 # browser language if this is current user
-                lang = i18n.get_browser_language(self._request)
+                lang = i18n.get_browser_language()
         if not lang:
             lang = app.cfg.language_default
         available = i18n.wikiLanguages() or ["en"]
