@@ -453,7 +453,7 @@ class FsAttachmentRevision(StoredRevision):
         self._fs_data_file = None
 
 
-from MoinMoin.logfile import LogFile
+from fs19_logfile import LogFile
 from MoinMoin import wikiutil
 
 class EditLog(LogFile):
