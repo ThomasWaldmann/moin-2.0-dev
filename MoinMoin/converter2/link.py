@@ -27,10 +27,8 @@ class ConverterBase(object):
     def handle_wikilocal(self, elem, link, page_name):
         pass
 
-    def __init__(self, request):
-        self.request = request
-        # TODO: request should hold this in a parsed way
-        self.url_root = Iri(request.url_root)
+    def __init__(self, url_root=None):
+        self.url_root = url_root
 
     def __call__(self, elem, page=None,
             __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
@@ -53,9 +51,9 @@ class ConverterBase(object):
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, input, output, request, links=None, **kw):
+    def _factory(cls, input, output, links=None, url_root=None, **kw):
         if links == 'extern':
-            return cls(request)
+            return cls(url_root=url_root)
 
     def _get_do(self, query):
         """
@@ -151,12 +149,12 @@ class ConverterItemLinks(ConverterBase):
     determine all links to other wiki items in this document
     """
     @classmethod
-    def _factory(cls, input, output, request, links=None, **kw):
+    def _factory(cls, input, output, links=None, url_root=None, **kw):
         if links == 'itemlinks':
-            return cls(request)
+            return cls(url_root=url_root)
 
-    def __init__(self, request):
-        super(ConverterItemLinks, self).__init__(request)
+    def __init__(self, **kw):
+        super(ConverterItemLinks, self).__init__(**kw)
         self.links = set()
 
     def handle_wikilocal(self, elem, input, page):

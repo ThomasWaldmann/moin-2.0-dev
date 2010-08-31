@@ -269,8 +269,8 @@ class Converter(object):
                 'table_cell')}
 
     @classmethod
-    def factory(cls, request, input, output, **kw):
-        return cls
+    def factory(cls, input, output, **kw):
+        return cls # XXX WRONG? should it be cls()?
 
     def __init__(self):
         # TODO: create class containing all table attributes

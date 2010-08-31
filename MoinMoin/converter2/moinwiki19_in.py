@@ -24,11 +24,8 @@ from .moinwiki_in import Converter
 
 class ConverterFormat19(Converter):
     @classmethod
-    def factory(cls, input, output, request, **kw):
-        return cls(request)
-
-    def __init__(self, request):
-        self.request = request
+    def factory(cls, input, output, **kw):
+        return cls()
 
     inline_freelink = r"""
          (?:

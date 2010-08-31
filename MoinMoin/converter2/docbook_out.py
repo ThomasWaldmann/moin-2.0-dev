@@ -44,7 +44,7 @@ class Converter(object):
     standard_attribute = {}
 
     @classmethod
-    def _factory(cls, input, output, request, **kw):
+    def _factory(cls, input, output, **kw):
         return cls()
 
     def __call__(self, element, **kw):
