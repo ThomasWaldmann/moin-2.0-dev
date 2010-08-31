@@ -153,7 +153,7 @@ class Item(object):
         return ItemClass(request, name=name, rev=rev, mimetype=mimetype)
 
     def __init__(self, request, name, rev=None, mimetype=None):
-        self.request = request
+        self.context = request
         self.name = name
         self.rev = rev
         self.mimetype = mimetype
@@ -173,8 +173,6 @@ class Item(object):
         """
         Return the internal representation of a document using a DOM Tree
         """
-        request = self.request
-
         # We will see if we can perform the conversion:
         # FROM_mimetype --> DOM
         # if so we perform the transformation, otherwise we don't
@@ -183,17 +181,17 @@ class Item(object):
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import moin_page, xlink
         input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
+                request=self.context)
         if not input_conv:
             raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
         include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
+                includes='expandall', request=self.context)
         macro_conv = reg.get(type_moin_document, type_moin_document,
-                macros='expandall', request=request)
+                macros='expandall', request=self.context)
         link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
+                links='extern', request=self.context)
         smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
+                icon='smiley', request=self.context)
 
         # We can process the conversion
         links = Iri(scheme='wiki', authority='', path='/' + self.name)
@@ -214,10 +212,9 @@ class Item(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import html
-        request = self.request
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
+                Type('application/x-xhtml-moin-page'), request=self.context)
         doc = self.internal_representation()
         doc = html_conv(doc)
 
@@ -337,7 +334,7 @@ class Item(object):
 
     def revert(self):
         # called from revert UI/POST
-        comment = self.request.form.get('comment')
+        comment = request.form.get('comment')
         self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
 
     def destroy(self, comment=u'', destroy_item=False):
@@ -351,7 +348,6 @@ class Item(object):
 
     def modify(self):
         # called from modify UI/POST
-        request = self.request
         data_file = request.files.get('data_file')
         mimetype = request.values.get('mimetype', 'text/plain')
         if data_file and data_file.filename:
@@ -370,11 +366,10 @@ class Item(object):
                 mimetype = None
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
-        comment = self.request.form.get('comment')
+        comment = request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
     def _save(self, meta, data, name=None, action=u'SAVE', mimetype=None, comment=u''):
-        request = self.request
         if name is None:
             name = self.name
         backend = flaskg.storage
@@ -447,7 +442,7 @@ class Item(object):
             # special case: we just want all items
             backend_items = flaskg.storage.iteritems()
         for item in backend_items:
-            yield Item.create(self.request, item=item)
+            yield Item.create(self.context, item=item)
 
     list_items = search_items  # just for cosmetics
 
@@ -614,7 +609,7 @@ There is no help, you're doomed!
     _render_data_diff_text = _render_data_diff
 
     def _convert(self):
-        return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
+        return "Impossible to convert the data to the mimetype : %s" % request.values.get('mimetype')
 
     def do_get(self):
         hash = self.rev.get(app.cfg.hash_algorithm)
@@ -624,13 +619,11 @@ There is no help, you're doomed!
             return Response(status=304)
 
     def _do_get_modified(self, hash):
-        request = self.request
         from_cache = request.values.get('from_cache')
         member = request.values.get('member')
         return self._do_get(hash, from_cache, member)
 
     def _do_get(self, hash, from_cache=None, member=None):
-        request = self.request
         filename = None
         if from_cache:
             content_disposition = None
@@ -645,7 +638,7 @@ There is no help, you're doomed!
                 elif lkey == 'content-disposition':
                     content_disposition = value
                 else:
-                    request.headers.add(key, value)
+                    request.headers.add(key, value) # XXX WRONG! Must be response!
             file_to_send = sendcache._get_datafile()
         elif member: # content = file contained within a archive item revision
             path, filename = os.path.split(member)
@@ -892,7 +885,6 @@ class TransformableBitmapImage(RenderableBitmapImage):
         cache.put(None, content_type=content_type)
 
     def _do_get_modified(self, hash):
-        request = self.request
         try:
             width = int(request.values.get('w'))
         except (TypeError, ValueError):
@@ -951,7 +943,6 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
         diffimage = PILdiff(newimage, oldimage)
 
-        request = self.request
         hash_name = app.cfg.hash_algorithm
         cache_meta = [ # we use a list to have order stability
             (hash_name, oldrev[hash_name], newrev[hash_name]),
@@ -1020,7 +1011,7 @@ class Text(Binary):
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
-            item = Item.create(self.request, template_name)
+            item = Item.create(self.contex, template_name)
             data_text = self.data_storage_to_internal(item.data)
         else:
             data_text = self.data_storage_to_internal(self.data)
@@ -1049,11 +1040,10 @@ class MarkupItem(Text):
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import moin_page
 
-        request = self.request
         input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
+                request=self.context)
         itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='itemlinks', request=request)
+                links='itemlinks', request=self.context)
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
@@ -1099,7 +1089,7 @@ class HTML(Text):
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
-            item = Item.create(self.request, template_name)
+            item = Item.create(self.context, template_name)
             data_text = self.data_storage_to_internal(item.data)
         else:
             data_text = self.data_storage_to_internal(self.data)
@@ -1125,12 +1115,10 @@ class DocBook(MarkupItem):
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import docbook, xlink
 
-        request = self.request
-
         # We convert the internal representation of the document
         # into a DocBook document
         conv = reg.get(type_moin_document,
-                       Type('application/docbook+xml'), request=request)
+                       Type('application/docbook+xml'), request=self.context)
 
         doc = conv(doc)
 
@@ -1176,7 +1164,6 @@ class TWikiDraw(TarMixin, Image):
 
     def modify(self):
         # called from modify UI/POST
-        request = self.request
         file_upload = request.files.get('filepath')
         filename = request.form['filename']
         basepath, basename = os.path.split(filename)
@@ -1215,7 +1202,6 @@ class TWikiDraw(TarMixin, Image):
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
         # of items and also rendering them with the code in base class could work
-        request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.draw')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
@@ -1250,7 +1236,6 @@ class AnyWikiDraw(TarMixin, Image):
 
     def modify(self):
         # called from modify UI/POST
-        request = self.request
         file_upload = request.files.get('filepath')
         filename = request.form['filename']
         basepath, basename = os.path.split(filename)
@@ -1289,7 +1274,6 @@ class AnyWikiDraw(TarMixin, Image):
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
         # of items and also rendering them with the code in base class could work
-        request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
@@ -1324,7 +1308,6 @@ class SvgDraw(TarMixin, Image):
 
     def modify(self):
         # called from modify UI/POST
-        request = self.request
         file_upload = request.values.get('data')
         filename = request.form['filename']
         filecontent = file_upload.decode('base_64')
@@ -1352,7 +1335,6 @@ class SvgDraw(TarMixin, Image):
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
         # of items and also rendering them with the code in base class could work
-        request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
