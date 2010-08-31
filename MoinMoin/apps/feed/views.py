@@ -11,7 +11,7 @@
 
 from datetime import datetime
 
-from flask import url_for, Response
+from flask import request, url_for, Response
 from flask import flaskg
 
 from flask import current_app as app
@@ -37,7 +37,6 @@ def atom(item_name):
     # - full item in html is nice
     # - diffs in textmode are OK, but look very simple
     # - full-item content in textmode is OK, but looks very simple
-    request = flaskg.context
     title = app.cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
     for rev in flaskg.storage.history(item_name=item_name):
@@ -46,7 +45,7 @@ def atom(item_name):
         item = rev.item
         name = rev[NAME]
         try:
-            hl_item = Item.create(request, name, rev_no=this_revno)
+            hl_item = Item.create(flaskg.context, name, rev_no=this_revno)
             previous_revno = this_revno - 1
             if previous_revno >= 0:
                 # simple text diff for changes
@@ -65,7 +64,7 @@ def atom(item_name):
         feed.add(title=name, title_type='text',
                  summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
                  content=content, content_type=content_type,
-                 author=get_editor_info(request, rev, external=True),
+                 author=get_editor_info(rev, external=True),
                  url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
                  updated=datetime.utcfromtimestamp(rev.timestamp),
                 )

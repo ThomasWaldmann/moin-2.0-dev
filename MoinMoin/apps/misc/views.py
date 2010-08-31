@@ -30,7 +30,6 @@ def sitemap():
     def format_timestamp(ts):
         return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts))
 
-    request = flaskg.context
     sitemap = []
     for item in flaskg.storage.iteritems():
         try:
