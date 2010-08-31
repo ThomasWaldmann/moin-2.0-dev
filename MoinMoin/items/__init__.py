@@ -99,7 +99,7 @@ class DummyItem(object):
 class Item(object):
     """ Highlevel (not storage) Item """
     @classmethod
-    def create(cls, request, name=u'', mimetype=None, rev_no=None, item=None):
+    def create(cls, name=u'', mimetype=None, rev_no=None, item=None):
         if rev_no is None:
             rev_no = -1
         if mimetype is None:
@@ -150,10 +150,9 @@ class Item(object):
 
         ItemClass = _find_item_class(mimetype, cls)[1]
         logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
-        return ItemClass(request, name=name, rev=rev, mimetype=mimetype)
+        return ItemClass(name=name, rev=rev, mimetype=mimetype)
 
-    def __init__(self, request, name, rev=None, mimetype=None):
-        self.context = request
+    def __init__(self, name, rev=None, mimetype=None):
         self.name = name
         self.rev = rev
         self.mimetype = mimetype
@@ -180,18 +179,17 @@ class Item(object):
         from MoinMoin.util.iri import Iri
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import moin_page, xlink
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=self.context)
+        input_conv = reg.get(Type(self.mimetype), type_moin_document)
         if not input_conv:
             raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
         include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=self.context)
+                includes='expandall')
         macro_conv = reg.get(type_moin_document, type_moin_document,
-                macros='expandall', request=self.context)
+                macros='expandall')
         link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=self.context)
+                links='extern', url_root=Iri(request.url_root))
         smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=self.context)
+                icon='smiley')
 
         # We can process the conversion
         links = Iri(scheme='wiki', authority='', path='/' + self.name)
@@ -214,7 +212,7 @@ class Item(object):
         from MoinMoin.util.tree import html
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=self.context)
+                Type('application/x-xhtml-moin-page'))
         doc = self.internal_representation()
         doc = html_conv(doc)
 
@@ -442,7 +440,7 @@ class Item(object):
             # special case: we just want all items
             backend_items = flaskg.storage.iteritems()
         for item in backend_items:
-            yield Item.create(self.context, item=item)
+            yield Item.create(item=item)
 
     list_items = search_items  # just for cosmetics
 
@@ -1011,7 +1009,7 @@ class Text(Binary):
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
-            item = Item.create(self.contex, template_name)
+            item = Item.create(template_name)
             data_text = self.data_storage_to_internal(item.data)
         else:
             data_text = self.data_storage_to_internal(self.data)
@@ -1040,10 +1038,9 @@ class MarkupItem(Text):
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import moin_page
 
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=self.context)
+        input_conv = reg.get(Type(self.mimetype), type_moin_document)
         itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='itemlinks', request=self.context)
+                links='itemlinks', url_root=Iri(request.url_root))
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
@@ -1089,7 +1086,7 @@ class HTML(Text):
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
-            item = Item.create(self.context, template_name)
+            item = Item.create(template_name)
             data_text = self.data_storage_to_internal(item.data)
         else:
             data_text = self.data_storage_to_internal(self.data)
@@ -1117,8 +1114,7 @@ class DocBook(MarkupItem):
 
         # We convert the internal representation of the document
         # into a DocBook document
-        conv = reg.get(type_moin_document,
-                       Type('application/docbook+xml'), request=self.context)
+        conv = reg.get(type_moin_document, Type('application/docbook+xml'))
 
         doc = conv(doc)
 

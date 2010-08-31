@@ -26,9 +26,9 @@ from MoinMoin.util.tree import html, moin_page
 
 class Converter(object):
     @classmethod
-    def _factory(cls, input, output, request, macros=None, **kw):
+    def _factory(cls, input, output, macros=None, **kw):
         if macros == 'expandall':
-            return cls(request)
+            return cls()
 
     def handle_macro(self, elem, page):
         type = elem.get(moin_page.content_type)
@@ -66,7 +66,7 @@ class Converter(object):
         cls = wikiutil.importPlugin(app.cfg, 'macro2', name, function='Macro')
 
         try:
-            macro = cls(self.request)
+            macro = cls() # XXX refactor all macro2 macros so they are OK without "request"
             ret = macro((), args, page, alt, context_block)
 
             elem_body.append(ret)
@@ -98,9 +98,6 @@ class Converter(object):
             if isinstance(child, ET.Node):
                 for i in self.recurse(child, page):
                     yield i
-
-    def __init__(self, request):
-        self.request = request
 
     def __call__(self, tree):
         for elem, page in self.recurse(tree, None):

@@ -97,8 +97,8 @@ class Converter(object):
                 'table_cell')}
 
     @classmethod
-    def factory(cls, request, input, output, **kw):
-        return cls
+    def factory(cls, input, output, **kw):
+        return cls # XXX WRONG? shouldn't that be cls()?
 
     def __init__(self):
 

@@ -89,7 +89,7 @@ def favicon():
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -122,7 +122,7 @@ def redirect_show_item(item_name):
 @frontend.route('/+dom/<int:rev>/<itemname:item_name>')
 @frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
 def show_dom(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if isinstance(item, NonExistent):
         status = 404
     else:
@@ -137,7 +137,7 @@ def show_dom(item_name, rev):
 @frontend.route('/+meta/<int:rev>/<itemname:item_name>')
 def show_item_meta(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -160,7 +160,7 @@ def show_item_meta(item_name, rev):
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
 @frontend.route('/+get/<itemname:item_name>', defaults=dict(rev=-1))
 def get_item(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     return item.do_get()
 
 @frontend.route('/+convert/<itemname:item_name>')
@@ -175,12 +175,12 @@ def convert_item(item_name):
     with the internal representation of the item.
     """
     mimetype = request.values.get('mimetype')
-    item = Item.create(flaskg.context, item_name, rev_no=-1)
+    item = Item.create(item_name, rev_no=-1)
     # We don't care about the name of the converted object
     # It should just be a name which does not exist.
     # XXX Maybe use a random name to be sure it does not exist
     item_name_converted = item_name + 'converted'
-    converted_item = Item.create(flaskg.context, item_name_converted, mimetype=mimetype)
+    converted_item = Item.create(item_name_converted, mimetype=mimetype)
     return converted_item._convert(item.internal_representation())
 
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
@@ -188,7 +188,7 @@ def convert_item(item_name):
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
     from MoinMoin.util.tree import html
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
@@ -198,8 +198,7 @@ def highlight_item(item_name, rev):
         pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=flaskg.context)
+        html_conv = reg.get(type_moin_document, Type('application/x-xhtml-moin-page'))
         doc = html_conv(doc)
         from array import array
         out = array('u')
@@ -225,7 +224,7 @@ def modify_item(item_name):
     """
     mimetype = request.values.get('mimetype')
     template_name = request.values.get('template')
-    item = Item.create(flaskg.context, item_name, mimetype=mimetype)
+    item = Item.create(item_name, mimetype=mimetype)
     if request.method == 'GET':
         content = item.do_modify(template_name)
         return content
@@ -241,7 +240,7 @@ def modify_item(item_name):
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
 def revert_item(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if request.method == 'GET':
         return render_template(item.revert_template,
                                item=item, item_name=item_name,
@@ -254,7 +253,7 @@ def revert_item(item_name, rev):
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
 def copy_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.copy_template,
                                item=item, item_name=item_name,
@@ -272,7 +271,7 @@ def copy_item(item_name):
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
 def rename_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.rename_template,
                                item=item, item_name=item_name,
@@ -290,7 +289,7 @@ def rename_item(item_name):
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
 def delete_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.delete_template,
                                item=item, item_name=item_name,
@@ -312,7 +311,7 @@ def destroy_item(item_name, rev):
     else:
         _rev = rev
         destroy_item = False
-    item = Item.create(flaskg.context, item_name, rev_no=_rev)
+    item = Item.create(item_name, rev_no=_rev)
     if request.method == 'GET':
         return render_template(item.destroy_template,
                                item=item, item_name=item_name,
@@ -327,7 +326,7 @@ def destroy_item(item_name, rev):
 
 @frontend.route('/+index/<itemname:item_name>')
 def index(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     index = item.flat_index()
     return render_template(item.index_template,
                            item=item, item_name=item_name,
@@ -337,7 +336,7 @@ def index(item_name):
 
 @frontend.route('/+index')
 def global_index():
-    item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
+    item = Item.create('') # XXX hack: item_name='' gives toplevel index
     index = item.flat_index()
     item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_index.html',
@@ -849,7 +848,7 @@ def _diff(item, revno1, revno2):
             # nothing in common
             commonmt = ''
 
-    item = Item.create(flaskg.context, item_name, mimetype=commonmt, rev_no=newrevno)
+    item = Item.create(item_name, mimetype=commonmt, rev_no=newrevno)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
                            item=item, item_name=item.name,

@@ -58,7 +58,7 @@ class Base(object):
 
 class TestConverter(Base):
     def setup_class(self):
-        self.conv = Converter(self.request)
+        self.conv = Converter()
 
     def test_base(self):
         data = [
@@ -236,7 +236,7 @@ class TestConverter(Base):
 
 class TestConverterPage(Base):
     def setup_class(self):
-        self.conv = ConverterPage(self.request)
+        self.conv = ConverterPage()
 
     def test_note(self):
         data = [

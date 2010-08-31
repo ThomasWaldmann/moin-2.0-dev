@@ -76,7 +76,7 @@ class Converter(object):
     base_url = ''
 
     @classmethod
-    def _factory(cls, input, output, request, **kw):
+    def _factory(cls, input, output, **kw):
         return cls()
 
     def __call__(self, content, arguments=None):

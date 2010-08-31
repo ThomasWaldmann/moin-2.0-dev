@@ -18,7 +18,7 @@ from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Ima
 
 class TestItem(object):
     def testNonExistent(self):
-        item = Item.create(self.request, 'DoesNotExist')
+        item = Item.create('DoesNotExist')
         assert isinstance(item, NonExistent)
         meta, data = item.meta, item.data
         assert meta == {MIMETYPE: 'application/x-nonexistent'}
@@ -31,7 +31,7 @@ class TestItem(object):
                 ('image/tiff', Image),
                 ('image/png', TransformableBitmapImage),
             ]:
-            item = Item.create(self.request, 'foo', mimetype=mimetype)
+            item = Item.create('foo', mimetype=mimetype)
             assert isinstance(item, ExpectedClass)
 
     def testCRUD(self):
@@ -41,11 +41,11 @@ class TestItem(object):
         meta = dict(foo='bar')
         comment = u'saved it'
         become_trusted(self.request)
-        item = Item.create(self.request, name)
+        item = Item.create(name)
         # save rev 0
         item._save(meta, data, mimetype=mimetype, comment=comment)
         # check save result
-        item = Item.create(self.request, name)
+        item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
@@ -57,7 +57,7 @@ class TestItem(object):
         # save rev 1
         item._save(meta, data, mimetype=mimetype, comment=comment)
         # check save result
-        item = Item.create(self.request, name)
+        item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
@@ -69,7 +69,7 @@ class TestItem(object):
         # save rev 2 (auto delete)
         item._save(meta, data, mimetype=mimetype, comment=comment)
         # check save result
-        item = Item.create(self.request, name)
+        item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
@@ -77,18 +77,18 @@ class TestItem(object):
         assert item.rev.revno == 2
 
         # access old revision
-        item = Item.create(self.request, name, rev_no=1)
+        item = Item.create(name, rev_no=1)
         assert item.data == rev1_data
 
     def testIndex(self):
         # create a toplevel and some sub-items
         basename = u'Foo'
         for name in ['', '/ab', '/cd/ef', '/gh', '/ij/kl', ]:
-            item = Item.create(self.request, basename + name)
+            item = Item.create(basename + name)
             item._save({}, "foo", mimetype='text/plain')
 
         # check index
-        baseitem = Item.create(self.request, basename)
+        baseitem = Item.create(basename)
         index = baseitem.get_index()
         assert index == [(u'Foo/ab', u'ab', 'text/plain'),
                          (u'Foo/cd/ef', u'cd/ef', 'text/plain'),
@@ -109,16 +109,15 @@ class TestTarItems(object):
         """
         creates a container and tests the content saved to the container
         """
-        request = self.request
         item_name = u'ContainerItem1'
-        item = Item.create(request, item_name, mimetype='application/x-tar')
+        item = Item.create(item_name, mimetype='application/x-tar')
         filecontent = 'abcdefghij'
         content_length = len(filecontent)
         members = set(['example1.txt', 'example2.txt'])
         item.put_member('example1.txt', filecontent, content_length, expected_members=members)
         item.put_member('example2.txt', filecontent, content_length, expected_members=members)
 
-        item = Item.create(request, item_name, mimetype='application/x-tar')
+        item = Item.create(item_name, mimetype='application/x-tar')
         tf_names = set(item.list_members())
         assert tf_names == members
         assert item.get_member('example1.txt').read() == filecontent
@@ -127,9 +126,8 @@ class TestTarItems(object):
         """
         creates two revisions of a container item
         """
-        request = self.request
         item_name = u'ContainerItem2'
-        item = Item.create(request, item_name, mimetype='application/x-tar')
+        item = Item.create(item_name, mimetype='application/x-tar')
         filecontent = 'abcdefghij'
         content_length = len(filecontent)
         members = set(['example1.txt'])
@@ -141,7 +139,7 @@ class TestTarItems(object):
         item = flaskg.storage.get_item(item_name)
         assert item.next_revno == 2
 
-        item = Item.create(request, item_name, mimetype='application/x-tar')
+        item = Item.create(item_name, mimetype='application/x-tar')
         assert item.get_member('example1.txt').read() == filecontent
 
 coverage_modules = ['MoinMoin.items']

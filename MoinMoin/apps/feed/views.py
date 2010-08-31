@@ -45,7 +45,7 @@ def atom(item_name):
         item = rev.item
         name = rev[NAME]
         try:
-            hl_item = Item.create(flaskg.context, name, rev_no=this_revno)
+            hl_item = Item.create(name, rev_no=this_revno)
             previous_revno = this_revno - 1
             if previous_revno >= 0:
                 # simple text diff for changes

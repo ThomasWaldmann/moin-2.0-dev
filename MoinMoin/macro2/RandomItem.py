@@ -41,7 +41,7 @@ class Macro(MacroInlineBase):
 
             # Filter out items the user may not read.
             try:
-                item = Item.create(request, item_name)
+                item = Item.create(item_name)
                 random_item_names.append(item_name)
                 found += 1
             except AccessDeniedError:
