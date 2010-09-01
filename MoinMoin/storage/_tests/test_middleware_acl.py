@@ -15,7 +15,6 @@ from flask import flaskg
 from MoinMoin.items import ACL
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.conftest import init_test_request
 from MoinMoin._tests import wikiconfig
 
 
@@ -56,7 +55,6 @@ class TestACLMiddleware(BackendTest):
             # no create
             content_acl = dict(default=u"All:admin,read,write,destroy")
 
-        request = init_test_request(Config)
         backend = flaskg.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
