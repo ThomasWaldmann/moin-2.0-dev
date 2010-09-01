@@ -98,7 +98,7 @@ class Converter(object):
 
     @classmethod
     def factory(cls, request, input, output, **kw):
-        return cls
+        return cls()
 
     def __init__(self):
 
