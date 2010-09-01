@@ -277,18 +277,6 @@ class Page(object):
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
-    def editlog_entry(self):
-        """ Return the edit-log entry for this Page object (can be an old revision).
-        """
-        from MoinMoin.logfile import editlog
-        rev = self.get_real_rev()
-        for line in editlog.LocalEditLog(self.request, rootpagename=self.page_name):
-            if int(line.rev) == rev:
-                break
-        else:
-            line = None
-        return line
-
     def mtime(self, printable=False):
         """
         Get modification timestamp of this page.
@@ -474,7 +462,7 @@ class Page(object):
         for uid in userlist:
             if uid == flaskg.user.id and not include_self:
                 continue # no self notification
-            subscriber = user.User(request, uid)
+            subscriber = user.User(uid)
 
             # The following tests should be ordered in order of
             # decreasing computation complexity, in particular
@@ -946,7 +934,7 @@ class Page(object):
         @rtype: list
         @return: categories this page belongs to
         """
-        return wikiutil.filterCategoryPages(request, self.getPageLinks(request))
+        return wikiutil.filterCategoryPages(self.getPageLinks(request))
 
     def getParentPage(self):
         """ Return parent page or None

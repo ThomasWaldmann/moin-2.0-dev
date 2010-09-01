@@ -32,7 +32,7 @@ def execute(item_name, request):
         if not cancelled:
             syspages = request.form.get('target')
             try:
-                upgrade_syspages(request, syspages)
+                upgrade_syspages(syspages)
             except BackendError, e:
                 content = _('<br> System pages upgrade failed due to the following error: %s.' % e)
             else:

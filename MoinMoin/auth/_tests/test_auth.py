@@ -207,7 +207,7 @@ class TestMoinAuthSession(AuthTest):
         from MoinMoin.user import User
         username = u'MoinAuthTestUser'
         password = u'ßecretß'
-        User(self.request, name=username, password=password).save() # create user
+        User(name=username, password=password).save() # create user
         trail_expected = []
         first = True
         for pagename in self.PAGES:

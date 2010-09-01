@@ -94,9 +94,9 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
         new_user = create_random_string_list(length=15, count=1)[0]
         append_item(request, u'UserGroup', u' * %s' % new_user)
-        user = User(request, name=new_user)
+        user = User(name=new_user)
         if not user.exists():
-            User(request, name=new_user, password=new_user).save()
+            User(name=new_user, password=new_user).save()
 
         result = new_user in flaskg.groups[u'UserGroup']
         assert result

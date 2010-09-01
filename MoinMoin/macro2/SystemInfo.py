@@ -19,7 +19,6 @@ from MoinMoin import _, N_
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
 from MoinMoin import action, macro
-from MoinMoin.logfile import editlog
 from MoinMoin.Page import Page
 
 class Macro(MacroDefinitionListBase):

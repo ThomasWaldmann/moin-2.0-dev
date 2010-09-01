@@ -47,7 +47,7 @@ class SMBMount(BaseAuth):
         self.log = log
         self.coding = coding
 
-    def do_smb(self, request, username, password, login):
+    def do_smb(self, username, password, login):
         logging.debug("login=%s logout=%s: got name=%s" % (login, not login, username))
 
         import os, pwd, subprocess
@@ -82,15 +82,15 @@ class SMBMount(BaseAuth):
             env['PASSWD'] = password.encode(self.coding)
         subprocess.call(cmd.encode(self.coding), env=env, shell=True)
 
-    def login(self, request, user_obj, **kw):
+    def login(self, user_obj, **kw):
         username = kw.get('username')
         password = kw.get('password')
         if user_obj and user_obj.valid:
-            self.do_smb(request, username, password, True)
+            self.do_smb(username, password, True)
         return ContinueLogin(user_obj)
 
-    def logout(self, request, user_obj, **kw):
+    def logout(self, user_obj, **kw):
         if user_obj and not user_obj.valid:
-            self.do_smb(request, user_obj.name, None, False)
+            self.do_smb(user_obj.name, None, False)
         return user_obj, True
 

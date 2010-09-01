@@ -11,7 +11,7 @@
     {%- endif %}
     {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
-        {% if theme.item_writable %}
+        {% if user.may.write(item_name) %}
             <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
         {% else %}
             {{ _('Immutable Item')}}
@@ -29,10 +29,10 @@
         </li>
     {%- endif %}
     {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
-       and theme.user.valid -%}
+       and user.valid -%}
         <li>
             <a class="nbquicklink" href="{{ url_for('frontend.quicklink_item', item_name=item_name)|e }}" rel="nofollow">
-            {% if theme.user.isQuickLinkedTo([item_name]) -%}
+            {% if user.isQuickLinkedTo([item_name]) -%}
                 {{ _('Remove Link') }}
             {% else -%}
                 {{ _('Add Link') }}
@@ -41,10 +41,10 @@
         </li>
     {%- endif %}
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
-       and theme.user.valid and cfg.mail_enabled -%}
+       and user.valid and cfg.mail_enabled -%}
         <li>
             <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name)|e }}" rel="nofollow">
-            {% if theme.user.isSubscribedTo([item_name]) %}
+            {% if user.isSubscribedTo([item_name]) %}
                     {{ _('Unsubscribe') }}
             {% else %}
                     {{ _('Subscribe') }}
@@ -67,7 +67,7 @@
             {% set current_sub = item_name.rsplit('/', 1)[-1] %}
             {%- if not current_sub in cfg.supplementation_item_names -%}
                 {% set supp_name = '%s/%s' % (item_name, sub_item_name) -%}
-                {% if flaskg.storage.has_item(supp_name) or theme.user.may.write(supp_name) %}
+                {% if storage.has_item(supp_name) or user.may.write(supp_name) %}
                     <li>
                         <a class="nbsupplementation" href="{{ url_for('frontend.show_item', item_name=supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
                     </li>

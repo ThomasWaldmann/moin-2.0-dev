@@ -66,6 +66,6 @@ General syntax: moin [options] maint mailtranslators [mailtranslators-options]
                 rc = None
                 if to_address and '***vacant***' not in to_address:
                     text = text_template % locals()
-                    rc = sendmail(request, [to_address], subject, text, mail_from=from_address)
+                    rc = sendmail([to_address], subject, text, mail_from=from_address)
                     print lang, repr(from_address), repr(to_address), subject, repr(rc)
 

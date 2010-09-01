@@ -118,7 +118,7 @@ class LDAPAuth(BaseAuth):
 
         self.report_invalid_credentials = report_invalid_credentials
 
-    def login(self, request, user_obj, **kw):
+    def login(self, user_obj, **kw):
         username = kw.get('username')
         password = kw.get('password')
 
@@ -232,10 +232,10 @@ class LDAPAuth(BaseAuth):
                     username = self.name_callback(ldap_dict)
 
                 if email:
-                    u = user.User(request, auth_username=username, auth_method=self.name, auth_attribs=('name', 'password', 'email', 'mailto_author', ))
+                    u = user.User(auth_username=username, auth_method=self.name, auth_attribs=('name', 'password', 'email', 'mailto_author', ))
                     u.email = email
                 else:
-                    u = user.User(request, auth_username=username, auth_method=self.name, auth_attribs=('name', 'password', 'mailto_author', ))
+                    u = user.User(auth_username=username, auth_method=self.name, auth_attribs=('name', 'password', 'mailto_author', ))
                 u.name = username
                 u.aliasname = aliasname
                 u.remember_me = False # False enforces cookie_lifetime config param

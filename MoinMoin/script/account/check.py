@@ -114,7 +114,7 @@ General syntax: moin [options] account check [check-options]
         import re
         request = self.request
         for uid in user.getUserList():
-            u = user.User(request, uid)
+            u = user.User(uid)
             self.users[uid] = u
 
             # collect name duplicates:

@@ -27,7 +27,7 @@ import os, gettext, glob
 from StringIO import StringIO
 
 from flask import flaskg
-
+from flask import request
 from flask import current_app as app
 
 from MoinMoin import log
@@ -251,7 +251,7 @@ def wikiLanguages():
     return languages
 
 
-def browserLanguages(request):
+def browserLanguages():
     """
     Return the accepted languages as set in the user browser.
 
@@ -275,19 +275,18 @@ def browserLanguages(request):
                 fallback.append(baselang)
     return fallback
 
-def get_browser_language(request):
+def get_browser_language():
     """
     Return the language that is supported by wiki and what user browser
     would prefer to get. Return empty string if there is no such language
     or language_ignore_browser is true.
 
-    @param request: the request object
     @rtype: string
     @return: ISO language code, e.g. 'en'
     """
     available = wikiLanguages()
     if available and not app.cfg.language_ignore_browser:
-            for lang in browserLanguages(request):
+            for lang in browserLanguages():
                 if lang in available:
                     return lang
     return ''

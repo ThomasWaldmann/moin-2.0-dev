@@ -24,7 +24,7 @@
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {%- endif %}
     {%- if item_name and allow_doubleclick and
-        theme.user.edit_on_doubleclick and theme.item_writable -%}
+        user.edit_on_doubleclick and user.may.write(item_name) -%}
             <meta name="edit_on_doubleclick" content="1" />
     {%- endif %}
     {%- if theme.meta_keywords -%}
@@ -38,11 +38,11 @@
     {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %}{{ cfg.sitename|e }}{%- endif -%}
     </title>
     <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}" />
-    <link rel="Search" href="{{ url_for('frontend.show_item', item_name=translated_item_name('FindPage'))|e }}" />
-    <link rel="Index" href="{{ url_for('frontend.show_item', item_name=translated_item_name('TitleIndex'))|e }}" />
-    <link rel="Glossary" href="{{ url_for('frontend.show_item', item_name=translated_item_name('WordIndex'))|e }}" />
-    <link rel="Help" href="{{ url_for('frontend.show_item', item_name=translated_item_name('HelpOnFormatting'))|e }}" />
-    <link rel="Start" href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" />
+    <link rel="Search" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name('FindPage'))|e }}" />
+    <link rel="Index" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name('TitleIndex'))|e }}" />
+    <link rel="Glossary" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name('WordIndex'))|e }}" />
+    <link rel="Help" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name('HelpOnFormatting'))|e }}" />
+    <link rel="Start" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.page_front_page))|e }}" />
     {% set parent_item = theme.parent_item(item_name) %}
     {%- if parent_item -%}
         <link rel="Up" href="{{ url_for('frontend.show_item', item_name=parent_page)|e }}" />
@@ -67,8 +67,8 @@
         rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
         />
     {%- endfor %}
-    {% if theme.user.valid and theme.user.css_url -%}
-        <link media="all" rel="stylesheet" title="{{ theme.user.name|e }}'s stylesheet" href="{{ theme.user.css_url|e }}" />
+    {% if user.valid and user.css_url -%}
+        <link media="all" rel="stylesheet" title="{{ user.name|e }}'s stylesheet" href="{{ user.css_url|e }}" />
     {%- endif %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}

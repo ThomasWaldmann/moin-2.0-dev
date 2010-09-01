@@ -34,10 +34,11 @@ class ThemeSupport(object):
         ('projection',  'projection'),
         )
 
-    def __init__(self, name='modernized'):
+    def __init__(self, cfg, name='modernized'):
         self.name = name
-        self.cfg = app.cfg
+        self.cfg = cfg
         self.user = flaskg.user
+        self.storage = flaskg.storage
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
         self.output_charset = 'utf-8'  # was: page.output_charset
         self.ui_lang = 'en'
@@ -48,33 +49,6 @@ class ThemeSupport(object):
         self.meta_keywords = ''
         self.meta_description = ''
 
-    def item_exists(self, item_name):
-        """
-        Get a boolean indicating whether an item_name exists or not.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return flaskg.storage.has_item(item_name)
-
-    def item_readable(self, item_name):
-        """
-        Get a boolean indicating whether the current user can read in item_name.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return flaskg.user.may.read(item_name)
-
-    def item_writable(self, item_name):
-        """
-        Get a boolean indicating whether the current user can write in item_name.
-
-        @param item_name: unicode
-        @rtype: boolean
-        """
-        return flaskg.user.may.write(item_name)
-
     def translated_item_name(self, item_en):
         """
         Get a translated item name.
@@ -84,11 +58,11 @@ class ThemeSupport(object):
         @rtype: unicode
         """
         item_lang_request = _(item_en)
-        if self.item_exists(item_lang_request):
+        if self.storage.has_item(item_lang_request):
             return item_lang_request
 
         item_lang_default = item_en # FIXME, was: i18n.getText(item_en, request, self.cfg.language_default)
-        if self.item_exists(item_lang_default):
+        if self.storage.has_item(item_lang_default):
             return item_lang_default
         return item_en
 
@@ -115,7 +89,7 @@ class ThemeSupport(object):
         current_item = ''
         for segment in item_name.split('/'):
             current_item += segment
-            breadcrumbs.append((segment, current_item, self.item_exists(current_item)))
+            breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
             current_item += '/'
         return breadcrumbs
 
@@ -133,8 +107,8 @@ class ThemeSupport(object):
             wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
             wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
             href = wikiutil.join_wiki(wiki_base_url, item_name)
-            if wiki_name in [app.cfg.interwikiname, 'Self', ]:
-                exists = self.item_exists(item_name)
+            if wiki_name in [self.cfg.interwikiname, 'Self', ]:
+                exists = self.storage.has_item(item_name)
                 wiki_name = ''  # means "this wiki" for the theme code
             else:
                 exists = True  # we can't detect existance of remote items
@@ -158,7 +132,7 @@ class ThemeSupport(object):
         title = "%s @ %s" % (aliasname, wikiname)
         # link to (interwiki) user homepage
         if wikiname == "Self":
-            exists = self.item_exists(itemname)
+            exists = self.storage.has_item(itemname)
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
@@ -216,13 +190,13 @@ class ThemeSupport(object):
         wiki_name, item_name = wikiutil.split_interwiki(target)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
-        if wiki_name not in [app.cfg.interwikiname, 'Self', ]:
+        if wiki_name not in [self.cfg.interwikiname, 'Self', ]:
             if not title:
                 title = item_name
             return href, title, wiki_name
 
         # Handle regular pagename like "FrontPage"
-        item_name = wikiutil.normalize_pagename(item_name, app.cfg)
+        item_name = wikiutil.normalize_pagename(item_name, self.cfg)
 
         # Use localized pages for the current user
         if localize:
@@ -244,7 +218,7 @@ class ThemeSupport(object):
         current = item_name
 
         # Process config navi_bar
-        for text in app.cfg.navi_bar:
+        for text in self.cfg.navi_bar:
             url, link_text, title = self.split_navilink(text)
             items.append(('wikilink', url, link_text, title))
 
@@ -256,8 +230,8 @@ class ThemeSupport(object):
             items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
-        for sistername, sisterurl in app.cfg.sistersites:
-            if sistername == app.cfg.interwikiname:  # it is THIS wiki
+        for sistername, sisterurl in self.cfg.sistersites:
+            if sistername == self.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
                 cache = caching.CacheEntry('sisters', sistername, 'farm', use_pickle=True)
@@ -292,9 +266,9 @@ class ThemeSupport(object):
         @return: url for user login
         """
         url = ''
-        if app.cfg.auth_login_inputs == ['special_no_input']:
+        if self.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
-        if app.cfg.auth_have_login:
+        if self.cfg.auth_have_login:
             url = url or url_for('frontend.login')
         return url
 
@@ -330,7 +304,7 @@ class ThemeSupport(object):
         ]
         return [(title, disabled, endpoint)
                 for title, action, endpoint, disabled in menu
-                if action not in app.cfg.actions_excluded]
+                if action not in self.cfg.actions_excluded]
 
     @property
     def special_item_names(self):
@@ -344,5 +318,107 @@ class ThemeSupport(object):
         return [self.cfg.page_front_page,
                 self.translated_item_name(self.cfg.page_front_page)
                ]
+
+
+def get_editor_info(rev, external=False):
+    from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+    addr = rev.get(EDIT_LOG_ADDR)
+    hostname = rev.get(EDIT_LOG_HOSTNAME)
+    text = _('anonymous')  # link text
+    title = ''  # link title
+    css = 'editor'  # link/span css class
+    name = None  # author name
+    uri = None  # author homepage uri
+    email = None  # pure email address of author
+    if app.cfg.show_hosts and addr:
+        # only tell ip / hostname if show_hosts is True
+        if hostname:
+            text = hostname[:15]  # 15 = len(ipaddr)
+            name = title = '%s[%s]' % (hostname, addr)
+            css = 'editor host'
+        else:
+            name = text = addr
+            title = '[%s]' % (addr, )
+            css = 'editor ip'
+
+    userid = rev.get(EDIT_LOG_USERID)
+    if userid:
+        u = user.User(userid)
+        name = u.name
+        text = name
+        aliasname = u.aliasname
+        if not aliasname:
+            aliasname = name
+        if title:
+            # we already have some address info
+            title = "%s @ %s" % (aliasname, title)
+        else:
+            title = aliasname
+        if u.mailto_author and u.email:
+            email = u.email
+            css = 'editor mail'
+        else:
+            homewiki = app.cfg.user_homewiki
+            if homewiki in ('Self', app.cfg.interwikiname):
+                homewiki = u'Self'
+                css = 'editor homepage local'
+                uri = url_for('frontend.show_item', item_name=name, _external=external)
+            else:
+                css = 'editor homepage interwiki'
+                wt, wu, tail, err = wikiutil.resolve_interwiki(homewiki, name)
+                uri = wikiutil.join_wiki(wu, tail)
+
+    result = dict(name=name, text=text, css=css, title=title)
+    if uri:
+        result['uri'] = uri
+    if email:
+        result['email'] = email
+    return result
+
+
+def shorten_item_name(name, length=25):
+    """
+    Shorten item names
+
+    Shorten very long item names that tend to break the user
+    interface. The short name is usually fine, unless really stupid
+    long names are used (WYGIWYD).
+
+    @param name: item name, unicode
+    @param length: maximum length for shortened item names, int
+    @rtype: unicode
+    @return: shortened version.
+    """
+    # First use only the sub page name, that might be enough
+    if len(name) > length:
+        name = name.split('/')[-1]
+        # If it's not enough, replace the middle with '...'
+        if len(name) > length:
+            half, left = divmod(length - 3, 2)
+            name = u'%s...%s' % (name[:half + left], name[-half:])
+    return name
+
+
+def setup_jinja_env():
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+
+    theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
+    theme = ThemeSupport(app.cfg, theme_name)
+
+    app.jinja_env.globals.update({
+                            'isinstance': isinstance,
+                            'list': list,
+                            'theme': theme,
+                            'user': flaskg.user,
+                            'storage': flaskg.storage,
+                            'clock': flaskg.clock,
+                            'cfg': app.cfg,
+                            '_': _,
+                            'item_name': 'handlers need to give it',
+                            'get_editor_info': lambda rev: get_editor_info(rev),
+                            })
+
 
 

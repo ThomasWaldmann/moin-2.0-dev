@@ -317,7 +317,7 @@ class TestItemAcls(object):
         ]
 
         for itemname, username, may in tests:
-            u = User(self.request, auth_username=username)
+            u = User(auth_username=username)
             u.valid = True
 
             def _have_right(u, right, itemname):
@@ -399,7 +399,7 @@ class TestItemHierachicalAcls(object):
         ]
 
         for itemname, username, may in tests:
-            u = User(self.request, auth_username=username)
+            u = User(auth_username=username)
             u.valid = True
 
             def _have_right(u, right, itemname):

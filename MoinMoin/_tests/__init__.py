@@ -60,21 +60,21 @@ def create_item(request, itemname, content, mimetype='text/x.moin.wiki', acl=Non
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = Item.create(request, itemname)
+    item = Item.create(itemname)
     meta = {}
     if acl is not None:
         meta[ACL] = acl
     item._save(meta, content, mimetype=mimetype)
-    return Item.create(request, itemname)
+    return Item.create(itemname)
 
 def append_item(request, itemname, content):
     """ appends some content to an existing page """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = Item.create(request, itemname)
+    item = Item.create(itemname)
     content = "%s\n%s\n"% (item.data, content)
     item._save({}, content)
-    return Item.create(request, itemname)
+    return Item.create(itemname)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
@@ -104,5 +104,5 @@ def nuke_xapian_index(request):
 
 def nuke_item(request, item_name):
     """ complete destroys an item """
-    item = Item.create(request, item_name)
+    item = Item.create(item_name)
     item.destroy()

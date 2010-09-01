@@ -17,8 +17,8 @@ from flask import request, url_for, flash, render_template, Response, redirect, 
 from flask import flaskg
 from flask import current_app as app
 
-from flatland import String, Form
-from flatland.validation import Validator, Present, IsEmail
+from flatland import Form, String, Integer
+from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -67,6 +67,7 @@ Disallow: /+backlinks/
 Disallow: /+register
 Disallow: /+recoverpass
 Disallow: /+usersettings
+Disallow: /+usersettings1
 Disallow: /+login
 Disallow: /+changepass
 Disallow: /+logout
@@ -89,7 +90,7 @@ def favicon():
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -122,7 +123,7 @@ def redirect_show_item(item_name):
 @frontend.route('/+dom/<int:rev>/<itemname:item_name>')
 @frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
 def show_dom(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if isinstance(item, NonExistent):
         status = 404
     else:
@@ -137,7 +138,7 @@ def show_dom(item_name, rev):
 @frontend.route('/+meta/<int:rev>/<itemname:item_name>')
 def show_item_meta(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -160,7 +161,7 @@ def show_item_meta(item_name, rev):
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
 @frontend.route('/+get/<itemname:item_name>', defaults=dict(rev=-1))
 def get_item(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     return item.do_get()
 
 @frontend.route('/+convert/<itemname:item_name>')
@@ -175,12 +176,12 @@ def convert_item(item_name):
     with the internal representation of the item.
     """
     mimetype = request.values.get('mimetype')
-    item = Item.create(flaskg.context, item_name, rev_no=-1)
+    item = Item.create(item_name, rev_no=-1)
     # We don't care about the name of the converted object
     # It should just be a name which does not exist.
     # XXX Maybe use a random name to be sure it does not exist
     item_name_converted = item_name + 'converted'
-    converted_item = Item.create(flaskg.context, item_name_converted, mimetype=mimetype)
+    converted_item = Item.create(item_name_converted, mimetype=mimetype)
     return converted_item._convert(item.internal_representation())
 
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
@@ -188,7 +189,7 @@ def convert_item(item_name):
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
     from MoinMoin.util.tree import html
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
@@ -198,8 +199,7 @@ def highlight_item(item_name, rev):
         pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=flaskg.context)
+        html_conv = reg.get(type_moin_document, Type('application/x-xhtml-moin-page'))
         doc = html_conv(doc)
         from array import array
         out = array('u')
@@ -223,14 +223,14 @@ def modify_item(item_name):
     On POST, saves the new page (unless there's an error in input, or cancelled).
     After successful POST, redirects to the page.
     """
-    mimetype = flaskg.context.values.get('mimetype')
-    template_name = flaskg.context.values.get('template')
-    item = Item.create(flaskg.context, item_name, mimetype=mimetype)
+    mimetype = request.values.get('mimetype')
+    template_name = request.values.get('template')
+    item = Item.create(item_name, mimetype=mimetype)
     if request.method == 'GET':
         content = item.do_modify(template_name)
         return content
-    elif flaskg.context.method == 'POST':
-        cancelled = 'button_cancel' in flaskg.context.form
+    elif request.method == 'POST':
+        cancelled = 'button_cancel' in request.form
         if not cancelled:
             item.modify()
         if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw', 'application/x-svgdraw'):
@@ -241,28 +241,28 @@ def modify_item(item_name):
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
 def revert_item(item_name, rev):
-    item = Item.create(flaskg.context, item_name, rev_no=rev)
+    item = Item.create(item_name, rev_no=rev)
     if request.method == 'GET':
         return render_template(item.revert_template,
                                item=item, item_name=item_name,
                               )
     elif request.method == 'POST':
-        if 'button_ok' in flaskg.context.form:
+        if 'button_ok' in request.form:
             item.revert()
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
 def copy_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.copy_template,
                                item=item, item_name=item_name,
                               )
     if request.method == 'POST':
-        if 'button_ok' in flaskg.context.form:
-            target = flaskg.context.form.get('target')
-            comment = flaskg.context.form.get('comment')
+        if 'button_ok' in request.form:
+            target = request.form.get('target')
+            comment = request.form.get('comment')
             item.copy(target, comment)
             redirect_to = target
         else:
@@ -272,15 +272,15 @@ def copy_item(item_name):
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
 def rename_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.rename_template,
                                item=item, item_name=item_name,
                               )
     if request.method == 'POST':
-        if 'button_ok' in flaskg.context.form:
-            target = flaskg.context.form.get('target')
-            comment = flaskg.context.form.get('comment')
+        if 'button_ok' in request.form:
+            target = request.form.get('target')
+            comment = request.form.get('comment')
             item.rename(target, comment)
             redirect_to = target
         else:
@@ -290,14 +290,14 @@ def rename_item(item_name):
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
 def delete_item(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     if request.method == 'GET':
         return render_template(item.delete_template,
                                item=item, item_name=item_name,
                               )
     elif request.method == 'POST':
-        if 'button_ok' in flaskg.context.form:
-            comment = flaskg.context.form.get('comment')
+        if 'button_ok' in request.form:
+            comment = request.form.get('comment')
             item.delete(comment)
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
@@ -312,22 +312,22 @@ def destroy_item(item_name, rev):
     else:
         _rev = rev
         destroy_item = False
-    item = Item.create(flaskg.context, item_name, rev_no=_rev)
+    item = Item.create(item_name, rev_no=_rev)
     if request.method == 'GET':
         return render_template(item.destroy_template,
                                item=item, item_name=item_name,
                                rev_no=rev,
                               )
     if request.method == 'POST':
-        if 'button_ok' in flaskg.context.form:
-            comment = flaskg.context.form.get('comment')
+        if 'button_ok' in request.form:
+            comment = request.form.get('comment')
             item.destroy(comment=comment, destroy_item=destroy_item)
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+index/<itemname:item_name>')
 def index(item_name):
-    item = Item.create(flaskg.context, item_name)
+    item = Item.create(item_name)
     index = item.flat_index()
     return render_template(item.index_template,
                            item=item, item_name=item_name,
@@ -337,7 +337,7 @@ def index(item_name):
 
 @frontend.route('/+index')
 def global_index():
-    item = Item.create(flaskg.context, '') # XXX hack: item_name='' gives toplevel index
+    item = Item.create('') # XXX hack: item_name='' gives toplevel index
     index = item.flat_index()
     item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('global_index.html',
@@ -382,7 +382,6 @@ def global_history():
 @frontend.route('/+quicklink/<itemname:item_name>')
 def quicklink_item(item_name):
     """ Add/Remove the current wiki page to/from the user quicklinks """
-    request = flaskg.context
     u = flaskg.user
     msg = None
     if not u.valid:
@@ -401,7 +400,6 @@ def quicklink_item(item_name):
 @frontend.route('/+subscribe/<itemname:item_name>')
 def subscribe_item(item_name):
     """ Add/Remove the current wiki item to/from the user's subscriptions """
-    request = flaskg.context
     u = flaskg.user
     cfg = app.cfg
     msg = None
@@ -469,7 +467,6 @@ def _using_moin_auth():
 
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
-    request = flaskg.context
     item_name = 'Register' # XXX
 
     if not _using_moin_auth():
@@ -485,8 +482,7 @@ def register():
         form = RegistrationForm.from_flat(request.form)
         valid = form.validate()
         if valid:
-            msg = user.create_user(request,
-                                   username=form['username'].value,
+            msg = user.create_user(username=form['username'].value,
                                    password=form['password1'].value,
                                    email=form['email'].value,
                                   )
@@ -541,7 +537,6 @@ class ChangePassForm(Form):
 
 @frontend.route('/+changepass', methods=['GET', 'POST'])
 def changepass():
-    request = flaskg.context
     item_name = 'ChangePass' # XXX
 
     if not _using_moin_auth():
@@ -615,10 +610,10 @@ def lostpass():
             u = None
             username = form['username'].value
             if username:
-                u = user.User(flaskg.context, user.getUserId(username))
+                u = user.User(user.getUserId(username))
             email = form['email'].value
             if form['email'].valid and email:
-                u = user.get_by_email_address(flaskg.context, email)
+                u = user.get_by_email_address(email)
             if u and u.valid:
                 is_ok, msg = u.mailAccountData()
                 if not is_ok:
@@ -682,7 +677,7 @@ def recoverpass():
         form = PasswordRecoveryForm.from_flat(request.form)
         valid = form.validate()
         if valid:
-            u = user.User(request, user.getUserId(form['username'].value))
+            u = user.User(user.getUserId(form['username'].value))
             if u and u.valid and u.apply_recovery_token(form['token'].value, form['password1'].value):
                 flash(_("Your password has been changed, you can log in now."), "info")
             else:
@@ -694,15 +689,6 @@ def recoverpass():
                                    gen=make_generator(),
                                    form=form,
                                   )
-
-
-@frontend.route('/+usersettings', methods=['GET', ])
-def usersettings():
-    # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'User Settings' # XXX
-    return render_template('usersettings.html',
-                           item_name=item_name,
-                          )
 
 
 class ValidLogin(Validator):
@@ -738,10 +724,9 @@ class LoginForm(Form):
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'LoggedIn' # XXX
-    request = flaskg.context
     if request.method == 'GET':
         for authmethod in app.cfg.auth:
-            hint = authmethod.login_hint(request)
+            hint = authmethod.login_hint()
             if hint:
                 flash(hint, "info")
         form = LoginForm.from_defaults()
@@ -774,12 +759,78 @@ def login():
 @frontend.route('/+logout')
 def logout():
     item_name = 'LoggedOut' # XXX
-    request = flaskg.context
     flash(_("You are now logged out."), "info")
     for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
         if key in session:
             del session[key]
     return redirect(url_for('frontend.show_root'))
+
+
+@frontend.route('/+usersettings', methods=['GET', ])
+def usersettings():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'User Settings' # XXX
+    return render_template('usersettings.html',
+                           item_name=item_name,
+                          )
+
+
+class ValidUsersettings1(Validator):
+    """Validator for a valid user settings
+    """
+    #fail_msg = N_('...')
+
+    def validate(self, element, state):
+        return True
+
+
+class Usersettings1Form(Form):
+    """User settings1 form"""
+    name = 'usersettings1'
+
+    name = String.using(label=N_('Name')).validated_by(Present())
+    aliasname = String.using(label=N_('Alias-Name'), optional=True)
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
+    edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
+    theme_name = String.using(label=N_('Theme name')).validated_by(Present())
+    editor_default = String.using(label=N_('Editor default')).validated_by(Present())
+    editor_ui = String.using(label=N_('Editor UI')).validated_by(Present())
+    tz_offset = Integer.using(label=N_('Timezone offset')).validated_by(ValueBetween(-43200, 43200))
+    datetime_fmt = String.using(label=N_('DateTime format')).validated_by(Present())
+    date_fmt = String.using(label=N_('Date format')).validated_by(Present())
+    language = String.using(label=N_('Language'), optional=True)
+    submit = String.using(default=N_('Save'), optional=True)
+
+    validators = [ValidUsersettings1()]
+
+
+@frontend.route('/+usersettings1', methods=['GET', 'POST'])
+def usersettings1():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'User Settings1' # XXX
+    u = flaskg.user
+    if request.method == 'GET':
+        form = Usersettings1Form.from_object(u)
+        form['submit'].set('Save') # XXX why does from_object() kill submit value?
+        return render_template('usersettings1.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = Usersettings1Form.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            form.update_object(u)
+            u.save()
+            return redirect(url_for('frontend.usersettings'))
+        else:
+            return render_template('usersettings1.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
@@ -807,8 +858,8 @@ def diff(item_name):
     #      If this happens for get_item, don't show the diff at all
     #      If it happens for get_revision, we may just want to skip that rev in the list
     item = flaskg.storage.get_item(item_name)
-    rev1 = flaskg.context.values.get('rev1')
-    rev2 = flaskg.context.values.get('rev2')
+    rev1 = request.values.get('rev1')
+    rev2 = request.values.get('rev2')
     return _diff(item, rev1, rev2)
 
 
@@ -855,7 +906,7 @@ def _diff(item, revno1, revno2):
             # nothing in common
             commonmt = ''
 
-    item = Item.create(flaskg.context, item_name, mimetype=commonmt, rev_no=newrevno)
+    item = Item.create(item_name, mimetype=commonmt, rev_no=newrevno)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
                            item=item, item_name=item.name,
@@ -901,13 +952,11 @@ def findMatches(item_name, s_re=None, e_re=None):
     """ Find similar item names.
 
     @param item_name: name to match
-    @param request: current reqeust
     @param s_re: start re for wiki matching
     @param e_re: end re for wiki matching
     @rtype: tuple
     @return: start word, end word, matches dict
     """
-    request = flaskg.context
     item_names = [item.name for item in flaskg.storage.iteritems()]
     if item_name in item_names:
         item_names.remove(item_name)
@@ -1021,7 +1070,7 @@ def sitemap(item_name):
     """
     sitemap view shows item link structure, relative to current item
     """
-    sitemap = NestedItemListBuilder(flaskg.context).recurse_build([item_name])
+    sitemap = NestedItemListBuilder().recurse_build([item_name])
     del sitemap[0] # don't show current item name as sole toplevel list item
     return render_template('sitemap.html',
                            item_name=item_name, # XXX no item
@@ -1030,8 +1079,7 @@ def sitemap(item_name):
 
 
 class NestedItemListBuilder(object):
-    def __init__(self, request):
-        self.request = request
+    def __init__(self):
         self.children = set()
         self.numnodes = 0
         self.maxnodes = 35 # approx. max count of nodes, not strict

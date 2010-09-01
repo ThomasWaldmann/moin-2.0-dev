@@ -222,7 +222,6 @@ class BaseIndex(object):
         """
         import copy
         from MoinMoin.security import Permissions
-        from MoinMoin.logfile import editlog
 
         class SecurityPolicy(Permissions):
 

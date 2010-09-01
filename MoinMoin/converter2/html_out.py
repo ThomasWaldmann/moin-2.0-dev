@@ -107,9 +107,6 @@ class Converter(object):
     # Inline tags which can be directly converted into an HTML element
     direct_inline_tags = set(['abbr', 'address', 'dfn', 'kbd'])
 
-    def __init__(self, request):
-        self.request = request
-
     def __call__(self, element):
         # Base URL extracted from xml:base
         self.base_url = ''
@@ -505,8 +502,8 @@ class ConverterPage(Converter):
     """
 
     @classmethod
-    def _factory(cls, input, output, request, **kw):
-        return cls(request)
+    def _factory(cls, input, output, **kw):
+        return cls()
 
     def __call__(self, element):
         special_root = SpecialPage()

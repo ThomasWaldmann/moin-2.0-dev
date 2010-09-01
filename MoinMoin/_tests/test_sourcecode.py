@@ -17,7 +17,6 @@ from MoinMoin.conftest import moindir
 ROOT = str(moindir)
 
 EXCLUDE = [
-    '/contrib/DesktopEdition/setup_py2exe.py', # has crlf
     '/contrib/TWikiDrawPlugin', # 3rd party java stuff
     '/support', # 3rd party libs or non-broken stdlib stuff
     '/MoinMoin/static', # this is our dist static stuff

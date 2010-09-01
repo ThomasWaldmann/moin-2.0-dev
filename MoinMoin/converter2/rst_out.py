@@ -269,7 +269,7 @@ class Converter(object):
                 'table_cell')}
 
     @classmethod
-    def factory(cls, request, input, output, **kw):
+    def factory(cls, input, output, **kw):
         return cls()
 
     def __init__(self):
