@@ -671,28 +671,6 @@ class MoinDirectives(object):
             state_machine.insert_input(lines, 'MoinDirectives')
             return []
 
-        # This is part of old moinmoin rst parser. TODO: delete
-        """
-        if len(content):
-            pagename = content[0]
-            page = Page(page_name=pagename, request=self.request)
-            if not flaskg.user.may.read(pagename):
-                lines =\
-                    ["**You are not allowed to read the page: %s**"\
-                        % (pagename, )]
-            else:
-                if page.exists():
-                    text = page.get_raw_body()
-                    lines = text.split('\n')
-                    # Remove the "#format rst" line
-                    if lines[0].startswith("#format"):
-                        del lines[0]
-                else:
-                    lines =\
-                        ["**Could not find the referenced page: %s**"\
-                        % (pagename, )]
-            state_machine.insert_input(lines, 'MoinDirectives')
-        """
         if content:
             macro = u'<<Include(%s)>>' % content[0]
         else:
