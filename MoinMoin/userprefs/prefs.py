@@ -335,9 +335,6 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         if request.method != 'POST':
             return
 
-        if not wikiutil.checkTicket(request, form.get('ticket', '')):
-            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.prefs'}
-
         if 'save' in form: # Save user profile
             return self._save_user_prefs()
 
@@ -357,6 +354,5 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
 
     def create_form(self):
         return render_template('userprefs.html',
-                                             userprefs=get_userprefs_info(self.request),
-                                             ticket=wikiutil.createTicket(self.request))
+                                             userprefs=get_userprefs_info(self.request))
 
