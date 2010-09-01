@@ -33,7 +33,7 @@ def userbrowser():
     #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
     for uid in user.getUserList():
-        u = user.User(flaskg.context, uid)
+        u = user.User(uid)
         #groups = [groupname for groupname in groupnames if flaskg.dicts.has_member(groupname, account.name)])
         user_accounts.append(dict(
             uid=uid,
@@ -52,22 +52,19 @@ def userprofile(user_name):
     """
     # XXX add superuser check
     uid = user.getUserId(user_name)
-    u = user.User(flaskg.context, uid)
+    u = user.User(uid)
     if request.method == 'GET':
         return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))
 
     if request.method == 'POST':
-        if wikiutil.checkTicket(flaskg.context, request.form.get('ticket', '')):
-            key = request.form.get('key', '')
-            val = request.form.get('val', '')
-            if key in app.cfg.user_checkbox_fields:
-                val = int(val)
-            oldval = getattr(u, key)
-            setattr(u, key, val)
-            theuser.save()
-            flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
-        else:
-            flash("ticket fail")
+        key = request.form.get('key', '')
+        val = request.form.get('val', '')
+        if key in app.cfg.user_checkbox_fields:
+            val = int(val)
+        oldval = getattr(u, key)
+        setattr(u, key, val)
+        theuser.save()
+        flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
     return redirect(url_for('admin.userbrowser'))
 
 

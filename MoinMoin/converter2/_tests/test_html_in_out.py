@@ -54,7 +54,7 @@ class Base(object):
 class TestConverter(Base):
     def setup_class(self):
         self.conv_html_dom = HTML_IN()
-        self.conv_dom_html = HTML_OUT(self.request)
+        self.conv_dom_html = HTML_OUT()
 
     def test_base(self):
         data = [

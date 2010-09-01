@@ -14,7 +14,7 @@ from .test_moinwiki_in import TestConverter as _Base
 
 class TestConverterFormat19(_Base):
     def setup_class(self):
-        self.conv = ConverterFormat19(self.request)
+        self.conv = ConverterFormat19()
 
     def test_freelink(self):
         data = [

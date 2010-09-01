@@ -21,9 +21,6 @@ from MoinMoin import config, error, util
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
-import MoinMoin.events as events
-from MoinMoin.events import PageChangedEvent, PageRenamedEvent
-from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.security import AccessControlList
 
 
@@ -188,20 +185,6 @@ class ConfigFunctionality(object):
                 secret += repr(var)
         return secret
 
-    # lazily create a list of event handlers
-    _event_handlers = None
-    def make_event_handlers_prop():
-        def getter(self):
-            if self._event_handlers is None:
-                self._event_handlers = events.get_handlers(self)
-            return self._event_handlers
-
-        def setter(self, new_handlers):
-            self._event_handlers = new_handlers
-
-        return property(getter, setter)
-    event_handlers = make_event_handlers_prop()
-
     def _config_check(self):
         """ Check namespace and warn about unknown names
 
@@ -356,7 +339,7 @@ class DefaultConfig(ConfigFunctionality):
     # the options dictionary.
 
 
-def _default_password_checker(cfg, request, username, password):
+def _default_password_checker(cfg, username, password):
     """ Check if a password is secure enough.
         We use a built-in check to get rid of the worst passwords.
 
@@ -421,9 +404,6 @@ options_no_group_name = {
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
     # use sha512 as soon as we require python2.5 because sha1 is weak:
     ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
-    ('DesktopEdition',
-     False,
-     "if True, give all local users special powers - ''only use this for a local desktop wiki!''"),
     ('SecurityPolicy',
      None,
      "Class object hook for implementing security restrictions or relaxations"),
@@ -586,11 +566,11 @@ options_no_group_name = {
 
     ('email_subscribed_events_default',
      [
-        PageChangedEvent.__name__,
-        PageRenamedEvent.__name__,
-        PageDeletedEvent.__name__,
-        PageCopiedEvent.__name__,
-        PageRevertedEvent.__name__,
+        # XXX PageChangedEvent.__name__
+        # XXX PageRenamedEvent.__name__
+        # XXX PageDeletedEvent.__name__
+        # XXX PageCopiedEvent.__name__
+        # XXX PageRevertedEvent.__name__
      ], None),
 
     ('tz_offset', 0.0,

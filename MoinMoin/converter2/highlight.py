@@ -46,8 +46,8 @@ class Converter(object):
         if len(new_childs) > len(elem):
             elem[:] = new_childs
 
-    def __init__(self, request, re):
-        self.request, self.re = request, re
+    def __init__(self, re):
+        self.re = re
 
     def __call__(self, tree):
         self.recurse(tree)

@@ -195,7 +195,7 @@ class Converter(object):
     sect_re = re.compile('sect[1-5]')
 
     @classmethod
-    def _factory(cls, input, output, request, **kw):
+    def _factory(cls, input, output, **kw):
         return cls()
 
     def __call__(self, content, aruments=None):

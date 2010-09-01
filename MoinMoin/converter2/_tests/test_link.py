@@ -10,10 +10,12 @@ import py.test
 from emeraldtree import tree as ET
 
 from MoinMoin.converter2.link import *
+from MoinMoin.util.iri import Iri
 
 class TestConverterExternOutput(object):
     def setup_class(self):
-        self.conv = ConverterExternOutput(self.request)
+        url_root = Iri('./')
+        self.conv = ConverterExternOutput(url_root=url_root)
 
     def test_wiki(self):
         pairs = [

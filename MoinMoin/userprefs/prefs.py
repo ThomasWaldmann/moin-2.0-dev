@@ -13,7 +13,7 @@ import time
 from flask import flaskg
 
 from MoinMoin import _, N_
-from MoinMoin import user, util, wikiutil, events
+from MoinMoin import user, util, wikiutil
 from MoinMoin.userprefs import UserPrefBase
 
 from flask import current_app as app
@@ -241,7 +241,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
 
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
             if new_email and app.cfg.user_email_unique:
-                other = user.get_by_email_address(request, new_email)
+                other = user.get_by_email_address(new_email)
                 if other is not None and other.id != u.id:
                     return 'error', _("This email already belongs to somebody else.")
 
@@ -335,9 +335,6 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         if request.method != 'POST':
             return
 
-        if not wikiutil.checkTicket(request, form.get('ticket', '')):
-            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.prefs'}
-
         if 'save' in form: # Save user profile
             return self._save_user_prefs()
 
@@ -357,6 +354,5 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
 
     def create_form(self):
         return render_template('userprefs.html',
-                                             userprefs=get_userprefs_info(self.request),
-                                             ticket=wikiutil.createTicket(self.request))
+                                             userprefs=get_userprefs_info(self.request))
 

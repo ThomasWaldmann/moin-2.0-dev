@@ -45,7 +45,7 @@ class TestLoginWithPassword(object):
 
         # Create anon user for the tests
         self.request.cookies = {}
-        flaskg.user = user.User(self.request)
+        flaskg.user = user.User()
 
         self.user = None
 
@@ -77,7 +77,7 @@ class TestLoginWithPassword(object):
         self.createUser(name, password)
 
         # Try to "login"
-        theUser = user.User(self.request, name=name, password=password)
+        theUser = user.User(name=name, password=password)
         assert theUser.valid
 
     def testUnicodePassword(self):
@@ -88,7 +88,7 @@ class TestLoginWithPassword(object):
         self.createUser(name, password)
 
         # Try to "login"
-        theUser = user.User(self.request, name=name, password=password)
+        theUser = user.User(name=name, password=password)
         assert theUser.valid
 
     def testSubscriptionSubscribedPage(self):
@@ -98,7 +98,7 @@ class TestLoginWithPassword(object):
         password = name
         self.createUser(name, password)
         # Login - this should replace the old password in the user file
-        theUser = user.User(self.request, name=name, password=password)
+        theUser = user.User(name=name, password=password)
         theUser.subscribe(pagename)
         assert theUser.isSubscribedTo([pagename]) # list(!) of pages to check
 
@@ -110,7 +110,7 @@ class TestLoginWithPassword(object):
         password = name
         self.createUser(name, password)
         # Login - this should replace the old password in the user file
-        theUser = user.User(self.request, name=name, password=password)
+        theUser = user.User(name=name, password=password)
         theUser.subscribe(pagename)
         assert not theUser.isSubscribedTo([testPagename]) # list(!) of pages to check
 
@@ -123,11 +123,11 @@ class TestLoginWithPassword(object):
         password = name
         self.createUser(name, password)
         # Login - this should replace the old password in the user file
-        theUser = user.User(self.request, name=name)
+        theUser = user.User(name=name)
         # Rename user
         theUser.name = u'__SomeName__'
         theUser.save()
-        theUser = user.User(self.request, name=name, password=password)
+        theUser = user.User(name=name, password=password)
 
         assert not theUser.exists()
 
@@ -139,7 +139,7 @@ class TestLoginWithPassword(object):
         name = u'/no such user/'
         password = '{SHA}jLIjfQZ5yojbZGTqxg2pY0VROWQ=' # 12345
         self.createUser(name, password, True)
-        theuser = user.User(self.request, name=name, password='12345')
+        theuser = user.User(name=name, password='12345')
         assert theuser.enc_password[:6] == '{SSHA}'
 
     def test_for_email_attribute_by_name(self):
@@ -150,7 +150,7 @@ class TestLoginWithPassword(object):
         password = u"ekfdweurwerh"
         email = "__TestUser__@moinhost"
         self.createUser(name, password, email=email)
-        theuser = user.User(self.request, name=name)
+        theuser = user.User(name=name)
         assert theuser.email == ""
 
     def test_for_email_attribut_by_uid(self):
@@ -162,7 +162,7 @@ class TestLoginWithPassword(object):
         email = "__TestUser2__@moinhost"
         self.createUser(name, password, email=email)
         uid = user.getUserId(name)
-        theuser = user.User(self.request, uid)
+        theuser = user.User(uid)
         assert theuser.email == email
 
     # Helpers ---------------------------------------------------------
@@ -171,7 +171,7 @@ class TestLoginWithPassword(object):
         """ helper to create test user
         """
         # Create user
-        self.user = user.User(self.request)
+        self.user = user.User()
         self.user.name = name
         self.user.email = email
         if not pwencoded:

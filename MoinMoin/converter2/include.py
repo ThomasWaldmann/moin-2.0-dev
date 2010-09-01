@@ -100,9 +100,9 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, input, output, request, includes=None, **kw):
+    def _factory(cls, input, output, includes=None, **kw):
         if includes == 'expandall':
-            return cls(request)
+            return cls()
 
     def recurse(self, elem, page_href):
         # Check if we reached a new page
@@ -189,14 +189,14 @@ class Converter(object):
 
                     link.path = path
 
-                    page = Item.create(self.request, unicode(path))
+                    page = Item.create(unicode(path))
                     pages = ((page, link), )
 
                 elif xp_include_pages:
                     # We have a regex of pages to include
                     from MoinMoin.search.term import NameFn
                     inc_match = re.compile(xp_include_pages)
-                    root_item = Item(self.request, name=u'')
+                    root_item = Item(name=u'')
                     pagelist = [item.name for item in root_item.list_items(NameFn(inc_match))]
                     pagelist.sort()
                     if xp_include_sort == 'descending':
@@ -206,7 +206,7 @@ class Converter(object):
                     if xp_include_items is not None:
                         pagelist = pagelist[xp_include_items + 1:]
 
-                    pages = ((Item.create(self.request, p), Iri(scheme='wiki', authority='', path='/' + p)) for p in pagelist)
+                    pages = ((Item.create(p), Iri(scheme='wiki', authority='', path='/' + p)) for p in pagelist)
 
                 included_elements = []
                 for page, page_href in pages:
@@ -251,9 +251,6 @@ class Converter(object):
                         elem[i] = ret
         finally:
             self.stack.pop()
-
-    def __init__(self, request):
-        self.request = request
 
     def __call__(self, tree):
         self.stack = []
