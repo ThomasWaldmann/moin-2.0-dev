@@ -2152,48 +2152,26 @@ def split_anchor(pagename):
 ### action and same page.
 ########################################################################
 
-def createTicket(request, tm=None, action=None, pagename=None):
+def createTicket(tm=None, **kw):
     """ Create a ticket using a configured secret
 
         @param tm: unix timestamp (optional, uses current time if not given)
-        @param action: action name (default: show)
-                       Note: if you create a ticket for a form that calls another
-                             action than the current one, you MUST specify the
-                             action you call when posting the form.
-        @param pagename: page name (optional, uses current page name if not given)
-                       Note: if you create a ticket for a form that posts to another
-                             page than the current one, you MUST specify the
-                             page name you use when posting the form.
+        @param kw: key/value stuff put into ticket, must be same for ticket
+                   creation and ticket check
     """
-
     import hmac, hashlib
     if tm is None:
         # for age-check of ticket
         tm = "%010x" % time.time()
 
-    # make the ticket very specific:
-    if pagename is None:
-        pagename = ''
-
-    if action is None:
-        action = 'show'
-
-    if session:
-        # either a user is logged in or we have a anon session -
-        # if session times out, ticket will get invalid
-        sid = session.sid
-    else:
-        sid = ''
-
-    if flaskg.user.valid:
-        uid = flaskg.user.id
-    else:
-        uid = ''
+    kw['uid'] = flaskg.user.valid and flaskg.user.id or ''
 
     hmac_data = []
-    for value in [tm, pagename, action, sid, uid, ]:
+    for value in sorted(kw.items()):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
+        elif not isinstance(value, str):
+            value = str(value)
         hmac_data.append(value)
 
     h = hmac.new(app.cfg.secrets['wikiutil/tickets'],
@@ -2201,23 +2179,23 @@ def createTicket(request, tm=None, action=None, pagename=None):
     return "%s.%s" % (tm, h.hexdigest())
 
 
-def checkTicket(request, ticket):
-    """Check validity of a previously created ticket"""
+def checkTicket(ticket, **kw):
+    """ Check validity of a previously created ticket.
+
+        @param ticket: a str as created by createTicket
+        @param kw: see createTicket kw
+    """
     try:
         timestamp_str = ticket.split('.')[0]
         timestamp = int(timestamp_str, 16)
     except ValueError:
-        # invalid or empty ticket
         logging.debug("checkTicket: invalid or empty ticket %r" % ticket)
         return False
     now = time.time()
     if timestamp < now - 10 * 3600:
-        # we don't accept tickets older than 10h
         logging.debug("checkTicket: too old ticket, timestamp %r" % timestamp)
         return False
-    # Note: if the session timed out, that will also invalidate the ticket,
-    #       if the ticket was created within a session.
-    ourticket = createTicket(request, timestamp_str)
+    ourticket = createTicket(timestamp_str, **kw)
     logging.debug("checkTicket: returning %r, got %r, expected %r" % (ticket == ourticket, ticket, ourticket))
     return ticket == ourticket
 

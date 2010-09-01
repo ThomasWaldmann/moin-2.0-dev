@@ -57,17 +57,14 @@ def userprofile(user_name):
         return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))
 
     if request.method == 'POST':
-        if wikiutil.checkTicket(flaskg.context, request.form.get('ticket', '')):
-            key = request.form.get('key', '')
-            val = request.form.get('val', '')
-            if key in app.cfg.user_checkbox_fields:
-                val = int(val)
-            oldval = getattr(u, key)
-            setattr(u, key, val)
-            theuser.save()
-            flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
-        else:
-            flash("ticket fail")
+        key = request.form.get('key', '')
+        val = request.form.get('val', '')
+        if key in app.cfg.user_checkbox_fields:
+            val = int(val)
+        oldval = getattr(u, key)
+        setattr(u, key, val)
+        theuser.save()
+        flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
     return redirect(url_for('admin.userbrowser'))
 
 

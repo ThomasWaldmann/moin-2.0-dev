@@ -37,14 +37,17 @@ class TestQueryStringSupport(object):
 
 class TestTickets(object):
     def testTickets(self):
-        # page name with double quotes
-        ticket1 = wikiutil.createTicket(self.request, pagename=u'bla"bla')
-        assert wikiutil.checkTicket(self.request, ticket1, pagename=u'bla"bla')
-        # page name with non-ASCII chars
-        ticket2 = wikiutil.createTicket(self.request, pagename=u'\xc4rger')
-        assert wikiutil.checkTicket(self.request, ticket2, pagename=u'\xc4rger')
+        # value with double quotes
+        ticket1 = wikiutil.createTicket(pagename=u'bla"bla')
+        assert wikiutil.checkTicket(ticket1, pagename=u'bla"bla')
+        # unicode value
+        ticket2 = wikiutil.createTicket(pagename=u'\xc4rger')
+        assert wikiutil.checkTicket(ticket2, pagename=u'\xc4rger')
+        # integer value
+        ticket3 = wikiutil.createTicket(foo=42)
+        assert wikiutil.checkTicket(ticket3, foo=42)
 
-        assert ticket1 != ticket2
+        assert ticket1 != ticket2 != ticket3
 
 
 class TestCleanInput(object):
