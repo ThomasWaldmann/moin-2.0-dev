@@ -17,8 +17,8 @@ from flask import request, url_for, flash, render_template, Response, redirect, 
 from flask import flaskg
 from flask import current_app as app
 
-from flatland import String, Form
-from flatland.validation import Validator, Present, IsEmail
+from flatland import Form, String, Integer
+from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -67,6 +67,7 @@ Disallow: /+backlinks/
 Disallow: /+register
 Disallow: /+recoverpass
 Disallow: /+usersettings
+Disallow: /+usersettings1
 Disallow: /+login
 Disallow: /+changepass
 Disallow: /+logout
@@ -690,15 +691,6 @@ def recoverpass():
                                   )
 
 
-@frontend.route('/+usersettings', methods=['GET', ])
-def usersettings():
-    # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'User Settings' # XXX
-    return render_template('usersettings.html',
-                           item_name=item_name,
-                          )
-
-
 class ValidLogin(Validator):
     """Validator for a valid login
 
@@ -772,6 +764,73 @@ def logout():
         if key in session:
             del session[key]
     return redirect(url_for('frontend.show_root'))
+
+
+@frontend.route('/+usersettings', methods=['GET', ])
+def usersettings():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'User Settings' # XXX
+    return render_template('usersettings.html',
+                           item_name=item_name,
+                          )
+
+
+class ValidUsersettings1(Validator):
+    """Validator for a valid user settings
+    """
+    #fail_msg = N_('...')
+
+    def validate(self, element, state):
+        return True
+
+
+class Usersettings1Form(Form):
+    """User settings1 form"""
+    name = 'usersettings1'
+
+    name = String.using(label=N_('Name')).validated_by(Present())
+    aliasname = String.using(label=N_('Alias-Name'), optional=True)
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
+    edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
+    theme_name = String.using(label=N_('Theme name')).validated_by(Present())
+    editor_default = String.using(label=N_('Editor default')).validated_by(Present())
+    editor_ui = String.using(label=N_('Editor UI')).validated_by(Present())
+    tz_offset = Integer.using(label=N_('Timezone offset')).validated_by(ValueBetween(-43200, 43200))
+    datetime_fmt = String.using(label=N_('DateTime format')).validated_by(Present())
+    date_fmt = String.using(label=N_('Date format')).validated_by(Present())
+    language = String.using(label=N_('Language'), optional=True)
+    submit = String.using(default=N_('Save'), optional=True)
+
+    validators = [ValidUsersettings1()]
+
+
+@frontend.route('/+usersettings1', methods=['GET', 'POST'])
+def usersettings1():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'User Settings1' # XXX
+    u = flaskg.user
+    if request.method == 'GET':
+        form = Usersettings1Form.from_object(u)
+        form['submit'].set('Save') # XXX why does from_object() kill submit value?
+        return render_template('usersettings1.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = Usersettings1Form.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            form.update_object(u)
+            u.save()
+            return redirect(url_for('frontend.usersettings'))
+        else:
+            return render_template('usersettings1.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')

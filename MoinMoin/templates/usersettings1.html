@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% import "forms.html" as forms %}
+
+{% block item %}
+<h1>{{ _("User Settings1") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings1')) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['name'], 'text') }}
+    {{ forms.render_field(gen, form['aliasname'], 'text') }}
+    {{ forms.render_field(gen, form['email'], 'text') }}
+    {{ forms.render_field(gen, form['css_url'], 'text') }}
+    {{ forms.render_field(gen, form['edit_rows'], 'text') }}
+    {{ forms.render_field(gen, form['theme_name'], 'text') }}
+    {{ forms.render_field(gen, form['editor_default'], 'text') }}
+    {{ forms.render_field(gen, form['editor_ui'], 'text') }}
+    {{ forms.render_field(gen, form['tz_offset'], 'text') }}
+    {{ forms.render_field(gen, form['datetime_fmt'], 'text') }}
+    {{ forms.render_field(gen, form['date_fmt'], 'text') }}
+    {{ forms.render_field(gen, form['language'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+{% endblock %}
