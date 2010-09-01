@@ -28,7 +28,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
-
+from flask import request
 from flask import flaskg
 
 from MoinMoin import wikiutil
@@ -36,20 +36,17 @@ from MoinMoin import wikiutil
 class TextCha(object):
     """ Text CAPTCHA support """
 
-    def __init__(self, request, question=None):
+    def __init__(self, question=None):
         """ Initialize the TextCha.
 
-            @param request: the request object
             @param question: see _init_qa()
         """
-        self.request = request
         self.user_info = flaskg.user.valid and flaskg.user.name or request.remote_addr
         self.textchas = self._get_textchas()
         self._init_qa(question)
 
     def _get_textchas(self):
         """ get textchas from the wiki config for the user's language (or default_language or en) """
-        request = self.request
         groups = flaskg.groups
         cfg = app.cfg
         user = flaskg.user
@@ -131,7 +128,7 @@ class TextCha(object):
 
     def _extract_form_values(self, form=None):
         if form is None:
-            form = self.request.form
+            form = request.form
         question = form.get('textcha-question')
         given_answer = form.get('textcha-answer', u'')
         return question, given_answer
