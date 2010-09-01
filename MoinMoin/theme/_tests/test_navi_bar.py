@@ -7,8 +7,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import current_app as app
+
 from MoinMoin._tests import wikiconfig
-from MoinMoin.theme import ThemeBase
+from MoinMoin.theme import ThemeSupport
 
 
 class TestNaviBar(object):
@@ -16,7 +18,7 @@ class TestNaviBar(object):
         interwiki_map = dict(MoinMoin='http://moinmo.in/', )
 
     def setup_method(self, method):
-        self.theme = ThemeBase()
+        self.theme = ThemeSupport(app.cfg)
 
     def test_split_navilink(self):
         tests = [
