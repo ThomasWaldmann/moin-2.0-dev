@@ -12,6 +12,7 @@
 
 import re
 import difflib
+import time
 
 from flask import request, url_for, flash, render_template, Response, redirect, session
 from flask import flaskg
@@ -71,6 +72,7 @@ Disallow: /+usersettings1
 Disallow: /+login
 Disallow: /+changepass
 Disallow: /+logout
+Disallow: /+bookmark
 Disallow: /+diffsince/
 Disallow: /+diff/
 Disallow: /+dispatch/
@@ -831,6 +833,31 @@ def usersettings1():
                                    gen=make_generator(),
                                    form=form,
                                   )
+
+
+@frontend.route('/+bookmark')
+def bookmark():
+    """ set bookmark (in time) for recent changes (or delete them) """
+    if flaskg.user.valid:
+        timestamp = request.values.get('time')
+        if timestamp is not None:
+            if timestamp == 'del':
+                tm = None
+            else:
+                try:
+                    tm = int(timestamp)
+                except StandardError:
+                    tm = int(time.time())
+        else:
+            tm = int(time.time())
+
+        if tm is None:
+            flaskg.user.delBookmark()
+        else:
+            flaskg.user.setBookmark(tm)
+    else:
+        flash(_("You must log in to use bookmarks."), "error")
+    return redirect(url_for('frontend.global_history'))
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
