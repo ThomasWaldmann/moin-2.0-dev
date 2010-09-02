@@ -15,6 +15,7 @@ from flask import flaskg
 
 from flask import current_app as app
 
+from MoinMoin import _, N_
 from MoinMoin.apps.admin import admin
 from MoinMoin import user, wikiutil
 
@@ -75,4 +76,24 @@ def mail_recovery_token():
     """
     flash("mail recovery token not implemented yet")
     return redirect(url_for('admin.userbrowser'))
+
+
+@admin.route('/sysitems_upgrade', methods=['GET', 'POST', ])
+def sysitems_upgrade():
+    from MoinMoin.storage.backends import upgrade_sysitems
+    from MoinMoin.storage.error import BackendError
+    if request.method == 'GET':
+        action = 'syspages_upgrade'
+        label = 'Upgrade System Pages'
+        return render_template('admin/sysitems_upgrade.html',
+                              )
+    if request.method == 'POST':
+        xmlfile = request.files.get('xmlfile')
+        try:
+            upgrade_sysitems(xmlfile)
+        except BackendError, e:
+            flash(_('System items upgrade failed due to the following error: %s.' % e), 'error')
+        else:
+            flash(_('System items have been upgraded successfully!'))
+        return redirect(url_for('admin.index'))
 

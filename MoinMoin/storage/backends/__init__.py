@@ -14,7 +14,7 @@ from flask import flaskg
 
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
-from MoinMoin.storage.backends import fs, fs2, memory
+from MoinMoin.storage.backends import router, fs, fs2, memory
 
 
 CONTENT = 'content'
@@ -109,24 +109,14 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
     return namespace_mapping, router_index_uri
 
 
-def upgrade_syspages(packagepath):
+def upgrade_sysitems(xmlfile):
     """
     Upgrade the wiki's system pages from an XML file.
-
-    @type packagepath: basestring
-    @param packagepath: Name of the item containing the system pages xml as data.
     """
-    # !! Uses ACL-free storage !!
-    storage = flaskg.unprotected_storage
-    try:
-        item = storage.get_item(packagepath)
-        rev = item.get_revision(-1)
-    except NoSuchItemError, NoSuchRevisionError:
-        raise BackendError("No such item %r." % packagepath)
-
-    tmp_backend = memory.MemoryBackend()
-    unserialize(tmp_backend, rev)
+    tmp_backend = router.RouterBackend([('/', memory.MemoryBackend())],
+                                       index_uri='sqlite://')
+    unserialize(tmp_backend, xmlfile)
 
     # clone to real backend from config WITHOUT checking ACLs!
-    storage.clone(tmp_backend)
+    flaskg.unprotected_storage.clone(tmp_backend)
 
