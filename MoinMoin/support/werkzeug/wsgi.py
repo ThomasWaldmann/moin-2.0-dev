@@ -18,6 +18,8 @@ from time import time, mktime
 from datetime import datetime
 
 from werkzeug._internal import _patch_wrapper
+from werkzeug.utils import http_date
+from werkzeug.http import is_resource_modified
 
 
 def responder(f):
@@ -350,8 +352,10 @@ class SharedDataMiddleware(object):
         manager = ResourceManager()
         filesystem_bound = isinstance(provider, DefaultProvider)
         def loader(path):
+            if path is None:
+                return None, None
             path = posixpath.join(package_path, path)
-            if path is None or not provider.has_resource(path):
+            if not provider.has_resource(path):
                 return None, None
             basename = posixpath.basename(path)
             if filesystem_bound:
@@ -757,8 +761,3 @@ class LimitedStream(object):
         if line is None:
             raise StopIteration()
         return line
-
-
-# circular dependencies
-from werkzeug.utils import http_date
-from werkzeug.http import is_resource_modified

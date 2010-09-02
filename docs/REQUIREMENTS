@@ -94,8 +94,8 @@ and 58eb8f978188
 
 werkzeug (WSGI toolkit)
 =======================
-shipped: 0.6.2
-minimum: 0.5.1 will work, maybe 0.5 also
+shipped: 0.7pre
+minimum: 0.7pre (minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0 )
 
 
 jinja2

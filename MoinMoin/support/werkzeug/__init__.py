@@ -18,7 +18,7 @@ from types import ModuleType
 import sys
 
 # This import magic raises concerns quite often which is why the implementation
-# and motiviation is explained here in detail now.
+# and motivation is explained here in detail now.
 #
 # The majority of the functions and classes provided by Werkzeug work on the
 # HTTP and WSGI layer.  There is no useful grouping for those which is why
@@ -96,7 +96,7 @@ all_by_module = {
 }
 
 # modules that should be imported when accessed as attributes of werkzeug
-attribute_modules = dict.fromkeys(['exceptions', 'routing', 'script'])
+attribute_modules = frozenset(['exceptions', 'routing', 'script'])
 
 
 object_origins = {}
@@ -150,6 +150,7 @@ old_module = sys.modules['werkzeug']
 new_module = sys.modules['werkzeug'] = module('werkzeug')
 new_module.__dict__.update({
     '__file__':         __file__,
+    '__package__':      'werkzeug',
     '__path__':         __path__,
     '__doc__':          __doc__,
     '__all__':          tuple(object_origins) + tuple(attribute_modules),

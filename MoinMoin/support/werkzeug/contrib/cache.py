@@ -19,11 +19,11 @@
     Caching is pretty simple.  Basically you have a cache object lurking around
     somewhere that is connected to a remote cache or the file system or
     something else.  When the request comes in you check if the current page
-    is already in the cache and if, you're returning it.  Otherwise you generate
-    the page and put it into the cache.  (Or a fragment of the page, you don't
-    have to cache the full thing)
+    is already in the cache and if so, you're returning it from the cache.
+    Otherwise you generate the page and put it into the cache. (Or a fragment
+    of the page, you don't have to cache the full thing)
 
-    Here a simple example of how to cache a sidebar for a template::
+    Here is a simple example of how to cache a sidebar for a template::
 
         def get_sidebar(user):
             identifier = 'sidebar_for/user%d' % user.id
@@ -38,7 +38,7 @@
     =======================
 
     To create a cache object you just import the cache system of your choice
-    from the cache module and instanciate it.  Then you can start working
+    from the cache module and instantiate it.  Then you can start working
     with that object:
 
     >>> from werkzeug.contrib.cache import SimpleCache
@@ -50,14 +50,15 @@
     True
 
     Please keep in mind that you have to create the cache and put it somewhere
-    you have access to it (either as a module global you can import or if you
-    put it onto your WSGI application).
+    you have access to it (either as a module global you can import or you just
+    put it into your WSGI application).
 
     :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 import os
 import re
+import tempfile
 try:
     from hashlib import md5
 except ImportError:
@@ -65,6 +66,7 @@ except ImportError:
 from itertools import izip
 from time import time
 from cPickle import loads, dumps, load, dump, HIGHEST_PROTOCOL
+from werkzeug.posixemulation import rename
 
 
 class BaseCache(object):
@@ -79,8 +81,8 @@ class BaseCache(object):
         self.default_timeout = default_timeout
 
     def get(self, key):
-        """Looks up key in the cache and returns it.  If the key does not
-        exist `None` is returned instead.
+        """Looks up key in the cache and returns the value for it.
+        If the key does not exist `None` is returned instead.
 
         :param key: the key to be looked up.
         """
@@ -95,8 +97,8 @@ class BaseCache(object):
         pass
 
     def get_many(self, *keys):
-        """Returns a list of keys.  For each key a item in the list is
-        created.  Example::
+        """Returns a list of values for the given keys.
+        For each key a item in the list is created.  Example::
 
             foo, bar = cache.get_many("foo", "bar")
 
@@ -121,18 +123,19 @@ class BaseCache(object):
         return dict(izip(keys, self.get_many(*keys)))
 
     def set(self, key, value, timeout=None):
-        """Adds or overrides a key in the cache.
+        """Adds a new key/value to the cache (overwrites value, if key already
+        exists in the cache).
 
         :param key: the key to set
         :param value: the value for the key
-        :param timeout: the cache timeout for the key or the default
-                        timeout if not specified.
+        :param timeout: the cache timeout for the key (if not specified,
+                        it uses the default timeout).
         """
         pass
 
     def add(self, key, value, timeout=None):
-        """Works like :meth:`set` but does not override already existing
-        values.
+        """Works like :meth:`set` but does not overwrite the values of already
+        existing keys.
 
         :param key: the key to set
         :param value: the value for the key
@@ -144,9 +147,9 @@ class BaseCache(object):
     def set_many(self, mapping, timeout=None):
         """Sets multiple keys and values from a dict.
 
-        :param mapping: a dict with the values to set.
-        :param timeout: the cache timeout for the key or the default
-                        timeout if not specified.
+        :param mapping: a dict with the keys/values to set.
+        :param timeout: the cache timeout for the key (if not specified,
+                        it uses the default timeout).
         """
         for key, value in mapping.iteritems():
             self.set(key, value, timeout)
@@ -162,7 +165,7 @@ class BaseCache(object):
 
     def clear(self):
         """Clears the cache.  Keep in mind that not all caches support
-        clearning of the full cache.
+        completely clearing the cache.
         """
         pass
 
@@ -287,7 +290,7 @@ class MemcachedCache(BaseCache):
                     raise RuntimeError('no memcache module found')
 
             # cmemcache has a bug that debuglog is not defined for the
-            # client.  Whenever pickle fails you get a weird AttributError.
+            # client.  Whenever pickle fails you get a weird AttributeError.
             if is_cmemcache:
                 client = memcache.Client(map(str, servers))
                 try:
@@ -327,8 +330,8 @@ class MemcachedCache(BaseCache):
             if _test_memcached_key(key):
                 key_mapping[encoded_key] = key
         # the keys call here is important because otherwise cmemcache
-        # does ugly things.  What exaclty I don't know, i think it does
-        # Py_DECREF but quite frankly i don't care.
+        # does ugly things.  What exactly I don't know, I think it does
+        # Py_DECREF but quite frankly I don't care.
         d = rv = self._client.get_multi(key_mapping.keys())
         if have_encoded_keys or self.key_prefix:
             rv = {}
@@ -432,36 +435,63 @@ class GAEMemcachedCache(MemcachedCache):
 class FileSystemCache(BaseCache):
     """A cache that stores the items on the file system.  This cache depends
     on being the only user of the `cache_dir`.  Make absolutely sure that
-    nobody but this cache stores files there or otherwise the chace will
-    randomely delete files therein.
+    nobody but this cache stores files there or otherwise the cache will
+    randomly delete files therein.
 
-    :param cache_dir: the directory where cached files are stored.
+    :param cache_dir: the directory where cache files are stored.
     :param threshold: the maximum number of items the cache stores before
                       it starts deleting some.
     :param default_timeout: the default timeout that is used if no timeout is
                             specified on :meth:`~BaseCache.set`.
+    :param mode: the file mode wanted for the cache files, default 0600
     """
 
-    def __init__(self, cache_dir, threshold=500, default_timeout=300):
+    #: used for temporary files by the FileSystemCache
+    _fs_transaction_suffix = '.__wz_cache'
+
+    def __init__(self, cache_dir, threshold=500, default_timeout=300, mode=0600):
         BaseCache.__init__(self, default_timeout)
         self._path = cache_dir
         self._threshold = threshold
+        self._mode = mode
         if not os.path.exists(self._path):
             os.makedirs(self._path)
 
+    def _list_dir(self):
+        """return a list of (fully qualified) cache filenames
+        """
+        return [os.path.join(self._path, fn) for fn in os.listdir(self._path)
+                if not fn.endswith(self._fs_transaction_suffix)]
+
     def _prune(self):
-        entries = os.listdir(self._path)
+        entries = self._list_dir()
         if len(entries) > self._threshold:
             now = time()
-            for idx, key in enumerate(entries):
+            for idx, fname in enumerate(entries):
+                remove = False
+                f = None
                 try:
-                    f = file(self._get_filename(key))
-                    if load(f) > now and idx % 3 != 0:
-                        f.close()
-                        continue
+                    try:
+                        f = open(fname, 'rb')
+                        expires = load(f)
+                        remove = expires <= now or idx % 3 == 0
+                    finally:
+                        if f is not None:
+                            f.close()
                 except:
-                    f.close()
-                self.delete(key)
+                    pass
+                if remove:
+                    try:
+                        os.remove(fname)
+                    except (IOError, OSError):
+                        pass
+
+    def clear(self):
+        for fname in self._list_dir():
+            try:
+                os.remove(fname)
+            except (IOError, OSError):
+                pass
 
     def _get_filename(self, key):
         hash = md5(key).hexdigest()
@@ -470,7 +500,7 @@ class FileSystemCache(BaseCache):
     def get(self, key):
         filename = self._get_filename(key)
         try:
-            f = file(filename, 'rb')
+            f = open(filename, 'rb')
             try:
                 if load(f) >= time():
                     return load(f)
@@ -491,12 +521,16 @@ class FileSystemCache(BaseCache):
         filename = self._get_filename(key)
         self._prune()
         try:
-            f = file(filename, 'wb')
+            fd, tmp = tempfile.mkstemp(suffix=self._fs_transaction_suffix,
+                                       dir=self._path)
+            f = os.fdopen(fd, 'wb')
             try:
                 dump(int(time() + timeout), f, 1)
                 dump(value, f, HIGHEST_PROTOCOL)
             finally:
                 f.close()
+            rename(tmp, filename)
+            os.chmod(filename, self._mode)
         except (IOError, OSError):
             pass
 
@@ -506,6 +540,3 @@ class FileSystemCache(BaseCache):
         except (IOError, OSError):
             pass
 
-    def clear(self):
-        for key in os.listdir(self._path):
-            self.delete(key)
