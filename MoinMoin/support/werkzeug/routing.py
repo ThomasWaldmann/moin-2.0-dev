@@ -105,6 +105,7 @@ from werkzeug.urls import url_encode, url_quote
 from werkzeug.utils import redirect, format_string
 from werkzeug.exceptions import HTTPException, NotFound, MethodNotAllowed
 from werkzeug._internal import _get_environ
+from werkzeug.datastructures import ImmutableDict, MultiDict
 
 
 _rule_re = re.compile(r'''
@@ -539,7 +540,11 @@ class Rule(RuleFactory):
             self.strict_slashes = map.strict_slashes
         if self.subdomain is None:
             self.subdomain = map.default_subdomain
+        self.compile()
 
+    def compile(self):
+        """Compiles the regular expression and stores it."""
+        assert self.map is not None, 'rule not bound'
         rule = self.subdomain + '|' + (self.is_leaf and self.rule
                                        or self.rule.rstrip('/'))
 
@@ -554,7 +559,7 @@ class Rule(RuleFactory):
                 self._trace.append((False, variable))
                 self._weights.append(len(variable))
             else:
-                convobj = get_converter(map, converter, arguments)
+                convobj = get_converter(self.map, converter, arguments)
                 regex_parts.append('(?P<%s>%s)' % (variable, convobj.regex))
                 self._converters[variable] = convobj
                 self._trace.append((True, variable))
@@ -912,6 +917,17 @@ class FloatConverter(NumberConverter):
         NumberConverter.__init__(self, map, 0, min, max)
 
 
+#: the default converter mapping for the map.
+DEFAULT_CONVERTERS = {
+    'default':          UnicodeConverter,
+    'string':           UnicodeConverter,
+    'any':              AnyConverter,
+    'path':             PathConverter,
+    'int':              IntegerConverter,
+    'float':            FloatConverter
+}
+
+
 class Map(object):
     """The map class stores all the URL rules and some configuration
     parameters.  Some of the configuration values are only stored on the
@@ -933,24 +949,30 @@ class Map(object):
     :param sort_parameters: If set to `True` the url parameters are sorted.
                             See `url_encode` for more details.
     :param sort_key: The sort key function for `url_encode`.
+    :param encoding_errors: the error method to use for decoding
 
     .. versionadded:: 0.5
         `sort_parameters` and `sort_key` was added.
+
+    .. versionadded:: 0.7
+        `encoding_errors` was added.
     """
 
     #: .. versionadded:: 0.6
     #:    a dict of default converters to be used.
-    default_converters = None
+    default_converters = ImmutableDict(DEFAULT_CONVERTERS)
 
     def __init__(self, rules=None, default_subdomain='', charset='utf-8',
                  strict_slashes=True, redirect_defaults=True,
-                 converters=None, sort_parameters=False, sort_key=None):
+                 converters=None, sort_parameters=False, sort_key=None,
+                 encoding_errors='ignore'):
         self._rules = []
         self._rules_by_endpoint = {}
         self._remap = True
 
         self.default_subdomain = default_subdomain
         self.charset = charset
+        self.encoding_errors = encoding_errors
         self.strict_slashes = strict_slashes
         self.redirect_defaults = redirect_defaults
 
@@ -1096,11 +1118,9 @@ class Map(object):
                 rules.sort(lambda a, b: a.build_compare(b))
             self._remap = False
 
-
     def __repr__(self):
         rules = self.iter_rules()
         return '%s([%s])' % (self.__class__.__name__, pformat(list(rules)))
-
 
 
 class MapAdapter(object):
@@ -1245,7 +1265,8 @@ class MapAdapter(object):
         if path_info is None:
             path_info = self.path_info
         if not isinstance(path_info, unicode):
-            path_info = path_info.decode(self.map.charset, 'ignore')
+            path_info = path_info.decode(self.map.charset,
+                                         self.map.encoding_errors)
         method = (method or self.default_method).upper()
         path = u'%s|/%s' % (self.subdomain, path_info.lstrip('/'))
         have_match_for = set()
@@ -1314,9 +1335,22 @@ class MapAdapter(object):
             self.match(path_info, method)
         except RequestRedirect:
             pass
-        except NotFound:
+        except (NotFound, MethodNotAllowed):
             return False
         return True
+
+    def allowed_methods(self, path_info=None):
+        """Returns the valid methods that match for a given path.
+
+        .. versionadded:: 0.7
+        """
+        try:
+            self.match(path_info, method='--')
+        except MethodNotAllowed, e:
+            return e.valid_methods
+        except HTTPException, e:
+            pass
+        return []
 
     def _partial_build(self, endpoint, values, method, append_unknown):
         """Helper for :meth:`build`.  Returns subdomain and path for the
@@ -1410,7 +1444,7 @@ class MapAdapter(object):
         subdomain, path = rv
 
         if not force_external and subdomain == self.subdomain:
-            return str(urljoin(self.script_name, path.lstrip('/')))
+            return str(urljoin(self.script_name, './' + path.lstrip('/')))
         return str('%s://%s%s%s/%s' % (
             self.url_scheme,
             subdomain and subdomain + '.' or '',
@@ -1418,17 +1452,3 @@ class MapAdapter(object):
             self.script_name[:-1],
             path.lstrip('/')
         ))
-
-
-#: the default converter mapping for the map.
-DEFAULT_CONVERTERS = {
-    'default':          UnicodeConverter,
-    'string':           UnicodeConverter,
-    'any':              AnyConverter,
-    'path':             PathConverter,
-    'int':              IntegerConverter,
-    'float':            FloatConverter
-}
-
-from werkzeug.datastructures import ImmutableDict, MultiDict
-Map.default_converters = ImmutableDict(DEFAULT_CONVERTERS)
