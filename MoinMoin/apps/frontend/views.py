@@ -547,6 +547,7 @@ def changepass():
     if request.method == 'GET':
         form = ChangePassForm.from_defaults()
         return render_template('changepass.html',
+                               item_name=item_name,
                                gen=make_generator(),
                                form=form,
                               )
@@ -560,6 +561,7 @@ def changepass():
             return redirect(url_for('frontend.show_root'))
         else:
             return render_template('changepass.html',
+                                   item_name=item_name,
                                    gen=make_generator(),
                                    form=form,
                                   )
