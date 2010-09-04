@@ -91,21 +91,6 @@ def decodeUserInput(s, charsets=[config.charset]):
     raise UnicodeError('The string %r cannot be decoded.' % s)
 
 
-def quoteWikinameURL(pagename, charset=config.charset):
-    """ Return a url encoding of filename in plain ascii
-
-    @param pagename: the original pagename (unicode)
-    @param charset: url text encoding, 'utf-8' recommended. Other charset
-                    might not be able to encode the page name and raise
-                    UnicodeError. (default config.charset ('utf-8')).
-    @rtype: string
-    @return: the quoted filename, all unsafe characters encoded
-    """
-    # XXX please note that urllib.quote and werkzeug.url_quote have
-    # XXX different defaults for safe=...
-    return werkzeug.url_quote(pagename, charset=charset, safe='/')
-
-
 escape = werkzeug.escape
 
 
@@ -495,16 +480,6 @@ def ParentItemName(pagename):
             return pagename[:pos]
     return u''
 
-
-def pagelinkmarkup(pagename, text=None):
-    """ return markup that can be used as link to page <pagename> """
-    # XXX: This used to check for CamelCase
-    # TODO: To be replaced by a converter application/x-moin-document -> real markup
-    if text is None or text == pagename:
-        text = ''
-    else:
-        text = u'|%s' % text
-    return u'[[%s%s]]' % (pagename, text)
 
 #############################################################################
 ### mimetype support
