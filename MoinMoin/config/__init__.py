@@ -6,7 +6,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 import re
-from MoinMoin import version
 
 # unicode: set the char types (upper, lower, digits, spaces)
 from MoinMoin.util.chartypes import *

@@ -7,37 +7,69 @@
                 2003-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-import sys
-
-try:
-    from MoinMoin.patchlevel import patchlevel
-except:
-    patchlevel = 'alpha'
 
 project = "MoinMoin"
-release = '2.0.0alpha'
-release_short = '200' # used for url_prefix_static
-revision = patchlevel
 
-def update():
-    """ update the version information in package init """
-    fname = 'MoinMoin/__init__.py'
-    f = file(fname)
-    lines = f.readlines()
-    f.close()
-    f = file(fname, "w")
-    version_pattern = "%s Version " % project
-    version_string = version_pattern + "%s %s" % (release, revision)
-    for line in lines:
-        if version_pattern in line:
-            f.write("%s\n" % version_string)
-        else:
-            f.write(line)
-    f.close()
+import re
+
+class Version(tuple):
+    """
+    Version objects store versions like 1.2.3-4.5alpha6 in a structured
+    way and support version comparisons and direct version component access.
+    1: major version (digits only)
+    2: minor version (digits only)
+    3: (maintenance) release version (digits only)
+    4.5alpha6: optional additional version specification (str)
+
+    You can create a Version instance either by giving the components, like:
+        Version(1,2,3,'4.5alpha6')
+    or by giving the composite version string, like:
+        Version(version="1.2.3-4.5alpha6").
+
+    Version subclasses tuple, so comparisons to tuples should work.
+    Also, we inherit all the comparison logic from tuple base class.
+    """
+    VERSION_RE = re.compile(
+        r"""(?P<major>\d+)
+            \.
+            (?P<minor>\d+)
+            \.
+            (?P<release>\d+)
+            (-
+             (?P<additional>.+)
+            )?""",
+            re.VERBOSE)
+
+    @classmethod
+    def parse_version(cls, version):
+        match = cls.VERSION_RE.match(version)
+        if match is None:
+            raise ValueError("Unexpected version string format: %r" % version)
+        v = match.groupdict()
+        return int(v['major']), int(v['minor']), int(v['release']), str(v['additional'] or '')
+
+    def __new__(cls, major=0, minor=0, release=0, additional='', version=None):
+        if version:
+            major, minor, release, additional = cls.parse_version(version)
+        return tuple.__new__(cls, (major, minor, release, additional))
+
+    # properties for easy access of version components
+    major = property(lambda self: self[0])
+    minor = property(lambda self: self[1])
+    release = property(lambda self: self[2])
+    additional = property(lambda self: self[3])
+
+    def __str__(self):
+        version_str = "%d.%d.%d" % (self.major, self.minor, self.release)
+        if self.additional:
+            version_str += "-%s" % self.additional
+        return version_str
+
+
+# see MoinMoin/_tests/test_version.py for examples how to use this:
+version = Version(2, 0, 0, 'alpha')
+
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == "update":
-        update()
-    else:
-        print project, release, revision
+    print project, str(version)
 
