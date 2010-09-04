@@ -203,19 +203,6 @@ class LogFile:
                 return 0
             raise
 
-    def date(self):
-        # ToDo check if we need this method
-        """ Return timestamp of log file in usecs """
-        try:
-            mtime = os.path.getmtime(self.__filename)
-        except OSError, err:
-            if err.errno == errno.ENOENT:
-                # This can happen on fresh wiki when building the index
-                # Usually the first request will create an event log
-                raise LogMissing(str(err))
-            raise
-        return wikiutil.timestamp2version(mtime)
-
     def peek(self, lines):
         """ Move position in file forward or backwards by "lines" count
 
