@@ -105,7 +105,6 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 
 from MoinMoin.util.clock import Clock
-from MoinMoin.util.uidgen import UniqueIDGenerator
 from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.serialization import serialize, unserialize
 from MoinMoin.storage.backends import router, acl, memory
@@ -296,10 +295,6 @@ def before():
     flaskg.current_lang = app.cfg.language_default
 
     lang = setup_i18n_postauth()
-
-    def uid_generator():
-        return UniqueIDGenerator()
-    flaskg.uid_generator = uid_generator
 
     flaskg.storage = app.storage
 
