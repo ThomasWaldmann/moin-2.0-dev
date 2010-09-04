@@ -401,72 +401,72 @@ def getInterwikiHome(username=None):
     return homewiki, username
 
 
-def AbsPageName(context, pagename):
+def AbsItemName(context, itemname):
     """
-    Return the absolute pagename for a (possibly) relative pagename.
+    Return the absolute item name for a (possibly) relative item name.
 
-    @param context: name of the page where "pagename" appears on
-    @param pagename: the (possibly relative) page name
-    @rtype: string
-    @return: the absolute page name
+    @param context: name of the item where "itemname" appears on
+    @param itemname: the (possibly relative) item name
+    @rtype: unicode
+    @return: the absolute item name
     """
-    if pagename.startswith(PARENT_PREFIX):
-        while context and pagename.startswith(PARENT_PREFIX):
+    if itemname.startswith(PARENT_PREFIX):
+        while context and itemname.startswith(PARENT_PREFIX):
             context = '/'.join(context.split('/')[:-1])
-            pagename = pagename[PARENT_PREFIX_LEN:]
-        pagename = '/'.join(filter(None, [context, pagename, ]))
-    elif pagename.startswith(CHILD_PREFIX):
+            itemname = itemname[PARENT_PREFIX_LEN:]
+        itemname = '/'.join(filter(None, [context, itemname, ]))
+    elif itemname.startswith(CHILD_PREFIX):
         if context:
-            pagename = context + '/' + pagename[CHILD_PREFIX_LEN:]
+            itemname = context + '/' + itemname[CHILD_PREFIX_LEN:]
         else:
-            pagename = pagename[CHILD_PREFIX_LEN:]
-    return pagename
+            itemname = itemname[CHILD_PREFIX_LEN:]
+    return itemname
 
-def RelPageName(context, pagename):
+def RelItemName(context, itemname):
     """
-    Return the relative pagename for some context.
+    Return the relative item name for some context.
 
-    @param context: name of the page where "pagename" appears on
-    @param pagename: the absolute page name
-    @rtype: string
-    @return: the relative page name
+    @param context: name of the item where "itemname" appears on
+    @param itemname: the absolute item name
+    @rtype: unicode
+    @return: the relative item name
     """
     if context == '':
-        # special case, context is some "virtual root" page with name == ''
-        # every page is a subpage of this virtual root
-        return CHILD_PREFIX + pagename
-    elif pagename.startswith(context + CHILD_PREFIX):
+        # special case, context is some "virtual root" item with name == ''
+        # every item is a subitem of this virtual root
+        return CHILD_PREFIX + itemname
+    elif itemname.startswith(context + CHILD_PREFIX):
         # simple child
-        return pagename[len(context):]
+        return itemname[len(context):]
     else:
         # some kind of sister/aunt
         context_frags = context.split('/')   # A, B, C, D, E
-        pagename_frags = pagename.split('/') # A, B, C, F
+        itemname_frags = itemname.split('/') # A, B, C, F
         # first throw away common parents:
         common = 0
-        for cf, pf in zip(context_frags, pagename_frags):
+        for cf, pf in zip(context_frags, itemname_frags):
             if cf == pf:
                 common += 1
             else:
                 break
         context_frags = context_frags[common:] # D, E
-        pagename_frags = pagename_frags[common:] # F
+        itemname_frags = itemname_frags[common:] # F
         go_up = len(context_frags)
-        return PARENT_PREFIX * go_up + '/'.join(pagename_frags)
+        return PARENT_PREFIX * go_up + '/'.join(itemname_frags)
 
 
-def ParentItemName(pagename):
+def ParentItemName(itemname):
     """
-    Return the parent pagename.
+    Return the parent item name.
 
-    @param pagename: the absolute page name (unicode)
+    @param itemname: the absolute item name (unicode)
     @rtype: unicode
-    @return: the parent page name (or empty string for toplevel pages)
+    @return: the parent item name (or empty string for toplevel items)
     """
-    if pagename:
-        pos = pagename.rfind('/')
+    if itemname:
+        pos = itemname.rfind('/')
         if pos > 0:
-            return pagename[:pos]
+            return itemname[:pos]
     return u''
 
 
