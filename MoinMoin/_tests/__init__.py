@@ -12,7 +12,6 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
@@ -80,21 +79,6 @@ def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return [u"%s" % random_string(length, chars) for counter in range(count)]
-
-def make_macro(request, page):
-    """ creates the macro """
-
-    class _PseudoParser(object):
-        def __init__(self, request, formatter):
-            self.request, self.formatter = request, formatter
-            self.form = request.form
-
-    from MoinMoin import macro
-    from MoinMoin.formatter.text_html import Formatter
-    p = _PseudoParser(self.request, Formatter(self.request))
-    p.formatter.page = self.page
-    m = macro.Macro(p)
-    return m
 
 def nuke_xapian_index(request):
     """ completely delete everything in xapian index dir """
