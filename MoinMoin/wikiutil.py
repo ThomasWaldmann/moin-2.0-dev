@@ -92,52 +92,6 @@ def decodeUserInput(s, charsets=[config.charset]):
     raise UnicodeError('The string %r cannot be decoded.' % s)
 
 
-def parseQueryString(qstr, want_unicode=None):
-    """ see werkzeug.url_decode
-
-        DEPRECATED, use werkzeug directly
-
-        Please note: this returns a MultiDict, you might need to use dict() on
-                     the result if your code expects a "normal" dict.
-    """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    return werkzeug.url_decode(qstr, charset=config.charset, errors='fallback:iso-8859-1',
-                               decode_keys=False, include_empty=False)
-
-def makeQueryString(qstr=None, want_unicode=None, **kw): # DEPRECATED, use werkzeug!
-    """ Make a querystring from arguments.
-
-    DEPRECATED, use werkzeug directly
-
-    kw arguments overide values in qstr.
-
-    If a string is passed in, it's returned verbatim and keyword parameters are ignored.
-
-    See also: werkzeug.url_encode
-
-    @param qstr: dict to format as query string, using either ascii or unicode
-    @param kw: same as dict when using keywords, using ascii or unicode
-    @rtype: string
-    @return: query string ready to use in a url
-    """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    if qstr is None:
-        qstr = {}
-    elif isinstance(qstr, (str, unicode)):
-        return qstr
-    if isinstance(qstr, dict):
-        qstr.update(kw)
-        return werkzeug.url_encode(qstr, charset=config.charset, encode_keys=True)
-    else:
-        raise ValueError("Unsupported argument type, should be dict.")
-
-
 def quoteWikinameURL(pagename, charset=config.charset):
     """ Return a url encoding of filename in plain ascii
 

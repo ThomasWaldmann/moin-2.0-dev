@@ -6,44 +6,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import wikiutil
 from MoinMoin.util import web
 from MoinMoin.widget import html
-
-
-class TestMakeQueryString:
-    """util.web: making query string"""
-
-    def testMakeQueryStringFromArgument(self):
-        """ util.web: make query sting from argument """
-        tests = (
-            # description,          arg,                expected
-            ('string unchanged',    'a=b',              'a=b'),
-            ('string value',        {'a': 'b'},         'a=b'),
-            ('integer value',       {'a': 1},           'a=1'),
-            ('multiply values',     {'a': 1, 'b': 2},   'a=1&b=2'),
-            )
-
-        for description, arg, expected in tests:
-            assert wikiutil.makeQueryString(arg) == expected
-
-    def testMakeQueryStringFromKeywords(self):
-        """ util.web: make query sting from keywords """
-        assert wikiutil.makeQueryString(a=1, b='string') == 'a=1&b=string'
-
-    def testMakeQueryStringFromArgumentAndKeywords(self):
-        """ util.web: make query sting from argument and keywords """
-
-        tests = (
-            # description,      arg,                    expected
-            ('kw ignored',      'a=1',                  'a=1'),
-            ('kw added to arg', {'a': 1},               'a=1&b=kw'),
-            ('kw override arg', {'a': 1, 'b': 'arg'},   'a=1&b=kw'),
-            )
-
-        for description, arg, expected in tests:
-            # Call makeQueryString with both arg and keyword
-            assert wikiutil.makeQueryString(arg, b='kw') == expected
 
 
 class TestMakeSelection:
