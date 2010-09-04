@@ -364,22 +364,14 @@ def isGroupItem(itemname):
     return app.cfg.cache.item_group_regexact.search(itemname) is not None
 
 
-def filterCategoryPages(pagelist):
-    """ Return category pages in pagelist
+def isCategoryItem(itemname):
+    """ Is this a name of category item?
 
-    WARNING: DO NOT USE THIS TO FILTER THE FULL PAGE LIST! Use
-    getPageList with a filter function.
-
-    If you pass a list with a single pagename, either that is returned
-    or an empty list, thus you can use this function like a `isCategoryPage`
-    one.
-
-    @param pagelist: a list of pages
-    @rtype: list
-    @return: only the category pages of pagelist
+    @param itemname: the item name
+    @rtype: bool
+    @return: True if item is a category item
     """
-    func = app.cfg.cache.item_category_regexact.search
-    return [pn for pn in pagelist if func(pn)]
+    return app.cfg.cache.item_category_regexact.search(itemname) is not None
 
 
 def getInterwikiHome(username=None):
