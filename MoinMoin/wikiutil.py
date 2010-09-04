@@ -20,7 +20,7 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 from flask import flaskg
-from flask import request, session
+from flask import request
 
 from MoinMoin import _, N_
 from MoinMoin import config
@@ -28,11 +28,6 @@ from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 import werkzeug
-
-# Exceptions
-class InvalidFileNameError(Exception):
-    """ Called when we find an invalid file name """
-    pass
 
 # constants for page names
 PARENT_PREFIX = "../"
@@ -164,6 +159,11 @@ def quoteWikinameFS(wikiname, charset=config.charset):
     # append rest of string
     quoted.append(filename[location:])
     return ''.join(quoted)
+
+
+class InvalidFileNameError(Exception):
+    """ Called when we find an invalid file name """
+    pass
 
 
 def unquoteWikiname(filename, charsets=[config.charset]):
