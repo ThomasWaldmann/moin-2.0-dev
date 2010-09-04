@@ -8,7 +8,6 @@ MoinMoin - cleancache script
 """
 
 from MoinMoin import caching, i18n, user
-from MoinMoin.Page import Page
 from MoinMoin.script import MoinScript
 
 class PluginScript(MoinScript):
@@ -38,13 +37,6 @@ General syntax: moin [options] maint cleancache
     def mainloop(self):
         self.init_request()
         request = self.request
-
-        # clean page scope cache entries
-        keys = ['text_html', 'pagelinks', 'hitcounts', ]
-        pages = request.rootpage.getPageList(user='')
-        for pagename in pages:
-            for key in keys:
-                caching.CacheEntry(pagename, key, scope='item').remove()
 
         # clean wiki scope cache entries
         arena_key_list = [
