@@ -17,24 +17,6 @@ from MoinMoin._tests import wikiconfig
 from werkzeug import MultiDict
 
 
-class TestQueryStringSupport(object):
-    tests = [
-        ('', {}, {}),
-        ('key1=value1', {'key1': 'value1'}, {'key1': u'value1'}),
-        ('key1=value1&key2=value2', {'key1': 'value1', 'key2': 'value2'}, {'key1': u'value1', 'key2': u'value2'}),
-        ('rc_de=Aktuelle%C3%84nderungen', {'rc_de': 'Aktuelle\xc3\x84nderungen'}, {'rc_de': u'Aktuelle\xc4nderungen'}),
-    ]
-    def testParseQueryString(self):
-        for qstr, expected_str, expected_unicode in self.tests:
-            assert wikiutil.parseQueryString(qstr) == MultiDict(expected_unicode)
-            assert wikiutil.parseQueryString(unicode(qstr)) == MultiDict(expected_unicode)
-
-    def testMakeQueryString(self):
-        for qstr, in_str, in_unicode in self.tests:
-            assert wikiutil.parseQueryString(wikiutil.makeQueryString(in_unicode)) == MultiDict(in_unicode)
-            assert wikiutil.parseQueryString(wikiutil.makeQueryString(in_str)) == MultiDict(in_unicode)
-
-
 class TestTickets(object):
     def testTickets(self):
         # value with double quotes
