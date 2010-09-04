@@ -11,9 +11,6 @@ from MoinMoin import version
 # unicode: set the char types (upper, lower, digits, spaces)
 from MoinMoin.util.chartypes import *
 
-# List of image types browser do support regulary
-browser_supported_images = ('gif', 'jpg', 'jpeg', 'png', 'bmp', 'ico', )
-
 # Parser to use mimetype text
 parser_text_mimetype = ('plain', 'csv', 'rst', 'docbook', 'latex', 'tex', 'html', 'css',
                        'xml', 'python', 'perl', 'php', 'ruby', 'javascript',
