@@ -906,26 +906,6 @@ class TestAnchorNames(object):
         encoded = wikiutil.anchor_name_from_text(text)
         assert expected == encoded
 
-class TestPageLinkMarkup(object):
-    def test_pagelinkmarkup(self):
-        tests = [
-            # pagename (no link text), expected markup
-            (('SomePage', ), '[[SomePage]]'),
-            (('Somepage', ), '[[Somepage]]'),
-            (('somepage', ), '[[somepage]]'),
-            (('Some Page', ), '[[Some Page]]'),
-            # with link text
-            (('SomePage', 'SomePage'), '[[SomePage]]'),
-            (('SomePage', 'some page'), '[[SomePage|some page]]'),
-            (('Some Page', 'Some Page'), '[[Some Page]]'),
-            (('Some Page', 'some Page'), '[[Some Page|some Page]]'),
-        ]
-        for params, expected in tests:
-            yield self._check, params, expected
-
-    def _check(self, params, expected):
-        assert expected == wikiutil.pagelinkmarkup(*params)
-
 class TestRelativeTools(object):
     tests = [
         # test                      expected output
