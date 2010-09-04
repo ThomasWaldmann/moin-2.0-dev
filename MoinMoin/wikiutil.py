@@ -245,21 +245,6 @@ def unquoteWikiname(filename, charsets=[config.charset]):
     wikiname = decodeUserInput(wikiname, charsets)
     return wikiname
 
-# time scaling
-def timestamp2version(ts):
-    """ Convert UNIX timestamp (may be float or int) to our version
-        (long) int.
-        We don't want to use floats, so we just scale by 1e6 to get
-        an integer in usecs.
-    """
-    return long(ts*1000000L)
-
-def version2timestamp(v):
-    """ Convert version number to UNIX timestamp (float).
-        This must ONLY be used for display purposes.
-    """
-    return v / 1000000.0
-
 
 # This is the list of meta attribute names to be treated as integers.
 # IMPORTANT: do not use any meta attribute names with "-" (or any other chars
