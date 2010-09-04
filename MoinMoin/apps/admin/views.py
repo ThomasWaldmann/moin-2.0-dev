@@ -11,13 +11,14 @@
 """
 
 from flask import request, url_for, render_template, flash, redirect
+from flask import current_app as app
 from flask import flaskg
 
-from flask import current_app as app
+from werkzeug import escape
 
 from MoinMoin import _, N_
 from MoinMoin.apps.admin import admin
-from MoinMoin import user, wikiutil
+from MoinMoin import user
 
 @admin.route('/')
 def index():
@@ -65,7 +66,7 @@ def userprofile(user_name):
         oldval = getattr(u, key)
         setattr(u, key, val)
         theuser.save()
-        flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
+        flash('%s.%s: %s -> %s' % tuple([escape(s) for s in [user_name, key, oldval, val]]), "info")
     return redirect(url_for('admin.userbrowser'))
 
 

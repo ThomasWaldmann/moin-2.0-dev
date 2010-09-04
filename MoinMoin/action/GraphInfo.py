@@ -16,8 +16,9 @@ from mercurial.templatefilters import json
 from flask import current_app as app
 from flask import flaskg
 
+from werkzeug import escape
+
 from MoinMoin import _, N_
-from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.widget import html
 from MoinMoin.Page import Page
@@ -117,7 +118,7 @@ def execute(pagename, request):
             editor = user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR],
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
             date = flaskg.user.getFormattedDateTime(float(revision.timestamp))
-            comment = wikiutil.escape(comment) or '&nbsp;'
+            comment = escape(comment) or '&nbsp;'
             node = "%d:%s" % (revno, flaskg.storage._get_revision_node(revision)[1])
 
             history.append((url, (idx, color), edges, node, editor, date, comment, "%d B" % size, diff, "&nbsp;".join(actions)))

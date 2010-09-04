@@ -17,8 +17,9 @@ from MoinMoin import user, util, wikiutil
 from MoinMoin.userprefs import UserPrefBase
 
 from flask import current_app as app
-
 from flask import render_template
+
+from werkzeug import escape
 
 #################################################################
 # This is still a mess.
@@ -215,7 +216,7 @@ class Settings(UserPrefBase):
             if not user.isValidName(new_name):
                 return 'error', _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""") % wikiutil.escape(new_name)
+space between words. Group page name is not allowed.""") % escape(new_name)
 
             # Is this an existing user trying to change information or a new user?
             # Name required to be unique. Check if name belong to another user.
