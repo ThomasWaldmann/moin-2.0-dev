@@ -1887,57 +1887,6 @@ def is_URL(arg, schemas=config.url_schemas):
     return False
 
 
-def isPicture(url):
-    """
-    Is this a picture's url?
-
-    @param url: the url in question
-    @rtype: bool
-    @return: true if url points to a picture
-    """
-    extpos = url.rfind(".") + 1
-    return extpos > 1 and url[extpos:].lower() in config.browser_supported_images
-
-
-def link_tag(request, params, text=None, formatter=None, on=None, **kw):
-    """ Create a link.
-
-    TODO: cleanup css_class
-
-    @param request: the request object
-    @param params: parameter string appended to the URL after the scriptname/
-    @param text: text / inner part of the <a>...</a> link - does NOT get
-                 escaped, so you can give HTML here and it will be used verbatim
-    @param formatter: None (do not use)
-    @param on: opening/closing tag only
-    @keyword attrs: additional attrs (HTMLified string) (removed in 1.5.3)
-    @rtype: string
-    @return: formatted link tag
-    """
-    if 'css_class' in kw:
-        css_class = kw['css_class']
-        del kw['css_class'] # one time is enough
-    else:
-        css_class = None
-    id = kw.get('id', None)
-    name = kw.get('name', None)
-    if text is None:
-        text = params # default
-    if on is not None and not on:
-        tag = '</a>'
-    else:
-        attrs = ''
-        if css_class:
-            attrs += ' class="%s"' % css_class
-        if id:
-            attrs += ' id="%s"' % id
-        if name:
-            attrs += ' name="%s"' % name
-        tag = '<a%s href="%s/%s">' % (attrs, request.script_root, params)
-        if not on:
-            tag = "%s%s</a>" % (tag, text)
-    return tag
-
 def containsConflictMarker(text):
     """ Returns true if there is a conflict marker in the text. """
     return "/!\\ '''Edit conflict" in text
