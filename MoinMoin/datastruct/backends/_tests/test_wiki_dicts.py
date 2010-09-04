@@ -20,7 +20,7 @@ class TestWikiDictsBackend(DictsBackendTest):
 
     def setup_method(self, method):
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
         text = '''
 Text ignored
@@ -34,13 +34,13 @@ Next line has key with empty value
  Empty string::\x20
  Last:: last item
 '''
-        create_item(request, u'SomeTestDict', text)
+        create_item(u'SomeTestDict', text)
 
         text = """
  One:: 1
  Two:: 2
 """
-        create_item(request, u'SomeOtherTestDict', text)
+        create_item(u'SomeOtherTestDict', text)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']

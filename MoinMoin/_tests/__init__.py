@@ -21,7 +21,7 @@ from MoinMoin import config, security
 # Usually the tests run as anonymous user, but for some stuff, you
 # need more privs...
 
-def become_valid(request, username=u"ValidUser"):
+def become_valid(username=u"ValidUser"):
     """ modify flaskg.user to make the user valid.
         Note that a valid user will only be in ACL special group "Known", if
         we have a user profile for this user as the ACL system will check if
@@ -34,13 +34,13 @@ def become_valid(request, username=u"ValidUser"):
     flaskg.user.valid = 1
 
 
-def become_trusted(request, username=u"TrustedUser"):
+def become_trusted(username=u"TrustedUser"):
     """ modify flaskg.user to make the user valid and trusted, so it is in acl group Trusted """
-    become_valid(request, username)
+    become_valid(username)
     flaskg.user.auth_method = app.cfg.auth_methods_trusted[0]
 
 
-def become_superuser(request):
+def become_superuser(username=u"SuperUser"):
     """ modify flaskg.user so it is in the superuser list,
         also make the user valid (see notes in become_valid()),
         also make the user trusted (and thus in "Trusted" ACL pseudo group).
@@ -48,14 +48,13 @@ def become_superuser(request):
         Note: being superuser is completely unrelated to ACL rights,
               especially it is not related to ACL admin rights.
     """
-    su_name = u"SuperUser"
-    become_trusted(request, su_name)
-    if su_name not in app.cfg.superuser:
-        app.cfg.superuser.append(su_name)
+    become_trusted(username)
+    if username not in app.cfg.superuser:
+        app.cfg.superuser.append(username)
 
 # Creating and destroying test pages --------------------------------
 
-def create_item(request, itemname, content, mimetype='text/x.moin.wiki', acl=None):
+def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -66,7 +65,7 @@ def create_item(request, itemname, content, mimetype='text/x.moin.wiki', acl=Non
     item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
 
-def append_item(request, itemname, content):
+def append_item(itemname, content):
     """ appends some content to an existing page """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -86,7 +85,7 @@ def nuke_xapian_index(request):
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 
-def nuke_item(request, item_name):
+def nuke_item(item_name):
     """ complete destroys an item """
     item = Item.create(item_name)
     item.destroy()

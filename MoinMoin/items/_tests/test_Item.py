@@ -40,7 +40,7 @@ class TestItem(object):
         data = 'foobar'
         meta = dict(foo='bar')
         comment = u'saved it'
-        become_trusted(self.request)
+        become_trusted()
         item = Item.create(name)
         # save rev 0
         item._save(meta, data, mimetype=mimetype, comment=comment)
