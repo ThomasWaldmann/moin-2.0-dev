@@ -97,7 +97,7 @@ class Script:
         import optparse
         from MoinMoin import version
 
-        rev = "%s %s [%s]" % (version.project, version.release, version.revision)
+        rev = "%s %s" % (version.project, str(version.version))
         sys.argv[0] = cmd
 
         self.parser = optparse.OptionParser(

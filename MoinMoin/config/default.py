@@ -529,11 +529,8 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
-    # includes the moin version number, so we can have a unlimited cache lifetime
-    # for the static stuff. if stuff changes on version upgrade, url will change
-    # immediately and we have no problem with stale caches.
     ('url_prefix_static', config.url_prefix_static,
-     "used as the base URL for icons, css, etc. - includes the moin version number and changes on every release. This replaces the deprecated and sometimes confusing `url_prefix = '/wiki'` setting."),
+     "used as the base URL for icons, css, etc."),
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
 
