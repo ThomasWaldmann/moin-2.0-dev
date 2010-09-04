@@ -553,7 +553,7 @@ def filterCategoryPages(pagelist):
     return [pn for pn in pagelist if func(pn)]
 
 
-def getInterwikiHomePage(username=None):
+def getInterwikiHome(username=None):
     """
     Get a user's homepage.
 

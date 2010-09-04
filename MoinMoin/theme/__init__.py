@@ -124,7 +124,7 @@ class ThemeSupport(object):
         """
         user = self.user
 
-        wikiname, itemname = wikiutil.getInterwikiHomePage()
+        wikiname, itemname = wikiutil.getInterwikiHome()
         name = user.name
         aliasname = user.aliasname
         if not aliasname:
