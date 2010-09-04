@@ -9,8 +9,9 @@
 
 import difflib
 
+from werkzeug import escape
+
 from MoinMoin import _, N_
-from MoinMoin.wikiutil import escape
 
 def indent(line):
     eol = ''

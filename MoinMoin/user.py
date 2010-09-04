@@ -27,6 +27,8 @@ from flask import current_app as app
 
 from flask import flaskg, session, request, url_for
 
+from werkzeug import escape
+
 from MoinMoin import _, N_
 from MoinMoin import config, caching, wikiutil, i18n
 from MoinMoin.util import random_string
@@ -43,7 +45,7 @@ def create_user(username, password, email):
     if not isValidName(theuser.name):
         return _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
+space between words. Group page name is not allowed.""") % escape(theuser.name)
 
     # Name required to be unique. Check if name belong to another user.
     if getUserId(theuser.name):
@@ -53,7 +55,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     if pw_checker:
         pw_error = pw_checker(theuser.name, password)
         if pw_error:
-            return _("Password not acceptable: %s") % wikiutil.escape(pw_error)
+            return _("Password not acceptable: %s") % escape(pw_error)
 
     # Encode password
     if password and not password.startswith('{SHA}'):
@@ -61,7 +63,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
             theuser.enc_password = encodePassword(password)
         except UnicodeError, err:
             # Should never happen
-            return "Can't encode password: %s" % wikiutil.escape(str(err))
+            return "Can't encode password: %s" % escape(str(err))
 
     # try to get the email, for new users it is required
     theuser.email = email

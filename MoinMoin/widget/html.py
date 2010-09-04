@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import wikiutil
+from werkzeug import escape
 
 # sort attributes or not? (set to 1 by unit tests)
 _SORT_ATTRS = 0
@@ -23,7 +23,7 @@ class Text:
         self.text = text
 
     def __unicode__(self):
-        return wikiutil.escape(self.text)
+        return escape(self.text)
 
 
 class Raw:
@@ -83,7 +83,7 @@ class Element:
                 if val:
                     result.append(key)
             else:
-                result.append(u'%s="%s"' % (key, wikiutil.escape(val, 1)))
+                result.append(u'%s="%s"' % (key, escape(val, 1)))
         return ' '.join(result)
 
     def __unicode__(self):
@@ -448,7 +448,7 @@ class LABEL(CompositeElement):
                 if val:
                     result.append(key)
             else:
-                result.append(u'%s="%s"' % (key, wikiutil.escape(val, 1)))
+                result.append(u'%s="%s"' % (key, escape(val, 1)))
         return ' '.join(result)
 
 

@@ -31,7 +31,8 @@ from flask import current_app as app
 from flask import request
 from flask import flaskg
 
-from MoinMoin import wikiutil
+from werkzeug import escape
+
 
 class TextCha(object):
     """ Text CAPTCHA support """
@@ -122,8 +123,8 @@ class TextCha(object):
             return True
 
     def _make_form_values(self, question, given_answer):
-        question_form = wikiutil.escape(question, True)
-        given_answer_form = wikiutil.escape(given_answer, True)
+        question_form = escape(question, True)
+        given_answer_form = escape(given_answer, True)
         return question_form, given_answer_form
 
     def _extract_form_values(self, form=None):
@@ -150,7 +151,7 @@ class TextCha(object):
 <input type="hidden" name="textcha-question" value="%s">
 <input id="textcha-answer" type="text" name="textcha-answer" value="%s" size="20" maxlength="80">
 </div>
-""" % (wikiutil.escape(question), question_form, given_answer_form)
+""" % (escape(question), question_form, given_answer_form)
         else:
             result = u''
         return result

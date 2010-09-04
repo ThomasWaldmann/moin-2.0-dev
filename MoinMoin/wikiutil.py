@@ -91,9 +91,6 @@ def decodeUserInput(s, charsets=[config.charset]):
     raise UnicodeError('The string %r cannot be decoded.' % s)
 
 
-escape = werkzeug.escape
-
-
 def clean_input(text, max_len=201):
     """ Clean input:
         replace CR, LF, TAB by whitespace
