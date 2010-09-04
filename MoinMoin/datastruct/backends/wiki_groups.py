@@ -10,10 +10,6 @@ FriendsGroup. This lets MoinMoin recognize it as a group. This default
 pattern could be changed (e.g. for non-english languages etc.), see
 HelpOnConfiguration.
 
-MoinMoin.formatter.groups is used to extract group members from a
-page.
-
-
 @copyright: 2008 MoinMoin:ThomasWaldmann,
             2009 MoinMoin:DmitrijsMilajevs
 @license: GPL, see COPYING for details
@@ -22,7 +18,6 @@ page.
 from MoinMoin import caching, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.datastruct.backends import GreedyGroup, BaseGroupsBackend, GroupDoesNotExistError
-from MoinMoin.formatter.groups import Formatter
 
 
 class WikiGroup(GreedyGroup):
@@ -72,24 +67,5 @@ class WikiGroups(BaseGroupsBackend):
         return WikiGroup(request=self.request, name=group_name, backend=self)
 
     def _retrieve_members(self, group_name):
-        """
-        MoinMoin.formatter.groups is used to extract group members from a page.
-        """
-        formatter = Formatter(self.request)
-        page = Page(self.request, group_name, formatter=formatter)
-
-        request_page = None # getattr(self.request, "page", None)
-        # send_special is set to True because acl of the page should
-        # not be processed to avoid infinite recursion in the
-        # following case.
-        #
-        # Consider page UserGroup content:
-        #
-        # #acl UserGroup:read,write,admin All:read
-        #
-        #  * ExampleUser
-        #  * TestGroup
-        #
-        page.send_page(content_only=True, send_special=True)
-        return formatter.members
+        return [] # XXX TODO use DOM approach to get group members in moin2
 

@@ -43,9 +43,8 @@ class UniqueIDGenerator(object):
 
     def begin(self, base):
         """
-        Called by the formatter when a document begins, which means
-        that include causing nested documents gives us an include
-        stack in self.include_id_stack.
+        Called when a document begins, which means that include causing nested
+        documents gives us an include stack in self.include_id_stack.
         """
         pids = {}
         for namespace in self.page_ids:
@@ -59,9 +58,8 @@ class UniqueIDGenerator(object):
 
     def end(self):
         """
-        Called by the formatter when a document ends, restores
-        the current include ID to the previous one and discards
-        the page IDs state we kept around for push().
+        Called when a document ends, restores the current include ID to the
+        previous one and discards the page IDs state we kept around for push().
         """
         self.include_id, pids = self.include_stack.pop()
 

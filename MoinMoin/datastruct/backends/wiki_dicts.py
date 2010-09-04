@@ -73,14 +73,6 @@ class WikiDicts(BaseDictsBackend):
         return WikiDict(request=self.request, name=dict_name, backend=self)
 
     def _retrieve_items(self, dict_name):
-        # XXX in Moin 2.0 regex should not be used instead use DOM
-        # tree to extract dict values. Also it should be possible to
-        # convert dict values to different markups (wiki-markup,
-        # creole...).
-        #
-        # Note that formatter which extracts dictionary from a
-        # page was developed. See
-        # http://hg.moinmo.in/moin/1.9-groups-dmilajevs/file/982f706482e7/MoinMoin/formatter/dicts.py
         page = Page(self.request, dict_name)
         text = page.get_raw_body()
         return dict([match.groups() for match in self._dict_page_parse_regex.finditer(text)])
