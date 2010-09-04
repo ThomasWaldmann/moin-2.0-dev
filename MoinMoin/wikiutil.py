@@ -11,7 +11,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import codecs
 import os
 import re
 import time
@@ -1806,20 +1805,6 @@ def normalize_pagename(name, cfg):
     name = u'/'.join(normalized)
     return name
 
-def taintfilename(basename):
-    """
-    Make a filename that is supposed to be a plain name secure, i.e.
-    remove any possible path components that compromise our system.
-
-    @param basename: (possibly unsafe) filename
-    @rtype: string
-    @return: (safer) filename
-    """
-    for x in (os.pardir, ':', '/', '\\', '<', '>'):
-        basename = basename.replace(x, '_')
-
-    return basename
-
 
 def drawing2fname(drawing):
     config.drawing_extensions = ['.tdraw', '.adraw',
@@ -1833,26 +1818,6 @@ def drawing2fname(drawing):
         # for backwards compatibility, twikidraw is the default:
         drawing += '.tdraw'
     return drawing
-
-
-def mapURL(request, url):
-    """
-    Map URLs according to 'cfg.url_mappings'.
-
-    @param url: a URL
-    @rtype: string
-    @return: mapped URL
-    """
-    # check whether we have to map URLs
-    if app.cfg.url_mappings:
-        # check URL for the configured prefixes
-        for prefix in app.cfg.url_mappings:
-            if url.startswith(prefix):
-                # substitute prefix with replacement value
-                return app.cfg.url_mappings[prefix] + url[len(prefix):]
-
-    # return unchanged url
-    return url
 
 
 def getUnicodeIndexGroup(name):
