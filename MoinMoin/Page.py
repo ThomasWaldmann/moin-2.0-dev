@@ -391,9 +391,6 @@ class Page(object):
 
         # Add anchor
         if anchor:
-            fmt = getattr(self, 'formatter')
-            if fmt:
-                anchor = fmt.sanitize_to_id(anchor)
             url = "%s#%s" % (url, anchor)
 
         return url
@@ -401,9 +398,7 @@ class Page(object):
     def link_to_raw(self, request, text, querystr=None, anchor=None, **kw):
         """ core functionality of link_to, without the magic """
         url = self.url(request, querystr, anchor=anchor, relative=True) # scriptName is added by link_tag
-        # escaping is done by link_tag -> formatter.url -> ._open()
-        link = wikiutil.link_tag(request, url, text,
-                                 formatter=getattr(self, 'formatter', None), **kw)
+        link = wikiutil.link_tag(request, url, text, **kw)
         return link
 
     def link_to(self, request, text=None, querystr=None, anchor=None, **kw):
@@ -677,7 +672,7 @@ class Page(object):
                 special = 'denied'
 
             # if we have a special page, output it, unless
-            #  - we should only output content (this is for say the pagelinks formatter)
+            #  - we should only output content
             #  - we have a non-default formatter
             if special and not content_only and self.default_formatter:
                 self._specialPageText(request, special) # this recursively calls send_page
@@ -697,8 +692,6 @@ class Page(object):
             if self.default_formatter:
                 request.theme.send_footer(self.page_name, print_mode=print_mode)
 
-            # TODO: request.write(self.formatter.endDocument())
-
         if not content_only and self.default_formatter:
             request.theme.send_closing_html()
 
@@ -708,10 +701,7 @@ class Page(object):
         @rtype: string
         @return: formatter name as used in caching
         """
-        if not hasattr(self, 'formatter') or self.formatter is None:
-            return ''
-        module = self.formatter.__module__
-        return module[module.rfind('.') + 1:]
+        return ''
 
     def canUseCache(self, parser=None):
         """ Is caching available for this request?

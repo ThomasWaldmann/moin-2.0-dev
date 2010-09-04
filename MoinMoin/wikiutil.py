@@ -873,7 +873,7 @@ def importPlugin(cfg, kind, name, function="execute"):
 
     If <name> plugin can not be imported, raise PluginMissingError.
 
-    kind may be one of 'action', 'formatter', 'macro' or any other
+    kind may be one of 'action', 'macro' or any other
     directory that exist in MoinMoin or data/plugin.
 
     Wiki plugins will always override builtin plugins. If you want
@@ -1003,7 +1003,6 @@ def getPlugins(kind, cfg):
 
 def searchAndImportPlugin(cfg, type, name, what=None):
     type2classname = {
-        "formatter": "Formatter",
     }
     if what is None:
         what = type2classname[type]
@@ -2061,7 +2060,7 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
     @param params: parameter string appended to the URL after the scriptname/
     @param text: text / inner part of the <a>...</a> link - does NOT get
                  escaped, so you can give HTML here and it will be used verbatim
-    @param formatter: the formatter object to use
+    @param formatter: None (do not use)
     @param on: opening/closing tag only
     @keyword attrs: additional attrs (HTMLified string) (removed in 1.5.3)
     @rtype: string
@@ -2076,30 +2075,19 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
     name = kw.get('name', None)
     if text is None:
         text = params # default
-    if formatter:
-        url = "%s/%s" % (request.script_root, params)
-        # formatter.url will escape the url part
-        if on is not None:
-            tag = formatter.url(on, url, css_class, **kw)
-        else:
-            tag = (formatter.url(1, url, css_class, **kw) +
-                formatter.rawHTML(text) +
-                formatter.url(0))
-    else: # this shouldn't be used any more:
-        if on is not None and not on:
-            tag = '</a>'
-        else:
-            attrs = ''
-            if css_class:
-                attrs += ' class="%s"' % css_class
-            if id:
-                attrs += ' id="%s"' % id
-            if name:
-                attrs += ' name="%s"' % name
-            tag = '<a%s href="%s/%s">' % (attrs, request.script_root, params)
-            if not on:
-                tag = "%s%s</a>" % (tag, text)
-        logging.warning("wikiutil.link_tag called without formatter. tag=%r" % (tag, ))
+    if on is not None and not on:
+        tag = '</a>'
+    else:
+        attrs = ''
+        if css_class:
+            attrs += ' class="%s"' % css_class
+        if id:
+            attrs += ' id="%s"' % id
+        if name:
+            attrs += ' name="%s"' % name
+        tag = '<a%s href="%s/%s">' % (attrs, request.script_root, params)
+        if not on:
+            tag = "%s%s</a>" % (tag, text)
     return tag
 
 def containsConflictMarker(text):
