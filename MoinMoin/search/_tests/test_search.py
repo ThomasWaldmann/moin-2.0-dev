@@ -125,11 +125,11 @@ class BaseSearchTest(object):
 
     def setup_method(cls, method):
         request = cls.request
-        become_trusted(request)
+        become_trusted()
 
         for page, text in cls.pages.iteritems():
             if text:
-                create_item(request, page, text)
+                create_item(page, text)
 
     def get_searcher(self, query):
         raise NotImplementedError

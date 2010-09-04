@@ -29,19 +29,19 @@ class TestWikiGroupBackend(GroupsBackendTest):
     # is WikiGroups backend.
 
     def setup_method(self, method):
-        become_trusted(self.request)
+        become_trusted()
         for group, members in self.test_groups.iteritems():
             page_text = ' * %s' % '\n * '.join(members)
-            create_item(self.request, group, page_text)
+            create_item(group, page_text)
 
     def test_rename_group_page(self):
         """
         Tests if the groups cache is refreshed after renaming a Group page.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
-        page = create_item(request, u'SomeGroup', u" * ExampleUser")
+        page = create_item(u'SomeGroup', u" * ExampleUser")
         page.rename(u'AnotherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'AnotherGroup']
@@ -54,9 +54,9 @@ class TestWikiGroupBackend(GroupsBackendTest):
         Tests if the groups cache is refreshed after copying a Group page.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
-        page = create_item(request, u'SomeGroup', u" * ExampleUser")
+        page = create_item(u'SomeGroup', u" * ExampleUser")
         page.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'SomeOtherGroup']
@@ -70,13 +70,13 @@ class TestWikiGroupBackend(GroupsBackendTest):
         Test scalability by appending a name to a large list of group members.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
         # long list of users
         page_content = [u" * %s" % member for member in create_random_string_list(length=15, count=1234)]
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(request, u'UserGroup', "\n".join(page_content))
-        append_item(request, u'UserGroup', u' * %s' % test_user)
+        create_item(u'UserGroup', "\n".join(page_content))
+        append_item(u'UserGroup', u' * %s' % test_user)
         result = test_user in flaskg.groups['UserGroup']
 
         assert result
@@ -86,14 +86,14 @@ class TestWikiGroupBackend(GroupsBackendTest):
         Test addition of a username to a large list of group members.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
         # long list of users
         page_content = [u" * %s" % member for member in create_random_string_list()]
-        create_item(request, u'UserGroup', "\n".join(page_content))
+        create_item(u'UserGroup', "\n".join(page_content))
 
         new_user = create_random_string_list(length=15, count=1)[0]
-        append_item(request, u'UserGroup', u' * %s' % new_user)
+        append_item(u'UserGroup', u' * %s' % new_user)
         user = User(name=new_user)
         if not user.exists():
             User(name=new_user, password=new_user).save()
@@ -107,21 +107,21 @@ class TestWikiGroupBackend(GroupsBackendTest):
         recreating the page without the member.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
         # long list of users
         page_content = [u" * %s" % member for member in create_random_string_list()]
         page_content = "\n".join(page_content)
-        create_item(request, u'UserGroup', page_content)
+        create_item(u'UserGroup', page_content)
 
         # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(request, u'UserGroup', page_content + '\n * %s' % test_user)
+        create_item(u'UserGroup', page_content + '\n * %s' % test_user)
         result = test_user in flaskg.groups[u'UserGroup']
         assert result
 
         # updates the text without test_user
-        create_item(request, u'UserGroup', page_content)
+        create_item(u'UserGroup', page_content)
         result = test_user in flaskg.groups[u'UserGroup']
         assert not result
 
@@ -130,16 +130,16 @@ class TestWikiGroupBackend(GroupsBackendTest):
         Test addition of a user to a group page by trivial change.
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
         test_user = create_random_string_list(length=15, count=1)[0]
         member = u" * %s\n" % test_user
-        page = create_item(request, u'UserGroup', member)
+        page = create_item(u'UserGroup', member)
 
         # next member saved  as trivial change
         test_user = create_random_string_list(length=15, count=1)[0]
         member = u" * %s\n" % test_user
-        page = create_item(request, u'UserGroup', member)
+        page = create_item(u'UserGroup', member)
 
         result = test_user in flaskg.groups[u'UserGroup']
 
@@ -152,9 +152,9 @@ class TestWikiGroupBackend(GroupsBackendTest):
         then add user member to a page group and check acl rights
         """
         request = self.request
-        become_trusted(request)
+        become_trusted()
 
-        create_item(request, u'NewGroup', u" * ExampleUser")
+        create_item(u'NewGroup', u" * ExampleUser")
 
         acl_rights = ["NewGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
@@ -162,7 +162,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         has_rights_before = acl.may(u"AnotherUser", "read")
 
         # update page - add AnotherUser to a page group NewGroup
-        append_item(request, u'NewGroup', u" * AnotherUser")
+        append_item(u'NewGroup', u" * AnotherUser")
 
         has_rights_after = acl.may(u"AnotherUser", "read")
 

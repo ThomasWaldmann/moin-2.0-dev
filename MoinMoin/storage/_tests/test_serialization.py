@@ -23,7 +23,7 @@ from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
 def update_item(request, name, revno, meta, data):
-    become_trusted(request)
+    become_trusted()
     try:
         item = flaskg.storage.create_item(name)
     except ItemAlreadyExistsError:

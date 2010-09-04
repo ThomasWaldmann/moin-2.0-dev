@@ -65,14 +65,14 @@ class TestCaching(object):
         test_data1 = u'does not matter'
         test_data2 = u'something else'
         page_name = u'Caching_TestPage'
-        become_trusted(self.request)
-        item = create_item(self.request, page_name, test_data1, mimetype='text/x.moin.wiki', acl=None)
+        become_trusted()
+        item = create_item(page_name, test_data1, mimetype='text/x.moin.wiki', acl=None)
         mtime = item.rev.timestamp
         cache = caching.CacheEntry(item.name, 'test_key', 'item')
         cache.update(test_data1)
         assert not cache.needsUpdate(mtime)
         time.sleep(3) # XXX fails without, due to mtime granularity
-        item = create_item(self.request, page_name, test_data2, mimetype='text/x.moin.wiki', acl=None)
+        item = create_item(page_name, test_data2, mimetype='text/x.moin.wiki', acl=None)
         mtime = item.rev.timestamp
         assert cache.needsUpdate(mtime)
 

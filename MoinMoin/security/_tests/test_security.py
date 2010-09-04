@@ -294,9 +294,9 @@ class TestItemAcls(object):
         )
 
     def setup_method(self, method):
-        become_trusted(self.request, username=u'WikiAdmin')
+        become_trusted(username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
-            create_item(self.request, item_name, item_content, acl=item_acl)
+            create_item(item_name, item_content, acl=item_acl)
 
     def testItemACLs(self):
         """ security: test item acls """
@@ -374,9 +374,9 @@ class TestItemHierachicalAcls(object):
         )
 
     def setup_method(self, method):
-        become_trusted(self.request, username=u'WikiAdmin')
+        become_trusted(username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
-            create_item(self.request, item_name, item_content, acl=item_acl)
+            create_item(item_name, item_content, acl=item_acl)
 
     def testItemACLs(self):
         """ security: test item acls """
