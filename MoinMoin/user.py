@@ -257,11 +257,13 @@ class User(object):
         if password:
             self.enc_password = encodePassword(password)
 
-        self.tz_offset = int(self._cfg.tz_offset * 3600)
-        self.language = '' # '' means user did not specify language preference
-                           # in userprefs - do not put cfg.language_default here
-                           # or moin won't use browser language
-                           # Note: usually you want to use .getLang()!
+        # stuff for flask-babel
+        self.locale = None  # None means user did not specify locale
+        self.timezone = None  # None means user did not specify timezone
+        # XXX old stuff, so old code doesn't crash:
+        self.tz_offset = 0
+        self.language = 'en'
+
         self._stored = False
         self.date_fmt = self._cfg.date_fmt
         self.datetime_fmt = self._cfg.datetime_fmt

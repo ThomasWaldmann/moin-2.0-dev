@@ -9,15 +9,15 @@
     {{ forms.render_field(gen, form['name'], 'text') }}
     {{ forms.render_field(gen, form['aliasname'], 'text') }}
     {{ forms.render_field(gen, form['email'], 'text') }}
+    {{ forms.render_field(gen, form['timezone'], 'text') }}
+    {{ forms.render_field(gen, form['locale'], 'text') }}
+    {{ forms.render_field(gen, form['datetime_fmt'], 'text') }}
+    {{ forms.render_field(gen, form['date_fmt'], 'text') }}
     {{ forms.render_field(gen, form['css_url'], 'text') }}
     {{ forms.render_field(gen, form['edit_rows'], 'text') }}
     {{ forms.render_field(gen, form['theme_name'], 'text') }}
     {{ forms.render_field(gen, form['editor_default'], 'text') }}
     {{ forms.render_field(gen, form['editor_ui'], 'text') }}
-    {{ forms.render_field(gen, form['tz_offset'], 'text') }}
-    {{ forms.render_field(gen, form['datetime_fmt'], 'text') }}
-    {{ forms.render_field(gen, form['date_fmt'], 'text') }}
-    {{ forms.render_field(gen, form['language'], 'text') }}
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
