@@ -25,6 +25,8 @@ import time, datetime
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+
 
 class IndexingBackendMixin(object):
     """
@@ -45,8 +47,11 @@ class IndexingBackendMixin(object):
             # compatible with storage api definition, but this could be changed to
             # just return the data we get from the index (without accessing backend)
             rev_datetime, name, rev_no, rev_metas = result
-            item = self.get_item(name)
-            yield item.get_revision(rev_no)
+            try:
+                item = self.get_item(name)
+                yield item.get_revision(rev_no)
+            except (NoSuchItemError, NoSuchRevisionError), e:
+                logging.exception("history processing catched exception")
 
 
 class IndexingItemMixin(object):
