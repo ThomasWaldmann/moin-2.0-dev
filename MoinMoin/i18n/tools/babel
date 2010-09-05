@@ -20,10 +20,14 @@ if cmd == 'extract':
            )
 elif cmd == 'update':
     lang = sys.argv[2]
-    args = "babel update --locale %(lang)s -i %(pot)s -o %(po)s" % dict(
+    args = "babel update --locale %(lang)s -i %(pot)s -d %(trans_dir)s" % dict(
                pot=join(i18n_dir, 'MoinMoin.pot'),
-               po=join(i18n_dir, '%s.MoinMoin.po' % lang),
+               trans_dir=join(top_dir, 'MoinMoin', 'translations'),
                lang=lang,
+           )
+elif cmd == 'compile':
+    args = "babel compile -d %(trans_dir)s" % dict(
+               trans_dir=join(top_dir, 'MoinMoin', 'translations'),
            )
 
 rc = CommandLineInterface().run(args.split())
