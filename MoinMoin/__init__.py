@@ -23,6 +23,9 @@ from MoinMoin.util import monkeypatch
 
 from flask import Flask, request, url_for, render_template, flash, session, flaskg
 from flask import current_app as app
+from flaskext.babel import Babel
+from flaskext.babel import gettext as _
+from flaskext.babel import ngettext as N_
 
 from werkzeug import ImmutableDict
 
@@ -36,10 +39,6 @@ class MoinFlask(Flask):
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
-
-# FIXME dummy i18n for now XXX
-_ = lambda x: x
-N_ = lambda s, p, n: s if n == 1 else p
 
 
 from MoinMoin.theme import setup_jinja_env
@@ -101,7 +100,24 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     app.unprotected_storage = init_unprotected_backends(app)
     import_export_xml(app)
     app.storage = init_protected_backends(app)
+    babel = Babel(app)
+    babel.localeselector(get_locale)
+    babel.timezoneselector(get_timezone)
     return app
+
+
+def get_locale():
+    # if a user is logged in, use the locale from the user settings
+    if flaskg.user.locale is not None:
+        return flaskg.user.locale
+    # otherwise try to guess the language from the user accept
+    # header the browser transmits. The best match wins.
+    supported_languages = ['de', 'fr', 'en'] # XXX
+    return request.accept_languages.best_match(supported_languages)
+
+
+def get_timezone():
+    return flaskg.user.timezone
 
 
 from MoinMoin.util.clock import Clock
