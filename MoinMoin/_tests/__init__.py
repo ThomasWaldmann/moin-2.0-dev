@@ -12,7 +12,7 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin.items import Item, ACL
+from MoinMoin.items import Item, ACL, SOMEDICT
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
 from MoinMoin import config, security
@@ -54,7 +54,7 @@ def become_superuser(username=u"SuperUser"):
 
 # Creating and destroying test pages --------------------------------
 
-def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None):
+def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None, somedict=None):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -62,6 +62,8 @@ def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None):
     meta = {}
     if acl is not None:
         meta[ACL] = acl
+    if somedict is not None:
+        meta[SOMEDICT] = somedict
     item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
 

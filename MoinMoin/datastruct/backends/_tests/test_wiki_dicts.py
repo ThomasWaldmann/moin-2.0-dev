@@ -3,8 +3,9 @@
     MoinMoin - MoinMoin.datastruct.backends.wiki_dicts tests
 
     @copyright: 2003-2004 by Juergen Hermann <jh@web.de>,
-                2007 by MoinMoin:ThomasWaldmann
-                2009 by MoinMoin:DmitrijsMilajevs
+                2007 by MoinMoin:ThomasWaldmann,
+                2009 by MoinMoin:DmitrijsMilajevs,
+                2010 by MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,24 +24,20 @@ class TestWikiDictsBackend(DictsBackendTest):
         become_trusted()
 
         text = '''
-Text ignored
- * list items ignored
-  * Second level list ignored
- First:: first item
- text with spaces:: second item
-
-Empty lines ignored, so is this text
-Next line has key with empty value
- Empty string::\x20
- Last:: last item
+This is a page with some text.
 '''
-        create_item(u'SomeTestDict', text)
+        somedict = {u"First": u"first item",
+                    u"text with spaces": u"second item",
+                    u'Empty string': u'',
+                    u"Last": u"last item"}
+        create_item(u'SomeTestDict', text, somedict=somedict)
 
         text = """
- One:: 1
- Two:: 2
+ This is an example
 """
-        create_item(u'SomeOtherTestDict', text)
+        somedict = {u"One": u"1",
+                    u"Two": u"2"}
+        create_item(u'SomeOtherTestDict', text, somedict=somedict)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']
