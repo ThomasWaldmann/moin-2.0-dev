@@ -92,6 +92,12 @@ send_file needs moin custom patches, see changesets 25de9bb78a9f
 and 58eb8f978188
 
 
+flask-babel
+===========
+shipped: 0.7
+minimum: 0.7(?)
+
+
 werkzeug (WSGI toolkit)
 =======================
 shipped: 0.7pre
