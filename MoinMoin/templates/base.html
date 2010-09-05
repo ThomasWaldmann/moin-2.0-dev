@@ -35,7 +35,7 @@
     {%- endif %}
     <title>
     {%- if title -%}{{ title }}{% else %}{{ item_name }}{%- endif %} -
-    {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %}{{ cfg.sitename|e }}{%- endif -%}
+    {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %} {{ cfg.sitename|e }}{%- endif -%}
     </title>
     <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}" />
     <link rel="Search" href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name('FindPage'))|e }}" />
