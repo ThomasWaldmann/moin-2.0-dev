@@ -107,13 +107,18 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 
 def get_locale():
-    # if a user is logged in, use the locale from the user settings
+    lang = None
     if flaskg.user.locale is not None:
-        return flaskg.user.locale
-    # otherwise try to guess the language from the user accept
-    # header the browser transmits. The best match wins.
-    supported_languages = ['de', 'fr', 'en'] # XXX
-    return request.accept_languages.best_match(supported_languages)
+        # locale is given in user profile, use it
+        lang = flaskg.user.locale
+    elif not app.cfg.language_ignore_browser:
+        # try to guess the language from the user accept
+        # header the browser transmits. The best match wins.
+        supported_languages = ['de', 'fr', 'en'] # XXX
+        lang = request.accept_languages.best_match(supported_languages)
+    if not lang:
+        lang = app.cfg.language_default
+    return lang
 
 
 def get_timezone():
@@ -252,37 +257,9 @@ def setup_user():
 
 def setup_i18n_preauth(context):
     """ Determine language for the request in absence of any user info. """
+    # XXX deprecated, but keep this until all code is refactored to babel
     if i18n.languages is None:
         i18n.i18n_init(context)
-
-    lang = None
-    if i18n.languages:
-        cfg = app.cfg
-        if not cfg.language_ignore_browser:
-            for l, w in request.accept_languages:
-                logging.debug("client accepts language %r, weight %r" % (l, w))
-                if l in i18n.languages:
-                    logging.debug("moin supports language %r" % l)
-                    lang = l
-                    break
-            else:
-                logging.debug("moin does not support any language client accepts")
-        if not lang:
-            if cfg.language_default in i18n.languages:
-                lang = cfg.language_default
-                logging.debug("fall back to cfg.language_default (%r)" % lang)
-    if not lang:
-        lang = 'en'
-        logging.debug("emergency fallback to 'en'")
-    logging.debug("setup_i18n_preauth returns %r" % lang)
-    return lang
-
-
-def setup_i18n_postauth():
-    """ Determine language for the request after user-id is established. """
-    lang = flaskg.user.getLang()
-    logging.debug("setup_i18n_postauth returns %r" % lang)
-    return lang
 
 
 def before():
@@ -299,7 +276,7 @@ def before():
 
     context = request # werkzeug contextlocal request object
 
-    lang = setup_i18n_preauth(context)
+    setup_i18n_preauth(context)
 
     flaskg.unprotected_storage = app.unprotected_storage
     flaskg.user = setup_user()
@@ -309,8 +286,6 @@ def before():
 
     flaskg.content_lang = app.cfg.language_default
     flaskg.current_lang = app.cfg.language_default
-
-    lang = setup_i18n_postauth()
 
     flaskg.storage = app.storage
 

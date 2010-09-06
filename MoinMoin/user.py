@@ -30,7 +30,7 @@ from flask import flaskg, session, request, url_for
 from werkzeug import escape
 
 from MoinMoin import _, N_
-from MoinMoin import config, caching, wikiutil, i18n
+from MoinMoin import config, caching, wikiutil
 from MoinMoin.util import random_string
 
 
@@ -487,17 +487,9 @@ class User(object):
             If the language we have determined so far is not supported by moin,
             we'll fall back to English, we never return an unsupported language.
         """
-        lang = self.language
-        if not lang:
-            # user did not specify his language preference explicitly
-            if self.isCurrentUser():
-                # browser language if this is current user
-                lang = i18n.get_browser_language()
+        lang = self.locale
         if not lang:
             lang = app.cfg.language_default
-        available = i18n.wikiLanguages() or ["en"]
-        if lang not in available:
-            lang = 'en'
         return lang
 
     # -----------------------------------------------------------------
