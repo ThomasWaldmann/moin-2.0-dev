@@ -122,7 +122,6 @@ def _tz_select(request, enabled=True):
 
 def _lang_select(request, enabled=True):
     """ Create language selection. """
-    from MoinMoin import i18n
     cur_lang = flaskg.user.language
 
     langs = i18n.wikiLanguages().items()

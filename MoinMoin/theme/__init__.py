@@ -18,7 +18,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin import i18n, wikiutil, caching, user
+from MoinMoin import wikiutil, caching, user
 
 
 class ThemeSupport(object):
@@ -41,10 +41,10 @@ class ThemeSupport(object):
         self.storage = flaskg.storage
         self.output_mimetype = 'text/html'  # was: page.output_mimetype
         self.output_charset = 'utf-8'  # was: page.output_charset
-        self.ui_lang = 'en'
-        self.ui_dir = i18n.getDirection(self.ui_lang)
-        self.content_lang = flaskg.content_lang
-        self.content_dir = i18n.getDirection(self.content_lang)
+        self.ui_lang = 'en' # XXX
+        self.ui_dir = 'ltr' # XXX
+        self.content_lang = flaskg.content_lang # XXX
+        self.content_dir = 'ltr' # XXX
         # for html head:
         self.meta_keywords = ''
         self.meta_description = ''
