@@ -106,14 +106,14 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     babel.timezoneselector(get_timezone)
 
     # translations list, TODO: move this to user settings view
-    supported_locales = [Locale('en')] + babel.list_translations()
-    translations_available = sorted([(str(l), l.display_name) for l in supported_locales],
-                                    key=lambda x: x[1])
-    print repr(translations_available)
+    #supported_locales = [Locale('en')] + babel.list_translations()
+    #translations_available = sorted([(str(l), l.display_name) for l in supported_locales],
+    #                                key=lambda x: x[1])
+    #print repr(translations_available)
 
     # timezone list, TODO: move this to user settings view
-    timezones = [(k, v['city']) for k, v in sorted(l.time_zones.items(), key=lambda x: x[1]['city'])]
-    print repr(timezones) # XXX where is Europe/Berlin???
+    #timezones = [(k, v['city']) for k, v in sorted(l.time_zones.items(), key=lambda x: x[1]['city'])]
+    #print repr(timezones) # XXX where is Europe/Berlin???
 
     return app
 
