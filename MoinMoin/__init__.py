@@ -129,7 +129,7 @@ from MoinMoin.util.clock import Clock
 from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.serialization import serialize, unserialize
 from MoinMoin.storage.backends import router, acl, memory
-from MoinMoin import auth, config, i18n, user
+from MoinMoin import auth, config, user
 
 
 def set_umask(new_mask=0777^config.umask):
@@ -255,13 +255,6 @@ def setup_user():
     return userobj
 
 
-def setup_i18n_preauth(context):
-    """ Determine language for the request in absence of any user info. """
-    # XXX deprecated, but keep this until all code is refactored to babel
-    if i18n.languages is None:
-        i18n.i18n_init(context)
-
-
 def before():
     """
     Wraps an incoming WSGI request in a Context object and initializes
@@ -275,8 +268,6 @@ def before():
                 # software sets own umask
 
     context = request # werkzeug contextlocal request object
-
-    setup_i18n_preauth(context)
 
     flaskg.unprotected_storage = app.unprotected_storage
     flaskg.user = setup_user()
