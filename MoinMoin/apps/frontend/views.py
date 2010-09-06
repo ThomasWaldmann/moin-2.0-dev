@@ -797,8 +797,6 @@ class Usersettings1Form(Form):
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
     timezone = String.using(label=N_('Timezone'), optional=True)
     locale = String.using(label=N_('Locale'), optional=True)
-    datetime_fmt = String.using(label=N_('DateTime format')).validated_by(Present())
-    date_fmt = String.using(label=N_('Date format')).validated_by(Present())
     css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
     edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
     theme_name = String.using(label=N_('Theme name')).validated_by(Present())
