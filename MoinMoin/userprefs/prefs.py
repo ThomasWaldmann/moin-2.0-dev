@@ -95,31 +95,6 @@ def _prefered_editor(request):
                        dict(value="freechoice", text=_("free choice"), selected="")]
     return prefered_editor
 
-def _tz_select(request, enabled=True):
-    """ Create time zone selection. """
-    tz = 0
-    if flaskg.user.valid:
-        tz_offset = int(flaskg.user.tz_offset)
-
-    time_zone = []
-    now = time.time()
-    for halfhour in range(-47, 48):
-        offset = halfhour * 1800
-        t = now + offset
-        selected = ""
-        if offset == tz_offset:
-            selected = "selected"
-        time_zone.append(dict(value=str(offset),
-                              selected=selected,
-                              text='%s [%s%s:%s]' % (
-                time.strftime(app.cfg.datetime_fmt, time.gmtime(t)),
-                "+-"[offset < 0],
-                "%02d" % (abs(offset) / 3600),
-                "%02d" % (abs(offset) % 3600 / 60),
-            ),
-        ))
-    return time_zone
-
 def _lang_select(request, enabled=True):
     """ Create language selection. """
     cur_lang = flaskg.user.language
@@ -260,9 +235,6 @@ space between words. Group page name is not allowed.""") % escape(new_name)
         u.editor_default = wikiutil.clean_input(form.get('editor_default', self.cfg.editor_default))
         u.editor_ui = wikiutil.clean_input(form.get('editor_ui', self.cfg.editor_ui))
 
-        # time zone
-        u.tz_offset = util.web.getIntegerInput(request, 'tz_offset', u.tz_offset, -84600, 84600)
-
         # datetime format
         try:
             dt_d_combined = _date_formats.get(form['datetime_fmt'], '')
@@ -286,7 +258,7 @@ space between words. Group page name is not allowed.""") % escape(new_name)
         # plugins to provide methods to validate their fields as well.
         already_handled = ['name', 'email',
                            'aliasname', 'edit_rows', 'editor_default',
-                           'editor_ui', 'tz_offset', 'datetime_fmt',
+                           'editor_ui', 'datetime_fmt',
                            'theme_name', 'language', 'real_language']
         for field in self.cfg.user_form_fields:
             key = field[0]

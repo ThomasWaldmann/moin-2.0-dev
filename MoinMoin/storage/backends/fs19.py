@@ -667,16 +667,10 @@ class FsUserItem(Item):
 
         # stuff we want to have stored as integer:
         int_defaults = [
-            ('tz_offset', '0'),
             ('edit_rows', '0'),
         ]
         for key, default in int_defaults:
             metadata[key] = int(metadata.get(key, default))
-
-        tz_offset = metadata['tz_offset']
-        # convert (old) hourly format to seconds
-        if -24 <= tz_offset <= 24:
-            metadata['tz_offset'] = tz_offset * 3600
 
         # int last_saved timestamp should be enough:
         metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
@@ -699,6 +693,7 @@ class FsUserItem(Item):
                 'subscribed_pages', # renamed to subscribed_items
                 'edit_cols', # not used any more
                 'jid', # no jabber support
+                'tz_offset', # we have real timezone now
                ]
         for key in kill:
             if key in metadata:

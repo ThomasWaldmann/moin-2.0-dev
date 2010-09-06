@@ -572,9 +572,6 @@ options_no_group_name = {
         # XXX PageRevertedEvent.__name__
      ], None),
 
-    ('tz_offset', 0.0,
-     "default time zone offset in hours from UTC"),
-
     ('userprefs_disabled', [],
      "Disable the listed user preferences plugins."),
   )),

@@ -54,17 +54,6 @@
                 </td>
             </tr>
             <tr>
-                <td><b>{{ userprefs.time_zone.title }}</b>   </td>
-                <td>{{ userprefs.your_time }} <BR>
-                <select name="tz_offset" size="1">
-                   {% for v in userprefs.time_zone.param %}
-                      <option value="{{ v.value }}">{{ v.text }}</option>
-                   {% endfor %}
-               </select>
-               <br>{{ userprefs.server_time }}
-               </td>
-            </tr>
-            <tr>
                 <td><b>{{ userprefs.date_formats.title }}</b>   </td>
                 <td>
                     <select name="datetime_fmt" size="1">
