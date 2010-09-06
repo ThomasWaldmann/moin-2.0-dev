@@ -1,10 +1,64 @@
 {% extends "layout.html" %}
+{% import "forms.html" as forms %}
 
 {% block item %}
-<h1>{{ _("User Settings") }}</h1>
+{% if part == 'main' %}
+<h1>{{ _("Settings") }}</h1>
 <ul>
-    <li><a href="{{ url_for('frontend.changepass')|e }}">{{ _("Change password") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings1')|e }}">{{ _("Settings 1") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='personal')|e }}">{{ _("Personal Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='password')|e }}">{{ _("Change password") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='notification')|e }}">{{ _("Notification Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='ui')|e }}">{{ _("Wiki Appearance Settings") }}</a></li>
 </ul>
+
+{% elif part == 'personal' %}
+<h1>{{ _("Personal Settings") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['name'], 'text') }}
+    {{ forms.render_field(gen, form['aliasname'], 'text') }}
+    {{ forms.render_field(gen, form['timezone'], 'text') }}
+    {{ forms.render_field(gen, form['locale'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+
+{% elif part == 'password' %}
+<h1>{{ _("Change Password") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['password_current'], 'password') }}
+    {{ forms.render_field(gen, form['password1'], 'password') }}
+    {{ forms.render_field(gen, form['password2'], 'password') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+
+{% elif part == 'notification' %}
+<h1>{{ _("Notification Settings") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['email'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+
+{% elif part == 'ui' %}
+<h1>{{ _("Wiki Appearance Settings") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['theme_name'], 'text') }}
+    {{ forms.render_field(gen, form['css_url'], 'text') }}
+    {{ forms.render_field(gen, form['editor_ui'], 'text') }}
+    {{ forms.render_field(gen, form['editor_default'], 'text') }}
+    {{ forms.render_field(gen, form['edit_rows'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+{% endif %}
 {% endblock %}
 

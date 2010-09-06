@@ -68,9 +68,7 @@ Disallow: /+backlinks/
 Disallow: /+register
 Disallow: /+recoverpass
 Disallow: /+usersettings
-Disallow: /+usersettings1
 Disallow: /+login
-Disallow: /+changepass
 Disallow: /+logout
 Disallow: /+bookmark
 Disallow: /+diffsince/
@@ -500,73 +498,6 @@ def register():
                                   )
 
 
-class ValidChangePass(Validator):
-    """Validator for a valid password change
-    """
-    passwords_mismatch_msg = N_('The passwords do not match.')
-    current_password_wrong_msg = N_('The current password was wrong.')
-    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
-
-    def validate(self, element, state):
-        if not (element['password_current'].valid and element['password1'].valid and element['password2'].valid):
-            return False
-
-        if not element['password_current'].value: # XXX add the real pw check
-            return self.note_error(element, state, 'current_password_wrong_msg')
-
-        if element['password1'].value != element['password2'].value:
-            return self.note_error(element, state, 'passwords_mismatch_msg')
-
-        try:
-            user.encodePassword(element['password1'].value)
-        except UnicodeError:
-            return self.note_error(element, state, 'password_encoding_problem_msg')
-
-        return True
-
-
-class ChangePassForm(Form):
-    """a simple change password form"""
-    name = 'changepass'
-
-    password_current = String.using(label=N_('Current Password')).validated_by(Present())
-    password1 = String.using(label=N_('New password')).validated_by(Present())
-    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
-    submit = String.using(default=N_('Change password'), optional=True)
-
-    validators = [ValidChangePass()]
-
-
-@frontend.route('/+changepass', methods=['GET', 'POST'])
-def changepass():
-    item_name = 'ChangePass' # XXX
-
-    if not _using_moin_auth():
-        return Response('No MoinAuth in auth list', 403)
-
-    if request.method == 'GET':
-        form = ChangePassForm.from_defaults()
-        return render_template('changepass.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
-    if request.method == 'POST':
-        form = ChangePassForm.from_flat(request.form)
-        valid = form.validate()
-        if valid:
-            flaskg.user.enc_password = user.encodePassword(form['password1'].value)
-            flaskg.user.save()
-            flash(_("Your password has been changed."), "info")
-            return redirect(url_for('frontend.show_root'))
-        else:
-            return render_template('changepass.html',
-                                   item_name=item_name,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
-
-
 class ValidLostPassword(Validator):
     """Validator for a valid lost password form
     """
@@ -771,66 +702,107 @@ def logout():
     return redirect(url_for('frontend.show_root'))
 
 
-@frontend.route('/+usersettings', methods=['GET', ])
-def usersettings():
-    # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'User Settings' # XXX
-    return render_template('usersettings.html',
-                           item_name=item_name,
-                          )
+class UserSettingsPersonalForm(Form):
+    name = 'usersettings_personal' # "name" is duplicate
+    name = String.using(label=N_('Name')).validated_by(Present())
+    aliasname = String.using(label=N_('Alias-Name'), optional=True)
+    timezone = String.using(label=N_('Timezone'), optional=True)
+    locale = String.using(label=N_('Locale'), optional=True)
+    submit = String.using(default=N_('Save'), optional=True)
 
 
-class ValidUsersettings1(Validator):
-    """Validator for a valid user settings
+class ValidChangePass(Validator):
+    """Validator for a valid password change
     """
-    #fail_msg = N_('...')
+    passwords_mismatch_msg = N_('The passwords do not match.')
+    current_password_wrong_msg = N_('The current password was wrong.')
+    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
 
     def validate(self, element, state):
+        if not (element['password_current'].valid and element['password1'].valid and element['password2'].valid):
+            return False
+
+        if not element['password_current'].value: # XXX add the real pw check
+            return self.note_error(element, state, 'current_password_wrong_msg')
+
+        if element['password1'].value != element['password2'].value:
+            return self.note_error(element, state, 'passwords_mismatch_msg')
+
+        try:
+            user.encodePassword(element['password1'].value)
+        except UnicodeError:
+            return self.note_error(element, state, 'password_encoding_problem_msg')
         return True
 
 
-class Usersettings1Form(Form):
-    """User settings1 form"""
-    name = 'usersettings1'
+class UserSettingsPasswordForm(Form):
+    name = 'usersettings_password'
+    password_current = String.using(label=N_('Current Password')).validated_by(Present())
+    password1 = String.using(label=N_('New password')).validated_by(Present())
+    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
+    submit = String.using(default=N_('Change password'), optional=True)
+    validators = [ValidChangePass()]
 
-    name = String.using(label=N_('Name')).validated_by(Present())
-    aliasname = String.using(label=N_('Alias-Name'), optional=True)
+
+class UserSettingsNotificationForm(Form):
+    name = 'usersettings_notification'
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    timezone = String.using(label=N_('Timezone'), optional=True)
-    locale = String.using(label=N_('Locale'), optional=True)
-    css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
-    edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
-    theme_name = String.using(label=N_('Theme name')).validated_by(Present())
-    editor_default = String.using(label=N_('Editor default')).validated_by(Present())
-    editor_ui = String.using(label=N_('Editor UI')).validated_by(Present())
     submit = String.using(default=N_('Save'), optional=True)
 
-    validators = [ValidUsersettings1()]
+
+class UserSettingsUIForm(Form):
+    name = 'usersettings_ui'
+    theme_name = String.using(label=N_('Theme name')).validated_by(Present())
+    css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
+    editor_ui = String.using(label=N_('Editor UI')).validated_by(Present())
+    editor_default = String.using(label=N_('Editor default')).validated_by(Present())
+    edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
+    submit = String.using(default=N_('Save'), optional=True)
 
 
-@frontend.route('/+usersettings1', methods=['GET', 'POST'])
-def usersettings1():
+@frontend.route('/+usersettings', defaults=dict(part='main'), methods=['GET'])
+@frontend.route('/+usersettings/<part>', methods=['GET', 'POST'])
+def usersettings(part):
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'User Settings1' # XXX
-    u = flaskg.user
-    if request.method == 'GET':
-        form = Usersettings1Form.from_object(u)
-        form['submit'].set('Save') # XXX why does from_object() kill submit value?
-        return render_template('usersettings1.html',
+    item_name = 'User Settings' # XXX
+    dispatch = dict(
+        personal=UserSettingsPersonalForm,
+        password=UserSettingsPasswordForm,
+        notification=UserSettingsNotificationForm,
+        ui=UserSettingsUIForm,
+    )
+    Form = dispatch.get(part)
+    if Form is None:
+        # 'main' part or some invalid part
+        return render_template('usersettings.html',
+                               part='main',
                                item_name=item_name,
+                              )
+    if request.method == 'GET':
+        form = Form.from_object(flaskg.user)
+        form['submit'].set('Save') # XXX why does from_object() kill submit value?
+        return render_template('usersettings.html',
+                               item_name=item_name,
+                               part=part,
                                gen=make_generator(),
                                form=form,
                               )
     if request.method == 'POST':
-        form = Usersettings1Form.from_flat(request.form)
+        form = Form.from_flat(request.form)
         valid = form.validate()
         if valid:
-            form.update_object(u)
-            u.save()
+            if part == 'password':
+                flaskg.user.enc_password = user.encodePassword(form['password1'].value)
+            else:
+                form.update_object(flaskg.user)
+            flaskg.user.save()
+            if part == 'password':
+                flash(_("Your password has been changed."), "info")
             return redirect(url_for('frontend.usersettings'))
         else:
-            return render_template('usersettings1.html',
+            return render_template('usersettings.html',
                                    item_name=item_name,
+                                   part=part,
                                    gen=make_generator(),
                                    form=form,
                                   )
