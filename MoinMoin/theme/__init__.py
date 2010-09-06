@@ -403,11 +403,15 @@ def setup_jinja_env():
     app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
     app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
     app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+    # please note that these filters are installed by flask-babel:
+    # datetimeformat, dateformat, timeformat, timedeltaformat
 
     theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
     theme = ThemeSupport(app.cfg, theme_name)
 
     app.jinja_env.globals.update({
+                            # please note that flask-babel/jinja2.ext installs:
+                            # _, gettext, ngettext
                             'isinstance': isinstance,
                             'list': list,
                             'theme': theme,
@@ -415,10 +419,7 @@ def setup_jinja_env():
                             'storage': flaskg.storage,
                             'clock': flaskg.clock,
                             'cfg': app.cfg,
-                            '_': _,
                             'item_name': 'handlers need to give it',
                             'get_editor_info': lambda rev: get_editor_info(rev),
                             })
-
-
 
