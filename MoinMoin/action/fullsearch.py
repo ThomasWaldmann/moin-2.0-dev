@@ -131,6 +131,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             # show info
             if mtime_parsed:
                 # XXX mtime_msg is not shown in some cases
+                # TODO: use flaskext.babel.format_datetime
                 mtime_msg = _("Only pages changed since '%s' are being displayed!",
                              ) % flaskg.user.getFormattedDateTime(mtime)
             else:

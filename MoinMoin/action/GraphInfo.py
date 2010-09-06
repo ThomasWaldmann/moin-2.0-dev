@@ -117,6 +117,7 @@ def execute(pagename, request):
             url = page.url(request, {'action': 'recall', 'rev': '%d' % revno})
             editor = user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR],
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
+            # TODO: use flaskext.babel.format_datetime
             date = flaskg.user.getFormattedDateTime(float(revision.timestamp))
             comment = escape(comment) or '&nbsp;'
             node = "%d:%s" % (revno, flaskg.storage._get_revision_node(revision)[1])
