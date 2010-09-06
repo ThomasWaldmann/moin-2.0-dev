@@ -155,10 +155,10 @@ def sendmail(to, subject, text, mail_from=None):
             return (0, str(e))
         except (os.error, socket.error), e:
             logging.exception("smtp mail failed with an exception.")
-            return (0, _("Connection to mailserver '%(server)s' failed: %(reason)s") % {
-                'server': cfg.mail_smarthost,
-                'reason': str(e)
-            })
+            return (0, _("Connection to mailserver '%(server)s' failed: %(reason)s",
+                server=cfg.mail_smarthost,
+                reason=str(e)
+            ))
     else:
         try:
             logging.debug("trying to send mail (sendmail)")

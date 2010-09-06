@@ -2,7 +2,7 @@
 {% import "utils.html" as utils %}
 {% block content %}
     {% if history %}
-    <h1>{{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}</h1>
+    <h1>{{ _("History of '%(item_name)s'", item_name=item_name) }}</h1>
     <form action="{{ url_for('frontend.diff', item_name=item_name) }}" method="GET">
         <div id="page-history">
         <table>

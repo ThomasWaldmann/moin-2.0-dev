@@ -76,10 +76,10 @@ class Converter(object):
             # thus, in case of exceptions, we just log the problem and return
             # some standard text.
             logger.exception("Macro %s raised an exception:" % name)
-            elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
-                    'macro_name': name,
-                    'error_msg': unicode(e),
-                })
+            elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>',
+                    macro_name=name,
+                    error_msg=unicode(e),
+                ))
 
         if len(elem_body):
             elem.append(elem_body)

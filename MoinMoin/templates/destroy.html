@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
 {% if rev_no == None %}
-<h1>{{ _("DESTROY COMPLETE item '%(item_name)s'") % dict(item_name=item.name) }}</h1>
+<h1>{{ _("DESTROY COMPLETE item '%(item_name)s'", item_name=item.name) }}</h1>
 <form action="{{ url_for('frontend.destroy_item', item_name=item.name) }}" method="POST" enctype="multipart/form-data">
 {% else %}
-<h1>{{ _("DESTROY REVISION '%(item_name)s' (rev %(rev_no)d)") % dict(item_name=item.name, rev_no=rev_no) }}</h1>
+<h1>{{ _("DESTROY REVISION '%(item_name)s' (rev %(rev_no)d)", item_name=item.name, rev_no=rev_no) }}</h1>
 <form action="{{ url_for('frontend.destroy_item', item_name=item.name, rev=rev_no) }}" method="POST" enctype="multipart/form-data">
 {% endif %}
 <fieldset>
