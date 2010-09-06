@@ -3,13 +3,14 @@
     MoinMoin Date macro - outputs the date for some specific point in time,
     adapted to the TZ settings of the user viewing the content.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details
 """
 
 import time
 
 from flask import flaskg
+from flaskext.babel import format_date
 
 from MoinMoin.macro2._base import MacroInlineBase
 
@@ -59,5 +60,5 @@ class MacroDateTimeBase(MacroInlineBase):
 class Macro(MacroDateTimeBase):
     def macro(self, stamp=None):
         tm = self.parse_time(stamp)
-        return flaskg.user.getFormattedDate(tm)
+        return format_date(tm)
 
