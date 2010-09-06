@@ -14,7 +14,7 @@ import distutils
 from distutils.core import setup
 from distutils.command.build_scripts import build_scripts
 
-from MoinMoin.version import release, revision
+from MoinMoin.version import version
 
 
 #############################################################################
@@ -204,12 +204,12 @@ moin_scripts = [scriptname(fn) for fn in glob.glob('MoinMoin/script/[!_]*.py')]
 
 setup_args = {
     'name': "moin",
-    'version': release,
-    'description': "MoinMoin %s is an easy to use, full-featured and extensible wiki software package" % (release, ),
+    'version': str(version),
+    'description': "MoinMoin is an easy to use, full-featured and extensible wiki software package",
     'author': "Juergen Hermann et al.",
     'author_email': "moin-user@lists.sourceforge.net",
     # maintainer(_email) not active because distutils/register can't handle author and maintainer at once
-    'download_url': 'http://static.moinmo.in/files/moin-%s.tar.gz' % (release, ),
+    'download_url': 'http://static.moinmo.in/files/moin-%s.tar.gz' % (version, ),
     'url': "http://moinmo.in/",
     'license': "GNU GPL",
     'long_description': """
@@ -267,22 +267,12 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.converter2',
         'MoinMoin.datastruct',
         'MoinMoin.datastruct.backends',
-        'MoinMoin.events',
         'MoinMoin.filter',
-        'MoinMoin.formatter',
-        'MoinMoin.i18n',
-        'MoinMoin.i18n.tools',
         'MoinMoin.items',
-        'MoinMoin.logfile',
-        'MoinMoin.macro',
         'MoinMoin.macro2',
         'MoinMoin.mail',
-        'MoinMoin.parser',
         'MoinMoin.script',
         'MoinMoin.script.account',
-        'MoinMoin.script.cli',
-        'MoinMoin.script.export',
-        'MoinMoin.script.import',
         'MoinMoin.script.index',
         'MoinMoin.script.maint',
         'MoinMoin.script.migration',
@@ -320,7 +310,6 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.theme',
         'MoinMoin.userprefs',
         'MoinMoin.util',
-        'MoinMoin.web',
         'MoinMoin.widget',
 
         # all other _tests are missing here, either we have all or nothing:
