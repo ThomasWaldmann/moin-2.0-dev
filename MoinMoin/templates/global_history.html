@@ -23,7 +23,7 @@
         <tbody>
         {% for rev in history %}
         <tr>
-            <td>{{ rev.timestamp|datetime_format }}</td>
+            <td>{{ rev.timestamp|datetimeformat }}</td>
             <td>{{ rev.edit_log_action }}</td>
             <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name)|e }}">{{ rev.item.name|e }}</a>
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>

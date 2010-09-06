@@ -400,8 +400,6 @@ def shorten_item_name(name, length=25):
 
 
 def setup_jinja_env():
-    app.jinja_env.filters['datetime_format'] = lambda tm, u = flaskg.user: u.getFormattedDateTime(tm)
-    app.jinja_env.filters['date_format'] = lambda tm, u = flaskg.user: u.getFormattedDate(tm)
     app.jinja_env.filters['shorten_item_name'] = shorten_item_name
     # please note that these filters are installed by flask-babel:
     # datetimeformat, dateformat, timeformat, timedeltaformat
