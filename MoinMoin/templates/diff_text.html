@@ -30,7 +30,7 @@
            href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1older, rev2=revno2older) }}"
            title="{{ _('Use older revision') }}">←</a>
         {% endif %}
-        {{ _('Revision %(revno)d as of %(date_time)s' % dict(revno=revno, date_time=date_time|datetime_format)) }}
+        {{ _('Revision %(revno)d as of %(date_time)s' % dict(revno=revno, date_time=date_time|datetimeformat)) }}
         {% if max_reached %}
         <span class="diff-no-nav-link diff-next-link diff-old-rev"
               title="{{ _('No newer revision') }}">→</span>

@@ -64,7 +64,7 @@
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
             {{ item_name }}
             (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
-            {{ _("last edit:") }} {{ utils.editor_info(rev) }} {{ rev.timestamp|datetime_format }}
+            {{ _("last edit:") }} {{ utils.editor_info(rev) }} {{ rev.timestamp|datetimeformat }}
         </p>
     </div>
     {% endif %}

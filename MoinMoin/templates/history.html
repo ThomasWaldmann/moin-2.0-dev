@@ -21,7 +21,7 @@
             <tr>
                 <td>{{ rev.name|e }}</td>
                 <td>{{ rev.revno }}</td>
-                <td>{{ rev.timestamp|datetime_format }}</td>
+                <td>{{ rev.timestamp|datetimeformat }}</td>
                 <td>{{ rev.size }}</td>
                 <td>
                     <input type="radio" name="rev1" value="{{ rev.revno }}" />
