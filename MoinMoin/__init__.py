@@ -108,9 +108,11 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 def get_locale():
     lang = None
-    if flaskg.user.locale is not None:
+    # this might be called at a time when flaskg.user is not setup yet:
+    u = getattr(flaskg, 'user', None)
+    if u and u.locale is not None:
         # locale is given in user profile, use it
-        lang = flaskg.user.locale
+        lang = u.locale
     elif not app.cfg.language_ignore_browser:
         # try to guess the language from the user accept
         # header the browser transmits. The best match wins.
@@ -122,7 +124,10 @@ def get_locale():
 
 
 def get_timezone():
-    return flaskg.user.timezone
+    # this might be called at a time when flaskg.user is not setup yet:
+    u = getattr(flaskg, 'user', None)
+    if u and u.timezone is not None:
+        return u.timezone
 
 
 from MoinMoin.util.clock import Clock
