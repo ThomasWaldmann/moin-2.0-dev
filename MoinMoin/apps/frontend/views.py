@@ -727,7 +727,7 @@ class LoginForm(Form):
 @frontend.route('/+login', methods=['GET', 'POST'])
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
-    item_name = 'LoggedIn' # XXX
+    item_name = 'Login' # XXX
     if request.method == 'GET':
         for authmethod in app.cfg.auth:
             hint = authmethod.login_hint()
@@ -735,6 +735,7 @@ def login():
                 flash(hint, "info")
         form = LoginForm.from_defaults()
         return render_template('login.html',
+                               item_name=item_name,
                                login_inputs=app.cfg.auth_login_inputs,
                                gen=make_generator(),
                                form=form,
@@ -754,6 +755,7 @@ def login():
         else:
             # if no valid user, show form again (with hints)
             return render_template('login.html',
+                                   item_name=item_name,
                                    login_inputs=app.cfg.auth_login_inputs,
                                    gen=make_generator(),
                                    form=form,
@@ -762,7 +764,6 @@ def login():
 
 @frontend.route('/+logout')
 def logout():
-    item_name = 'LoggedOut' # XXX
     flash(_("You are now logged out."), "info")
     for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
         if key in session:
