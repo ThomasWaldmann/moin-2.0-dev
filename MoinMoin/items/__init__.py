@@ -1207,7 +1207,7 @@ class TWikiDraw(TarMixin, Image):
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.draw')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
-        title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
+        title = _('Edit drawing %(filename)s (opens in new window)', filename=item_name)
 
         mapfile = self.get_member('drawing.map')
         try:
@@ -1222,7 +1222,7 @@ class TWikiDraw(TarMixin, Image):
             # add alt and title tags to areas
             image_map = re.sub(r'href\s*=\s*"((?!%TWIKIDRAW%).+?)"', r'href="\1" alt="\1" title="\1"', image_map)
             image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
-            title = _('Clickable drawing: %(filename)s') % {'filename': item_name}
+            title = _('Clickable drawing: %(filename)s', filename=item_name)
 
             return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
@@ -1279,7 +1279,7 @@ class AnyWikiDraw(TarMixin, Image):
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
-        title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
+        title = _('Edit drawing %(filename)s (opens in new window)', filename=self.name)
 
         mapfile = self.get_member('drawing.map')
         try:
@@ -1296,7 +1296,7 @@ class AnyWikiDraw(TarMixin, Image):
             image_map = image_map.replace(u'name="drawing.svg"', u'name="%s"' % mapid)
             # unxml, because 4.01 concrete will not validate />
             image_map = image_map.replace(u'/>', u'>')
-            title = _('Clickable drawing: %(filename)s') % {'filename': self.name}
+            title = _('Clickable drawing: %(filename)s', filename=self.name)
             return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
             return '<img src="%s" alt="%s" />' % (png_url, title)

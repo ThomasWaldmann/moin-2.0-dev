@@ -43,9 +43,9 @@ def create_user(username, password, email):
 
     # Don't allow creating users with invalid names
     if not isValidName(theuser.name):
-        return _("""Invalid user name '%s'.
+        return _("""Invalid user name '%(name)s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""") % escape(theuser.name)
+space between words. Group page name is not allowed.""", name=escape(theuser.name))
 
     # Name required to be unique. Check if name belong to another user.
     if getUserId(theuser.name):
@@ -55,7 +55,7 @@ space between words. Group page name is not allowed.""") % escape(theuser.name)
     if pw_checker:
         pw_error = pw_checker(theuser.name, password)
         if pw_error:
-            return _("Password not acceptable: %s") % escape(pw_error)
+            return _("Password not acceptable: %(msg)s", msg=escape(pw_error))
 
     # Encode password
     if password and not password.startswith('{SHA}'):
@@ -852,7 +852,7 @@ Please use the link below to change your password to a known value:
                         username=self.name, token=token, _external=True)}
 
         subject = _('[%(sitename)s] Your wiki password recovery link',
-                ) % {'sitename': self._cfg.sitename or "Wiki"}
+                    sitename=self._cfg.sitename or "Wiki")
         mailok, msg = sendmail.sendmail([self.email], subject, text, mail_from=self._cfg.mail_from)
         return mailok, msg
 

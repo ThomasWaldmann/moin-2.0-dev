@@ -93,7 +93,7 @@ def sysitems_upgrade():
         try:
             upgrade_sysitems(xmlfile)
         except BackendError, e:
-            flash(_('System items upgrade failed due to the following error: %s.' % e), 'error')
+            flash(_('System items upgrade failed due to the following error: %(error)s.', error=e), 'error')
         else:
             flash(_('System items have been upgraded successfully!'))
         return redirect(url_for('admin.index'))

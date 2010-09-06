@@ -387,7 +387,7 @@ def quicklink_item(item_name):
     u = flaskg.user
     msg = None
     if not u.valid:
-        msg = _("You must login to use this action: %(action)s.") % {"action": "quicklink/quickunlink"}, "error"
+        msg = _("You must login to use this action: %(action)s.", action="quicklink/quickunlink"), "error"
     elif not flaskg.user.isQuickLinkedTo([item_name]):
         if not u.addQuicklink(item_name):
             msg = _('A quicklink to this page could not be added for you.'), "error"
@@ -406,7 +406,7 @@ def subscribe_item(item_name):
     cfg = app.cfg
     msg = None
     if not u.valid:
-        msg = _("You must login to use this action: %(action)s.") % {"action": "subscribe/unsubscribe"}, "error"
+        msg = _("You must login to use this action: %(action)s.", action="subscribe/unsubscribe"), "error"
     elif not u.may.read(item_name):
         msg = _("You are not allowed to subscribe to an item you may not read."), "error"
     elif not cfg.mail_enabled:
