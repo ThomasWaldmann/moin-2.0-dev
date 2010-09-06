@@ -261,7 +261,6 @@ class User(object):
         self.locale = None  # None means user did not specify locale
         self.timezone = None  # None means user did not specify timezone
         # XXX old stuff, so old code doesn't crash:
-        self.tz_offset = 0
         self.language = 'en'
 
         self._stored = False
