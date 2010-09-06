@@ -2,32 +2,34 @@
 import os, sys
 from os.path import abspath, join, dirname
 
-top_dir = abspath(join(dirname(__file__), '..', '..', '..'))
+top_dir = abspath(dirname(__file__))
 os.chdir(top_dir)
 
 support_dir = join(top_dir, 'MoinMoin', 'support')
 sys.path.insert(0, support_dir)
+
 from babel.messages.frontend import CommandLineInterface
 
-i18n_dir = join(top_dir, 'MoinMoin', 'i18n')
+trans_dir = join(top_dir, 'MoinMoin', 'translations')
+potfile = join(trans_dir, 'MoinMoin.pot')
 
 cmd = sys.argv[1]
 
 if cmd == 'extract':
     args = "babel extract -F %(cfg)s -o %(out)s ." % dict(
-               cfg=join(i18n_dir, 'tools', 'babel.cfg'),
-               out=join(i18n_dir, 'MoinMoin.pot'),
+               cfg=join(top_dir, 'babel.cfg'),
+               out=potfile,
            )
 elif cmd == 'update':
     lang = sys.argv[2]
     args = "babel update --locale %(lang)s -i %(pot)s -d %(trans_dir)s" % dict(
-               pot=join(i18n_dir, 'MoinMoin.pot'),
-               trans_dir=join(top_dir, 'MoinMoin', 'translations'),
+               pot=potfile,
+               trans_dir=trans_dir,
                lang=lang,
            )
 elif cmd == 'compile':
     args = "babel compile -d %(trans_dir)s" % dict(
-               trans_dir=join(top_dir, 'MoinMoin', 'translations'),
+               trans_dir=trans_dir,
            )
 
 rc = CommandLineInterface().run(args.split())
