@@ -54,17 +54,6 @@
                 </td>
             </tr>
             <tr>
-                <td><b>{{ userprefs.date_formats.title }}</b>   </td>
-                <td>
-                    <select name="datetime_fmt" size="1">
-                        <option value="">Default</option>
-                        {% for v in userprefs.date_formats.param %}
-                            <option value="{{ v.value }}">{{ v.text }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-            </tr>
-            <tr>
                 <td><b>{{ userprefs.prefered_language.title }}</b>   </td>
                 <td>
                     <select name="language" size="1">

@@ -264,8 +264,6 @@ class User(object):
         self.language = 'en'
 
         self._stored = False
-        self.date_fmt = self._cfg.date_fmt
-        self.datetime_fmt = self._cfg.datetime_fmt
         self.quicklinks = self._cfg.quicklinks_default
         self.subscribed_items = self._cfg.subscribed_items_default
         self.email_subscribed_events = self._cfg.email_subscribed_events_default

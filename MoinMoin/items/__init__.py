@@ -331,7 +331,7 @@ class Item(object):
         delete this item by moving it to the trashbin
         """
         trash_prefix = u'Trash/' # XXX move to config
-        now = time.strftime(app.cfg.datetime_fmt, time.gmtime())
+        now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
         return self._rename(trashname, comment, action='SAVE/DELETE')

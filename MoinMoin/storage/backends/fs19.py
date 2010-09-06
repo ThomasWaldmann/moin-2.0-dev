@@ -694,6 +694,8 @@ class FsUserItem(Item):
                 'edit_cols', # not used any more
                 'jid', # no jabber support
                 'tz_offset', # we have real timezone now
+                'date_fmt', # not used any more
+                'datetime_fmt', # not used any more
                ]
         for key in kill:
             if key in metadata:
@@ -701,7 +703,7 @@ class FsUserItem(Item):
 
         # finally, remove some empty values (that have empty defaults anyway or
         # make no sense when empty):
-        empty_kill = ['aliasname', 'date_fmt', 'datetime_fmt', 'bookmarks', 'enc_password',
+        empty_kill = ['aliasname', 'bookmarks', 'enc_password',
                       'language', 'css_url', 'email', ] # XXX check subscribed_items, quicklinks
         for key in empty_kill:
             if key in metadata and metadata[key] in [u'', tuple(), {}, [], ]:
