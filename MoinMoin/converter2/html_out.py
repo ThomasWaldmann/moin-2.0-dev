@@ -399,10 +399,9 @@ class Converter(object):
                 key = html('class')
                 attribute[key] = 'big'
                 return self.new_copy(html.span, elem, attribute)
-        generate = attrib.get(html('class'))
+        generate = attrib.get('element')
         if generate:
-            class_element = generate.split("-")[1]
-            if class_element in self.direct_inline_tags:
+            if generate in self.direct_inline_tags:
                 return self.new_copy(html(generate), elem)
             else:
                 attribute = {}
