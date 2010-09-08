@@ -475,6 +475,7 @@ def register():
     if request.method == 'GET':
         form = RegistrationForm.from_defaults()
         return render_template('register.html',
+                               item_name=item_name,
                                gen=make_generator(),
                                form=form,
                               )
@@ -493,6 +494,7 @@ def register():
             return redirect(url_for('frontend.show_root'))
         else:
             return render_template('register.html',
+                                   item_name=item_name,
                                    gen=make_generator(),
                                    form=form,
                                   )
