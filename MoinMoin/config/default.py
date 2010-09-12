@@ -567,9 +567,6 @@ options_no_group_name = {
         # XXX PageCopiedEvent.__name__
         # XXX PageRevertedEvent.__name__
      ], None),
-
-    ('userprefs_disabled', [],
-     "Disable the listed user preferences plugins."),
   )),
   # ==========================================================================
   'various': ('Various', None, (
