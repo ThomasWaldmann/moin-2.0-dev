@@ -80,6 +80,9 @@ def create_app(flask_config_file=None, flask_config_dict=None,
         from MoinMoin.config.default import DefaultConfig as Config
     for key, value in kwargs.iteritems():
         setattr(Config, key, value)
+    if Config.secrets is None:
+        # reuse the secret configured for flask (which is required for sessions)
+        Config.secrets = app.config.get('SECRET_KEY')
     app.cfg = Config()
     # register converters
     from werkzeug.routing import PathConverter
