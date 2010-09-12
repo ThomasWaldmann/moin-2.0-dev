@@ -756,6 +756,12 @@ class UserSettingsUIForm(Form):
     submit = String.using(default=N_('Save'), optional=True)
 
 
+class UserSettingsNavigationForm(Form):
+    name = 'usersettings_navigation'
+    # TODO: find a good way to handle quicklinks here
+    submit = String.using(default=N_('Save'), optional=True)
+
+
 @frontend.route('/+usersettings', defaults=dict(part='main'), methods=['GET'])
 @frontend.route('/+usersettings/<part>', methods=['GET', 'POST'])
 def usersettings(part):
@@ -783,6 +789,7 @@ def usersettings(part):
         password=UserSettingsPasswordForm,
         notification=UserSettingsNotificationForm,
         ui=UserSettingsUIForm,
+        navigation=UserSettingsNavigationForm,
     )
     FormClass = dispatch.get(part)
     if FormClass is None:
