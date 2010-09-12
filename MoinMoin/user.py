@@ -419,8 +419,11 @@ class User(object):
 
     def persistent_items(self):
         """ items we want to store into the user profile """
+        nonpersistent_keys = ['id', 'valid', 'may', 'auth_username',
+                              'password', 'password2', 'auth_method', 'auth_attribs',
+                             ]
         return [(key, value) for key, value in vars(self).items()
-                    if key not in self._cfg.user_transient_fields and key[0] != '_' and value]
+                    if key not in nonpersistent_keys and key[0] != '_' and value]
 
     def save(self):
         """
