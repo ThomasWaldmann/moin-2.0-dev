@@ -18,7 +18,7 @@ from flask import request, url_for, flash, render_template, Response, redirect, 
 from flask import flaskg
 from flask import current_app as app
 
-from flatland import Form, String, Integer, Enum
+from flatland import Form, String, Integer, Boolean, Enum
 from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
 
 import pytz
@@ -762,6 +762,21 @@ class UserSettingsNavigationForm(Form):
     submit = String.using(default=N_('Save'), optional=True)
 
 
+class UserSettingsOptionsForm(Form):
+    # TODO: if the checkbox in the form is checked, we get key: u'1' in the
+    # form data and all is fine. if it is not checked, the key is not present
+    # in the form data and flatland assigns None to the attribute (not False).
+    # If moin detects the None, it thinks this has not been set and uses its
+    # builtin defaults (for some True, for some others False). Makes
+    # edit_on_doubleclick malfunctioning (because its default is True).
+    name = 'usersettings_options'
+    mailto_author = Boolean.using(label=N_('Publish my email (not my wiki homepage) in author info'), optional=True)
+    edit_on_doubleclick = Boolean.using(label=N_('Open editor on double click'), optional=True)
+    show_comments = Boolean.using(label=N_('Show comment sections'), optional=True)
+    disabled = Boolean.using(label=N_('Disable this account forever'), optional=True)
+    submit = String.using(default=N_('Save'), optional=True)
+
+
 @frontend.route('/+usersettings', defaults=dict(part='main'), methods=['GET'])
 @frontend.route('/+usersettings/<part>', methods=['GET', 'POST'])
 def usersettings(part):
@@ -790,6 +805,7 @@ def usersettings(part):
         notification=UserSettingsNotificationForm,
         ui=UserSettingsUIForm,
         navigation=UserSettingsNavigationForm,
+        options=UserSettingsOptionsForm,
     )
     FormClass = dispatch.get(part)
     if FormClass is None:

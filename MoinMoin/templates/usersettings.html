@@ -10,6 +10,7 @@
     <li><a href="{{ url_for('frontend.usersettings', part='notification')|e }}">{{ _("Notification Settings") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='ui')|e }}">{{ _("Wiki Appearance Settings") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='navigation')|e }}">{{ _("Navigation Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='options')|e }}">{{ _("Options Settings") }}</a></li>
 </ul>
 
 {% elif part == 'personal' %}
@@ -67,6 +68,19 @@
   {{ forms.render_errors(form) }}
   <dl>
     {# TODO: find a good way to handle quicklinks #}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+
+{% elif part == 'options' %}
+<h1>{{ _("Options Settings") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {{ forms.render_field(gen, form['mailto_author'], 'checkbox') }}
+    {{ forms.render_field(gen, form['edit_on_doubleclick'], 'checkbox') }}
+    {{ forms.render_field(gen, form['show_comments'], 'checkbox') }}
+    {{ forms.render_field(gen, form['disabled'], 'checkbox') }}
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
