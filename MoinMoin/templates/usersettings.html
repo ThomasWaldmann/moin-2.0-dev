@@ -9,6 +9,7 @@
     <li><a href="{{ url_for('frontend.usersettings', part='password')|e }}">{{ _("Change password") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='notification')|e }}">{{ _("Notification Settings") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='ui')|e }}">{{ _("Wiki Appearance Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='navigation')|e }}">{{ _("Navigation Settings") }}</a></li>
 </ul>
 
 {% elif part == 'personal' %}
@@ -56,6 +57,16 @@
     {{ forms.render_field(gen, form['editor_ui'], 'text') }}
     {{ forms.render_field(gen, form['editor_default'], 'text') }}
     {{ forms.render_field(gen, form['edit_rows'], 'text') }}
+  </dl>
+  {{ gen.input(form['submit'], type='submit') }}
+{{ gen.form.close() }}
+
+{% elif part == 'navigation' %}
+<h1>{{ _("Navigation Settings") }}</h1>
+{{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
+  {{ forms.render_errors(form) }}
+  <dl>
+    {# TODO: find a good way to handle quicklinks #}
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
