@@ -502,14 +502,10 @@ options_no_group_name = {
      "used as the base URL for icons, css, etc."),
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
-
-    ('url_mappings', {},
-     "lookup table to remap URL prefixes (dict of {{{'prefix': 'replacement'}}}); especially useful in intranets, when whole trees of externally hosted documents move around"),
-
   )),
   # ==========================================================================
   'pages': ('Special page names', None, (
-      ('page_front_page', u'Home',
+    ('page_front_page', u'Home',
      "Name of the front page. We don't expect you to keep the default. [Unicode]"),
 
     # the following regexes should match the complete name when used in free text
@@ -667,10 +663,6 @@ options = {
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
-
-      ('transient_fields',
-       ['id', 'valid', 'may', 'auth_username', 'password', 'password2', 'auth_method', 'auth_attribs', ],
-       "User object attributes that are not persisted to permanent storage (internal use)."),
     )),
 
     'mail': ('Mail settings',
