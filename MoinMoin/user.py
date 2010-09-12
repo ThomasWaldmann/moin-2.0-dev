@@ -244,14 +244,16 @@ class User(object):
         self.css_url = ''
         self.edit_rows = 20
 
+        mailto_author = False
+        edit_on_doubleclick = True
+        show_comments = False
+        want_trivial = False
+        disabled = False
+
         if name:
             self.name = name
         elif auth_username: # this is needed for user autocreate
             self.name = auth_username
-
-        # initialize checkbox values with defaults
-        for key, label in self._cfg.user_checkbox_fields:
-            setattr(self, key, self._cfg.user_checkbox_defaults.get(key))
 
         self.recoverpass_key = ""
 
@@ -359,11 +361,6 @@ class User(object):
             valid, changed = self._validatePassword(user_data, password)
             if not valid:
                 return
-
-        # Remove ignored checkbox values from user data
-        for key, label in self._cfg.user_checkbox_fields:
-            if key in user_data and key in self._cfg.user_checkbox_disable:
-                del user_data[key]
 
         # Copy user data into user object
         for key, val in user_data.items():

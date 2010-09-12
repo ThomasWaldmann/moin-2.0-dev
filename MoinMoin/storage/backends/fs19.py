@@ -652,7 +652,7 @@ class FsUserItem(Item):
 
     def _process_usermeta(self, metadata):
         # stuff we want to have stored as boolean:
-        bool_defaults = [ # XXX use cfg.checkbox_defaults
+        bool_defaults = [ # taken from cfg.checkbox_defaults
             ('show_comments', 'False'),
             ('edit_on_doubleclick', 'True'),
             ('want_trivial', 'False'),

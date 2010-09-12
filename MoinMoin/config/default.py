@@ -87,9 +87,6 @@ class ConfigFunctionality(object):
 
         self._loadPluginModule()
 
-        # Preparse user dicts
-        self._fillDicts()
-
         # Normalize values
         self.language_default = self.language_default.lower()
 
@@ -312,17 +309,6 @@ that the data/plugin directory has an __init__.py file.
     'err': str(err),
 }
             raise error.ConfigurationError(msg)
-
-    def _fillDicts(self):
-        """ fill config dicts
-
-        Fills in missing dict keys of derived user config by copying
-        them from this base class.
-        """
-        # user checkbox defaults
-        for key, value in DefaultConfig.user_checkbox_defaults.items():
-            if key not in self.user_checkbox_defaults:
-                self.user_checkbox_defaults[key] = value
 
     def __getitem__(self, item):
         """ Make it possible to access a config object like a dict """
@@ -694,33 +680,6 @@ options = {
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
-
-      ('checkbox_fields',
-       [
-        ('mailto_author', lambda _: _('Publish my email (not my wiki homepage) in author info')),
-        ('edit_on_doubleclick', lambda _: _('Open editor on double click')),
-        ('show_comments', lambda _: _('Show comment sections')),
-        ('disabled', lambda _: _('Disable this account forever')),
-        # if an account is disabled, it may be used for looking up
-        # id -> username for page info and recent changes, but it
-        # is not usable for the user any more:
-       ],
-       "Describes user preferences, see HelpOnConfiguration/UserPreferences."),
-
-      ('checkbox_defaults',
-       {
-        'mailto_author': False,
-        'edit_on_doubleclick': True,
-        'show_comments': False,
-        'disabled': False,
-       },
-       "Defaults for user preferences, see HelpOnConfiguration/UserPreferences."),
-
-      ('checkbox_disable', [],
-       "Disable user preferences, see HelpOnConfiguration/UserPreferences."),
-
-      ('checkbox_remove', [],
-       "Remove user preferences, see HelpOnConfiguration/UserPreferences."),
 
       ('transient_fields',
        ['id', 'valid', 'may', 'auth_username', 'password', 'password2', 'auth_method', 'auth_attribs', ],

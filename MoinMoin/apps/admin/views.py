@@ -61,12 +61,24 @@ def userprofile(user_name):
     if request.method == 'POST':
         key = request.form.get('key', '')
         val = request.form.get('val', '')
-        if key in app.cfg.user_checkbox_fields:
-            val = int(val)
-        oldval = getattr(u, key)
-        setattr(u, key, val)
-        theuser.save()
-        flash('%s.%s: %s -> %s' % tuple([escape(s) for s in [user_name, key, oldval, val]]), "info")
+        ok = False
+        if hasattr(u, key)
+            ok = True
+            oldval = getattr(u, key)
+            if isinstance(oldval, bool):
+                val = bool(val)
+            elif isinstance(oldval, int):
+                val = int(val)
+            elif isinstance(oldval, unicode):
+                val = unicode(val)
+            else:
+                ok = False
+        if ok:
+            setattr(u, key, val)
+            theuser.save()
+            flash('%s.%s: %s -> %s' % tuple([escape(s) for s in [user_name, key, unicode(oldval), unicode(val)]]), "info")
+        else:
+            flash('modifying %s.%s failed' % tuple([escape(s) for s in [user_name, key]]), "error")
     return redirect(url_for('admin.userbrowser'))
 
 
