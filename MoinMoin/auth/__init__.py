@@ -248,11 +248,6 @@ class MoinAuth(BaseAuth):
                  recover_url=url_for('frontend.lostpass'))
         return msg
 
-        #return _('If you do not have an account, <a href="%(userprefslink)s">you can create one now</a>. '
-        #         '<a href="%(sendmypasswordlink)s">Forgot your password?</a>',
-        #         userprefslink=userprefslink,
-        #         sendmypasswordlink=sendmypasswordlink)
-
 
 class GivenAuth(BaseAuth):
     """ reuse a given authentication, e.g. http basic auth (or any other auth)

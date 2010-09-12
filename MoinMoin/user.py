@@ -8,8 +8,6 @@
     some specific user). User instances are used to access the user profile of
     some specific user (name, password, email, bookmark, trail, settings, ...).
 
-    Some related code is in the userprefs modules.
-
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2003-2010 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:JohannesBerg,
