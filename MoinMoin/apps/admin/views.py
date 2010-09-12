@@ -62,7 +62,7 @@ def userprofile(user_name):
         key = request.form.get('key', '')
         val = request.form.get('val', '')
         ok = False
-        if hasattr(u, key)
+        if hasattr(u, key):
             ok = True
             oldval = getattr(u, key)
             if isinstance(oldval, bool):

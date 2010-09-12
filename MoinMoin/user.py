@@ -244,11 +244,11 @@ class User(object):
         self.css_url = ''
         self.edit_rows = 20
 
-        mailto_author = False
-        edit_on_doubleclick = True
-        show_comments = False
-        want_trivial = False
-        disabled = False
+        self.mailto_author = False
+        self.edit_on_doubleclick = True
+        self.show_comments = False
+        self.want_trivial = False
+        self.disabled = False
 
         if name:
             self.name = name
