@@ -18,8 +18,11 @@ from flask import request, url_for, flash, render_template, Response, redirect, 
 from flask import flaskg
 from flask import current_app as app
 
-from flatland import Form, String, Integer
+from flatland import Form, String, Integer, Enum
 from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
+
+import pytz
+from babel import Locale
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -704,15 +707,6 @@ def logout():
     return redirect(url_for('frontend.show_root'))
 
 
-class UserSettingsPersonalForm(Form):
-    name = 'usersettings_personal' # "name" is duplicate
-    name = String.using(label=N_('Name')).validated_by(Present())
-    aliasname = String.using(label=N_('Alias-Name'), optional=True)
-    timezone = String.using(label=N_('Timezone'), optional=True)
-    locale = String.using(label=N_('Locale'), optional=True)
-    submit = String.using(default=N_('Save'), optional=True)
-
-
 class ValidChangePass(Validator):
     """Validator for a valid password change
     """
@@ -767,21 +761,38 @@ class UserSettingsUIForm(Form):
 def usersettings(part):
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'User Settings' # XXX
+
+    # this can't be global because we need app object, which is only available within a request:
+    class UserSettingsPersonalForm(Form):
+        name = 'usersettings_personal' # "name" is duplicate
+        name = String.using(label=N_('Name')).validated_by(Present())
+        aliasname = String.using(label=N_('Alias-Name'), optional=True)
+        #timezones_keys = sorted(Locale('en').time_zones.keys())
+        timezones_keys = pytz.common_timezones
+        timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
+        supported_locales = [Locale('en')] + app.babel_instance.list_translations()
+        locales_available = sorted([(str(l), l.display_name) for l in supported_locales],
+                                   key=lambda x: x[1])
+        locales_keys = [l[0] for l in locales_available]
+        locale = Enum.using(label=N_('Locale')).with_properties(labels=dict(locales_available)).valued(*locales_keys)
+        submit = String.using(default=N_('Save'), optional=True)
+
+
     dispatch = dict(
         personal=UserSettingsPersonalForm,
         password=UserSettingsPasswordForm,
         notification=UserSettingsNotificationForm,
         ui=UserSettingsUIForm,
     )
-    Form = dispatch.get(part)
-    if Form is None:
+    FormClass = dispatch.get(part)
+    if FormClass is None:
         # 'main' part or some invalid part
         return render_template('usersettings.html',
                                part='main',
                                item_name=item_name,
                               )
     if request.method == 'GET':
-        form = Form.from_object(flaskg.user)
+        form = FormClass.from_object(flaskg.user)
         form['submit'].set('Save') # XXX why does from_object() kill submit value?
         return render_template('usersettings.html',
                                item_name=item_name,
@@ -790,7 +801,7 @@ def usersettings(part):
                                form=form,
                               )
     if request.method == 'POST':
-        form = Form.from_flat(request.form)
+        form = FormClass.from_flat(request.form)
         valid = form.validate()
         if valid:
             if part == 'password':
