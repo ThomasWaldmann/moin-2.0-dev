@@ -23,7 +23,6 @@ from MoinMoin.util import monkeypatch
 
 from flask import Flask, request, url_for, render_template, flash, session, flaskg
 from flask import current_app as app
-from babel import Locale
 from flaskext.babel import Babel
 from flaskext.babel import gettext as _
 from flaskext.babel import ngettext as N_
@@ -104,17 +103,6 @@ def create_app(flask_config_file=None, flask_config_dict=None,
     babel = Babel(app)
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
-
-    # translations list, TODO: move this to user settings view
-    #supported_locales = [Locale('en')] + babel.list_translations()
-    #translations_available = sorted([(str(l), l.display_name) for l in supported_locales],
-    #                                key=lambda x: x[1])
-    #print repr(translations_available)
-
-    # timezone list, TODO: move this to user settings view
-    #timezones = [(k, v['city']) for k, v in sorted(l.time_zones.items(), key=lambda x: x[1]['city'])]
-    #print repr(timezones) # XXX where is Europe/Berlin???
-
     return app
 
 

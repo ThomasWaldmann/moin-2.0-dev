@@ -18,8 +18,8 @@
   <dl>
     {{ forms.render_field(gen, form['name'], 'text') }}
     {{ forms.render_field(gen, form['aliasname'], 'text') }}
-    {{ forms.render_field(gen, form['timezone'], 'text') }}
-    {{ forms.render_field(gen, form['locale'], 'text') }}
+    {{ forms.render_select(gen, form['timezone']) }}
+    {{ forms.render_select(gen, form['locale']) }}
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}

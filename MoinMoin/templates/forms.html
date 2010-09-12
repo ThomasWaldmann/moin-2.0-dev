@@ -26,3 +26,18 @@ Helpers for using flatland with jinja2 to create html forms.
   </dd>
 {% endmacro %}
 
+{% macro render_select(gen, field) %}
+  <dt>
+    {{ gen.label(field) }}
+  </dt>
+  <dd>
+    {{ gen.select.open(field) }}
+    {% set labels = field.properties.get('labels', {}) %}
+    {% for value in field.valid_values %}
+      {{ gen.option(field, value=value, contents=labels.get(value, value)) }}
+    {% endfor %}
+    {{ gen.select.close() }}
+    {{ render_errors(field) }}
+  </dd>
+{% endmacro %}
+
