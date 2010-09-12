@@ -57,8 +57,6 @@ class Config(DefaultConfig):
 
     #page_front_page = u'FrontPage' # change to some better value
 
-    # Add your configuration items here.
-    secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'
 
 MOINCFG = Config # Flask only likes uppercase stuff
 # Flask settings - see the flask documentation about their meaning

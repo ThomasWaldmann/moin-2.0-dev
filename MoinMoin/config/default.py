@@ -143,8 +143,8 @@ class ConfigFunctionality(object):
             raise error.ConfigurationError("No storage configuration specified! You need to define a namespace_mapping. " + \
                                            "For further reference, please see HelpOnStorageConfiguration.")
 
-        if self.secrets is None:  # admin did not setup a real secret, so make up something
-            self.secrets = self.calc_secrets()
+        if self.secrets is None:  # admin did not setup a real secret
+            raise error.ConfigurationError("No secret configured! You need to set secrets = 'somelongsecretstring' in your wiki config.")
 
         secret_key_names = ['action/cache', 'wikiutil/tickets', ]
 
@@ -168,19 +168,6 @@ class ConfigFunctionality(object):
             except (KeyError, ValueError):
                 raise error.ConfigurationError("You must set a (at least %d chars long) secret string for secrets['%s']!" % (
                     secret_min_length, secret_key_name))
-
-    def calc_secrets(self):
-        """ make up some 'secret' using some config values """
-        varnames = ['data_dir', 'language_default',
-                    'mail_smarthost', 'mail_from', 'page_front_page',
-                    'theme_default', 'sitename', 'logo_string',
-                    'interwikiname', 'user_homewiki', ]
-        secret = ''
-        for varname in varnames:
-            var = getattr(self, varname, None)
-            if isinstance(var, (str, unicode)):
-                secret += repr(var)
-        return secret
 
     def _config_check(self):
         """ Check namespace and warn about unknown names
@@ -389,7 +376,7 @@ options_no_group_name = {
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
-    ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
+    ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes."""),
     # use sha512 as soon as we require python2.5 because sha1 is weak:
     ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('SecurityPolicy',
