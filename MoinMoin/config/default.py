@@ -722,32 +722,6 @@ options = {
       ('checkbox_remove', [],
        "Remove user preferences, see HelpOnConfiguration/UserPreferences."),
 
-      ('form_fields',
-       [
-        ('name', _('Name'), "text", "36", _("(Use FirstnameLastname)")),
-        ('aliasname', _('Alias-Name'), "text", "36", ''),
-        ('email', _('Email'), "text", "36", ''),
-        ('css_url', _('User CSS URL'), "text", "40", _('(Leave it empty for disabling user CSS)')),
-        ('edit_rows', _('Editor size'), "text", "3", ''),
-       ],
-       None),
-
-      ('form_defaults',
-       {# key: default - do NOT remove keys from here!
-        'name': '',
-        'aliasname': '',
-        'password': '',
-        'password2': '',
-        'email': '',
-        'css_url': '',
-        'edit_rows': "20",
-       },
-       None),
-
-      ('form_disable', [], "list of field names used to disable user preferences form fields"),
-
-      ('form_remove', [], "list of field names used to remove user preferences form fields"),
-
       ('transient_fields',
        ['id', 'valid', 'may', 'auth_username', 'password', 'password2', 'auth_method', 'auth_attribs', ],
        "User object attributes that are not persisted to permanent storage (internal use)."),

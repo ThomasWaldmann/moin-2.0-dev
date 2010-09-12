@@ -65,7 +65,7 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
 
     # try to get the email, for new users it is required
     theuser.email = email
-    if not theuser.email and 'email' not in app.cfg.user_form_remove:
+    if not theuser.email:
         return _("Please provide your email address. If you lose your"
                  " login information, you can get it by email.")
 
@@ -238,8 +238,11 @@ class User(object):
         self.auth_attribs = kw.get('auth_attribs', ())
         self.bookmarks = {} # interwikiname: bookmark
 
-        # create some vars automatically
-        self.__dict__.update(self._cfg.user_form_defaults)
+        self.name = u''
+        self.aliasname = u''
+        self.email = u''
+        self.css_url = ''
+        self.edit_rows = 20
 
         if name:
             self.name = name
