@@ -703,9 +703,6 @@ options = {
         ('mailto_author', lambda _: _('Publish my email (not my wiki homepage) in author info')),
         ('edit_on_doubleclick', lambda _: _('Open editor on double click')),
         ('show_comments', lambda _: _('Show comment sections')),
-        ('show_fancy_diff', lambda _: _('Show fancy diffs')),
-        ('remember_me', lambda _: _('Remember login information')),
-
         ('disabled', lambda _: _('Disable this account forever')),
         # if an account is disabled, it may be used for looking up
         # id -> username for page info and recent changes, but it
@@ -718,8 +715,6 @@ options = {
         'mailto_author': False,
         'edit_on_doubleclick': True,
         'show_comments': False,
-        'show_fancy_diff': True,
-        'remember_me': True,
         'disabled': False,
        },
        "Defaults for user preferences, see HelpOnConfiguration/UserPreferences."),

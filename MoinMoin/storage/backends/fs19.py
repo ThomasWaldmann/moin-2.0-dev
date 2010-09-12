@@ -654,10 +654,7 @@ class FsUserItem(Item):
         # stuff we want to have stored as boolean:
         bool_defaults = [ # XXX use cfg.checkbox_defaults
             ('show_comments', 'False'),
-            ('show_page_trail', 'True'),
-            ('show_fancy_diff', 'True'), # XXX kill this? usability for vision impaired?
             ('edit_on_doubleclick', 'True'),
-            ('remember_me', 'True'),
             ('want_trivial', 'False'),
             ('mailto_author', 'False'),
             ('disabled', 'False'),
@@ -685,11 +682,13 @@ class FsUserItem(Item):
                 'external_target', # ancient, not used any more
                 'passwd', # ancient, not used any more (use enc_passwd)
                 'show_emoticons', # ancient, not used any more
+                'show_fancy_diff', # kind of diff display now depends on mimetype
                 'show_toolbar', # not used any more
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
                 'show_page_trail', # theme decides whether to show trail
                 'remember_last_visit', # we show trail, user can click there
+                'remember_me', # don't keep sessions open for a long time
                 'subscribed_pages', # renamed to subscribed_items
                 'edit_cols', # not used any more
                 'jid', # no jabber support
