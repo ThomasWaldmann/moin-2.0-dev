@@ -51,7 +51,7 @@
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
-    {{ forms.render_field(gen, form['theme_name'], 'text') }}
+    {{ forms.render_select(gen, form['theme_name']) }}
     {{ forms.render_field(gen, form['css_url'], 'text') }}
     {{ forms.render_field(gen, form['editor_ui'], 'text') }}
     {{ forms.render_field(gen, form['editor_default'], 'text') }}
