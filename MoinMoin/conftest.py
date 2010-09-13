@@ -79,7 +79,7 @@ def init_test_app(given_config):
         namespace_mapping=namespace_mapping,
         router_index_uri=router_index_uri,
     )
-    app = create_app(flask_config_dict=dict(SECRET_KEY='foo'),
+    app = create_app(flask_config_dict=dict(SECRET_KEY='foobarfoobar'),
                      moin_config_class=given_config,
                      **more_config)
     ctx = app.test_request_context('/')
