@@ -38,7 +38,6 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 
 from MoinMoin.items.sendcache import SendCache
 
-from MoinMoin.widget.table import Table
 
 COLS = 80
 ROWS_DATA = 20
