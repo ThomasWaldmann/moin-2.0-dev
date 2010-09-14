@@ -679,6 +679,8 @@ class FsUserItem(Item):
         kill = ['real_language', # crap (use 'language')
                 'wikiname_add_spaces', # crap magic (you get it like it is)
                 'recoverpass_key', # user can recover again if needed
+                'editor_default', # not used any more
+                'editor_ui', # not used any more
                 'external_target', # ancient, not used any more
                 'passwd', # ancient, not used any more (use enc_passwd)
                 'show_emoticons', # ancient, not used any more

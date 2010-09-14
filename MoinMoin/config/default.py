@@ -13,6 +13,8 @@ import re
 import os
 import sys
 
+from babel import parse_locale
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -87,8 +89,14 @@ class ConfigFunctionality(object):
 
         self._loadPluginModule()
 
-        # Normalize values
-        self.language_default = self.language_default.lower()
+        if self.user_defaults['timezone'] is None:
+            self.user_defaults['timezone'] = self.timezone_default
+        # Note: do not assign user_defaults['locale'] = locale_default
+        # to give browser language detection a chance.
+        try:
+            self.language_default = parse_locale(self.locale_default)[0]
+        except ValueError:
+            raise error.ConfigurationError("Invalid locale_default value (give something like 'en_US').")
 
         # Use site name as default name-logo
         if self.logo_string is None:
@@ -412,11 +420,6 @@ options_no_group_name = {
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
 
-    ('theme_default', 'modernized',
-     "the name of the theme that is used by default (see HelpOnThemes)"),
-    ('theme_force', False,
-     "if True, do not allow to change the theme"),
-
     ('stylesheets', [],
      """
      List of tuples (media, csshref, title, alternate_stylesheet)
@@ -470,14 +473,10 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
-    ('editor_default', 'text', "Editor to use by default, 'text' or 'gui'"),
-    ('editor_force', False, "if True, force using the default editor"),
-    ('editor_ui', 'freechoice', "Editor choice shown on the user interface, 'freechoice' or 'theonepreferred'"),
     ('page_license_enabled', False, 'if True, show a license hint in page editor.'),
     ('page_license_page', u'WikiLicense', 'Page linked from the license hint. [Unicode]'),
     ('edit_locking', 'warn 10', "Editor locking policy: `None`, `'warn <timeout in minutes>'`, or `'lock <timeout in minutes>'`"),
     ('edit_ticketing', True, None),
-    ('edit_rows', 20, "Default height of the edit box"),
   )),
   # ==========================================================================
   'data': ('Data storage', None, (
@@ -523,19 +522,32 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'user': ('User Preferences related', None, (
-    ('quicklinks_default', [],
-     'List of preset quicklinks for a newly created user accounts. Existing accounts are not affected by this option whereas changes in navi_bar do always affect existing accounts. Preset quicklinks can be removed by the user in the user preferences menu, navi_bar settings not.'),
-    ('subscribed_items_default', [],
-     "List of item names used for presetting item subscriptions for newly created user accounts."),
-
-    ('email_subscribed_events_default',
-     [
-        # XXX PageChangedEvent.__name__
-        # XXX PageRenamedEvent.__name__
-        # XXX PageDeletedEvent.__name__
-        # XXX PageCopiedEvent.__name__
-        # XXX PageRevertedEvent.__name__
-     ], None),
+    ('user_defaults',
+      dict(
+        name='anonymous',
+        aliasname=None,
+        email=None,
+        css_url=None,
+        mailto_author=False,
+        edit_on_doubleclick=True,
+        show_comments=False,
+        want_trivial=False,
+        disabled=False,
+        quicklinks=[],
+        subscribed_items=[],
+        email_subscribed_events=[
+            # XXX PageChangedEvent.__name__
+            # XXX PageRenamedEvent.__name__
+            # XXX PageDeletedEvent.__name__
+            # XXX PageCopiedEvent.__name__
+            # XXX PageRevertedEvent.__name__
+        ],
+        theme_name='modernized',
+        edit_rows=0,
+        locale=None, # None -> do browser language detection, otherwise just use this locale
+        timezone=None, # None -> use cfg.timezone_default
+      ),
+     'Default attributes of the user object'),
   )),
   # ==========================================================================
   'various': ('Various', None, (
@@ -553,8 +565,8 @@ options_no_group_name = {
     ('html_head_normal', '<meta name="robots" content="index,nofollow">\n',
      "Additional <HEAD> tags for most normal pages."),
 
-    ('language_default', 'en', "Default language for user interface and page content, see HelpOnLanguages."),
-    ('language_ignore_browser', False, "if True, ignore user's browser language settings, see HelpOnLanguages."),
+    ('timezone_default', 'UTC', "Default time zone."),
+    ('locale_default', 'en_US', "Default locale for user interface and content."),
 
     ('log_remote_addr', True,
      "if True, log the remote IP address (and maybe hostname)."),

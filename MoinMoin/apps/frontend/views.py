@@ -750,8 +750,6 @@ class UserSettingsUIForm(Form):
     name = 'usersettings_ui'
     theme_name = Enum.using(label=N_('Theme name')).valued('modernized')
     css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
-    editor_ui = String.using(label=N_('Editor UI')).validated_by(Present())
-    editor_default = String.using(label=N_('Editor default')).validated_by(Present())
     edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
     submit = String.using(default=N_('Save'), optional=True)
 

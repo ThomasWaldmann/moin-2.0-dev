@@ -404,8 +404,7 @@ def setup_jinja_env():
     # please note that these filters are installed by flask-babel:
     # datetimeformat, dateformat, timeformat, timedeltaformat
 
-    theme_name = app.cfg.theme_default if app.cfg.theme_force else flaskg.user.theme_name
-    theme = ThemeSupport(app.cfg, theme_name)
+    theme = ThemeSupport(app.cfg, flaskg.user.theme_name)
 
     app.jinja_env.globals.update({
                             # please note that flask-babel/jinja2.ext installs:

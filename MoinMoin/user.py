@@ -18,8 +18,11 @@
 """
 
 import os, time, codecs, base64
+import copy
 import hashlib
 import hmac
+
+from babel import parse_locale
 
 from flask import current_app as app
 
@@ -238,41 +241,19 @@ class User(object):
         self.auth_attribs = kw.get('auth_attribs', ())
         self.bookmarks = {} # interwikiname: bookmark
 
-        self.name = u''
-        self.aliasname = u''
-        self.email = u''
-        self.css_url = ''
-        self.edit_rows = 20
-
-        self.mailto_author = False
-        self.edit_on_doubleclick = True
-        self.show_comments = False
-        self.want_trivial = False
-        self.disabled = False
+        self.__dict__.update(copy.deepcopy(self._cfg.user_defaults))
 
         if name:
             self.name = name
         elif auth_username: # this is needed for user autocreate
             self.name = auth_username
 
-        self.recoverpass_key = ""
+        self.recoverpass_key = None
 
         if password:
             self.enc_password = encodePassword(password)
 
-        # stuff for flask-babel
-        self.locale = None  # None means user did not specify locale
-        self.timezone = None  # None means user did not specify timezone
-        # XXX old stuff, so old code doesn't crash:
-        self.language = 'en'
-
         self._stored = False
-        self.quicklinks = self._cfg.quicklinks_default
-        self.subscribed_items = self._cfg.subscribed_items_default
-        self.email_subscribed_events = self._cfg.email_subscribed_events_default
-        self.theme_name = self._cfg.theme_default
-        self.editor_default = self._cfg.editor_default
-        self.editor_ui = self._cfg.editor_ui
         self.last_saved = 0
 
         # attrs not saved to profile
@@ -307,6 +288,17 @@ class User(object):
         return "<%s.%s at 0x%x name:%r valid:%r>" % (
             self.__class__.__module__, self.__class__.__name__,
             id(self), self.name, self.valid)
+
+    @property
+    def language(self):
+        l = self._cfg.language_default
+        # .locale is either None or something like 'en_US'
+        if self.locale is not None:
+            try:
+                l = parse_locale(self.locale)[0]
+            except ValueError:
+                pass
+        return l
 
     def make_id(self):
         """ make a new unique user id """
@@ -423,7 +415,7 @@ class User(object):
                               'password', 'password2', 'auth_method', 'auth_attribs',
                              ]
         return [(key, value) for key, value in vars(self).items()
-                    if key not in nonpersistent_keys and key[0] != '_' and value]
+                    if key not in nonpersistent_keys and key[0] != '_' and value is not None]
 
     def save(self):
         """
@@ -471,24 +463,8 @@ class User(object):
 
     def getText(self, text):
         """ translate a text to the language of this user """
-        return text # FIXME, was: self._request.getText(text, lang=self.getLang())
+        return text # FIXME, was: self._request.getText(text, lang=self.language)
 
-    def getLang(self):
-        """ Get the language this user likely wants (limited by what we can support).
-
-            If this is a valid user (not an anon user), we try to use his language
-            preference, if there is one.
-            If there is none or this is an anon user, we check if this is the current
-            user and if yes, try to follow his browser language preferences.
-            If it is not the current user or we can't follow his language preferences,
-            we'll try using the language_default from the configuration.
-            If the language we have determined so far is not supported by moin,
-            we'll fall back to English, we never return an unsupported language.
-        """
-        lang = self.locale
-        if not lang:
-            lang = app.cfg.language_default
-        return lang
 
     # -----------------------------------------------------------------
     # Bookmark
@@ -830,7 +806,7 @@ class User(object):
         h = hmac.new(str(self.recoverpass_key), str(stamp), digestmod=hashlib.sha1).hexdigest()
         if h != parts[1]:
             return False
-        self.recoverpass_key = ""
+        self.recoverpass_key = None
         self.enc_password = encodePassword(newpass)
         self.save()
         return True
