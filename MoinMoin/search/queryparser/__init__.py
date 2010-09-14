@@ -15,10 +15,10 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import config, wikiutil
+from MoinMoin import config
+from MoinMoin.util.paramparser import parse_quoted_separated_ext, ParserPrefix, BracketError
 from MoinMoin.search.queryparser.expressions import AndExpression, OrExpression, TextSearch, TitleSearch, \
     LinkSearch, CategorySearch, DomainSearch, MimetypeSearch, LanguageSearch
-
 
 class QueryError(ValueError):
     """ error raised for problems when parsing the query """
@@ -38,7 +38,7 @@ class QueryParser(object):
         self.titlesearch = kw.get('titlesearch', 0)
         self.case = kw.get('case', 0)
         self.regex = kw.get('regex', 0)
-        self._M = wikiutil.ParserPrefix('-')
+        self._M = ParserPrefix('-')
 
     def _analyse_items(self, items):
         terms = AndExpression()
@@ -151,13 +151,13 @@ class QueryParser(object):
         if isinstance(query, str):
             query = query.decode(config.charset)
         try:
-            items = wikiutil.parse_quoted_separated_ext(query,
-                                                        name_value_separator=':',
-                                                        prefixes='-',
-                                                        multikey=True,
-                                                        brackets=('()', ),
-                                                        quotes='\'"')
-        except wikiutil.BracketError, err:
+            items = parse_quoted_separated_ext(query,
+                                               name_value_separator=':',
+                                               prefixes='-',
+                                               multikey=True,
+                                               brackets=('()', ),
+                                               quotes='\'"')
+        except BracketError, err:
             raise QueryError(str(err))
         logging.debug("parse_quoted_separated items: %r" % items)
         query = self._analyse_items(items)
