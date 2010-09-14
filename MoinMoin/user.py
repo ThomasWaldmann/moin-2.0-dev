@@ -33,6 +33,7 @@ from werkzeug import escape
 from MoinMoin import _, N_
 from MoinMoin import config, caching, wikiutil
 from MoinMoin.util import random_string
+from MoinMoin.util.interwiki import getInterwikiHome
 
 
 def create_user(username, password, email):
@@ -148,7 +149,7 @@ def get_editor(userid, addr, hostname):
         if userdata.mailto_author and userdata.email:
             return ('email', userdata.email)
         elif userdata.name:
-            interwiki = wikiutil.getInterwikiHome(userdata.name)
+            interwiki = getInterwikiHome(userdata.name)
             if interwiki:
                 result = ('interwiki', interwiki)
     return result
@@ -760,7 +761,7 @@ class User(object):
         """ Return wiki markup usable as a link to the user homepage,
             it doesn't matter whether it already exists or not.
         """
-        wikiname, pagename = wikiutil.getInterwikiHome(self.name)
+        wikiname, pagename = getInterwikiHome(self.name)
         if wikiname == 'Self':
             markup = '[[%s]]' % pagename
         else:

@@ -28,36 +28,6 @@ class TestCleanInput(object):
             assert wikiutil.clean_input(instr) == outstr
 
 
-class TestInterWiki(object):
-    class Config(wikiconfig.Config):
-        interwiki_map = dict(MoinMoin='http://moinmo.in/', )
-
-    def testSplitWiki(self):
-        tests = [('SomePage', ('Self', 'SomePage')),
-                 ('OtherWiki:OtherPage', ('OtherWiki', 'OtherPage')),
-                 (':OtherPage', ('', 'OtherPage')),
-                 # broken ('/OtherPage', ('Self', '/OtherPage')),
-                 # wrong interpretation ('MainPage/OtherPage', ('Self', 'MainPage/OtherPage')),
-                ]
-        for markup, (wikiname, pagename) in tests:
-            assert wikiutil.split_interwiki(markup) == (wikiname, pagename)
-
-    def testJoinWiki(self):
-        tests = [(('http://example.org/', u'SomePage'), 'http://example.org/SomePage'),
-                 (('http://example.org/?page=$PAGE&action=show', u'SomePage'), 'http://example.org/?page=SomePage&action=show'),
-                 (('http://example.org/', u'Aktuelle\xc4nderungen'), 'http://example.org/Aktuelle%C3%84nderungen'),
-                 (('http://example.org/$PAGE/show', u'Aktuelle\xc4nderungen'), 'http://example.org/Aktuelle%C3%84nderungen/show'),
-                ]
-        for (baseurl, pagename), url in tests:
-            assert wikiutil.join_wiki(baseurl, pagename) == url
-
-    def testResolveInterWiki(self):
-        result = wikiutil.resolve_interwiki('MoinMoin', 'SomePage')
-        assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
-        result = wikiutil.resolve_interwiki('Self', 'SomePage')
-        assert result == ('Self', u'/', 'SomePage', False)
-
-
 class TestSystemItem(object):
     systemItems = (
         'HelpOnMoinWikiSyntax',
