@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, sys, re, random
+import re, random
 
 # do the pickle magic once here, so we can just import from here:
 # cPickle can encode normal and Unicode strings
@@ -82,25 +82,6 @@ def rangelist(numbers):
     if pattern[-1] in ',-':
         return pattern[1:-1]
     return pattern[1:]
-
-
-class simpleIO:
-    """ A simple StringIO replacement for code that calls us
-        with ascii, Unicode and iso-8859-1 data. Wee, that is fun. """
-
-    def __init__(self):
-        self.buffer = []
-
-    def write(self, foo):
-        if not isinstance(foo, unicode):
-            foo = foo.decode("iso-8859-1", "replace")
-        self.buffer.append(foo)
-
-    def getvalue(self):
-        return u''.join(self.buffer)
-
-    def close(self):
-        self.buffer = None
 
 
 def random_string(length, allowed_chars=None):
