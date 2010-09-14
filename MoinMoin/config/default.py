@@ -221,7 +221,7 @@ file. It should match the actual charset of the configuration file.
             'superuser', 'textchas_disabled_group', 'supplementation_item_names',
             'logo', 'credits', 'html_pagetitle',
             'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
-            'html_head', 'html_head_queries', 'html_head_posts', 'html_head_index', 'html_head_normal',
+            'html_head',
         )
 
         for name in decode_names:
@@ -543,14 +543,6 @@ options_no_group_name = {
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
     ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes. [Unicode]"),
-    ('html_head_queries', '<meta name="robots" content="noindex,nofollow">\n',
-     "Additional <HEAD> tags for requests with query strings, like actions. [Unicode]"),
-    ('html_head_posts', '<meta name="robots" content="noindex,nofollow">\n',
-     "Additional <HEAD> tags for POST requests. [Unicode]"),
-    ('html_head_index', '<meta name="robots" content="index,follow">\n',
-     "Additional <HEAD> tags for some few index pages. [Unicode]"),
-    ('html_head_normal', '<meta name="robots" content="index,nofollow">\n',
-     "Additional <HEAD> tags for most normal pages. [Unicode]"),
 
     ('timezone_default', 'UTC', "Default time zone."),
     ('locale_default', 'en_US', "Default locale for user interface and content."),

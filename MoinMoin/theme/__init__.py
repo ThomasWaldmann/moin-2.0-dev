@@ -306,19 +306,6 @@ class ThemeSupport(object):
                 for title, action, endpoint, disabled in menu
                 if action not in self.cfg.actions_excluded]
 
-    @property
-    def special_item_names(self):
-        """
-        Return a list of item names for items that are considered "index" items.
-        For index items, base.html adds cfg.html_head_index.
-
-        @rtype: list
-        @return: list of item names
-        """
-        return [self.cfg.item_root,
-                self.translated_item_name(self.cfg.item_root)
-               ]
-
 
 def get_editor_info(rev, external=False):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME

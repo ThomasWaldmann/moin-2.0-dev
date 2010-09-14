@@ -4,22 +4,6 @@
 {% block head %}
     <meta charset="{{ theme.output_charset }}" />
     {{ cfg.html_head }}
-    {# Search engine precautions / optimizations #}
-    {%- if request.query_string -%}
-        {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
-        {{ cfg.html_head_queries }}
-    {%- elif request.method == 'POST' or item_name in ['BadContent', 'LocalBadContent', ] -%}
-        {# we don't want to have BadContent stuff indexed: #}
-        {{ cfg.html_head_posts }}
-    {%- elif item_name in theme.special_item_names -%}
-        {# if it is a special page, index it and follow the links - we do it #}
-        {# for the original, English pages as well as for (the possibly modified frontpage #}
-        {{ cfg.html_head_index }}
-    {%- else -%}
-        {# if it is a normal page, index it, but do not follow the links, because #}
-        {# there are a lot of illegal links (like actions) or duplicates: #}
-        {{ cfg.html_head_normal }}
-    {%- endif %}
     {% if pi_refresh -%}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {%- endif %}
