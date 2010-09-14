@@ -375,7 +375,7 @@ options_no_group_name = {
   # ==========================================================================
   'auth': ('Authentication / Authorization / Security settings', None, (
     ('superuser', [],
-     "List of trusted user names with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
+     "List of trusted user names [Unicode] with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
     ('auth', DefaultExpression('[MoinAuth()]'),
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
@@ -402,7 +402,7 @@ options_no_group_name = {
     ('textchas', None,
      "Spam protection setup using site-specific questions/answers, see HelpOnSpam."),
     ('textchas_disabled_group', None,
-     "Name of a group of trusted users who do not get asked !TextCha questions."),
+     "Name of a group of trusted users who do not get asked !TextCha questions. [Unicode]"),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
@@ -412,9 +412,9 @@ options_no_group_name = {
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
     ('logo', None, "Text (html-escaped) or html fragment (html5, xml variant) shown as logo. [Unicode]"),
-    ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`)"),
+    ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`) [Unicode]"),
     ('navi_bar', [u'FindPage', u'HelpContents', ],
-     'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
+     'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode]'),
 
     ('stylesheets', [],
      """
@@ -430,18 +430,18 @@ options_no_group_name = {
       """),
 
     ('supplementation_item_names', [u'Discussion', ],
-     "List of names of the supplementation (sub)items [unicode]"),
+     "List of names of the supplementation (sub)items [Unicode]"),
 
-    ('interwiki_preferred', [], "In dialogues, show those wikis at the top of the list."),
+    ('interwiki_preferred', [], "In dialogues, show those wikis at the top of the list [list of Unicode]."),
     ('sistersites', [], "list of tuples `('WikiName', 'sisterpagelist_fetch_url')`"),
 
     ('trail_size', 5,
      "Number of items in the trail of recently visited items"),
 
-    ('html_before_header', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag."),
-    ('html_after_header', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag)."),
-    ('html_before_footer', '', "Custom HTML markup sent ''before'' the system footer."),
-    ('html_after_footer', '', "Custom HTML markup sent ''after'' the system footer."),
+    ('html_before_header', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag. [Unicode]"),
+    ('html_after_header', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag). [Unicode]"),
+    ('html_before_footer', '', "Custom HTML markup sent ''before'' the system footer. [Unicode]"),
+    ('html_after_footer', '', "Custom HTML markup sent ''after'' the system footer. [Unicode]"),
 
     ('edit_bar', ['Show', 'Meta', 'Modify', 'Comments', 'Download', 'History', 'Subscribe', 'Quicklink', 'Index', 'Supplementation', 'ActionsMenu'],
      'list of edit bar entries'),
@@ -465,7 +465,7 @@ options_no_group_name = {
        '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
      ],
-     'list with html5 (xmlish) fragments with logos or strings for crediting.'),
+     'list of html5 (xmlish) fragments [Unicode], e.g. logos or strings for crediting.'),
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
@@ -542,15 +542,15 @@ options_no_group_name = {
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
-    ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes."),
+    ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes. [Unicode]"),
     ('html_head_queries', '<meta name="robots" content="noindex,nofollow">\n',
-     "Additional <HEAD> tags for requests with query strings, like actions."),
+     "Additional <HEAD> tags for requests with query strings, like actions. [Unicode]"),
     ('html_head_posts', '<meta name="robots" content="noindex,nofollow">\n',
-     "Additional <HEAD> tags for POST requests."),
+     "Additional <HEAD> tags for POST requests. [Unicode]"),
     ('html_head_index', '<meta name="robots" content="index,follow">\n',
-     "Additional <HEAD> tags for some few index pages."),
+     "Additional <HEAD> tags for some few index pages. [Unicode]"),
     ('html_head_normal', '<meta name="robots" content="index,nofollow">\n',
-     "Additional <HEAD> tags for most normal pages."),
+     "Additional <HEAD> tags for most normal pages. [Unicode]"),
 
     ('timezone_default', 'UTC', "Default time zone."),
     ('locale_default', 'en_US', "Default locale for user interface and content."),
@@ -667,7 +667,7 @@ options = {
     'mail': ('Mail settings',
         'These settings control outgoing and incoming email from and to the wiki.',
     (
-      ('from', None, "Used as From: address for generated mail."),
+      ('from', None, "Used as From: address for generated mail. [Unicode]"),
       ('login', None, "'username userpass' for SMTP server authentication (None = don't use auth)."),
       ('smarthost', None, "Address of SMTP server to use for sending mail (None = don't use SMTP server)."),
       ('sendmail', None, "sendmail command to use for sending mail (None = don't use sendmail)"),
