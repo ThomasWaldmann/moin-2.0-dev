@@ -51,7 +51,7 @@ class Config(DefaultConfig):
 
     surge_action_limits = None # no surge protection
     sitename = u'My MoinMoin'
-    logo_string = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
+    logo = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #item_root = u'Home' # change to some better value
