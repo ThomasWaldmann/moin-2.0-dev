@@ -54,7 +54,7 @@ class Config(DefaultConfig):
     logo_string = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
-    #page_front_page = u'FrontPage' # change to some better value
+    #item_root = u'Home' # change to some better value
 
 
 MOINCFG = Config # Flask only likes uppercase stuff

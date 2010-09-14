@@ -315,8 +315,8 @@ class ThemeSupport(object):
         @rtype: list
         @return: list of item names
         """
-        return [self.cfg.page_front_page,
-                self.translated_item_name(self.cfg.page_front_page)
+        return [self.cfg.item_root,
+                self.translated_item_name(self.cfg.item_root)
                ]
 
 

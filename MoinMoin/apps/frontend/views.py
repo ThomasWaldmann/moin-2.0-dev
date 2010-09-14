@@ -45,7 +45,7 @@ def dispatch():
 
 @frontend.route('/')
 def show_root():
-    item_name = app.cfg.page_front_page
+    item_name = app.cfg.item_root
     location = url_for('frontend.show_item', item_name=item_name)
     return redirect(location)
 
