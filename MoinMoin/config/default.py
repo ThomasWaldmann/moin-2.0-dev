@@ -214,10 +214,15 @@ file. It should match the actual charset of the configuration file.
 """
 
         decode_names = (
-            'sitename', 'interwikiname', 'user_homewiki', 'logo', 'navi_bar',
+            'sitename', 'interwikiname', 'user_homewiki', 'navi_bar',
+            'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
-            )
+            'superuser', 'textchas_disabled_group', 'supplementation_item_names',
+            'logo', 'credits', 'html_pagetitle',
+            'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
+            'html_head', 'html_head_queries', 'html_head_posts', 'html_head_index', 'html_head_normal',
+        )
 
         for name in decode_names:
             attr = getattr(self, name, None)
