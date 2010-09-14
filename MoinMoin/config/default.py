@@ -221,7 +221,7 @@ file. It should match the actual charset of the configuration file.
 
         for name in decode_names:
             attr = getattr(self, name, None)
-            if attr:
+            if attr is not None:
                 # Try to decode strings
                 if isinstance(attr, str):
                     try:
