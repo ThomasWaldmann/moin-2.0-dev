@@ -16,10 +16,12 @@
             <input id="fullsearch" name="fullsearch" type="submit" value="{{ _('Text') }}" />
         </div>
     </form>
-    
+
+    {% if cfg.logo %}
     <div id="moin-logo">
-        <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo_string }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
     </div>
+    {% endif %}
 
     <div id="moin-username">
         {% if user.valid -%}

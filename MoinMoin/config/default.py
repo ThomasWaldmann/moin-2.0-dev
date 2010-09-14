@@ -98,12 +98,7 @@ class ConfigFunctionality(object):
         except ValueError:
             raise error.ConfigurationError("Invalid locale_default value (give something like 'en_US').")
 
-        # Use site name as default name-logo
-        if self.logo_string is None:
-            self.logo_string = self.sitename
-
         # post process
-
         self.auth_can_logout = []
         self.auth_login_inputs = []
         found_names = []
@@ -219,7 +214,7 @@ file. It should match the actual charset of the configuration file.
 """
 
         decode_names = (
-            'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
+            'sitename', 'interwikiname', 'user_homewiki', 'logo', 'navi_bar',
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             )
@@ -411,7 +406,7 @@ options_no_group_name = {
     ('sitename', u'Untitled Wiki',
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
-    ('logo_string', None, "The wiki logo top of page, HTML is allowed (`<img>` is possible as well) [Unicode]"),
+    ('logo', None, "Text (html-escaped) or html fragment (html5, xml variant) shown as logo. [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`)"),
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
@@ -465,7 +460,7 @@ options_no_group_name = {
        '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
      ],
-     'list with html fragments with logos or strings for crediting.'),
+     'list with html5 (xmlish) fragments with logos or strings for crediting.'),
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
