@@ -110,20 +110,20 @@ def create_app(flask_config_file=None, flask_config_dict=None,
 
 
 def get_locale():
-    lang = None
+    locale = None
     # this might be called at a time when flaskg.user is not setup yet:
     u = getattr(flaskg, 'user', None)
     if u and u.locale is not None:
         # locale is given in user profile, use it
-        lang = u.locale
-    elif not app.cfg.language_ignore_browser:
+        locale = u.locale
+    else:
         # try to guess the language from the user accept
         # header the browser transmits. The best match wins.
         supported_languages = ['de', 'fr', 'en'] # XXX
-        lang = request.accept_languages.best_match(supported_languages)
-    if not lang:
-        lang = app.cfg.language_default
-    return lang
+        locale = request.accept_languages.best_match(supported_languages)
+    if not locale:
+        locale = app.cfg.locale_default
+    return locale
 
 
 def get_timezone():

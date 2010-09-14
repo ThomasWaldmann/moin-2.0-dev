@@ -151,7 +151,7 @@ class TestLoginWithPassword(object):
         email = "__TestUser__@moinhost"
         self.createUser(name, password, email=email)
         theuser = user.User(name=name)
-        assert theuser.email == ""
+        assert theuser.email is None
 
     def test_for_email_attribut_by_uid(self):
         """

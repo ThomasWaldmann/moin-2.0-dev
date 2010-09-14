@@ -55,12 +55,12 @@ class TextCha(object):
         textchas = cfg.textchas
         use_textchas = disabled_group and user.name and user.name in groups.get(disabled_group, [])
         if textchas and use_textchas:
-            langs = [user.getLang(), cfg.language_default, 'en', ]
-            for lang in langs:
-                logging.debug(u"TextCha: trying language == '%s'." % lang)
-                if lang in textchas:
-                    logging.debug(u"TextCha: using lang = '%s'" % lang)
-                    return textchas[lang]
+            locales = [user.locale, cfg.locale_default, 'en', ]
+            for locale in locales:
+                logging.debug(u"TextCha: trying locale == '%s'." % locale)
+                if locale in textchas:
+                    logging.debug(u"TextCha: using locale = '%s'" % locale)
+                    return textchas[locale]
 
     def _init_qa(self, question=None):
         """ Initialize the question / answer.

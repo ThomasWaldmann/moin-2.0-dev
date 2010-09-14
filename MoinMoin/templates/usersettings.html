@@ -55,8 +55,6 @@
   <dl>
     {{ forms.render_select(gen, form['theme_name']) }}
     {{ forms.render_field(gen, form['css_url'], 'text') }}
-    {{ forms.render_field(gen, form['editor_ui'], 'text') }}
-    {{ forms.render_field(gen, form['editor_default'], 'text') }}
     {{ forms.render_field(gen, form['edit_rows'], 'text') }}
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
