@@ -71,14 +71,14 @@ class Config(DefaultConfig):
     # name of entry page / front page [Unicode], choose one of those:
 
     # a) if most wiki content is in a single language
-    #page_front_page = u"MyStartingPage"
+    #item_root = u"MyStartingPage"
 
     # b) if wiki content is maintained in many languages
-    #page_front_page = u"FrontPage"
+    #item_root = u"FrontPage"
 
     # The interwiki name used in interwiki links
     #interwikiname = u'UntitledWiki'
-    # Show the interwiki name (and link it to page_front_page) in the Theme,
+    # Show the interwiki name (and link it to item_root) in the Theme,
     # nice for farm setups or when your logo does not show the wiki's name.
     #show_interwiki = 1
 
@@ -119,10 +119,8 @@ class Config(DefaultConfig):
     # page names for system and help pages, those will be used automatically
     # according to the user selected language. [Unicode]
     navi_bar = [
-        # If you want to show your page_front_page here:
-        #u'%(page_front_page)s',
-        u'RecentChanges',
-        u'FindPage',
+        # If you want to show your item_root here:
+        #u'%(item_root)s',
         u'HelpContents',
     ]
 

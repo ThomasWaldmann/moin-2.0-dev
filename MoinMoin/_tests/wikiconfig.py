@@ -21,5 +21,5 @@ class Config(DefaultConfig):
     data_dir = join(_here, 'wiki', 'data') # needed for plugins package TODO
     _test_items_xml = join(_here, 'testitems.xml')
     content_acl = None
-    page_front_page = 'FrontPage'
+    item_root = 'FrontPage'
 

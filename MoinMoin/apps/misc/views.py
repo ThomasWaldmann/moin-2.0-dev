@@ -51,7 +51,7 @@ def sitemap():
         sitemap.append((item.name, format_timestamp(rev.timestamp), changefreq, priority))
     # add an entry for root url
     try:
-        item = flaskg.storage.get_item(app.cfg.page_front_page)
+        item = flaskg.storage.get_item(app.cfg.item_root)
         rev = item.get_revision(-1)
         sitemap.append((u'', format_timestamp(rev.timestamp), "hourly", "1.0"))
     except NoSuchItemError:

@@ -125,7 +125,7 @@ class ConfigFunctionality(object):
         self._site_plugin_lists = {}
 
         # we replace any string placeholders with config values
-        # e.g u'%(page_front_page)s' % self
+        # e.g u'%(item_root)s' % self
         self.navi_bar = [elem % self for elem in self.navi_bar]
 
         # check if python-xapian is installed
@@ -220,7 +220,7 @@ file. It should match the actual charset of the configuration file.
 
         decode_names = (
             'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
-            'page_front_page', 'page_license_page', 'mail_from',
+            'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             )
 
@@ -458,7 +458,7 @@ options_no_group_name = {
     ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
-    ('page_credits',
+    ('credits',
      [
        '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
        '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
@@ -469,8 +469,7 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
-    ('page_license_enabled', False, 'if True, show a license hint in page editor.'),
-    ('page_license_page', u'WikiLicense', 'Page linked from the license hint. [Unicode]'),
+    ('item_license', u'', 'if set, show the license item within the editor. [Unicode]'),
     ('edit_locking', 'warn 10', "Editor locking policy: `None`, `'warn <timeout in minutes>'`, or `'lock <timeout in minutes>'`"),
     ('edit_ticketing', True, None),
   )),
@@ -492,9 +491,8 @@ options_no_group_name = {
      'If this points to an xml file, the current storage backend(s) content is saved into that file upon the first request.'),
   )),
   # ==========================================================================
-  'pages': ('Special page names', None, (
-    ('page_front_page', u'Home',
-     "Name of the front page. We don't expect you to keep the default. [Unicode]"),
+  'items': ('Special item names', None, (
+    ('item_root', u'Home', "Name of the root item (aka 'front page'). [Unicode]"),
 
     # the following regexes should match the complete name when used in free text
     # the group 'all' shall match all, while the group 'key' shall match the key only
