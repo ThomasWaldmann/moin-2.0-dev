@@ -18,14 +18,6 @@ parser_text_mimetype = ('plain', 'csv', 'rst', 'docbook', 'latex', 'tex', 'html'
 # When creating files, we use e.g. 0666 & config.umask for the mode:
 umask = 0770
 
-# Default value for the static stuff URL prefix (css, img, js).
-# Caution:
-# * do NOT use this directly, it is only the DEFAULT value to be used by
-#   server Config classes and by MoinMoin.config.default for app.cfg.
-# * must NOT end with '/'!
-# * some servers expect '/' at beginning and only 1 level deep.
-url_prefix_static = '/static'
-
 # Charset - we support only 'utf-8'. While older encodings might work,
 # we don't have the resources to test them, and there is no real
 # benefit for the user. IMPORTANT: use only lowercase 'utf-8'!
