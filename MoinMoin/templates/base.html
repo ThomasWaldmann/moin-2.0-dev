@@ -2,8 +2,8 @@
 <html>
 <head>
 {% block head %}
-    <meta charset="{{ theme.output_charset }}" />
-    {{ cfg.html_head }}
+    {% block head_meta %}
+    <meta charset="{{ theme.output_charset }}" />{# must be at the beginning #}
     {% if pi_refresh -%}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {%- endif %}
@@ -17,27 +17,29 @@
     {%- if theme.meta_description -%}
         <meta name="description" content="{{ theme.meta_description }}" />
     {%- endif %}
+    {% endblock %}
+
+    {% block head_misc %}
+    {{ cfg.html_head }}
+    {%- if html_head -%}
+        {{ html_head }}
+    {%- endif %}
+    {% endblock %}
+
+    {% block head_title %}
     <title>
     {%- if title -%}{{ title }}{% else %}{{ item_name }}{%- endif %} -
     {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %} {{ cfg.sitename|e }}{%- endif -%}
     </title>
+    {% endblock %}
+
+    {% block head_links %}
     <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}" />
     <link rel="archives" href="{{ url_for('frontend.history', item_name=item_name)|e }}" />
     {% set parent_item = theme.parent_item(item_name) %}
     {%- if parent_item -%}
         <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item)|e }}" />
     {%- endif %}
-    {%- if html_head -%}
-        {{ html_head }}
-    {%- endif %}
-    {% for src in ['jquery' ,'svg', 'common'] -%}
-        <script type="text/javascript" src="{{ url_for('.static', filename='common/js/%s.js' % src) }}"></script>
-    {% endfor %}
-    
-    {% for type, src in cfg.external_scripts -%}
-        <script type="{{ type }}" src="{{ src|e }}"></script>
-    {% endfor %}
-    
     {% for media, name in theme.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ url_for('.static', filename='%s/css/%s.css' % (theme.name, name))|e }}" />
     {% endfor %}
@@ -50,15 +52,25 @@
     {% if user.valid and user.css_url -%}
         <link media="all" rel="stylesheet" title="{{ user.name|e }}'s stylesheet" href="{{ user.css_url|e }}" />
     {%- endif %}
+    {% endblock %}
+
+    {% block head_scripts %}
+    {% for src in ['jquery' ,'svg', 'common'] -%}
+        <script src="{{ url_for('.static', filename='common/js/%s.js' % src) }}"></script>
+    {% endfor %}    
+    {% for type, src in cfg.external_scripts -%}
+        <script type="{{ type }}" src="{{ src|e }}"></script>
+    {% endfor %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <script type="text/javascript">
+    <script>
         <!--
         var search_hint = " {{ _('Search') }}";
         //-->
     </script>
+    {% endblock %}
 {% endblock %}
 </head>
 <body onload="actionsMenuInit('{{ _('More Actions:') }}'); {% if body_onload %}{{ body_onload }}{% endif %}" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">

@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
 {% import "utils.html" as utils %}
 
-{% block head %}
-{{ super() }}
-<link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
-{# universal edit button support #}
-{%- if user.may.write(item_name) and 'modify' not in cfg.actions_excluded -%}
+{% block head_links %}
+    {{ super() }}
+    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
+    {# universal edit button support #}
+    {%- if user.may.write(item_name) and 'modify' not in cfg.actions_excluded -%}
     <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
-{%- endif %}
+    {%- endif %}
 {% endblock %}
 
 {% import "editbar.html" as editbar with context %}
