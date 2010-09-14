@@ -27,7 +27,6 @@
 
 import os
 
-from MoinMoin.config import url_prefix_static
 from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -60,15 +59,6 @@ class Config(DefaultConfig):
     #            to use the default (see HelpOnAccessControlLists).
     namespace_mapping = create_simple_mapping('fs:' + data_dir)
 
-    # The URL prefix we use to access the static stuff (img, css, js).
-    # Note: moin runs a static file server at url_prefix_static path (relative
-    # to the script url).
-    # If you run your wiki script at the root of your site (/), just do NOT
-    # use this setting and it will automatically work.
-    # If you run your wiki script at /mywiki, you need to use this:
-    #url_prefix_static = '/mywiki' + url_prefix_static
-
-
     # Wiki identity ----------------------------------------------------
 
     # Site name, used by default for wiki name-logo [Unicode]
@@ -76,8 +66,7 @@ class Config(DefaultConfig):
 
     # Wiki logo. You can use an image, text or both. [Unicode]
     # For no logo or text, use '' - the default is to show the sitename.
-    # See also url_prefix setting below!
-    logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
+    logo_string = u'<img src="/static/common/moinmoin.png" alt="MoinMoin Logo">'
 
     # name of entry page / front page [Unicode], choose one of those:
 

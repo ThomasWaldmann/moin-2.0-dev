@@ -8,7 +8,6 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 
 import sys, os
 
-from MoinMoin.config import url_prefix_static
 from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -52,7 +51,7 @@ class Config(DefaultConfig):
 
     surge_action_limits = None # no surge protection
     sitename = u'My MoinMoin'
-    logo_string = u'<img src="%s/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">' % url_prefix_static
+    logo_string = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #page_front_page = u'FrontPage' # change to some better value

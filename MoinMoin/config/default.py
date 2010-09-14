@@ -143,10 +143,6 @@ class ConfigFunctionality(object):
         self.mail_enabled = (self.mail_smarthost is not None or self.mail_sendmail is not None) and self.mail_from
         self.mail_enabled = self.mail_enabled and True or False
 
-        # Cache variables for the properties below
-        if self.url_prefix_local is None:
-            self.url_prefix_local = self.url_prefix_static
-
         if self.namespace_mapping is None:
             raise error.ConfigurationError("No storage configuration specified! You need to define a namespace_mapping. " + \
                                            "For further reference, please see HelpOnStorageConfiguration.")
@@ -494,13 +490,6 @@ options_no_group_name = {
      'If this points to an xml file, the file is loaded into the storage backend(s) upon first request.'),
     ('save_xml', None,
      'If this points to an xml file, the current storage backend(s) content is saved into that file upon the first request.'),
-  )),
-  # ==========================================================================
-  'urls': ('URLs', None, (
-    ('url_prefix_static', config.url_prefix_static,
-     "used as the base URL for icons, css, etc."),
-    ('url_prefix_local', None,
-     "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
   )),
   # ==========================================================================
   'pages': ('Special page names', None, (
