@@ -13,7 +13,7 @@ from __future__ import absolute_import
 from flask import flaskg
 from werkzeug import url_decode, url_encode
 
-from MoinMoin import wikiutil
+from MoinMoin.util.interwiki import resolve_interwiki, join_wiki
 from MoinMoin.util.iri import Iri, IriPath
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
@@ -90,14 +90,14 @@ class ConverterExternOutput(ConverterBase):
 
         if input.authority:
             # interwiki link
-            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(input.authority, input.path[1:])
+            wikitag, wikiurl, wikitail, err = resolve_interwiki(input.authority, input.path[1:])
             if not err:
                 elem.set(html.class_, 'interwiki')
                 if do is not None:
                     # this will only work for wikis with compatible URL design
                     # for other wikis, don't use do=... in your interwiki links
                     wikitail = '/+' + do + wikitail
-                base = Iri(wikiutil.join_wiki(wikiurl, wikitail))
+                base = Iri(join_wiki(wikiurl, wikitail))
             else:
                 # TODO (for now, we just link to Self:item_name in case of
                 # errors, see code below)

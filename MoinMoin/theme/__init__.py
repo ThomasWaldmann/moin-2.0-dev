@@ -19,6 +19,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
 from MoinMoin import wikiutil, caching, user
+from MoinMoin.util.interwiki import split_interwiki, resolve_interwiki, join_wiki, getInterwikiHome
 
 
 class ThemeSupport(object):
@@ -104,9 +105,9 @@ class ThemeSupport(object):
         breadcrumbs = []
         trail = user.getTrail()
         for interwiki_item_name in trail:
-            wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
-            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
-            href = wikiutil.join_wiki(wiki_base_url, item_name)
+            wiki_name, item_name = split_interwiki(interwiki_item_name)
+            wiki_name, wiki_base_url, item_name, err = resolve_interwiki(wiki_name, item_name)
+            href = join_wiki(wiki_base_url, item_name)
             if wiki_name in [self.cfg.interwikiname, 'Self', ]:
                 exists = self.storage.has_item(item_name)
                 wiki_name = ''  # means "this wiki" for the theme code
@@ -123,12 +124,12 @@ class ThemeSupport(object):
         @return: arguments of user homepage link in tuple (wiki_href, aliasname, title, exists)
         """
         user = self.user
-
-        wikiname, itemname = wikiutil.getInterwikiHome()
         name = user.name
         aliasname = user.aliasname
         if not aliasname:
             aliasname = name
+
+        wikiname, itemname = getInterwikiHome(name)
         title = "%s @ %s" % (aliasname, wikiname)
         # link to (interwiki) user homepage
         if wikiname == "Self":
@@ -136,8 +137,8 @@ class ThemeSupport(object):
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
-        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wikiname, itemname)
-        wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
+        wiki_name, wiki_base_url, item_name, err = resolve_interwiki(wikiname, itemname)
+        wiki_href = join_wiki(wiki_base_url, item_name)
         return wiki_href, aliasname, title, exists
 
     def split_navilink(self, text, localize=1):
@@ -187,9 +188,9 @@ class ThemeSupport(object):
             target = target[5:]
 
         # try handling interwiki links
-        wiki_name, item_name = wikiutil.split_interwiki(target)
-        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(wiki_name, item_name)
-        href = wikiutil.join_wiki(wiki_base_url, item_name)
+        wiki_name, item_name = split_interwiki(target)
+        wiki_name, wiki_base_url, item_name, err = resolve_interwiki(wiki_name, item_name)
+        href = join_wiki(wiki_base_url, item_name)
         if wiki_name not in [self.cfg.interwikiname, 'Self', ]:
             if not title:
                 title = item_name
@@ -352,8 +353,8 @@ def get_editor_info(rev, external=False):
                 uri = url_for('frontend.show_item', item_name=name, _external=external)
             else:
                 css = 'editor homepage interwiki'
-                wt, wu, tail, err = wikiutil.resolve_interwiki(homewiki, name)
-                uri = wikiutil.join_wiki(wu, tail)
+                wt, wu, tail, err = resolve_interwiki(homewiki, name)
+                uri = join_wiki(wu, tail)
 
     result = dict(name=name, text=text, css=css, title=title)
     if uri:

@@ -9,7 +9,7 @@
 from flask import current_app as app
 
 from MoinMoin.util.tree import moin_page, xlink
-from MoinMoin import wikiutil
+from MoinMoin.util.interwiki import join_wiki
 from MoinMoin.macro2._base import MacroBlockBase
 
 class Macro(MacroBlockBase):
@@ -19,7 +19,7 @@ class Macro(MacroBlockBase):
 
         iw_list = moin_page.list()
         for tag, url in iwlist:
-            href = wikiutil.join_wiki(url, 'RecentChanges')
+            href = join_wiki(url, 'RecentChanges')
             link = moin_page.a(attrib={xlink.href: href}, children=[tag])
             label = moin_page.code(children=[link])
             iw_item_label = moin_page.list_item_label(children=[label])
