@@ -81,7 +81,7 @@
                 <div>
                     <label>{{ _('More Actions:') }}</label>
                     <select name="endpoint" id="moin-actionsmenu-select">
-                        {% for title, disabled, endpoint in theme.actions_menu_options(item_name) %}
+                        {% for title, disabled, endpoint in theme_supp.actions_menu_options(item_name) %}
                             <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}
                     </select>

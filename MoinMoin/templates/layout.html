@@ -2,7 +2,7 @@
 
 {% block layout %}
 
-{{ theme.emit_custom_html(cfg.html_before_header) }}
+{{ theme_supp.emit_custom_html(cfg.html_before_header) }}
 
 <div id="moin-header">
 {% block header %}
@@ -19,14 +19,14 @@
 
     {% if cfg.logo %}
     <div id="moin-logo">
-        <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
     </div>
     {% endif %}
 
     <div id="moin-username">
         {% if user.valid -%}
             {% if user.name -%}
-                {% set wiki_href, aliasname, title, exists = theme.userhome() %}
+                {% set wiki_href, aliasname, title, exists = theme_supp.userhome() %}
                 <a href="{{ wiki_href|e }}" {% if not exists %}class="nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
                     {{ aliasname }}
                 </a>
@@ -42,7 +42,7 @@
                 </a>
             {% endif %}
         {% else %}
-            <a href="{{ theme.login_url()|e }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
+            <a href="{{ theme_supp.login_url()|e }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
         {%- endif %}
     </div>
 
@@ -50,7 +50,7 @@
     <div id="moin-locationline">
         {% if cfg.show_interwiki -%}
         <span id="moin-interwiki">
-            <a href="{{ url_for('frontend.show_item', item_name=theme.translated_item_name(cfg.item_root))|e }}" rel="nofollow">
+            <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}" rel="nofollow">
                 {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
             </a>
             <span class="sep">: </span>
@@ -58,7 +58,7 @@
         {%- endif %}
         <span id="moin-pagelocation">
             <span class="moin-pagepath">
-                {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) -%}
+                {% for segment_name, segment_path, exists in theme_supp.location_breadcrumbs(item_name) -%}
                     <a href="{{ url_for('frontend.show_item', item_name=segment_path)|e }}" {% if not exists %}class="nonexistent"{% endif %}>
                         {{ segment_name|shorten_item_name }}
                     </a>
@@ -68,7 +68,7 @@
         </span>
     </div>
 
-    {% set trail_items = theme.path_breadcrumbs() %}
+    {% set trail_items = theme_supp.path_breadcrumbs() %}
     {% if trail_items %}
         <div id="moin-pagetrail">
         {% for wiki_name, item_name, item_href, exists, err in trail_items %}
@@ -87,7 +87,7 @@
     {% endif %}
 
     <ul id="moin-navibar">
-        {% for cls, url, text, title in theme.navibar(item_name) %}
+        {% for cls, url, text, title in theme_supp.navibar(item_name) %}
             <li class="{{ cls }}">
                 <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
             </li>
@@ -105,9 +105,9 @@
 {% endblock %}
 </div>
 
-{{ theme.emit_custom_html(cfg.html_after_header) }}
+{{ theme_supp.emit_custom_html(cfg.html_after_header) }}
 
-<div id="moin-page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
+<div id="moin-page" lang="{{ theme_supp.content_lang }}" dir="{{ theme_supp.content_dir }}">
     {% block item -%}
         {# If you want editbar in your template, extend from show.html, not from here. #}
         <div id="moin-content">
@@ -118,7 +118,7 @@
     {%- endblock %}
 </div>
 
-{{ theme.emit_custom_html(cfg.html_before_footer) }}
+{{ theme_supp.emit_custom_html(cfg.html_before_footer) }}
 
 <div id="moin-footer">
 {% block footer %}
@@ -131,7 +131,7 @@
 {% endblock %}
 </div>
 
-{{ theme.emit_custom_html(cfg.html_after_footer) }}
+{{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
 
 {%- set null = clock.stop('total') -%}
 {%- set timing_information = clock.dump() -%}

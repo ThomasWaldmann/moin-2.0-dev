@@ -3,7 +3,7 @@
 <head>
 {% block head %}
     {% block head_meta %}
-    <meta charset="{{ theme.output_charset }}" />{# must be at the beginning #}
+    <meta charset="{{ theme_supp.output_charset }}" />{# must be at the beginning #}
     {% if pi_refresh -%}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {%- endif %}
@@ -11,11 +11,11 @@
         user.edit_on_doubleclick and user.may.write(item_name) -%}
             <meta name="edit_on_doubleclick" content="1" />
     {%- endif %}
-    {%- if theme.meta_keywords -%}
-        <meta name="keywords" content="{{ theme.meta_keywords }}" />
+    {%- if theme_supp.meta_keywords -%}
+        <meta name="keywords" content="{{ theme_supp.meta_keywords }}" />
     {%- endif %}
-    {%- if theme.meta_description -%}
-        <meta name="description" content="{{ theme.meta_description }}" />
+    {%- if theme_supp.meta_description -%}
+        <meta name="description" content="{{ theme_supp.meta_description }}" />
     {%- endif %}
     {% endblock %}
 
@@ -36,12 +36,12 @@
     {% block head_links %}
     <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}" />
     <link rel="archives" href="{{ url_for('frontend.history', item_name=item_name)|e }}" />
-    {% set parent_item = theme.parent_item(item_name) %}
+    {% set parent_item = theme_supp.parent_item(item_name) %}
     {%- if parent_item -%}
         <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item)|e }}" />
     {%- endif %}
-    {% for media, name in theme.stylesheets -%}
-        <link media="{{ media }}" rel="stylesheet" href="{{ url_for('.static', filename='%s/css/%s.css' % (theme.name, name))|e }}" />
+    {% for media, name in theme_supp.stylesheets -%}
+        <link media="{{ media }}" rel="stylesheet" href="{{ url_for('.static', filename='%s/css/%s.css' % (theme_supp.name, name))|e }}" />
     {% endfor %}
     {% for media, url, title, alternate in cfg.stylesheets -%}
         <link media="{{ media }}" href="{{ url|e }}"
@@ -73,7 +73,7 @@
     {% endblock %}
 {% endblock %}
 </head>
-<body onload="actionsMenuInit('{{ _('More Actions:') }}'); {% if body_onload %}{{ body_onload }}{% endif %}" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+<body onload="actionsMenuInit('{{ _('More Actions:') }}'); {% if body_onload %}{{ body_onload }}{% endif %}" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
 {% block layout %}
     <h1>Extend this block only if you want to change layout. If you want to put content, extends layout.html and use placeholders item and content.</h1>
 {% endblock %}
