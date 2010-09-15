@@ -615,11 +615,11 @@ TD.tip {
     margin-top: 8px; /*to align text with bg graphic*/
 }
 
-#moin-content div.tip { background-image: url("../img/admon-tip.png"); }
-#moin-content div.note { background-image: url("../img/admon-note.png"); }
-#moin-content div.important { background-image: url("../img/admon-important.png"); }
-#moin-content div.caution { background-image: url("../img/admon-caution.png"); }
-#moin-content div.warning { background-image: url("../img/admon-warning.png"); }
+#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
+#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
+#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
+#moin-content div.caution { background-image: url("../img/admonitions/caution.png"); }
+#moin-content div.warning { background-image: url("../img/admonitions/warning.png"); }
 
 /* remove borders of fieldset in copy/rename/delete/revert/modify actions */
 #moin-content form fieldset {
