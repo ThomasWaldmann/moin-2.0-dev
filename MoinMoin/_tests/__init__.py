@@ -3,7 +3,8 @@
     MoinMoin - some common code for testing
 
     @copyright: 2007 MoinMoin:KarolNowak,
-                2008 MoinMoin:ThomasWaldmann, MoinMoin:ReimarBauer
+                2008 MoinMoin:ThomasWaldmann,
+                2008, 2010 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -12,7 +13,7 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin.items import Item, ACL, SOMEDICT
+from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
 from MoinMoin import config, security
@@ -52,10 +53,11 @@ def become_superuser(username=u"SuperUser"):
     if username not in app.cfg.superuser:
         app.cfg.superuser.append(username)
 
-# Creating and destroying test pages --------------------------------
+# Creating and destroying test items --------------------------------
 
-def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None, somedict=None):
-    """ create a page with some content """
+def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None,
+                somedict=None, groupmember=None):
+    """ create a item with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
     item = Item.create(itemname)
@@ -64,16 +66,27 @@ def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None, somedi
         meta[ACL] = acl
     if somedict is not None:
         meta[SOMEDICT] = somedict
+    if groupmember is not None:
+        meta[USERGROUP] = groupmember
     item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
 
-def append_item(itemname, content):
-    """ appends some content to an existing page """
+def append_item(itemname, content, groupmember=None):
+    """ appends some content to an existing item """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = Item.create(itemname)
-    content = "%s\n%s\n"% (item.data, content)
-    item._save({}, content)
+    meta = {}
+    if flaskg.storage.has_item(itemname):
+        item = flaskg.storage.get_item(itemname)
+        rev = item.get_revision(-1)
+        group = rev.get(USERGROUP, {})
+        mimetype = rev.get("mimetype", {})
+    if groupmember is not None:
+        item = Item.create(itemname)
+        group.extend(groupmember)
+        meta[USERGROUP] = group
+
+    item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
 
 def create_random_string_list(length=14, count=10):
