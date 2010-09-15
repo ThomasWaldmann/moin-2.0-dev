@@ -3,24 +3,22 @@
 MoinMoin - MoinMoin.backends.wiki_group tests
 
 @copyright: 2003-2004 by Juergen Hermann <jh@web.de>,
-            2007,2009 by MoinMoin:ThomasWaldmann
-            2008 by MoinMoin:MelitaMihaljevic
-            2009 by MoinMoin:DmitrijsMilajevs
+            2007,2009 by MoinMoin:ThomasWaldmann,
+            2008 by MoinMoin:MelitaMihaljevic,
+            2009 by MoinMoin:DmitrijsMilajevs,
+            2010 by MoinMoin:ReimarBauer
 @license: GNU GPL, see COPYING for details.
 """
 
-import py.test
-py.test.skip("mostly broken")
-
-import re, shutil
+import py
 
 from flask import current_app as app
-
+from flask import flaskg
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
-from MoinMoin.datastruct import WikiGroups, GroupDoesNotExistError
-from MoinMoin import Page, security
+from MoinMoin.datastruct import GroupDoesNotExistError
+from MoinMoin import security
 from MoinMoin.user import User
-from MoinMoin._tests import append_item, become_trusted, create_item, create_random_string_list, wikiconfig
+from MoinMoin._tests import append_item, become_trusted, create_item, create_random_string_list
 
 
 class TestWikiGroupBackend(GroupsBackendTest):
@@ -31,33 +29,33 @@ class TestWikiGroupBackend(GroupsBackendTest):
     def setup_method(self, method):
         become_trusted()
         for group, members in self.test_groups.iteritems():
-            page_text = ' * %s' % '\n * '.join(members)
-            create_item(group, page_text)
+            text = "This is a group item"
+            create_item(group, text, groupmember=members)
 
-    def test_rename_group_page(self):
+    def test_rename_group_item(self):
         """
-        Tests if the groups cache is refreshed after renaming a Group page.
+        Tests if the groups cache is refreshed after renaming a group item.
         """
-        request = self.request
         become_trusted()
-
-        page = create_item(u'SomeGroup', u" * ExampleUser")
-        page.rename(u'AnotherGroup')
+        text = u"This is a group item"
+        item = create_item(u'SomeGroup', text, groupmember=["ExampleUser"])
+        item.rename(u'AnotherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'AnotherGroup']
         assert result
 
         py.test.raises(GroupDoesNotExistError, lambda: flaskg.groups[u'SomeGroup'])
 
-    def test_copy_group_page(self):
+    def test_copy_group_item(self):
         """
-        Tests if the groups cache is refreshed after copying a Group page.
+        Tests if the groups cache is refreshed after copying a group item.
         """
-        request = self.request
-        become_trusted()
+        py.test.skip("item.copy() is not finished")
 
-        page = create_item(u'SomeGroup', u" * ExampleUser")
-        page.copy(u'SomeOtherGroup')
+        become_trusted()
+        text = u"This is a group item"
+        item = create_item(u'SomeGroup', text, groupmember=["ExampleUser"])
+        item.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'SomeOtherGroup']
         assert result
@@ -65,109 +63,83 @@ class TestWikiGroupBackend(GroupsBackendTest):
         result = u'ExampleUser' in flaskg.groups[u'SomeGroup']
         assert result
 
-    def test_appending_group_page(self):
+    def test_appending_group_item(self):
         """
         Test scalability by appending a name to a large list of group members.
         """
-        request = self.request
         become_trusted()
-
+        text = "This is a group item"
         # long list of users
-        page_content = [u" * %s" % member for member in create_random_string_list(length=15, count=1234)]
+        members = create_random_string_list(length=15, count=1234)
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', "\n".join(page_content))
-        append_item(u'UserGroup', u' * %s' % test_user)
+        create_item(u'UserGroup', text, groupmember=members)
+        append_item(u'UserGroup', text, groupmember=[test_user])
         result = test_user in flaskg.groups['UserGroup']
 
         assert result
 
-    def test_user_addition_to_group_page(self):
+    def test_user_addition_to_group_item(self):
         """
         Test addition of a username to a large list of group members.
         """
-        request = self.request
         become_trusted()
 
         # long list of users
-        page_content = [u" * %s" % member for member in create_random_string_list()]
-        create_item(u'UserGroup', "\n".join(page_content))
+        members = create_random_string_list()
+        text = "This is a group item"
 
+        create_item(u'UserGroup', text, groupmember=members)
         new_user = create_random_string_list(length=15, count=1)[0]
-        append_item(u'UserGroup', u' * %s' % new_user)
-        user = User(name=new_user)
-        if not user.exists():
-            User(name=new_user, password=new_user).save()
+        append_item(u'UserGroup', text, groupmember=[new_user])
 
         result = new_user in flaskg.groups[u'UserGroup']
         assert result
 
-    def test_member_removed_from_group_page(self):
+    def test_member_removed_from_group_item(self):
         """
         Tests appending a member to a large list of group members and
-        recreating the page without the member.
+        recreating the item without the member.
         """
-        request = self.request
         become_trusted()
 
         # long list of users
-        page_content = [u" * %s" % member for member in create_random_string_list()]
-        page_content = "\n".join(page_content)
-        create_item(u'UserGroup', page_content)
+        members = create_random_string_list()
+        text = u"This is a group item"
+        create_item(u'UserGroup', text, groupmember=members)
 
         # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', page_content + '\n * %s' % test_user)
+        create_item(u'UserGroup', text, groupmember=[test_user])
         result = test_user in flaskg.groups[u'UserGroup']
         assert result
 
         # updates the text without test_user
-        create_item(u'UserGroup', page_content)
+        create_item(u'UserGroup', text)
         result = test_user in flaskg.groups[u'UserGroup']
         assert not result
 
-    def test_group_page_user_addition_trivial_change(self):
-        """
-        Test addition of a user to a group page by trivial change.
-        """
-        request = self.request
-        become_trusted()
-
-        test_user = create_random_string_list(length=15, count=1)[0]
-        member = u" * %s\n" % test_user
-        page = create_item(u'UserGroup', member)
-
-        # next member saved  as trivial change
-        test_user = create_random_string_list(length=15, count=1)[0]
-        member = u" * %s\n" % test_user
-        page = create_item(u'UserGroup', member)
-
-        result = test_user in flaskg.groups[u'UserGroup']
-
-        assert result
-
-    def test_wiki_backend_page_acl_append_item(self):
+    def test_wiki_backend_item_acl_usergroupmember_item(self):
         """
         Test if the wiki group backend works with acl code.
         First check acl rights of a user that is not a member of group
-        then add user member to a page group and check acl rights
+        then add user member to an item group and check acl rights
         """
-        request = self.request
         become_trusted()
-
-        create_item(u'NewGroup', u" * ExampleUser")
+        text = u"This is a group item"
+        create_item(u'NewGroup', text, groupmember=["ExampleUser"])
 
         acl_rights = ["NewGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
         has_rights_before = acl.may(u"AnotherUser", "read")
 
-        # update page - add AnotherUser to a page group NewGroup
-        append_item(u'NewGroup', u" * AnotherUser")
+        # update item - add AnotherUser to a item group NewGroup
+        append_item(u'NewGroup', text, groupmember=["AnotherUser"])
 
         has_rights_after = acl.may(u"AnotherUser", "read")
 
-        assert not has_rights_before, 'AnotherUser has no read rights because in the beginning he is not a member of a group page NewGroup'
-        assert has_rights_after, 'AnotherUser must have read rights because after appendage he is member of NewGroup'
+        assert not has_rights_before, 'AnotherUser has no read rights because in the beginning he is not a member of a group item NewGroup'
+        assert has_rights_after, 'AnotherUser must have read rights because after appenditem he is member of NewGroup'
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_groups']
 
