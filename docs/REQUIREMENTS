@@ -106,6 +106,12 @@ Note:
 flask-script requires argparse, which we added also.
 
 
+flask-themes
+============
+shipped: 0.1
+minimum: 0.1(?)
+
+
 werkzeug (WSGI toolkit)
 =======================
 shipped: 0.7pre
