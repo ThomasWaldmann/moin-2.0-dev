@@ -14,9 +14,10 @@ import re
 import difflib
 import time
 
-from flask import request, url_for, flash, render_template, Response, redirect, session
+from flask import request, url_for, flash, Response, redirect, session
 from flask import flaskg
 from flask import current_app as app
+from flaskext.themes import get_themes_list
 
 from flatland import Form, String, Integer, Boolean, Enum
 from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
@@ -28,6 +29,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
+from MoinMoin.theme import render_template
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
@@ -746,14 +748,6 @@ class UserSettingsNotificationForm(Form):
     submit = String.using(default=N_('Save'), optional=True)
 
 
-class UserSettingsUIForm(Form):
-    name = 'usersettings_ui'
-    theme_name = Enum.using(label=N_('Theme name')).valued('modernized')
-    css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
-    edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
-    submit = String.using(default=N_('Save'), optional=True)
-
-
 class UserSettingsNavigationForm(Form):
     name = 'usersettings_navigation'
     # TODO: find a good way to handle quicklinks here
@@ -781,7 +775,7 @@ def usersettings(part):
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'User Settings' # XXX
 
-    # this can't be global because we need app object, which is only available within a request:
+    # these forms can't be global because we need app object, which is only available within a request:
     class UserSettingsPersonalForm(Form):
         name = 'usersettings_personal' # "name" is duplicate
         name = String.using(label=N_('Name')).validated_by(Present())
@@ -796,6 +790,15 @@ def usersettings(part):
         locale = Enum.using(label=N_('Locale')).with_properties(labels=dict(locales_available)).valued(*locales_keys)
         submit = String.using(default=N_('Save'), optional=True)
 
+    class UserSettingsUIForm(Form):
+        name = 'usersettings_ui'
+        themes_available = sorted([(t.identifier, t.name) for t in get_themes_list()],
+                                  key=lambda x: x[1])
+        themes_keys = [t[0] for t in themes_available]
+        theme_name = Enum.using(label=N_('Theme name')).with_properties(labels=dict(themes_available)).valued(*themes_keys)
+        css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
+        edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
+        submit = String.using(default=N_('Save'), optional=True)
 
     dispatch = dict(
         personal=UserSettingsPersonalForm,

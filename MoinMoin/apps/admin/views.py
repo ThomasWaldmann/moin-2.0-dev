@@ -10,13 +10,14 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from flask import request, url_for, render_template, flash, redirect
+from flask import request, url_for, flash, redirect
 from flask import current_app as app
 from flask import flaskg
 
 from werkzeug import escape
 
 from MoinMoin import _, N_
+from MoinMoin.theme import render_template
 from MoinMoin.apps.admin import admin
 from MoinMoin import user
 

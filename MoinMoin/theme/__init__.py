@@ -13,6 +13,7 @@ import os
 from flask import current_app as app
 from flask import flaskg
 from flask import url_for
+from flaskext.themes import get_theme, render_theme_template
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -20,6 +21,20 @@ logging = log.getLogger(__name__)
 from MoinMoin import _, N_
 from MoinMoin import wikiutil, caching, user
 from MoinMoin.util.interwiki import split_interwiki, resolve_interwiki, join_wiki, getInterwikiHome
+
+
+def get_current_theme():
+    # this might be called at a time when flaskg.user is not setup yet:
+    u = getattr(flaskg, 'user', None)
+    if u and u.theme_name is not None:
+        theme_name = u.theme_name
+    else:
+        theme_name = 'modernized' # XXX
+    return get_theme(theme_name)
+
+
+def render_template(template, **context):
+    return render_theme_template(get_current_theme(), template, **context)
 
 
 class ThemeSupport(object):
@@ -35,8 +50,7 @@ class ThemeSupport(object):
         ('projection',  'projection'),
         )
 
-    def __init__(self, cfg, name='modernized'):
-        self.name = name
+    def __init__(self, cfg):
         self.cfg = cfg
         self.user = flaskg.user
         self.storage = flaskg.storage
@@ -397,7 +411,9 @@ def setup_jinja_env():
                             # _, gettext, ngettext
                             'isinstance': isinstance,
                             'list': list,
-                            'theme_supp': ThemeSupport(app.cfg, flaskg.user.theme_name),
+                            # please note that flask-themes installs:
+                            # theme, theme_static
+                            'theme_supp': ThemeSupport(app.cfg),
                             'user': flaskg.user,
                             'storage': flaskg.storage,
                             'clock': flaskg.clock,
