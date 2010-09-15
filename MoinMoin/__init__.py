@@ -21,11 +21,12 @@ if support_dir not in sys.path:
 # monkey patching needs to be done after sys.path setup
 from MoinMoin.util import monkeypatch
 
-from flask import Flask, request, url_for, render_template, flash, session, flaskg
+from flask import Flask, request, url_for, flash, session, flaskg
 from flask import current_app as app
 from flaskext.babel import Babel
 from flaskext.babel import gettext as _
 from flaskext.babel import ngettext as N_
+from flaskext.themes import setup_themes
 
 from werkzeug import ImmutableDict
 
@@ -110,6 +111,7 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     babel = Babel(app)
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
+    setup_themes(app)
     return app
 
 

@@ -28,10 +28,11 @@ logging = log.getLogger(__name__)
 from flask import current_app as app
 from flask import flaskg
 
-from flask import request, url_for, send_file, render_template, Response, abort, escape
+from flask import request, url_for, send_file, Response, abort, escape
 from werkzeug import is_resource_modified
 
 from MoinMoin import _, N_
+from MoinMoin.theme import render_template
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError

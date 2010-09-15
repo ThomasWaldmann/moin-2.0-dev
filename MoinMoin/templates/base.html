@@ -41,7 +41,7 @@
         <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item)|e }}" />
     {%- endif %}
     {% for media, name in theme_supp.stylesheets -%}
-        <link media="{{ media }}" rel="stylesheet" href="{{ url_for('.static', filename='%s/css/%s.css' % (theme_supp.name, name))|e }}" />
+        <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name)|e }}" />
     {% endfor %}
     {% for media, url, title, alternate in cfg.stylesheets -%}
         <link media="{{ media }}" href="{{ url|e }}"

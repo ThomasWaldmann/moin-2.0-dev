@@ -132,7 +132,7 @@ class Converter(object):
             key = xlink.href
             # TODO: Retrieve the name of the theme used by the user
             #        to get the correct smiley image
-            attrib[key] = Iri(url_for('static', filename="modernized/img/smileys/%s" % icon))
+            attrib[key] = Iri(url_for('static', filename="images/smileys/%s" % icon))
             attrib[moin_page('type')] = "image/png"
             # We return an object element instead of the text
             return ET.Element(moin_page('object'), attrib=attrib, children=[smiley_text])
