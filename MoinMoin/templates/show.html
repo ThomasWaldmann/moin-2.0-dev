@@ -60,7 +60,7 @@
     {{ super() }}
     {% if rev %}
     <div id="moin-pagebottom">
-        <p id="moin-pageinfo" class="moin-info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+        <p id="moin-pageinfo" class="moin-info" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
             {{ item_name }}
             (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
