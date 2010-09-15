@@ -98,6 +98,14 @@ shipped: 0.7
 minimum: 0.7(?)
 
 
+flask-script
+============
+shipped: 0.3
+minimum: 0.3(?)
+Note:
+flask-script requires argparse, which we added also.
+
+
 werkzeug (WSGI toolkit)
 =======================
 shipped: 0.7pre
@@ -138,7 +146,11 @@ minimum: 2010h(?)
 
 Replacements for Python stdlib modules
 ======================================
-None currently.
+
+argparse
+========
+Not a replacement, but we took it from py 2.7 (which includes argparse) and
+added it for compatibility with py 2.6 (which doesn't include argparse).
 
 
 B) stuff below MoinMoin/web/static/htdocs/
