@@ -1,9 +1,23 @@
 #!/usr/bin/env python
 """
-    Start script for the Wiki server.
+moin script - issue moin commands (including starting the builtin server)
 
-    @copyright: 2010 MoinMoin:ThomasWaldmann
-    @license: GNU GPL, see COPYING for details.
+Usage:
+
+start server on 127.0.0.1:8080 (using wikiconfig_local.py / wikiconfig.py
+from same directory then):
+$ moin moin
+$ moin            # works also
+$ moin runserver  # works also, but port 5000
+
+start server with some specific config:
+$ moin moin -c configfile
+
+start shell:
+$ moin shell
+
+@copyright: 2010 MoinMoin:ThomasWaldmann
+@license: GNU GPL, see COPYING for details.
 """
 
 import sys
@@ -40,18 +54,20 @@ if moin_code:
     sys.path.insert(0, moin_code)
 
 
-# app is the Flask application
 from MoinMoin import create_app
-app = create_app(wiki_config)
+from flaskext.script import Manager, Server
 
-# please note: if you want to do some wsgi app wrapping, do it like shown below:
-#app.wsgi_app = somewrapper(app.wsgi_app)
+manager = Manager(create_app)
+manager.add_option('-c', '--config', dest='config', required=False)
+manager.add_command("moin", Server(host='127.0.0.1', port=8080))
 
-# get some configuration values for the builtin server:
-host = app.config.get('HOST', '127.0.0.1')
-port = app.config.get('PORT', 8080)
-debug = app.config.get('DEBUG', True) # XXX change default to False later
 
-# run the builtin server:
-app.run(host=host, port=port, debug=debug)
-
+if __name__ == "__main__":
+    args = sys.argv
+    if len(args) == 1:
+        # if we are called without params, just run the server
+        args.append('moin')
+    if '-c' not in args and '--config' not in args:
+        # if no config is given, use the wiki_config we discovered already
+        args.extend(['-c', wiki_config])
+    manager.run()

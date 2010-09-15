@@ -38,7 +38,7 @@ moindir = rootdir.join("..")
 
 from flask import flaskg
 
-from MoinMoin import create_app, before
+from MoinMoin import create_app_ext, before
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -79,9 +79,9 @@ def init_test_app(given_config):
         namespace_mapping=namespace_mapping,
         router_index_uri=router_index_uri,
     )
-    app = create_app(flask_config_dict=dict(SECRET_KEY='foobarfoobar'),
-                     moin_config_class=given_config,
-                     **more_config)
+    app = create_app_ext(flask_config_dict=dict(SECRET_KEY='foobarfoobar'),
+                         moin_config_class=given_config,
+                         **more_config)
     ctx = app.test_request_context('/')
     ctx.push()
     before()
