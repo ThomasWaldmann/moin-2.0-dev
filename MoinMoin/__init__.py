@@ -43,10 +43,14 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.theme import setup_jinja_env
 
+def create_app(config=None):
+    """simple wrapper around create_app_ext() for flask-script"""
+    return create_app_ext(flask_config_file=config)
 
-def create_app(flask_config_file=None, flask_config_dict=None,
-               moin_config_class=None, warn_default=True, **kwargs
-              ):
+
+def create_app_ext(flask_config_file=None, flask_config_dict=None,
+                   moin_config_class=None, warn_default=True, **kwargs
+                  ):
     """
     Factory for moin wsgi apps
 
