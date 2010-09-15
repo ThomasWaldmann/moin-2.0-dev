@@ -13,6 +13,9 @@ $ moin runserver  # works also, but port 5000
 start server with some specific config:
 $ moin moin -c configfile
 
+start server without debugger / reloader and on different host/port:
+$ moin moin --host=0.0.0.0 --port=8888 --no-debug --no-reload
+
 start shell:
 $ moin shell
 
