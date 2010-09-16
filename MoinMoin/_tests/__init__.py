@@ -94,7 +94,7 @@ def create_random_string_list(length=14, count=10):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return [u"%s" % random_string(length, chars) for counter in range(count)]
 
-def nuke_xapian_index(request):
+def nuke_xapian_index():
     """ completely delete everything in xapian index dir """
     fpath = os.path.join(app.cfg.cache_dir, 'xapian')
     if os.path.exists(fpath):
