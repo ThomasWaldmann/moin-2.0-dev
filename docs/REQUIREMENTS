@@ -96,6 +96,8 @@ flask-babel
 ===========
 shipped: 0.7
 minimum: 0.7(?)
+Note:
+flask-babel requires speaklater for lazy_gettext
 
 
 flask-script
@@ -142,6 +144,12 @@ shipped: 0.9.5 + patch
 minimum: 0.9.5(?)
 Note:
 0.9.5 needs patch from moin/2.0-dev changeset de6a753a8363 to remove its usage of pkg_resources (setuptools)
+
+
+speaklater
+==========
+shipped: 1.2
+minimum: 1.1(?)
 
 
 pytz
