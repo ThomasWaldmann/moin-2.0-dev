@@ -48,7 +48,6 @@ class ConfigFunctionality(object):
     auth_login_inputs = None
     _site_plugin_lists = None
     xapian_searchers = None
-    moinmoin_dir = None
 
     def __init__(self):
         """ Init Config instance """
@@ -58,10 +57,9 @@ class ConfigFunctionality(object):
             self._config_check()
 
         # define directories
-        self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ['cache', 'plugin', 'tmp', ]:
+        for dirname in ['cache', 'plugin', ]:
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
