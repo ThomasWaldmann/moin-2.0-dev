@@ -309,11 +309,10 @@ def get_bool(request, arg, name=None, default=None):
     else:
         if name:
             raise ValueError(
-                _('Argument "%s" must be a boolean value, not "%s"') % (
-                    name, arg))
+                _('Argument "%(name)s" must be a boolean value, not "%(value)s"', name=name, value=arg))
         else:
             raise ValueError(
-                _('Argument must be a boolean value, not "%s"') % arg)
+                _('Argument must be a boolean value, not "%(value)s"', value=arg))
 
 
 def get_int(request, arg, name=None, default=None):
@@ -340,11 +339,10 @@ def get_int(request, arg, name=None, default=None):
     except ValueError:
         if name:
             raise ValueError(
-                _('Argument "%s" must be an integer value, not "%s"') % (
-                    name, arg))
+                _('Argument "%(name)s" must be an integer value, not "%(value)s"', name=name, value=arg))
         else:
             raise ValueError(
-                _('Argument must be an integer value, not "%s"') % arg)
+                _('Argument must be an integer value, not "%(value)s"', value=arg))
 
 
 def get_float(request, arg, name=None, default=None):
@@ -370,11 +368,10 @@ def get_float(request, arg, name=None, default=None):
     except ValueError:
         if name:
             raise ValueError(
-                _('Argument "%s" must be a floating point value, not "%s"') % (
-                    name, arg))
+                _('Argument "%(name)s" must be a floating point value, not "%(value)s"', name=name, value=arg))
         else:
             raise ValueError(
-                _('Argument must be a floating point value, not "%s"') % arg)
+                _('Argument must be a floating point value, not "%(value)s"', value=arg))
 
 
 def get_complex(request, arg, name=None, default=None):
@@ -402,11 +399,10 @@ def get_complex(request, arg, name=None, default=None):
     except ValueError:
         if name:
             raise ValueError(
-                _('Argument "%s" must be a complex value, not "%s"') % (
-                    name, arg))
+                _('Argument "%(name)s" must be a complex value, not "%(value)s"', name=name, value=arg))
         else:
             raise ValueError(
-                _('Argument must be a complex value, not "%s"') % arg)
+                _('Argument must be a complex value, not "%(value)s"', value=arg))
 
 
 def get_unicode(request, arg, name=None, default=None):
@@ -460,13 +456,15 @@ def get_choice(request, arg, name=None, choices=[None], default_none=False):
     elif not arg in choices:
         if name:
             raise ValueError(
-                _('Argument "%s" must be one of "%s", not "%s"') % (
-                    name, '", "'.join([repr(choice) for choice in choices]),
-                    arg))
+                _('Argument "%(name)s" must be one of "%(choices)s", not "%(value)s"',
+                    name=name,
+                    choices='", "'.join([repr(choice) for choice in choices]),
+                    value=arg))
         else:
             raise ValueError(
-                _('Argument must be one of "%s", not "%s"') % (
-                    '", "'.join([repr(choice) for choice in choices]), arg))
+                _('Argument must be one of "%(choices)s", not "%(value)s"',
+                    choices='", "'.join([repr(choice) for choice in choices]),
+                    value=arg))
 
     return arg
 
@@ -712,7 +710,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
                                            defaults[argname], argname)
             if kwargs[argname] is None:
                 if isinstance(defaults[argname], required_arg):
-                    raise ValueError(_('Argument "%s" is required') % argname)
+                    raise ValueError(_('Argument "%(name)s" is required', name=argname))
                 if isinstance(defaults[argname], IEFArgument):
                     kwargs[argname] = defaults[argname].get_default()
 
@@ -724,8 +722,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     if kwargs_to_pass:
         kwargs['_kwargs'] = kwargs_to_pass
         if not allow_kwargs:
-            raise ValueError(_(u'No argument named "%s"') % (
-                kwargs_to_pass.keys()[0]))
+            raise ValueError(_(u'No argument named "%(name)s"', name=kwargs_to_pass.keys()[0]))
 
     return function(*fixed_args, **kwargs)
 
