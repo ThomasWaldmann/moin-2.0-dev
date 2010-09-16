@@ -36,6 +36,7 @@ from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            IS_SYSITEM, SYSITEM_VERSION
+from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
 
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -187,7 +188,7 @@ class FSPageBackend(Backend):
         """
         Returns the full path to the page directory.
         """
-        name = wikiutil.quoteWikinameFS(name)
+        name = quoteWikinameFS(name)
         path = os.path.join(self._path, 'pages', name, *args)
         return path
 
@@ -214,7 +215,7 @@ class FSPageBackend(Backend):
     def iteritems(self):
         pages_dir = os.path.join(self._path, 'pages')
         for f in os.listdir(pages_dir):
-            itemname = wikiutil.unquoteWikiname(f)
+            itemname = unquoteWikiname(f)
             try:
                 item = FsPageItem(self, itemname)
             except NoSuchItemError:
@@ -454,7 +455,7 @@ class FsAttachmentRevision(StoredRevision):
 
 
 from fs19_logfile import LogFile
-from MoinMoin import wikiutil
+
 
 class EditLog(LogFile):
     """ Access the edit-log and return metadata as the new api wants it. """
@@ -473,7 +474,7 @@ class EditLog(LogFile):
         # do some conversions/cleanups/fallbacks:
         result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
-        result[NAME] = wikiutil.unquoteWikiname(result[NAME])
+        result[NAME] = unquoteWikiname(result[NAME])
         action = result[EDIT_LOG_ACTION]
         extra = result[EDIT_LOG_EXTRA]
         if extra:

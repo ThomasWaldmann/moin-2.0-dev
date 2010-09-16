@@ -12,8 +12,8 @@ import py.test
 
 from flask import current_app as app
 
-from MoinMoin import wikiutil
 from MoinMoin.storage import Item
+from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
 from MoinMoin.storage.backends.fs19 import FSPageBackend, regenerate_acl
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -67,7 +67,7 @@ class TestFS19Backend(object):
         # populate it manually because the backend is just read-only
         join = os.path.join
         for name, revno, revdata, logdata, attachments in items:
-            pagedir = join(d, 'pages', wikiutil.quoteWikinameFS(name))
+            pagedir = join(d, 'pages', quoteWikinameFS(name))
             try:
                 os.makedirs(join(pagedir, 'revisions'))
                 os.makedirs(join(pagedir, 'attachments'))
