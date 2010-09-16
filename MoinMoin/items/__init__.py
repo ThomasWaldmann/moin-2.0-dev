@@ -198,6 +198,7 @@ class Item(object):
                 icon='smiley')
 
         # We can process the conversion
+        flaskg.clock.start('conv_in_dom')
         links = Iri(scheme='wiki', authority='', path='/' + self.name)
         input = self.feed_input_conv()
         doc = input_conv(input)
@@ -210,6 +211,7 @@ class Item(object):
         doc = macro_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
+        flaskg.clock.stop('conv_in_dom')
         return doc
 
     def _render_data(self):
@@ -220,12 +222,17 @@ class Item(object):
         html_conv = reg.get(type_moin_document,
                 Type('application/x-xhtml-moin-page'))
         doc = self.internal_representation()
+        flaskg.clock.start('conv_dom_html')
         doc = html_conv(doc)
+        flaskg.clock.stop('conv_dom_html')
 
         from array import array
         out = array('u')
+        flaskg.clock.start('conv_serialize')
         doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
-        return out.tounicode()
+        out = out.tounicode()
+        flaskg.clock.stop('conv_serialize')
+        return out
 
     def _render_data_xml(self):
         from MoinMoin.util.tree import moin_page, xlink, html
