@@ -60,9 +60,7 @@ class ThemeSupport(object):
         self.ui_dir = 'ltr' # XXX
         self.content_lang = flaskg.content_lang # XXX
         self.content_dir = 'ltr' # XXX
-        # for html head:
-        self.meta_keywords = ''
-        self.meta_description = ''
+        self.meta_items = [] # list of (name, content) for html head <meta>
 
     def translated_item_name(self, item_en):
         """
