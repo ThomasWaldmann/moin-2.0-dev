@@ -1,32 +1,8 @@
-AttachFile is dead
-------------------
-
-TODO: replace AttachList(pagename=None, mime_type='*') macro (removed) by SubItems macro (todo)
-mig script?
-
-TODO: same for AttachInfo(pagename=None) ?
-
 TODO: moin export dump
-
-TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
-
-
-Page / Page*Editor is almost dead, stuff moving to new MoinMoin.items package
------------------------------------------------------------------------------
-
-TODO: move functionality from there to MoinMoin.items.
-
-PageGraphicalEditor was removed, it contained only sending of FCKeditor and
-this currently is not used anyway. See 1.9 repo for latest code.
 
 MoinMoin.items has a Item hierarchy for highlevel items (!= storage items), like:
 Item, NonExistent, Binary, Image, Text, ...
-Currently it is all in one file, can be split later.
-
-Everything we want to be able to do with items should be implemented there.
-Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
-
-Show nicer error pages than what we have at the moment.
+TODO: Currently it is all in one file, can be split later.
 
 index pages: could filter by name (thus not displaying Trash/*, except if wanted)
 
