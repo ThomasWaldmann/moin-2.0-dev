@@ -37,6 +37,7 @@ from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            IS_SYSITEM, SYSITEM_VERSION
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
+from MoinMoin.storage.backends._flatutils import split_body
 
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -368,7 +369,7 @@ class FsPageRevision(StoredRevision):
                         EDIT_LOG_MTIME: os.path.getmtime(revpath),
                         EDIT_LOG_ACTION: u'SAVE',
                     }
-            meta, data = wikiutil.split_body(content)
+            meta, data = split_body(content)
             data = data.encode(config.charset)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
