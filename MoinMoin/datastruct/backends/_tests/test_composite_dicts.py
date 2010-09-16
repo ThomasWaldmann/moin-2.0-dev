@@ -28,10 +28,9 @@ class TestCompositeDict(DictsBackendTest):
         other_dict = {u'SomeOtherTestDict': {u'One': '1',
                                              u'Two': '2'}}
 
-        def dicts(self, request):
-            return CompositeDicts(request,
-                                  ConfigDicts(request, self.one_dict),
-                                  ConfigDicts(request, self.other_dict))
+        def dicts(self):
+            return CompositeDicts(ConfigDicts(self.one_dict),
+                                  ConfigDicts(self.other_dict))
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.composite_dicts']

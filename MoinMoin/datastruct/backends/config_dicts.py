@@ -17,8 +17,8 @@ class ConfigDict(BaseDict):
 
 class ConfigDicts(BaseDictsBackend):
 
-    def __init__(self, request, dicts):
-        super(ConfigDicts, self).__init__(request)
+    def __init__(self, dicts):
+        super(ConfigDicts, self).__init__()
 
         self._dicts = dicts
 
@@ -29,7 +29,7 @@ class ConfigDicts(BaseDictsBackend):
         return self._dicts.iterkeys()
 
     def __getitem__(self, dict_name):
-        return ConfigDict(request=self.request, name=dict_name, backend=self)
+        return ConfigDict(name=dict_name, backend=self)
 
     def _retrieve_items(self, dict_name):
         try:

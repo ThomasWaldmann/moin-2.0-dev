@@ -21,8 +21,8 @@ class ConfigLazyGroup(LazyGroup):
 
 class ConfigLazyGroups(LazyGroupsBackend):
 
-    def __init__(self, request, groups):
-        super(ConfigLazyGroups, self).__init__(request)
+    def __init__(self, groups):
+        super(ConfigLazyGroups, self).__init__()
 
         self._groups = groups
 
@@ -33,7 +33,7 @@ class ConfigLazyGroups(LazyGroupsBackend):
         return self._groups.iterkeys()
 
     def __getitem__(self, group_name):
-        return ConfigLazyGroup(self.request, group_name, self)
+        return ConfigLazyGroup(group_name, self)
 
     def _iter_group_members(self, group_name):
         if group_name in self:

@@ -15,9 +15,9 @@ class TestConfigDictsBackend(DictsBackendTest):
 
     class Config(wikiconfig.Config):
 
-        def dicts(self, request):
+        def dicts(self):
             dicts = DictsBackendTest.dicts
-            return ConfigDicts(request, dicts)
+            return ConfigDicts(dicts)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.config_dicts']
