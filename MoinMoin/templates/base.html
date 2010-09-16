@@ -11,12 +11,9 @@
         user.edit_on_doubleclick and user.may.write(item_name) -%}
             <meta name="edit_on_doubleclick" content="1" />
     {%- endif %}
-    {%- if theme_supp.meta_keywords -%}
-        <meta name="keywords" content="{{ theme_supp.meta_keywords }}" />
-    {%- endif %}
-    {%- if theme_supp.meta_description -%}
-        <meta name="description" content="{{ theme_supp.meta_description }}" />
-    {%- endif %}
+    {% for name, content in theme_supp.meta_items -%}
+        <meta name="{{ name|e }}" content="{{ content|e }}" />
+    {% endfor %}
     {% endblock %}
 
     {% block head_misc %}
