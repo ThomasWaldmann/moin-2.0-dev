@@ -27,9 +27,6 @@
 
 * Item: Support different output types again.
 
-* i18n: Provide replacement for percent hack in getText.
-  May work like % in logging.log.
-
 * Item: Converter-aware quickhelp.
   Possibilities:
   - Use help from converter $type -> application/x-moin-document.
@@ -38,8 +35,6 @@
   - Use another registry for the quickhelps within the converter framework.
 
 * Support for per-instance converters.
-
-* Remove unused formatters. Only compatibility and text_html will survive.
 
 * Fix GUI editor.
   - Don't expand macros and links(?) in HTML.
