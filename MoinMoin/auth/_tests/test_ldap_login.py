@@ -63,21 +63,21 @@ class TestMoinLDAPLogin(LDAPTstBase):
         """ Just try accessing the LDAP server and see if usera and userb are in LDAP. """
 
         # tests that must not authenticate:
-        u = handle_login(self.request, None, username='', password='')
+        u = handle_login(None, username='', password='')
         assert u is None
-        u = handle_login(self.request, None, username='usera', password='')
+        u = handle_login(None, username='usera', password='')
         assert u is None
-        u = handle_login(self.request, None, username='usera', password='userawrong')
+        u = handle_login(None, username='usera', password='userawrong')
         assert u is None
-        u = handle_login(self.request, None, username='userawrong', password='usera')
+        u = handle_login(None, username='userawrong', password='usera')
         assert u is None
 
         # tests that must authenticate:
-        u1 = handle_login(self.request, None, username='usera', password='usera')
+        u1 = handle_login(None, username='usera', password='usera')
         assert u1 is not None
         assert u1.valid
 
-        u2 = handle_login(self.request, None, username='userb', password='userb')
+        u2 = handle_login(None, username='userb', password='userb')
         assert u2 is not None
         assert u2.valid
 
@@ -113,7 +113,7 @@ class TestBugDefaultPasswd(LDAPTstBase):
             that default password or an empty password.
         """
         # do a LDAPAuth login (as a side effect, this autocreates the user profile):
-        u1 = handle_login(self.request, None, username='usera', password='usera')
+        u1 = handle_login(None, username='usera', password='usera')
         assert u1 is not None
         assert u1.valid
 
@@ -122,15 +122,15 @@ class TestBugDefaultPasswd(LDAPTstBase):
 
         # now try a MoinAuth login:
         # try the default password that worked in 1.7 up to rc1:
-        u2 = handle_login(self.request, None, username='usera', password='{SHA}NotStored')
+        u2 = handle_login(None, username='usera', password='{SHA}NotStored')
         assert u2 is None
 
         # try using no password:
-        u2 = handle_login(self.request, None, username='usera', password='')
+        u2 = handle_login(None, username='usera', password='')
         assert u2 is None
 
         # try using wrong password:
-        u2 = handle_login(self.request, None, username='usera', password='wrong')
+        u2 = handle_login(None, username='usera', password='wrong')
         assert u2 is None
 
 class TestTwoLdapServers(object):
@@ -223,7 +223,7 @@ class TestLdapFailover(object):
         """ Try if it does a failover to a secondary LDAP, if the primary fails. """
 
         # authenticate user (with primary slapd):
-        u1 = handle_login(self.request, None, username='usera', password='usera')
+        u1 = handle_login(None, username='usera', password='usera')
         assert u1 is not None
         assert u1.valid
 
@@ -231,7 +231,7 @@ class TestLdapFailover(object):
         self.ldap_envs[0].slapd.stop()
 
         # try if we can still authenticate (with the second slapd):
-        u2 = handle_login(self.request, None, username='usera', password='usera')
+        u2 = handle_login(None, username='usera', password='usera')
         assert u2 is not None
         assert u2.valid
 

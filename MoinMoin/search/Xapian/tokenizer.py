@@ -42,13 +42,12 @@ class WikiAnalyzer(object):
     mail_re = re.compile(r"[-_/,.]|(@)")
     alpha_num_re = re.compile(r"\d+|\D+")
 
-    def __init__(self, request=None, language=None):
+    def __init__(self, language=None):
         """
-        @param request: current request
         @param language: if given, the language in which to stem words
         """
         self.stemmer = None
-        if request and app.cfg.xapian_stemming and language:
+        if app.cfg.xapian_stemming and language:
             try:
                 stemmer = xapian.Stem(language)
                 # we need this wrapper because the stemmer returns a utf-8

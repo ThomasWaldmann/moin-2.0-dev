@@ -313,7 +313,7 @@ class BaseTextFieldSearch(BaseExpression):
         else:
             queries = []
             stemmed = []
-            analyzer = WikiAnalyzer(request=request, language=app.cfg.language_default)
+            analyzer = WikiAnalyzer(language=app.cfg.language_default)
 
             for term in self._pattern.split():
                 query_term = connection.query_field(self._field_to_search, term)

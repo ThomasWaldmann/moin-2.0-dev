@@ -20,7 +20,6 @@ class TestWikiDictsBackend(DictsBackendTest):
     # is WikiDicts backend.
 
     def setup_method(self, method):
-        request = self.request
         become_trusted()
 
         text = '''

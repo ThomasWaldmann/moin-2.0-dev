@@ -22,7 +22,7 @@ from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 
 XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
-def update_item(request, name, revno, meta, data):
+def update_item(name, revno, meta, data):
     become_trusted()
     try:
         item = flaskg.storage.create_item(name)
@@ -44,7 +44,7 @@ class TestSerializeRev(object):
 
     def test_serialize_rev(self):
         params = (u'foo1', 0, dict(m1=u"m1"), 'bar1')
-        item = update_item(self.request, *params)
+        item = update_item(*params)
         rev = item.get_revision(0)
         xmlfile = StringIO()
         serialize(rev, xmlfile)
@@ -68,7 +68,7 @@ class TestSerializeItem(object):
             (u'foo2', 1, dict(m1=u"m1r1"), 'baz2'),
         ]
         for params in testparams:
-            item = update_item(self.request, *params)
+            item = update_item(*params)
         xmlfile = StringIO()
         serialize(item, xmlfile)
         xml = xmlfile.getvalue()
@@ -103,7 +103,7 @@ class TestSerializeBackend(object):
             (u'foo4', 1, dict(m1=u"m1r1foo4"), 'baz2'),
         ]
         for params in testparams:
-            update_item(self.request, *params)
+            update_item(*params)
         xmlfile = StringIO()
         serialize(flaskg.storage, xmlfile)
         xml = xmlfile.getvalue()
