@@ -86,13 +86,16 @@
         </div>
     {% endif %}
 
-    <ul id="moin-navibar">
-        {% for cls, url, text, title in theme_supp.navibar(item_name) %}
+    {% set navibar_items = theme_supp.navibar(item_name) %}
+    {% if navibar_items %}
+        <ul id="moin-navibar">
+        {% for cls, url, text, title in navibar_items %}
             <li class="{{ cls }}">
                 <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
             </li>
         {% endfor %}
-    </ul>
+        </ul>
+    {% endif %}
 
     <div id="moin-pageline">
         <hr style="display:none;" />
