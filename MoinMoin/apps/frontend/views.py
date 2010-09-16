@@ -35,8 +35,6 @@ from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
 
-N_ = lambda x: x
-
 
 @frontend.route('/+dispatch', methods=['GET', ])
 def dispatch():
