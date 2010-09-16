@@ -25,7 +25,7 @@ from flask import Flask, request, url_for, flash, session, flaskg
 from flask import current_app as app
 from flaskext.babel import Babel
 from flaskext.babel import gettext as _
-from flaskext.babel import ngettext as N_
+from flaskext.babel import lazy_gettext as N_
 from flaskext.themes import setup_themes
 
 from werkzeug import ImmutableDict
