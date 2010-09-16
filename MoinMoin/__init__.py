@@ -281,8 +281,6 @@ def before():
     set_umask() # do it once per request because maybe some server
                 # software sets own umask
 
-    context = request # werkzeug contextlocal request object
-
     flaskg.unprotected_storage = app.unprotected_storage
     flaskg.user = setup_user()
 
@@ -295,8 +293,6 @@ def before():
     flaskg.storage = app.storage
 
     setup_jinja_env()
-
-    flaskg.context = context
 
     flaskg.clock.stop('init')
     # if return value is not None, it is the final response

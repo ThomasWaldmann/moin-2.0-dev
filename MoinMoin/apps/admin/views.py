@@ -33,7 +33,7 @@ def userbrowser():
     """
     # XXX add superuser check
     #isgroup = app.cfg.cache.item_group_regexact.search
-    #groupnames = list(flaskg.context.rootpage.getPageList(user='', filter=isgroup))
+    #groupnames = list(rootpage.getPageList(user='', filter=isgroup))
     user_accounts = []
     for uid in user.getUserList():
         u = user.User(uid)

@@ -428,7 +428,7 @@ class TestXapianSearch(BaseSearchTest):
                 raise
             py.test.skip('xapian is not installed')
 
-        nuke_xapian_index(self.request)
+        nuke_xapian_index()
         index = XapianIndex(self.request)
         # Additionally, pages which were not created but supposed to be searched
         # are indexed.
@@ -438,7 +438,7 @@ class TestXapianSearch(BaseSearchTest):
         super(TestXapianSearch, self).setup_class()
 
     def teardown_class(self):
-        nuke_xapian_index(self.request)
+        nuke_xapian_index()
 
     def test_get_all_documents(self):
         connection = self.get_moin_search_connection()

@@ -20,8 +20,7 @@ logging = log.getLogger(__name__)
 
 def chmod(name, mode, catchexception=True):
     """ change mode of some file/dir on platforms that support it.
-        usually you don't need this because we use os.umask() when importing
-        request.py
+        usually you don't need this because we use os.umask() in app init
     """
     try:
         os.chmod(name, mode)
