@@ -29,15 +29,13 @@ class BaseGroup(object):
     member is some arbitrary entity name (Unicode object).
     """
 
-    def __init__(self, request, name, backend):
+    def __init__(self, name, backend):
         """
         Initialize a group.
 
-        @param request
         @param name: moin group name
         @backend: backend object which created this object
         """
-        self.request = request
         self.name = name
         self._backend = backend
 
@@ -54,8 +52,7 @@ class BaseGroupsBackend(object):
     MoinMoin code.
     """
 
-    def __init__(self, request):
-        self.request = request
+    def __init__(self):
         self.item_group_regex = app.cfg.cache.item_group_regexact
 
     def is_group_name(self, member):
@@ -134,8 +131,8 @@ class LazyGroup(BaseGroup):
       * OtherGroup
     """
 
-    def __init__(self, request, name, backend):
-        super(LazyGroup, self).__init__(request, name, backend)
+    def __init__(self, name, backend):
+        super(LazyGroup, self).__init__(name, backend)
 
         if name not in backend:
             raise GroupDoesNotExistError(name)
@@ -173,9 +170,9 @@ class GreedyGroup(BaseGroup):
     Members of a group may be names of other groups.
     """
 
-    def __init__(self, request, name, backend):
+    def __init__(self, name, backend):
 
-        super(GreedyGroup, self).__init__(request, name, backend)
+        super(GreedyGroup, self).__init__(name, backend)
         self.members, self.member_groups = self._load_group()
 
     def _load_group(self):
@@ -260,16 +257,14 @@ class GreedyGroup(BaseGroup):
 
 class BaseDict(object, DictMixin):
 
-    def __init__(self, request, name, backend):
+    def __init__(self, name, backend):
         """
         Initialize a dict. Dicts are greedy, it stores all keys and
         items internally.
 
-        @param request
         @param name: moin dict name
         @backend: backend object which created this object
         """
-        self.request = request
         self.name = name
         self._backend = backend
         self._dict = self._load_dict()
@@ -306,8 +301,7 @@ class BaseDict(object, DictMixin):
 
 class BaseDictsBackend(object):
 
-    def __init__(self, request):
-        self.request = request
+    def __init__(self):
         self.item_dict_regex = app.cfg.cache.item_dict_regexact
 
     def is_dict_name(self, name):

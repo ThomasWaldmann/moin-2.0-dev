@@ -286,8 +286,8 @@ def before():
     flaskg.unprotected_storage = app.unprotected_storage
     flaskg.user = setup_user()
 
-    flaskg.dicts = app.cfg.dicts(context)
-    flaskg.groups = app.cfg.groups(context)
+    flaskg.dicts = app.cfg.dicts()
+    flaskg.groups = app.cfg.groups()
 
     flaskg.content_lang = app.cfg.language_default
     flaskg.current_lang = app.cfg.language_default

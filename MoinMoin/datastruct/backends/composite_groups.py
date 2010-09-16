@@ -19,12 +19,12 @@ class CompositeGroups(BaseGroupsBackend):
     Manage several group backends.
     """
 
-    def __init__(self, request, *backends):
+    def __init__(self, *backends):
         """
         @param backends: list of group backends which are used to get
                          access to the group definitions.
         """
-        super(CompositeGroups, self).__init__(request)
+        super(CompositeGroups, self).__init__()
         self._backends = backends
 
     def __getitem__(self, group_name):

@@ -18,12 +18,12 @@ class ConfigGroup(GreedyGroup):
 
 class ConfigGroups(BaseGroupsBackend):
 
-    def __init__(self, request, groups):
+    def __init__(self, groups):
         """
         @param groups: Dictionary of groups where key is group name,
         and value is list of members of that group.
         """
-        super(ConfigGroups, self).__init__(request)
+        super(ConfigGroups, self).__init__()
 
         self._groups = groups
 
@@ -34,7 +34,7 @@ class ConfigGroups(BaseGroupsBackend):
         return self._groups.iterkeys()
 
     def __getitem__(self, group_name):
-        return ConfigGroup(request=self.request, name=group_name, backend=self)
+        return ConfigGroup(name=group_name, backend=self)
 
     def _retrieve_members(self, group_name):
         try:

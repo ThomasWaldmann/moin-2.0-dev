@@ -15,9 +15,9 @@ class TestConfigGroupsBackend(GroupsBackendTest):
 
     class Config(wikiconfig.Config):
 
-        def groups(self, request):
+        def groups(self):
             groups = GroupsBackendTest.test_groups
-            return ConfigGroups(request, groups)
+            return ConfigGroups(groups)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.config_groups']

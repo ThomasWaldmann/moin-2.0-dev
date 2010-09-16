@@ -21,7 +21,6 @@ class WikiDict(BaseDict):
     """
 
     def _load_dict(self):
-        request = self.request
         dict_name = self.name
         if flaskg.storage.has_item(dict_name):
             item = flaskg.storage.get_item(dict_name)
@@ -38,7 +37,7 @@ class WikiDicts(BaseDictsBackend):
         return self.is_dict_name(dict_name) and flaskg.storage.has_item(dict_name)
 
     def __getitem__(self, dict_name):
-        return WikiDict(request=self.request, name=dict_name, backend=self)
+        return WikiDict(name=dict_name, backend=self)
 
     def _retrieve_items(self, dict_name):
         item = flaskg.storage.get_item(dict_name)

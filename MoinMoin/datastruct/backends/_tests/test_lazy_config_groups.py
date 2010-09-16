@@ -23,9 +23,9 @@ class TestLazyConfigGroups(GroupsBackendTest):
 
     class Config(wikiconfig.Config):
 
-        def groups(self, request):
+        def groups(self):
             groups = TestLazyConfigGroups.test_groups
-            return ConfigLazyGroups(request, groups)
+            return ConfigLazyGroups(groups)
 
     def test_contains_group(self):
         """
@@ -39,7 +39,7 @@ class TestCompositeAndLazyConfigGroups(GroupsBackendTest):
 
     class Config(wikiconfig.Config):
 
-        def groups(self, request):
+        def groups(self):
             config_groups = {u'EditorGroup': [u'AdminGroup', u'John', u'JoeDoe', u'Editor1', u'John'],
                              u'RecursiveGroup': [u'Something', u'OtherRecursiveGroup'],
                              u'OtherRecursiveGroup': [u'RecursiveGroup', u'Anything', u'NotExistingGroup'],
@@ -50,9 +50,8 @@ class TestCompositeAndLazyConfigGroups(GroupsBackendTest):
                            u'OtherGroup': [u'SomethingOther'],
                            u'EmptyGroup': []}
 
-            return CompositeGroups(request,
-                                   ConfigGroups(request, config_groups),
-                                   ConfigLazyGroups(request, lazy_groups))
+            return CompositeGroups(ConfigGroups(config_groups),
+                                   ConfigLazyGroups(lazy_groups))
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.config_lazy_groups']

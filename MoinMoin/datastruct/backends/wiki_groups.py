@@ -46,7 +46,7 @@ class WikiGroups(BaseGroupsBackend):
         return iter(item_list)
 
     def __getitem__(self, group_name):
-        return WikiGroup(request=self.request, name=group_name, backend=self)
+        return WikiGroup(name=group_name, backend=self)
 
     def _retrieve_members(self, group_name):
         item = flaskg.storage.get_item(group_name)

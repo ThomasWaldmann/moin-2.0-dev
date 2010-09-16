@@ -21,9 +21,9 @@ class TestCompositeGroupsBackend(GroupsBackendTest):
 
     class Config(wikiconfig.Config):
 
-        def groups(self, request):
+        def groups(self):
             groups = GroupsBackendTest.test_groups
-            return CompositeGroups(request, ConfigGroups(request, groups))
+            return CompositeGroups(ConfigGroups(groups))
 
 
 class TestCompositeGroup(object):
@@ -51,10 +51,9 @@ class TestCompositeGroup(object):
                                  # first_backend and second_backend.
                                  u'AdminGroup': second_admin_group}
 
-        def groups(self, request):
-            return CompositeGroups(request,
-                                   ConfigGroups(request, self.first_backend_groups),
-                                   ConfigGroups(request, self.second_backend_groups))
+        def groups(self):
+            return CompositeGroups(ConfigGroups(self.first_backend_groups),
+                                   ConfigGroups(self.second_backend_groups))
 
     def setup_method(self, method):
         self.groups = flaskg.groups
