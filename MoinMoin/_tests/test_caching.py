@@ -77,7 +77,6 @@ class TestCaching(object):
         assert cache.needsUpdate(mtime)
 
     def test_filelike_readwrite(self):
-        request = self.request
         key = 'nooneknowsit'
         arena = 'somethingfunny'
         data = "dontcare"

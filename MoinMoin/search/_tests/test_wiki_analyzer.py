@@ -27,7 +27,7 @@ class TestWikiAnalyzer(object):
              u'testing': u''}
 
     def setup_class(self):
-        self.analyzer = WikiAnalyzer(request=self.request, language=app.cfg.language_default)
+        self.analyzer = WikiAnalyzer(language=app.cfg.language_default)
 
     def test_tokenize(self):
         words = self.words

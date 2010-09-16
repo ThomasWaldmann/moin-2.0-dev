@@ -28,9 +28,7 @@ class TestSimpleStuff(object):
         Function name MUST start with 'test' to be included in the
         tests.
         """
-        # You can access the current request with self.request. It is
-        # injected for you into the test class by moin test framework.
-        result = module_tested.some_function(self.request, 'test_value')
+        result = module_tested.some_function('test_value')
         expected = 'expected value'
         assert result == expected
 
@@ -69,7 +67,7 @@ class TestComplexStuff(object):
 
         Keep the test non interesting details out of the way.
         """
-        module_tested.do_this(self.request)
+        module_tested.do_this()
         module_tested.do_that()
         result = None
         return result

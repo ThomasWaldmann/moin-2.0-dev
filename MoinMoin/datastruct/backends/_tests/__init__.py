@@ -91,8 +91,6 @@ class GroupsBackendTest(object):
         Test if the wiki group backend works with acl code.
         Check user which has rights.
         """
-        request = self.request
-
         acl_rights = ["AdminGroup:admin,read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
@@ -105,8 +103,6 @@ class GroupsBackendTest(object):
         Test if the wiki group backend works with acl code.
         Check user which does not have rights.
         """
-        request = self.request
-
         acl_rights = ["AdminGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
@@ -118,8 +114,6 @@ class GroupsBackendTest(object):
         assert not acl.may(u"Admin1", "admin")
 
     def test_backend_acl_with_all(self):
-        request = self.request
-
         acl_rights = ["EditorGroup:read,write,admin All:read"]
         acl = security.AccessControlList(app.cfg, acl_rights)
 
@@ -132,7 +126,6 @@ class GroupsBackendTest(object):
             assert not acl.may(u"Someone", permission)
 
     def test_backend_acl_not_existing_group(self):
-        request = self.request
         assert u'NotExistingGroup' not in flaskg.groups
 
         acl_rights = ["NotExistingGroup:read,write,admin All:read"]

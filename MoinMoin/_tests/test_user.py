@@ -39,12 +39,10 @@ class TestLoginWithPassword(object):
     """user: login tests"""
 
     def setup_method(self, method):
-        # Save original user and cookie
-        self.saved_cookie = self.request.cookies
+        # Save original user
         self.saved_user = flaskg.user
 
         # Create anon user for the tests
-        self.request.cookies = {}
         flaskg.user = user.User()
 
         self.user = None
@@ -59,7 +57,6 @@ class TestLoginWithPassword(object):
             del self.user
 
         # Restore original user
-        self.request.cookies = self.saved_cookie
         flaskg.user = self.saved_user
 
         # Remove user name to id cache, or next test will fail

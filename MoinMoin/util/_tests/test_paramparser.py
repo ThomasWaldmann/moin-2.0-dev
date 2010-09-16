@@ -341,26 +341,26 @@ class TestArgGetters(object):
             (u'YES', None, None, True),
         ]
         for arg, name, default, expected in tests:
-            assert paramparser.get_bool(self.request, arg, name, default) == expected
+            assert paramparser.get_bool(arg, name, default) == expected
 
     def testGetBooleanRaising(self):
         # wrong default type
-        py.test.raises(AssertionError, paramparser.get_bool, self.request, None, None, 42)
+        py.test.raises(AssertionError, paramparser.get_bool, None, None, 42)
 
         # anything except None or unicode raises TypeError
-        py.test.raises(TypeError, paramparser.get_bool, self.request, True)
-        py.test.raises(TypeError, paramparser.get_bool, self.request, 42)
-        py.test.raises(TypeError, paramparser.get_bool, self.request, 42.0)
-        py.test.raises(TypeError, paramparser.get_bool, self.request, '')
-        py.test.raises(TypeError, paramparser.get_bool, self.request, tuple())
-        py.test.raises(TypeError, paramparser.get_bool, self.request, [])
-        py.test.raises(TypeError, paramparser.get_bool, self.request, {})
+        py.test.raises(TypeError, paramparser.get_bool, True)
+        py.test.raises(TypeError, paramparser.get_bool, 42)
+        py.test.raises(TypeError, paramparser.get_bool, 42.0)
+        py.test.raises(TypeError, paramparser.get_bool, '')
+        py.test.raises(TypeError, paramparser.get_bool, tuple())
+        py.test.raises(TypeError, paramparser.get_bool, [])
+        py.test.raises(TypeError, paramparser.get_bool, {})
 
         # any value not convertable to boolean raises ValueError
-        py.test.raises(ValueError, paramparser.get_bool, self.request, u'')
-        py.test.raises(ValueError, paramparser.get_bool, self.request, u'42')
-        py.test.raises(ValueError, paramparser.get_bool, self.request, u'wrong')
-        py.test.raises(ValueError, paramparser.get_bool, self.request, u'"True"') # must not be quoted!
+        py.test.raises(ValueError, paramparser.get_bool, u'')
+        py.test.raises(ValueError, paramparser.get_bool, u'42')
+        py.test.raises(ValueError, paramparser.get_bool, u'wrong')
+        py.test.raises(ValueError, paramparser.get_bool, u'"True"') # must not be quoted!
 
     def testGetInt(self):
         tests = [
@@ -375,26 +375,26 @@ class TestArgGetters(object):
             (u'-23', None, None, -23),
         ]
         for arg, name, default, expected in tests:
-            assert paramparser.get_int(self.request, arg, name, default) == expected
+            assert paramparser.get_int(arg, name, default) == expected
 
     def testGetIntRaising(self):
         # wrong default type
-        py.test.raises(AssertionError, paramparser.get_int, self.request, None, None, 42.23)
+        py.test.raises(AssertionError, paramparser.get_int, None, None, 42.23)
 
         # anything except None or unicode raises TypeError
-        py.test.raises(TypeError, paramparser.get_int, self.request, True)
-        py.test.raises(TypeError, paramparser.get_int, self.request, 42)
-        py.test.raises(TypeError, paramparser.get_int, self.request, 42.0)
-        py.test.raises(TypeError, paramparser.get_int, self.request, '')
-        py.test.raises(TypeError, paramparser.get_int, self.request, tuple())
-        py.test.raises(TypeError, paramparser.get_int, self.request, [])
-        py.test.raises(TypeError, paramparser.get_int, self.request, {})
+        py.test.raises(TypeError, paramparser.get_int, True)
+        py.test.raises(TypeError, paramparser.get_int, 42)
+        py.test.raises(TypeError, paramparser.get_int, 42.0)
+        py.test.raises(TypeError, paramparser.get_int, '')
+        py.test.raises(TypeError, paramparser.get_int, tuple())
+        py.test.raises(TypeError, paramparser.get_int, [])
+        py.test.raises(TypeError, paramparser.get_int, {})
 
         # any value not convertable to int raises ValueError
-        py.test.raises(ValueError, paramparser.get_int, self.request, u'')
-        py.test.raises(ValueError, paramparser.get_int, self.request, u'23.42')
-        py.test.raises(ValueError, paramparser.get_int, self.request, u'wrong')
-        py.test.raises(ValueError, paramparser.get_int, self.request, u'"4711"') # must not be quoted!
+        py.test.raises(ValueError, paramparser.get_int, u'')
+        py.test.raises(ValueError, paramparser.get_int, u'23.42')
+        py.test.raises(ValueError, paramparser.get_int, u'wrong')
+        py.test.raises(ValueError, paramparser.get_int, u'"4711"') # must not be quoted!
 
     def testGetFloat(self):
         tests = [
@@ -411,25 +411,25 @@ class TestArgGetters(object):
             (u'23.42E-3', None, None, 23.42E-3),
         ]
         for arg, name, default, expected in tests:
-            assert paramparser.get_float(self.request, arg, name, default) == expected
+            assert paramparser.get_float(arg, name, default) == expected
 
     def testGetFloatRaising(self):
         # wrong default type
-        py.test.raises(AssertionError, paramparser.get_float, self.request, None, None, u'42')
+        py.test.raises(AssertionError, paramparser.get_float, None, None, u'42')
 
         # anything except None or unicode raises TypeError
-        py.test.raises(TypeError, paramparser.get_float, self.request, True)
-        py.test.raises(TypeError, paramparser.get_float, self.request, 42)
-        py.test.raises(TypeError, paramparser.get_float, self.request, 42.0)
-        py.test.raises(TypeError, paramparser.get_float, self.request, '')
-        py.test.raises(TypeError, paramparser.get_float, self.request, tuple())
-        py.test.raises(TypeError, paramparser.get_float, self.request, [])
-        py.test.raises(TypeError, paramparser.get_float, self.request, {})
+        py.test.raises(TypeError, paramparser.get_float, True)
+        py.test.raises(TypeError, paramparser.get_float, 42)
+        py.test.raises(TypeError, paramparser.get_float, 42.0)
+        py.test.raises(TypeError, paramparser.get_float, '')
+        py.test.raises(TypeError, paramparser.get_float, tuple())
+        py.test.raises(TypeError, paramparser.get_float, [])
+        py.test.raises(TypeError, paramparser.get_float, {})
 
         # any value not convertable to int raises ValueError
-        py.test.raises(ValueError, paramparser.get_float, self.request, u'')
-        py.test.raises(ValueError, paramparser.get_float, self.request, u'wrong')
-        py.test.raises(ValueError, paramparser.get_float, self.request, u'"47.11"') # must not be quoted!
+        py.test.raises(ValueError, paramparser.get_float, u'')
+        py.test.raises(ValueError, paramparser.get_float, u'wrong')
+        py.test.raises(ValueError, paramparser.get_float, u'"47.11"') # must not be quoted!
 
     def testGetComplex(self):
         tests = [
@@ -454,29 +454,29 @@ class TestArgGetters(object):
             (u'-300000000000000000000', None, None, -300000000000000000000L),
         ]
         for arg, name, default, expected in tests:
-            assert paramparser.get_complex(self.request, arg, name, default) == expected
+            assert paramparser.get_complex(arg, name, default) == expected
 
     def testGetComplexRaising(self):
         # wrong default type
-        py.test.raises(AssertionError, paramparser.get_complex, self.request, None, None, u'42')
+        py.test.raises(AssertionError, paramparser.get_complex, None, None, u'42')
 
         # anything except None or unicode raises TypeError
-        py.test.raises(TypeError, paramparser.get_complex, self.request, True)
-        py.test.raises(TypeError, paramparser.get_complex, self.request, 42)
-        py.test.raises(TypeError, paramparser.get_complex, self.request, 42.0)
-        py.test.raises(TypeError, paramparser.get_complex, self.request, 3j)
-        py.test.raises(TypeError, paramparser.get_complex, self.request, '')
-        py.test.raises(TypeError, paramparser.get_complex, self.request, tuple())
-        py.test.raises(TypeError, paramparser.get_complex, self.request, [])
-        py.test.raises(TypeError, paramparser.get_complex, self.request, {})
+        py.test.raises(TypeError, paramparser.get_complex, True)
+        py.test.raises(TypeError, paramparser.get_complex, 42)
+        py.test.raises(TypeError, paramparser.get_complex, 42.0)
+        py.test.raises(TypeError, paramparser.get_complex, 3j)
+        py.test.raises(TypeError, paramparser.get_complex, '')
+        py.test.raises(TypeError, paramparser.get_complex, tuple())
+        py.test.raises(TypeError, paramparser.get_complex, [])
+        py.test.raises(TypeError, paramparser.get_complex, {})
 
         # any value not convertable to int raises ValueError
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'')
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'3jj')
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'3Ij')
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'3i-3i')
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'wrong')
-        py.test.raises(ValueError, paramparser.get_complex, self.request, u'"47.11"') # must not be quoted!
+        py.test.raises(ValueError, paramparser.get_complex, u'')
+        py.test.raises(ValueError, paramparser.get_complex, u'3jj')
+        py.test.raises(ValueError, paramparser.get_complex, u'3Ij')
+        py.test.raises(ValueError, paramparser.get_complex, u'3i-3i')
+        py.test.raises(ValueError, paramparser.get_complex, u'wrong')
+        py.test.raises(ValueError, paramparser.get_complex, u'"47.11"') # must not be quoted!
 
     def testGetUnicode(self):
         tests = [
@@ -491,20 +491,20 @@ class TestArgGetters(object):
             (u'"abc"', None, None, u'"abc"'),
         ]
         for arg, name, default, expected in tests:
-            assert paramparser.get_unicode(self.request, arg, name, default) == expected
+            assert paramparser.get_unicode(arg, name, default) == expected
 
     def testGetUnicodeRaising(self):
         # wrong default type
-        py.test.raises(AssertionError, paramparser.get_unicode, self.request, None, None, 42)
+        py.test.raises(AssertionError, paramparser.get_unicode, None, None, 42)
 
         # anything except None or unicode raises TypeError
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, True)
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, 42)
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, 42.0)
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, '')
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, tuple())
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, [])
-        py.test.raises(TypeError, paramparser.get_unicode, self.request, {})
+        py.test.raises(TypeError, paramparser.get_unicode, True)
+        py.test.raises(TypeError, paramparser.get_unicode, 42)
+        py.test.raises(TypeError, paramparser.get_unicode, 42.0)
+        py.test.raises(TypeError, paramparser.get_unicode, '')
+        py.test.raises(TypeError, paramparser.get_unicode, tuple())
+        py.test.raises(TypeError, paramparser.get_unicode, [])
+        py.test.raises(TypeError, paramparser.get_unicode, {})
 
 
 class TestExtensionInvoking(object):
@@ -552,70 +552,70 @@ class TestExtensionInvoking(object):
             assert i == 1 or i is None
 
         ief = paramparser.invoke_extension_function
-        ief(self.request, self._test_invoke_bool, u'False')
-        ief(self.request, self._test_invoke_bool, u'b=False')
-        ief(self.request, _test_invoke_int, u'1')
-        ief(self.request, _test_invoke_int, u'i=1')
-        ief(self.request, self._test_invoke_bool_def, u'False, False')
-        ief(self.request, self._test_invoke_bool_def, u'b=False, v=False')
-        ief(self.request, self._test_invoke_bool_def, u'False')
-        ief(self.request, self._test_invoke_int_None, u'i=1')
-        ief(self.request, self._test_invoke_int_None, u'i=')
-        ief(self.request, self._test_invoke_int_None, u'')
-        py.test.raises(ValueError, ief, self.request,
+        ief(self._test_invoke_bool, u'False')
+        ief(self._test_invoke_bool, u'b=False')
+        ief(_test_invoke_int, u'1')
+        ief(_test_invoke_int, u'i=1')
+        ief(self._test_invoke_bool_def, u'False, False')
+        ief(self._test_invoke_bool_def, u'b=False, v=False')
+        ief(self._test_invoke_bool_def, u'False')
+        ief(self._test_invoke_int_None, u'i=1')
+        ief(self._test_invoke_int_None, u'i=')
+        ief(self._test_invoke_int_None, u'')
+        py.test.raises(ValueError, ief,
                        self._test_invoke_int_None, u'x')
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        self._test_invoke_int_None, u'""')
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        self._test_invoke_int_None, u'i=""')
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        _test_invoke_int_fixed, u'a=7', [7, 8])
-        ief(self.request, _test_invoke_int_fixed, u'i=1', [7, 8])
-        py.test.raises(ValueError, ief, self.request,
+        ief(_test_invoke_int_fixed, u'i=1', [7, 8])
+        py.test.raises(ValueError, ief,
                        _test_invoke_int_fixed, u'i=""', [7, 8])
-        ief(self.request, _test_invoke_int_fixed, u'i=', [7, 8])
+        ief(_test_invoke_int_fixed, u'i=', [7, 8])
 
         for choicefn in (self._test_invoke_choice, self._test_invoke_choicet):
-            ief(self.request, choicefn, u'', [7])
-            ief(self.request, choicefn, u'choice=a', [7])
-            ief(self.request, choicefn, u'choice=', [7])
-            ief(self.request, choicefn, u'choice="a"', [7])
-            py.test.raises(ValueError, ief, self.request,
+            ief(choicefn, u'', [7])
+            ief(choicefn, u'choice=a', [7])
+            ief(choicefn, u'choice=', [7])
+            ief(choicefn, u'choice="a"', [7])
+            py.test.raises(ValueError, ief,
                            choicefn, u'x', [7])
-            py.test.raises(ValueError, ief, self.request,
+            py.test.raises(ValueError, ief,
                            choicefn, u'choice=x', [7])
 
-        ief(self.request, self._test_invoke_float_None, u'i=1.4')
-        ief(self.request, self._test_invoke_float_None, u'i=')
-        ief(self.request, self._test_invoke_float_None, u'')
-        ief(self.request, self._test_invoke_float_None, u'1.4')
-        py.test.raises(ValueError, ief, self.request,
+        ief(self._test_invoke_float_None, u'i=1.4')
+        ief(self._test_invoke_float_None, u'i=')
+        ief(self._test_invoke_float_None, u'')
+        ief(self._test_invoke_float_None, u'1.4')
+        py.test.raises(ValueError, ief,
                        self._test_invoke_float_None, u'x')
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        self._test_invoke_float_None, u'""')
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        self._test_invoke_float_None, u'i=""')
-        ief(self.request, self._test_trailing, u'a=7, a')
-        ief(self.request, self._test_trailing, u'7, a')
-        ief(self.request, self._test_arbitrary_kw, u'test=x, \xc3=test',
+        ief(self._test_trailing, u'a=7, a')
+        ief(self._test_trailing, u'7, a')
+        ief(self._test_arbitrary_kw, u'test=x, \xc3=test',
             [{u'\xc3': 'test', 'test': u'x'}])
-        ief(self.request, self._test_arbitrary_kw, u'test=x, "\xc3"=test',
+        ief(self._test_arbitrary_kw, u'test=x, "\xc3"=test',
             [{u'\xc3': 'test', 'test': u'x'}])
-        ief(self.request, self._test_arbitrary_kw, u'test=x, "7 \xc3"=test',
+        ief(self._test_arbitrary_kw, u'test=x, "7 \xc3"=test',
             [{u'7 \xc3': 'test', 'test': u'x'}])
-        ief(self.request, self._test_arbitrary_kw, u'test=x, 7 \xc3=test',
+        ief(self._test_arbitrary_kw, u'test=x, 7 \xc3=test',
             [{u'7 \xc3': 'test', 'test': u'x'}])
-        ief(self.request, self._test_arbitrary_kw, u'7 \xc3=test, test= x ',
+        ief(self._test_arbitrary_kw, u'7 \xc3=test, test= x ',
             [{u'7 \xc3': 'test', 'test': u'x'}])
-        py.test.raises(ValueError, ief, self.request,
+        py.test.raises(ValueError, ief,
                        self._test_invoke_float_required, u'')
-        ief(self.request, self._test_invoke_float_required, u'1.4')
-        ief(self.request, self._test_invoke_float_required, u'i=1.4')
-        py.test.raises(ValueError, ief, self.request,
+        ief(self._test_invoke_float_required, u'1.4')
+        ief(self._test_invoke_float_required, u'i=1.4')
+        py.test.raises(ValueError, ief,
                        self._test_invoke_choice_required, u'')
-        ief(self.request, self._test_invoke_choice_required, u'a')
-        ief(self.request, self._test_invoke_choice_required, u'i=a')
-        py.test.raises(ValueError, ief, self.request,
+        ief(self._test_invoke_choice_required, u'a')
+        ief(self._test_invoke_choice_required, u'i=a')
+        py.test.raises(ValueError, ief,
                        self._test_invoke_float_required, u',')
 
     def testConstructors(self):
@@ -630,16 +630,16 @@ class TestExtensionInvoking(object):
         class TEST2(TEST1):
             pass
 
-        obj = ief(self.request, TEST1, u'a=7')
+        obj = ief(TEST1, u'a=7')
         assert isinstance(obj, TEST1)
         assert obj.constructed
-        py.test.raises(ValueError, ief, self.request, TEST1, u'b')
+        py.test.raises(ValueError, ief, TEST1, u'b')
 
-        obj = ief(self.request, TEST2, u'a=7')
+        obj = ief(TEST2, u'a=7')
         assert isinstance(obj, TEST1)
         assert isinstance(obj, TEST2)
         assert obj.constructed
-        py.test.raises(ValueError, ief, self.request, TEST2, u'b')
+        py.test.raises(ValueError, ief, TEST2, u'b')
 
         # old style class
         class TEST3:
@@ -650,23 +650,23 @@ class TestExtensionInvoking(object):
         class TEST4(TEST3):
             pass
 
-        obj = ief(self.request, TEST3, u'a=7')
+        obj = ief(TEST3, u'a=7')
         assert isinstance(obj, TEST3)
         assert obj.constructed
-        py.test.raises(ValueError, ief, self.request, TEST3, u'b')
+        py.test.raises(ValueError, ief, TEST3, u'b')
 
-        obj = ief(self.request, TEST4, u'a=7')
+        obj = ief(TEST4, u'a=7')
         assert isinstance(obj, TEST3)
         assert isinstance(obj, TEST4)
         assert obj.constructed
-        py.test.raises(ValueError, ief, self.request, TEST4, u'b')
+        py.test.raises(ValueError, ief, TEST4, u'b')
 
     def testFailing(self):
         ief = paramparser.invoke_extension_function
 
-        py.test.raises(TypeError, ief, self.request, hex, u'15')
-        py.test.raises(TypeError, ief, self.request, cmp, u'15')
-        py.test.raises(AttributeError, ief, self.request, unicode, u'15')
+        py.test.raises(TypeError, ief, hex, u'15')
+        py.test.raises(TypeError, ief, cmp, u'15')
+        py.test.raises(AttributeError, ief, unicode, u'15')
 
     def testAllDefault(self):
         ief = paramparser.invoke_extension_function
@@ -678,15 +678,15 @@ class TestExtensionInvoking(object):
             assert d == 4
             return True
 
-        assert ief(self.request, has_many_defaults, u'1, 2, 3, 4')
-        assert ief(self.request, has_many_defaults, u'2, 3, 4', [1])
-        assert ief(self.request, has_many_defaults, u'3, 4', [1, 2])
-        assert ief(self.request, has_many_defaults, u'4', [1, 2, 3])
-        assert ief(self.request, has_many_defaults, u'', [1, 2, 3, 4])
-        assert ief(self.request, has_many_defaults, u'd=4,c=3,b=2,a=1')
-        assert ief(self.request, has_many_defaults, u'd=4,c=3,b=2', [1])
-        assert ief(self.request, has_many_defaults, u'd=4,c=3', [1, 2])
-        assert ief(self.request, has_many_defaults, u'd=4', [1, 2, 3])
+        assert ief(has_many_defaults, u'1, 2, 3, 4')
+        assert ief(has_many_defaults, u'2, 3, 4', [1])
+        assert ief(has_many_defaults, u'3, 4', [1, 2])
+        assert ief(has_many_defaults, u'4', [1, 2, 3])
+        assert ief(has_many_defaults, u'', [1, 2, 3, 4])
+        assert ief(has_many_defaults, u'd=4,c=3,b=2,a=1')
+        assert ief(has_many_defaults, u'd=4,c=3,b=2', [1])
+        assert ief(has_many_defaults, u'd=4,c=3', [1, 2])
+        assert ief(has_many_defaults, u'd=4', [1, 2, 3])
 
     def testInvokeComplex(self):
         ief = paramparser.invoke_extension_function
@@ -695,10 +695,10 @@ class TestExtensionInvoking(object):
             assert a == b
             return True
 
-        assert ief(self.request, has_complex, u'3-3i, 3-3j')
-        assert ief(self.request, has_complex, u'2i, 2j')
-        assert ief(self.request, has_complex, u'b=2i, a=2j')
-        assert ief(self.request, has_complex, u'2.007, 2.007')
-        assert ief(self.request, has_complex, u'2.007', [2.007])
-        assert ief(self.request, has_complex, u'b=2.007', [2.007])
+        assert ief(has_complex, u'3-3i, 3-3j')
+        assert ief(has_complex, u'2i, 2j')
+        assert ief(has_complex, u'b=2i, a=2j')
+        assert ief(has_complex, u'2.007, 2.007')
+        assert ief(has_complex, u'2.007', [2.007])
+        assert ief(has_complex, u'b=2.007', [2.007])
 

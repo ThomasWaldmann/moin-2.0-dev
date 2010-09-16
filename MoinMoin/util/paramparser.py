@@ -281,14 +281,13 @@ def parse_quoted_separated(args, separator=',', name_value=True, seplimit=0):
     return result
 
 
-def get_bool(request, arg, name=None, default=None):
+def get_bool(arg, name=None, default=None):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return a boolean from a unicode string.
     Valid input is 'true'/'false', 'yes'/'no' and '1'/'0' or None for
     the default value.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param default: default value if arg is None
@@ -315,14 +314,13 @@ def get_bool(request, arg, name=None, default=None):
                 _('Argument must be a boolean value, not "%(value)s"', value=arg))
 
 
-def get_int(request, arg, name=None, default=None):
+def get_int(arg, name=None, default=None):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return an integer from a unicode string
     containing the decimal representation of a number.
     None is a valid input and yields the default value.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param default: default value if arg is None
@@ -345,13 +343,12 @@ def get_int(request, arg, name=None, default=None):
                 _('Argument must be an integer value, not "%(value)s"', value=arg))
 
 
-def get_float(request, arg, name=None, default=None):
+def get_float(arg, name=None, default=None):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return a float from a unicode string.
     None is a valid input and yields the default value.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param default: default return value if arg is None
@@ -374,13 +371,12 @@ def get_float(request, arg, name=None, default=None):
                 _('Argument must be a floating point value, not "%(value)s"', value=arg))
 
 
-def get_complex(request, arg, name=None, default=None):
+def get_complex(arg, name=None, default=None):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return a complex from a unicode string.
     None is a valid input and yields the default value.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param default: default return value if arg is None
@@ -405,13 +401,12 @@ def get_complex(request, arg, name=None, default=None):
                 _('Argument must be a complex value, not "%(value)s"', value=arg))
 
 
-def get_unicode(request, arg, name=None, default=None):
+def get_unicode(arg, name=None, default=None):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return a unicode string from a unicode string.
     None is a valid input and yields the default value.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param default: default return value if arg is None;
@@ -427,14 +422,13 @@ def get_unicode(request, arg, name=None, default=None):
     return arg
 
 
-def get_choice(request, arg, name=None, choices=[None], default_none=False):
+def get_choice(arg, name=None, choices=[None], default_none=False):
     """
     For use with values returned from parse_quoted_separated or given
     as macro parameters, return a unicode string that must be in the
     choices given. None is a valid input and yields first of the valid
     choices.
 
-    @param request: A request instance
     @param arg: The argument, may be None or a unicode string
     @param name: Name of the argument, for error messages
     @param choices: the possible choices
@@ -556,7 +550,7 @@ class required_arg:
         self.argtype = argtype
 
 
-def invoke_extension_function(request, function, args, fixed_args=[]):
+def invoke_extension_function(function, args, fixed_args=[]):
     """
     Parses arguments for an extension call and calls the extension
     function with the arguments.
@@ -567,7 +561,6 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     it to the macro function. That way, macros need not call the
     wikiutil.get_* functions for any arguments that have a default.
 
-    @param request: the request object
     @param function: the function to invoke
     @param args: unicode string with arguments (or evaluating to False)
     @param fixed_args: fixed arguments to pass as the first arguments
@@ -575,7 +568,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     """
     from inspect import getargspec, isfunction, isclass, ismethod
 
-    def _convert_arg(request, value, default, name=None):
+    def _convert_arg(value, default, name=None):
         """
         Using the get_* functions, convert argument to the type of the default
         if that is any of bool, int, long, float or unicode; if the default
@@ -586,25 +579,25 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
         """
         # if extending this, extend required_arg as well!
         if isinstance(default, bool):
-            return get_bool(request, value, name, default)
+            return get_bool(value, name, default)
         elif isinstance(default, (int, long)):
-            return get_int(request, value, name, default)
+            return get_int(value, name, default)
         elif isinstance(default, float):
-            return get_float(request, value, name, default)
+            return get_float(value, name, default)
         elif isinstance(default, complex):
-            return get_complex(request, value, name, default)
+            return get_complex(value, name, default)
         elif isinstance(default, unicode):
-            return get_unicode(request, value, name, default)
+            return get_unicode(value, name, default)
         elif isinstance(default, (tuple, list)):
-            return get_choice(request, value, name, default)
+            return get_choice(value, name, default)
         elif default is bool:
-            return get_bool(request, value, name)
+            return get_bool(value, name)
         elif default is int or default is long:
-            return get_int(request, value, name)
+            return get_int(value, name)
         elif default is float:
-            return get_float(request, value, name)
+            return get_float(value, name)
         elif default is complex:
-            return get_complex(request, value, name)
+            return get_complex(value, name)
         elif isinstance(default, IEFArgument):
             # defaults handled later
             if value is None:
@@ -614,10 +607,10 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
             if isinstance(default.argtype, (tuple, list)):
                 # treat choice specially and return None if no choice
                 # is given in the value
-                return get_choice(request, value, name, list(default.argtype),
+                return get_choice(value, name, list(default.argtype),
                        default_none=True)
             else:
-                return _convert_arg(request, value, default.argtype, name)
+                return _convert_arg(value, default.argtype, name)
         return value
 
     assert isinstance(fixed_args, (list, tuple))
@@ -706,7 +699,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
             # macro's 'argname' argument, so convert that giving the
             # name to the converter so the user is told which argument
             # went wrong (if it does)
-            kwargs[argname] = _convert_arg(request, kwargs[argname],
+            kwargs[argname] = _convert_arg(kwargs[argname],
                                            defaults[argname], argname)
             if kwargs[argname] is None:
                 if isinstance(defaults[argname], required_arg):

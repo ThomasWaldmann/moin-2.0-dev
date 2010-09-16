@@ -7,10 +7,6 @@ All test modules must be named test_modulename to be included in the
 test suite. If you are testing a package, name the test module
 test_package_module.
 
-Tests that need the current request, for example to create a page
-instance, can refer to self.request. It is injected into all test case
-classes by the framework.
-
 Tests that require a certain configuration, like section_numbers = 1, must
 use a Config class to define the required configuration within the test class.
 
@@ -35,8 +31,6 @@ import py
 
 rootdir = py.path.local(__file__)
 moindir = rootdir.join("..")
-
-from flask import flaskg
 
 from MoinMoin import create_app_ext, before
 from MoinMoin._tests import maketestwiki, wikiconfig
@@ -85,25 +79,12 @@ def init_test_app(given_config):
     ctx = app.test_request_context('/')
     ctx.push()
     before()
-    request = flaskg.context
-    return app, ctx, request
+    return app, ctx
 
-
-# py.test-1.0 provides "funcargs" natively
-def pytest_funcarg__request(request):
-    # note the naminng clash: py.test's funcarg-request object
-    # and the request we provide are totally separate things
-    cls = request._pyfuncitem.getparent(py.test.collect.Module)
-    return cls.request
 
 class MoinTestFunction(py.test.collect.Function):
     def execute(self, target, *args):
-        request = self.parent.request
-        co = target.func_code
-        if 'request' in co.co_varnames[:co.co_argcount]:
-            target(request, *args)
-        else:
-            target(*args)
+        target(*args)
 
 
 class MoinClassCollector(py.test.collect.Class):
@@ -115,11 +96,11 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = cls.Config
         else:
             given_config = wikiconfig.Config
-        cls.app, cls.ctx, cls.request = init_test_app(given_config)
+        cls.app, cls.ctx = init_test_app(given_config)
 
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
-                self.app, self.ctx, self.request = init_test_app(given_config)
+                self.app, self.ctx = init_test_app(given_config)
                 # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
@@ -137,7 +118,7 @@ class MoinClassCollector(py.test.collect.Class):
         except AttributeError:
             # Perhaps the test class did not define a setup_method.
             def no_setup(self, method):
-                self.app, self.ctx, self.request = init_test_app(given_config)
+                self.app, self.ctx = init_test_app(given_config)
             cls.setup_method = no_setup
 
         try:
@@ -163,7 +144,7 @@ class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
         given_config = wikiconfig.Config
-        self.app, self.ctx, self.request = init_test_app(given_config)
+        self.app, self.ctx = init_test_app(given_config)
         # XXX do ctx.pop() in ... (where?)
         super(Module, self).__init__(*args, **kwargs)
 
