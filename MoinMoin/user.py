@@ -445,14 +445,6 @@ class User(object):
 
         self._user.publish_metadata()
 
-        arena = 'user'
-        key = 'name2id'
-        caching.CacheEntry(arena, key, scope='wiki').remove()
-        try:
-            del app.cfg.cache.name2id
-        except:
-            pass
-
         if not self.disabled:
             self.valid = 1
 
