@@ -59,13 +59,6 @@ class TestLoginWithPassword(object):
         # Restore original user
         flaskg.user = self.saved_user
 
-        # Remove user name to id cache, or next test will fail
-        caching.CacheEntry('user', 'name2id', scope='wiki').remove()
-        try:
-            del app.cfg.cache.name2id
-        except:
-            pass
-
     def testAsciiPassword(self):
         """ user: login with ascii password """
         # Create test user
@@ -112,8 +105,8 @@ class TestLoginWithPassword(object):
         assert not theUser.isSubscribedTo([testPagename]) # list(!) of pages to check
 
     def testRenameUser(self):
-        """ create user and then rename user and check
-        if the old username is removed from the cache name2id
+        """ create user and then rename user and check if it still
+        exists under old name
         """
         # Create test user
         name = u'__Some Name__'
