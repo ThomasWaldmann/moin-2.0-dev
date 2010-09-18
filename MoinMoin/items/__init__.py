@@ -18,6 +18,7 @@
 import os, re, time, datetime, shutil, base64
 import tarfile
 import zipfile
+import tempfile
 from StringIO import StringIO
 import json
 import hashlib
@@ -728,9 +729,9 @@ class TarMixin(object):
             raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
         if isinstance(name, unicode):
             name = name.encode('utf-8')
-        cache = caching.CacheEntry("TarContainer", self.name, 'wiki')
-        tmp_fname = cache._fname
-        tf = tarfile.TarFile(tmp_fname, mode='a')
+        temp_fname = os.path.join(tempfile.gettempdir(), 'TarContainer_' +
+                                  caching.cache_key(usage='TarContainer', name=self.name))
+        tf = tarfile.TarFile(temp_fname, mode='a')
         ti = tarfile.TarInfo(name)
         if isinstance(content, str):
             if content_length is None:
@@ -747,16 +748,15 @@ class TarMixin(object):
         if tf_members - expected_members:
             msg = "found unexpected members in container item %r" % (self.name, )
             logging.error(msg)
-            cache.remove()
+            os.remove(temp_fname)
             raise StorageError(msg)
-
         if tf_members == expected_members:
             # everything we expected has been added to the tar file, save the container as revision
             meta = {"mimetype": self.mimetype}
-            cache.open(mode='rb')
-            self._save(meta, cache, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
-            cache.close()
-            cache.remove()
+            data = open(temp_fname, 'rb')
+            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
+            data.close()
+            os.remove(temp_fname)
 
 
 class ApplicationXTar(TarMixin, Application):
