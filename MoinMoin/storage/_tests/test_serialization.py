@@ -25,6 +25,7 @@ XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 class TestSerializeRev(object):
 
     def test_serialize_rev(self):
+        become_trusted()
         params = (u'foo1', 0, dict(m1=u"m1"), 'bar1')
         item = update_item(*params)
         rev = item.get_revision(0)
@@ -45,6 +46,7 @@ class TestSerializeRev(object):
 class TestSerializeItem(object):
 
     def test_serialize_item(self):
+        become_trusted()
         testparams = [
             (u'foo2', 0, dict(m1=u"m1r0"), 'bar2'),
             (u'foo2', 1, dict(m1=u"m1r1"), 'baz2'),
@@ -79,6 +81,7 @@ class TestSerializeItem(object):
 class TestSerializeBackend(object):
 
     def test_serialize_backend(self):
+        become_trusted()
         testparams = [
             (u'foo3', 0, dict(m1=u"m1r0foo3"), 'bar1'),
             (u'foo4', 0, dict(m1=u"m1r0foo4"), 'bar2'),

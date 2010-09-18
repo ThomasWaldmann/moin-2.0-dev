@@ -72,7 +72,6 @@ def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None,
     return Item.create(itemname)
 
 def update_item(name, revno, meta, data):
-    become_trusted()
     try:
         item = flaskg.storage.create_item(name)
     except ItemAlreadyExistsError:
