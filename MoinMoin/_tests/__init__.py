@@ -15,9 +15,9 @@ from flask import flaskg
 
 from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
+from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin import caching, user
 from MoinMoin import config, security
-
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
 # need more privs...
@@ -70,6 +70,23 @@ def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None,
         meta[USERGROUP] = groupmember
     item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
+
+def update_item(name, revno, meta, data):
+    become_trusted()
+    try:
+        item = flaskg.storage.create_item(name)
+    except ItemAlreadyExistsError:
+        item = flaskg.storage.get_item(name)
+    rev = item.create_revision(revno)
+    for k, v in meta.items():
+        rev[k] = v
+    if not 'name' in rev:
+        rev['name'] = name
+    if not 'mimetype' in rev:
+        rev['mimetype'] = u'application/octet-stream'
+    rev.write(data)
+    item.commit()
+    return item
 
 def append_item(itemname, content, groupmember=None):
     """ appends some content to an existing item """
