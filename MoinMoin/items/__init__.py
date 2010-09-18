@@ -23,6 +23,13 @@ from StringIO import StringIO
 import json
 import hashlib
 
+try:
+    import PIL
+    from PIL import Image as PILImage
+    from PIL.ImageChops import difference as PILdiff
+except ImportError:
+    PIL = None
+
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
@@ -616,6 +623,7 @@ There is no help, you're doomed!
             return "The items have different data."
 
     _render_data_diff_text = _render_data_diff
+    _render_data_diff_raw = _render_data_diff
 
     def _convert(self):
         return "Impossible to convert the data to the mimetype : %s" % request.values.get('mimetype')
@@ -628,31 +636,12 @@ There is no help, you're doomed!
             return Response(status=304)
 
     def _do_get_modified(self, hash):
-        from_cache = request.values.get('from_cache')
         member = request.values.get('member')
-        return self._do_get(hash, from_cache, member)
+        return self._do_get(hash, member)
 
-    def _do_get(self, hash, from_cache=None, member=None):
+    def _do_get(self, hash, member=None):
         filename = None
-        if from_cache:
-            content_disposition = None
-            cache = app.cache.get(from_cache)
-            if cache is None:
-                abort(404)
-            else:
-                headers, data = cache
-                for key, value in headers:
-                    lkey = key.lower()
-                    if lkey == 'content-type':
-                        content_type = value
-                    elif lkey == 'content-length':
-                        content_length = value
-                    elif lkey == 'content-disposition':
-                        content_disposition = value
-                    else:
-                        request.headers.add(key, value) # XXX WRONG! Must be response!
-                file_to_send = StringIO(data)
-        elif member: # content = file contained within a archive item revision
+        if member: # content = file contained within a archive item revision
             path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(app.cfg)
@@ -917,25 +906,30 @@ class TransformableBitmapImage(RenderableBitmapImage):
                 content_type, data = self._transform(content_type, size=size, transpose_op=transpose)
                 headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
                 app.cache.set(cid, (headers, data))
-            from_cache = cid
+            else:
+                # XXX TODO check ACL behaviour
+                headers, data = c
+            return Response(data, headers=headers)
         else:
-            from_cache = request.values.get('from_cache')
-        return self._do_get(hash, from_cache=from_cache)
+            return self._do_get(hash)
 
     def _render_data_diff(self, oldrev, newrev):
-        try:
-            from PIL import Image as PILImage
-            from PIL.ImageChops import difference as PILdiff
-        except ImportError:
+        if PIL is None:
             # no PIL, we can't do anything, we just call the base class method
             return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
+        url = url_for('frontend.diffraw', item_name=self.name, rev1=oldrev.revno, rev2=newrev.revno)
+        return '<img src="%s" />' % escape(url)
 
+    def _render_data_diff_raw(self, oldrev, newrev):
         hash_name = app.cfg.hash_algorithm
         cid = caching.cache_key(hash_name=hash_name,
                                 hash_old=oldrev[hash_name],
                                 hash_new=newrev[hash_name])
         c = app.cache.get(cid)
         if c is None:
+            if PIL is None:
+                abort(404)
+
             content_type = newrev[MIMETYPE]
             if content_type == 'image/jpeg':
                 output_type = 'JPEG'
@@ -957,8 +951,10 @@ class TransformableBitmapImage(RenderableBitmapImage):
             outfile.close()
             headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
             app.cache.set(cid, (headers, data))
-        url = url_for('frontend.get_item', item_name=self.name, from_cache=cid)
-        return '<img src="%s" />' % escape(url)
+        else:
+            # XXX TODO check ACL behaviour
+            headers, data = c
+        return Response(data, headers=headers)
 
     def _render_data_diff_text(self, oldrev, newrev):
         return super(TransformableBitmapImage, self)._render_data_diff_text(oldrev, newrev)

@@ -76,6 +76,7 @@ Disallow: /+logout
 Disallow: /+bookmark
 Disallow: /+diffsince/
 Disallow: /+diff/
+Disallow: /+diffraw/
 Disallow: /+dispatch/
 Disallow: /+admin/
 Allow: /
@@ -868,6 +869,17 @@ def bookmark():
     return redirect(url_for('frontend.global_history'))
 
 
+@frontend.route('/+diffraw/<path:item_name>')
+def diffraw(item_name):
+    # TODO get_item and get_revision calls may raise an AccessDeniedError.
+    #      If this happens for get_item, don't show the diff at all
+    #      If it happens for get_revision, we may just want to skip that rev in the list
+    item = flaskg.storage.get_item(item_name)
+    rev1 = request.values.get('rev1')
+    rev2 = request.values.get('rev2')
+    return _diff_raw(item, rev1, rev2)
+
+
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
 def diffsince(item_name, timestamp):
     date = timestamp
@@ -898,7 +910,7 @@ def diff(item_name):
     return _diff(item, rev1, rev2)
 
 
-def _diff(item, revno1, revno2):
+def _normalize_revnos(item, revno1, revno2):
     try:
         revno1 = int(revno1)
     except (ValueError, TypeError):
@@ -908,7 +920,6 @@ def _diff(item, revno1, revno2):
     except (ValueError, TypeError):
         revno2 = -1
 
-    item_name = item.name
     # get (absolute) current revision number
     current_revno = item.get_revision(-1).revno
     # now we can calculate the absolute revnos if we don't have them yet
@@ -921,27 +932,35 @@ def _diff(item, revno1, revno2):
         oldrevno, newrevno = revno2, revno1
     else:
         oldrevno, newrevno = revno1, revno2
+    return oldrevno, newrevno
 
-    oldrev = item.get_revision(oldrevno)
-    newrev = item.get_revision(newrevno)
 
-    oldmt = oldrev.get(MIMETYPE)
-    newmt = newrev.get(MIMETYPE)
-
-    if oldmt == newmt:
+def _common_mimetype(rev1, rev2):
+    mt1 = rev1.get(MIMETYPE)
+    mt2 = rev2.get(MIMETYPE)
+    if mt1 == mt2:
         # easy, exactly the same mimetype, call do_diff for it
-        commonmt = newmt
+        commonmt = mt1
     else:
-        oldmajor = oldmt.split('/')[0]
-        newmajor = newmt.split('/')[0]
-        if oldmajor == newmajor:
+        major1 = mt1.split('/')[0]
+        major2 = mt2.split('/')[0]
+        if major1 == major2:
             # at least same major mimetype, use common base item class
-            commonmt = newmajor + '/'
+            commonmt = major1 + '/'
         else:
             # nothing in common
             commonmt = ''
+    return commonmt
 
-    item = Item.create(item_name, mimetype=commonmt, rev_no=newrevno)
+
+def _diff(item, revno1, revno2):
+    oldrevno, newrevno = _normalize_revnos(item, revno1, revno2)
+    oldrev = item.get_revision(oldrevno)
+    newrev = item.get_revision(newrevno)
+
+    commonmt = _common_mimetype(oldrev, newrev)
+
+    item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
                            item=item, item_name=item.name,
@@ -951,6 +970,17 @@ def _diff(item, revno1, revno2):
                            oldrev=oldrev,
                            newrev=newrev,
                           )
+
+
+def _diff_raw(item, revno1, revno2):
+    oldrevno, newrevno = _normalize_revnos(item, revno1, revno2)
+    oldrev = item.get_revision(oldrevno)
+    newrev = item.get_revision(newrevno)
+
+    commonmt = _common_mimetype(oldrev, newrev)
+
+    item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
+    return item._render_data_diff_raw(oldrev, newrev)
 
 
 @frontend.route('/+similar_names/<itemname:item_name>')
