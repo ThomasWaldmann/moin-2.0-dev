@@ -37,9 +37,6 @@ from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
-from MoinMoin.items.sendcache import SendCache
-
-
 COLS = 80
 ROWS_DATA = 20
 ROWS_META = 10
@@ -638,19 +635,22 @@ There is no help, you're doomed!
         filename = None
         if from_cache:
             content_disposition = None
-            sendcache = SendCache(from_cache)
-            headers = sendcache._get_headers()
-            for key, value in headers:
-                lkey = key.lower()
-                if lkey == 'content-type':
-                    content_type = value
-                elif lkey == 'content-length':
-                    content_length = value
-                elif lkey == 'content-disposition':
-                    content_disposition = value
-                else:
-                    request.headers.add(key, value) # XXX WRONG! Must be response!
-            file_to_send = sendcache._get_datafile()
+            cache = app.cache.get(from_cache)
+            if cache is None:
+                abort(404)
+            else:
+                headers, data = cache
+                for key, value in headers:
+                    lkey = key.lower()
+                    if lkey == 'content-type':
+                        content_type = value
+                    elif lkey == 'content-length':
+                        content_length = value
+                    elif lkey == 'content-disposition':
+                        content_disposition = value
+                    else:
+                        request.headers.add(key, value) # XXX WRONG! Must be response!
+                file_to_send = StringIO(data)
         elif member: # content = file contained within a archive item revision
             path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
@@ -837,21 +837,15 @@ class TransformableBitmapImage(RenderableBitmapImage):
     """ We can transform (resize, rotate, mirror) some image types """
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
-    def _transform(self, content_type, cache, size=None, transpose_op=None):
+    def _transform(self, content_type, size=None, transpose_op=None):
         """ resize to new size (optional), transpose according to exif infos,
-            write data as content_type (default: same ct as original image)
-            to the cache.
+            result data should be content_type.
         """
         try:
             from PIL import Image as PILImage
         except ImportError:
             # no PIL, we can't do anything, we just output the revision data as is
-            outfile = cache.data_cache
-            outfile.open(mode='wb')
-            shutil.copyfileobj(self.rev, outfile)
-            outfile.close()
-            cache.put(None, content_type=content_type)
-            return
+            return content_type, self.rev.read()
 
         if content_type == 'image/jpeg':
             output_type = 'JPEG'
@@ -889,11 +883,11 @@ class TransformableBitmapImage(RenderableBitmapImage):
         }
         image = transpose_func[transpose_op](image)
 
-        outfile = cache.data_cache
-        outfile.open(mode='wb')
+        outfile = StringIO()
         image.save(outfile, output_type)
+        data = outfile.getvalue()
         outfile.close()
-        cache.put(None, content_type=content_type)
+        return content_type, data
 
     def _do_get_modified(self, hash):
         try:
@@ -913,18 +907,17 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # resize requested, XXX check ACL behaviour! XXX
             hash_name = app.cfg.hash_algorithm
             hash_hexdigest = self.rev[hash_name]
-            cache_meta = [ # we use a list to have order stability
-                (hash_name, hash_hexdigest),
-                ('width', width),
-                ('height', height),
-                ('transpose', transpose),
-            ]
-            cache = SendCache.from_meta(cache_meta)
-            if not cache.exists():
+            cid = caching.cache_key(hash_name=hash_name,
+                                    hash_hexdigest=hash_hexdigest,
+                                    width=width, height=height, transpose=transpose)
+            c = app.cache.get(cid)
+            if c is None:
                 content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
-                self._transform(content_type, cache=cache, size=size, transpose_op=transpose)
-            from_cache = cache.key
+                content_type, data = self._transform(content_type, size=size, transpose_op=transpose)
+                headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
+                app.cache.set(cid, (headers, data))
+            from_cache = cid
         else:
             from_cache = request.values.get('from_cache')
         return self._do_get(hash, from_cache=from_cache)
@@ -937,35 +930,34 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # no PIL, we can't do anything, we just call the base class method
             return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
 
-        content_type = newrev[MIMETYPE]
-        if content_type == 'image/jpeg':
-            output_type = 'JPEG'
-        elif content_type == 'image/png':
-            output_type = 'PNG'
-        elif content_type == 'image/gif':
-            output_type = 'GIF'
-        else:
-            raise ValueError("content_type %r not supported" % content_type)
-
-        oldimage = PILImage.open(oldrev)
-        newimage = PILImage.open(newrev)
-        oldimage.load()
-        newimage.load()
-
-        diffimage = PILdiff(newimage, oldimage)
-
         hash_name = app.cfg.hash_algorithm
-        cache_meta = [ # we use a list to have order stability
-            (hash_name, oldrev[hash_name], newrev[hash_name]),
-        ]
-        cache = SendCache.from_meta(cache_meta)
-        if not cache.exists():
-            outfile = cache.data_cache
-            outfile.open(mode='wb')
+        cid = caching.cache_key(hash_name=hash_name,
+                                hash_old=oldrev[hash_name],
+                                hash_new=newrev[hash_name])
+        c = app.cache.get(cid)
+        if c is None:
+            content_type = newrev[MIMETYPE]
+            if content_type == 'image/jpeg':
+                output_type = 'JPEG'
+            elif content_type == 'image/png':
+                output_type = 'PNG'
+            elif content_type == 'image/gif':
+                output_type = 'GIF'
+            else:
+                raise ValueError("content_type %r not supported" % content_type)
+
+            oldimage = PILImage.open(oldrev)
+            newimage = PILImage.open(newrev)
+            oldimage.load()
+            newimage.load()
+            diffimage = PILdiff(newimage, oldimage)
+            outfile = StringIO()
             diffimage.save(outfile, output_type)
+            data = outfile.getvalue()
             outfile.close()
-            cache.put(None, content_type=content_type)
-        url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
+            headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
+            app.cache.set(cid, (headers, data))
+        url = url_for('frontend.get_item', item_name=self.name, from_cache=cid)
         return '<img src="%s" />' % escape(url)
 
     def _render_data_diff_text(self, oldrev, newrev):
