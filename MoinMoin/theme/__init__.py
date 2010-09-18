@@ -248,7 +248,7 @@ class ThemeSupport(object):
             if sistername == self.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                cid = wikiutil.cache_key(sistername=sistername)
+                cid = wikiutil.cache_key(usage="SisterSites", sistername=sistername)
                 sisteritems = app.cache.get(cid)
                 if sisteritems is None:
                     uo = urllib.URLopener()
