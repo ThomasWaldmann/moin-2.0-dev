@@ -20,7 +20,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin import wikiutil, caching, user
+from MoinMoin import wikiutil, user
 from MoinMoin.util.interwiki import split_interwiki, resolve_interwiki, join_wiki, getInterwikiHome
 
 
@@ -248,7 +248,7 @@ class ThemeSupport(object):
             if sistername == self.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                cid = caching.cache_key(sistername=sistername)
+                cid = wikiutil.cache_key(sistername=sistername)
                 sisteritems = app.cache.get(cid)
                 if sisteritems is None:
                     uo = urllib.URLopener()

@@ -15,7 +15,7 @@ from flask import flaskg
 
 from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
-from MoinMoin import caching, user
+from MoinMoin import user
 from MoinMoin import config, security
 
 # Promoting the test user -------------------------------------------

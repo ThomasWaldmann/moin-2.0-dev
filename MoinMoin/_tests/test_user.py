@@ -12,7 +12,7 @@ import py
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin import user, caching
+from MoinMoin import user
 
 
 class TestEncodePassword(object):
