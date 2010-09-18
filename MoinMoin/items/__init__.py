@@ -896,7 +896,8 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # resize requested, XXX check ACL behaviour! XXX
             hash_name = app.cfg.hash_algorithm
             hash_hexdigest = self.rev[hash_name]
-            cid = wikiutil.cache_key(hash_name=hash_name,
+            cid = wikiutil.cache_key(usage="ImageTransform",
+                                     hash_name=hash_name,
                                      hash_hexdigest=hash_hexdigest,
                                      width=width, height=height, transpose=transpose)
             c = app.cache.get(cid)
@@ -922,7 +923,8 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
     def _render_data_diff_raw(self, oldrev, newrev):
         hash_name = app.cfg.hash_algorithm
-        cid = wikiutil.cache_key(hash_name=hash_name,
+        cid = wikiutil.cache_key(usage="ImageDiff",
+                                 hash_name=hash_name,
                                  hash_old=oldrev[hash_name],
                                  hash_new=newrev[hash_name])
         c = app.cache.get(cid)
