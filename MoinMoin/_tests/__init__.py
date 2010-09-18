@@ -13,11 +13,11 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
+from MoinMoin import caching, config, security, user
 from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
 from MoinMoin.storage.error import ItemAlreadyExistsError
-from MoinMoin import caching, user
-from MoinMoin import config, security
+
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
 # need more privs...
