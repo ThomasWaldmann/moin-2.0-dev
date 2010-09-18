@@ -52,7 +52,7 @@ class TestFuid:
         assert uid2 != uid1 # we changed size and maybe mtime
 
     def testUpdateFileMovingFromTemp(self):
-        # update file by moving another file over it (see caching.update)
+        # update file by moving another file over it
         # changing inode, maybe mtime, but not size
         if sys.platform == 'win32':
             py.test.skip("Inode change detection not supported on win32")

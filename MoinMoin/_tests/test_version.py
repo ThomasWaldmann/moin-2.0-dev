@@ -54,4 +54,4 @@ class TestVersion(object):
         assert Version(1, 2, 4) > (1, 2, 3)
 
 
-coverage_modules = ['MoinMoin.caching']
+coverage_modules = ['MoinMoin.version']

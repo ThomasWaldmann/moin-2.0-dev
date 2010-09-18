@@ -30,7 +30,7 @@ try:
 except ImportError:
     PIL = None
 
-from MoinMoin import caching, log
+from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
@@ -719,7 +719,7 @@ class TarMixin(object):
         if isinstance(name, unicode):
             name = name.encode('utf-8')
         temp_fname = os.path.join(tempfile.gettempdir(), 'TarContainer_' +
-                                  caching.cache_key(usage='TarContainer', name=self.name))
+                                  wikiutil.cache_key(usage='TarContainer', name=self.name))
         tf = tarfile.TarFile(temp_fname, mode='a')
         ti = tarfile.TarInfo(name)
         if isinstance(content, str):
@@ -896,9 +896,9 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # resize requested, XXX check ACL behaviour! XXX
             hash_name = app.cfg.hash_algorithm
             hash_hexdigest = self.rev[hash_name]
-            cid = caching.cache_key(hash_name=hash_name,
-                                    hash_hexdigest=hash_hexdigest,
-                                    width=width, height=height, transpose=transpose)
+            cid = wikiutil.cache_key(hash_name=hash_name,
+                                     hash_hexdigest=hash_hexdigest,
+                                     width=width, height=height, transpose=transpose)
             c = app.cache.get(cid)
             if c is None:
                 content_type = self.rev[MIMETYPE]
@@ -922,9 +922,9 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
     def _render_data_diff_raw(self, oldrev, newrev):
         hash_name = app.cfg.hash_algorithm
-        cid = caching.cache_key(hash_name=hash_name,
-                                hash_old=oldrev[hash_name],
-                                hash_new=newrev[hash_name])
+        cid = wikiutil.cache_key(hash_name=hash_name,
+                                 hash_old=oldrev[hash_name],
+                                 hash_new=newrev[hash_name])
         c = app.cache.get(cid)
         if c is None:
             if PIL is None:
