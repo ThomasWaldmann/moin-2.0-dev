@@ -34,7 +34,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
     def test_rename_group_item(self):
         """
-        Tests if the groups cache is refreshed after renaming a group item.
+        Tests renaming of a group item.
         """
         become_trusted()
         text = u"This is a group item"
@@ -48,7 +48,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
     def test_copy_group_item(self):
         """
-        Tests if the groups cache is refreshed after copying a group item.
+        Tests copying a group item.
         """
         py.test.skip("item.copy() is not finished")
 
