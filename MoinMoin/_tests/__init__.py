@@ -96,7 +96,7 @@ def create_random_string_list(length=14, count=10):
 
 def nuke_xapian_index():
     """ completely delete everything in xapian index dir """
-    fpath = os.path.join(app.cfg.cache_dir, 'xapian')
+    fpath = app.cfg.xapian_index_dir
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 

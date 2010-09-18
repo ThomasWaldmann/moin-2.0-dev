@@ -127,11 +127,7 @@ class XapianIndex(BaseIndex):
 
     def _main_dir(self):
         """ Get the directory of the xapian index """
-        if app.cfg.xapian_index_dir:
-            return os.path.join(app.cfg.xapian_index_dir,
-                    app.cfg.siteid)
-        else:
-            return os.path.join(app.cfg.cache_dir, 'xapian')
+        return os.path.join(app.cfg.xapian_index_dir, app.cfg.siteid)
 
     def exists(self):
         """ Check if index exists """

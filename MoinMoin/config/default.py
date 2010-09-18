@@ -59,10 +59,10 @@ class ConfigFunctionality(object):
         # define directories
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ['cache', 'plugin', ]:
-            name = dirname + '_dir'
-            if not getattr(self, name, None):
-                setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
+        if not getattr(self, 'plugin_dir', None):
+            setattr(self, 'plugin_dir', os.path.abspath(os.path.join(data_dir, 'plugin')))
+        if not getattr(self, 'xapian_index_dir', None):
+            setattr(self, 'xapian_index_dir', os.path.abspath(os.path.join(data_dir, 'xapian')))
 
         # Try to decode certain names which allow unicode
         self._decode()
@@ -143,7 +143,7 @@ class ConfigFunctionality(object):
         if self.secrets is None:  # admin did not setup a real secret
             raise error.ConfigurationError("No secret configured! You need to set secrets = 'somelongsecretstring' in your wiki config.")
 
-        secret_key_names = ['action/cache', 'wikiutil/tickets', ]
+        secret_key_names = ['wikiutil/tickets', ]
 
         secret_min_length = 10
         if isinstance(self.secrets, str):
@@ -474,7 +474,6 @@ options_no_group_name = {
   # ==========================================================================
   'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory."),
-    ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
