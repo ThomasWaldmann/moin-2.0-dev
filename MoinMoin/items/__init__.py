@@ -185,11 +185,15 @@ class Item(object):
         """
         flaskg.clock.start('conv_in_dom')
         hash_name = app.cfg.hash_algorithm
-        hash_hexdigest = self.rev[hash_name]
-        cid = wikiutil.cache_key(usage="internal_representation",
-                                 hash_name=hash_name,
-                                 hash_hexdigest=hash_hexdigest)
-        doc = app.cache.get(cid)
+        hash_hexdigest = self.rev.get(hash_name)
+        if hash_hexdigest:
+            cid = wikiutil.cache_key(usage="internal_representation",
+                                     hash_name=hash_name,
+                                     hash_hexdigest=hash_hexdigest)
+            doc = app.cache.get(cid)
+        else:
+            # likely a non-existing item
+            doc = cid = None
         if doc is None:
             # We will see if we can perform the conversion:
             # FROM_mimetype --> DOM
@@ -217,7 +221,8 @@ class Item(object):
             doc.set(moin_page.page_href, unicode(links))
             doc = smiley_conv(doc)
             doc = link_conv(doc)
-            app.cache.set(cid, doc)
+            if cid:
+                app.cache.set(cid, doc)
         flaskg.clock.stop('conv_in_dom')
         return doc
 
