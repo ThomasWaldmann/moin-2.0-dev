@@ -11,6 +11,7 @@
 
 from MoinMoin.datastruct.backends._tests import DictsBackendTest
 from MoinMoin.datastruct.backends import wiki_dicts
+from MoinMoin.items import SOMEDICT
 from MoinMoin._tests import become_trusted, create_item
 
 
@@ -29,14 +30,14 @@ This is a page with some text.
                     u"text with spaces": u"second item",
                     u'Empty string': u'',
                     u"Last": u"last item"}
-        create_item(u'SomeTestDict', text, somedict=somedict)
+        create_item(u'SomeTestDict', text, meta={SOMEDICT: somedict})
 
         text = """
  This is an example
 """
         somedict = {u"One": u"1",
                     u"Two": u"2"}
-        create_item(u'SomeOtherTestDict', text, somedict=somedict)
+        create_item(u'SomeOtherTestDict', text, meta={SOMEDICT: somedict})
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']
