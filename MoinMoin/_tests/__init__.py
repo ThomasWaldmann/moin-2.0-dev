@@ -55,15 +55,15 @@ def become_superuser(username=u"SuperUser"):
 
 # Creating and destroying test items --------------------------------
 
-def create_item(itemname, content, mimetype='text/x.moin.wiki', meta=None):
+def create_item(name, content, mimetype='text/x.moin.wiki', meta=None):
     """ create a item with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = Item.create(itemname)
+    item = Item.create(name)
     if meta is None:
         meta = {}
     item._save(meta, content, mimetype=mimetype)
-    return Item.create(itemname)
+    return Item.create(name)
 
 def update_item(name, revno, meta, data):
     try:
@@ -81,13 +81,13 @@ def update_item(name, revno, meta, data):
     item.commit()
     return item
 
-def append_item(itemname, content, meta=None):
+def append_item(name, content, meta=None):
     """ appends some content to an existing item """
     # require existing item
-    assert flaskg.storage.has_item(itemname)
+    assert flaskg.storage.has_item(name)
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = flaskg.storage.get_item(itemname)
+    item = flaskg.storage.get_item(name)
     rev = item.get_revision(-1)
     item_meta = dict(rev)
     if meta is not None:
@@ -95,7 +95,7 @@ def append_item(itemname, content, meta=None):
             attr = rev.get(key, {})
             attr.extend(meta[key])
             item_meta[key] = attr
-    return update_item(itemname, rev.revno + 1, item_meta, content)
+    return update_item(name, rev.revno + 1, item_meta, content)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
@@ -108,7 +108,7 @@ def nuke_xapian_index():
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 
-def nuke_item(item_name):
+def nuke_item(name):
     """ complete destroys an item """
-    item = Item.create(item_name)
+    item = Item.create(name)
     item.destroy()
