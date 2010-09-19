@@ -19,7 +19,9 @@ from MoinMoin.datastruct import GroupDoesNotExistError
 from MoinMoin.items import USERGROUP
 from MoinMoin import security
 from MoinMoin.user import User
-from MoinMoin._tests import append_item, become_trusted, create_item, create_random_string_list
+from MoinMoin._tests import become_trusted, create_random_string_list, update_item
+
+DATA = "This is a group item"
 
 
 class TestWikiGroupBackend(GroupsBackendTest):
@@ -30,16 +32,14 @@ class TestWikiGroupBackend(GroupsBackendTest):
     def setup_method(self, method):
         become_trusted()
         for group, members in self.test_groups.iteritems():
-            text = "This is a group item"
-            create_item(group, text, meta={USERGROUP: members})
+            update_item(group, 0, {USERGROUP: members}, DATA)
 
     def test_rename_group_item(self):
         """
         Tests renaming of a group item.
         """
         become_trusted()
-        text = u"This is a group item"
-        item = create_item(u'SomeGroup', text, meta={USERGROUP: ["ExampleUser"]})
+        item = update_item(u'SomeGroup', 0, {USERGROUP: ["ExampleUser"]}, DATA)
         item.rename(u'AnotherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'AnotherGroup']
@@ -54,8 +54,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         py.test.skip("item.copy() is not finished")
 
         become_trusted()
-        text = u"This is a group item"
-        item = create_item(u'SomeGroup', text,  meta={USERGROUP: ["ExampleUser"]})
+        item = update_item(u'SomeGroup', 0,  {USERGROUP: ["ExampleUser"]}, DATA)
         item.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'SomeOtherGroup']
@@ -69,31 +68,13 @@ class TestWikiGroupBackend(GroupsBackendTest):
         Test scalability by appending a name to a large list of group members.
         """
         become_trusted()
-        text = "This is a group item"
         # long list of users
         members = create_random_string_list(length=15, count=1234)
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', text,  meta={USERGROUP: members})
-        append_item(u'UserGroup', '', meta={USERGROUP: [test_user]})
+        update_item(u'UserGroup', 0, {USERGROUP: members}, DATA)
+        update_item(u'UserGroup', 1, {USERGROUP: members + [test_user]}, '')
         result = test_user in flaskg.groups['UserGroup']
 
-        assert result
-
-    def test_user_addition_to_group_item(self):
-        """
-        Test addition of a username to a large list of group members.
-        """
-        become_trusted()
-
-        # long list of users
-        members = create_random_string_list()
-        text = "This is a group item"
-
-        create_item(u'UserGroup', text, meta={USERGROUP: members})
-        new_user = create_random_string_list(length=15, count=1)[0]
-        append_item(u'UserGroup', '', meta={USERGROUP: [new_user]})
-
-        result = new_user in flaskg.groups[u'UserGroup']
         assert result
 
     def test_member_removed_from_group_item(self):
@@ -105,17 +86,16 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
         # long list of users
         members = create_random_string_list()
-        text = u"This is a group item"
-        create_item(u'UserGroup', text,  meta={USERGROUP: members})
+        update_item(u'UserGroup', 0,  {USERGROUP: members}, DATA)
 
         # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', text,  meta={USERGROUP: [test_user]})
+        update_item(u'UserGroup', 1,  {USERGROUP: [test_user]}, DATA)
         result = test_user in flaskg.groups[u'UserGroup']
         assert result
 
         # updates the text without test_user
-        create_item(u'UserGroup', text)
+        update_item(u'UserGroup', 2, {}, DATA)
         result = test_user in flaskg.groups[u'UserGroup']
         assert not result
 
@@ -126,8 +106,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         then add user member to an item group and check acl rights
         """
         become_trusted()
-        text = u"This is a group item"
-        create_item(u'NewGroup', text, meta={USERGROUP: ["ExampleUser"]})
+        update_item(u'NewGroup', 0, {USERGROUP: ["ExampleUser"]}, DATA)
 
         acl_rights = ["NewGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
@@ -135,7 +114,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         has_rights_before = acl.may(u"AnotherUser", "read")
 
         # update item - add AnotherUser to a item group NewGroup
-        append_item(u'NewGroup', '', meta={USERGROUP: ["AnotherUser"]})
+        update_item(u'NewGroup', 1, {USERGROUP: ["AnotherUser"]}, '')
 
         has_rights_after = acl.may(u"AnotherUser", "read")
 

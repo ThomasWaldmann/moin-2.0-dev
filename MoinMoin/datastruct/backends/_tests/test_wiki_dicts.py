@@ -12,7 +12,9 @@
 from MoinMoin.datastruct.backends._tests import DictsBackendTest
 from MoinMoin.datastruct.backends import wiki_dicts
 from MoinMoin.items import SOMEDICT
-from MoinMoin._tests import become_trusted, create_item
+from MoinMoin._tests import become_trusted, update_item
+
+DATA = "This is a dict item."
 
 
 class TestWikiDictsBackend(DictsBackendTest):
@@ -23,21 +25,15 @@ class TestWikiDictsBackend(DictsBackendTest):
     def setup_method(self, method):
         become_trusted()
 
-        text = '''
-This is a page with some text.
-'''
         somedict = {u"First": u"first item",
                     u"text with spaces": u"second item",
                     u'Empty string': u'',
                     u"Last": u"last item"}
-        create_item(u'SomeTestDict', text, meta={SOMEDICT: somedict})
+        update_item(u'SomeTestDict', 0, {SOMEDICT: somedict}, DATA)
 
-        text = """
- This is an example
-"""
         somedict = {u"One": u"1",
                     u"Two": u"2"}
-        create_item(u'SomeOtherTestDict', text, meta={SOMEDICT: somedict})
+        update_item(u'SomeOtherTestDict', 0, {SOMEDICT: somedict}, DATA)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']
