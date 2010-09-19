@@ -55,19 +55,13 @@ def become_superuser(username=u"SuperUser"):
 
 # Creating and destroying test items --------------------------------
 
-def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None,
-                somedict=None, groupmember=None):
+def create_item(itemname, content, mimetype='text/x.moin.wiki', meta=None):
     """ create a item with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
     item = Item.create(itemname)
-    meta = {}
-    if acl is not None:
-        meta[ACL] = acl
-    if somedict is not None:
-        meta[SOMEDICT] = somedict
-    if groupmember is not None:
-        meta[USERGROUP] = groupmember
+    if meta is None:
+        meta = {}
     item._save(meta, content, mimetype=mimetype)
     return Item.create(itemname)
 
@@ -87,23 +81,21 @@ def update_item(name, revno, meta, data):
     item.commit()
     return item
 
-def append_item(itemname, content, groupmember=None):
+def append_item(itemname, content, meta=None):
     """ appends some content to an existing item """
+    # require existing item
+    assert flaskg.storage.has_item(itemname)
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    meta = {}
-    if flaskg.storage.has_item(itemname):
-        item = flaskg.storage.get_item(itemname)
-        rev = item.get_revision(-1)
-        group = rev.get(USERGROUP, {})
-        mimetype = rev.get("mimetype", {})
-    if groupmember is not None:
-        item = Item.create(itemname)
-        group.extend(groupmember)
-        meta[USERGROUP] = group
-
-    item._save(meta, content, mimetype=mimetype)
-    return Item.create(itemname)
+    item = flaskg.storage.get_item(itemname)
+    rev = item.get_revision(-1)
+    item_meta = dict(rev)
+    if meta is not None:
+        for key in meta:
+            attr = rev.get(key, {})
+            attr.extend(meta[key])
+            item_meta[key] = attr
+    return update_item(itemname, rev.revno + 1, item_meta, content)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """

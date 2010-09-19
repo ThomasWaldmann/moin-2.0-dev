@@ -16,6 +16,7 @@ from flask import current_app as app
 from flask import flaskg
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
 from MoinMoin.datastruct import GroupDoesNotExistError
+from MoinMoin.items import USERGROUP
 from MoinMoin import security
 from MoinMoin.user import User
 from MoinMoin._tests import append_item, become_trusted, create_item, create_random_string_list
@@ -30,7 +31,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted()
         for group, members in self.test_groups.iteritems():
             text = "This is a group item"
-            create_item(group, text, groupmember=members)
+            create_item(group, text, meta={USERGROUP: members})
 
     def test_rename_group_item(self):
         """
@@ -38,7 +39,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         """
         become_trusted()
         text = u"This is a group item"
-        item = create_item(u'SomeGroup', text, groupmember=["ExampleUser"])
+        item = create_item(u'SomeGroup', text, meta={USERGROUP: ["ExampleUser"]})
         item.rename(u'AnotherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'AnotherGroup']
@@ -54,7 +55,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
         become_trusted()
         text = u"This is a group item"
-        item = create_item(u'SomeGroup', text, groupmember=["ExampleUser"])
+        item = create_item(u'SomeGroup', text,  meta={USERGROUP: ["ExampleUser"]})
         item.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in flaskg.groups[u'SomeOtherGroup']
@@ -72,8 +73,8 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # long list of users
         members = create_random_string_list(length=15, count=1234)
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', text, groupmember=members)
-        append_item(u'UserGroup', text, groupmember=[test_user])
+        create_item(u'UserGroup', text,  meta={USERGROUP: members})
+        append_item(u'UserGroup', text, meta={USERGROUP: [test_user]})
         result = test_user in flaskg.groups['UserGroup']
 
         assert result
@@ -88,9 +89,9 @@ class TestWikiGroupBackend(GroupsBackendTest):
         members = create_random_string_list()
         text = "This is a group item"
 
-        create_item(u'UserGroup', text, groupmember=members)
+        create_item(u'UserGroup', text, meta={USERGROUP: members})
         new_user = create_random_string_list(length=15, count=1)[0]
-        append_item(u'UserGroup', text, groupmember=[new_user])
+        append_item(u'UserGroup', text, meta={USERGROUP: [new_user]})
 
         result = new_user in flaskg.groups[u'UserGroup']
         assert result
@@ -105,11 +106,11 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # long list of users
         members = create_random_string_list()
         text = u"This is a group item"
-        create_item(u'UserGroup', text, groupmember=members)
+        create_item(u'UserGroup', text,  meta={USERGROUP: members})
 
         # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        create_item(u'UserGroup', text, groupmember=[test_user])
+        create_item(u'UserGroup', text,  meta={USERGROUP: [test_user]})
         result = test_user in flaskg.groups[u'UserGroup']
         assert result
 
@@ -126,7 +127,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         """
         become_trusted()
         text = u"This is a group item"
-        create_item(u'NewGroup', text, groupmember=["ExampleUser"])
+        create_item(u'NewGroup', text, meta={USERGROUP: ["ExampleUser"]})
 
         acl_rights = ["NewGroup:read,write"]
         acl = security.AccessControlList(app.cfg, acl_rights)
@@ -134,7 +135,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         has_rights_before = acl.may(u"AnotherUser", "read")
 
         # update item - add AnotherUser to a item group NewGroup
-        append_item(u'NewGroup', text, groupmember=["AnotherUser"])
+        append_item(u'NewGroup', text, meta={USERGROUP: ["AnotherUser"]})
 
         has_rights_after = acl.may(u"AnotherUser", "read")
 
