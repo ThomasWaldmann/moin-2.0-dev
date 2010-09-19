@@ -9,6 +9,7 @@
 """
 
 import os
+import urllib
 
 from flask import current_app as app
 from flask import flaskg
@@ -19,7 +20,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin import wikiutil, caching, user
+from MoinMoin import wikiutil, user
 from MoinMoin.util.interwiki import split_interwiki, resolve_interwiki, join_wiki, getInterwikiHome
 
 
@@ -242,18 +243,35 @@ class ThemeSupport(object):
             url, link_text, title = self.split_navilink(text, localize=0)
             items.append(('userlink', url, link_text, title))
 
-        # Add sister pages.
+        # Add sister pages (see http://usemod.com/cgi-bin/mb.pl?SisterSitesImplementationGuide )
         for sistername, sisterurl in self.cfg.sistersites:
             if sistername == self.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                cache = caching.CacheEntry('sisters', sistername, 'farm', use_pickle=True)
-                if cache.exists():
-                    data = cache.content()
-                    sisterpages = data['sisterpages']
-                    if current in sisterpages:
-                        url = sisterpages[current]
-                        items.append(('sisterwiki', url, sistername, ''))
+                cid = wikiutil.cache_key(usage="SisterSites", sistername=sistername)
+                sisteritems = app.cache.get(cid)
+                if sisteritems is None:
+                    uo = urllib.URLopener()
+                    uo.version = 'MoinMoin SisterItem list fetcher 1.0'
+                    try:
+                        sisteritems = {}
+                        f = uo.open(sisterurl)
+                        for line in f:
+                            line = line.strip()
+                            try:
+                                item_url, item_name = line.split(' ', 1)
+                                sisteritems[item_name.decode('utf-8')] = item_url
+                            except:
+                                pass # ignore invalid lines
+                        f.close()
+                        app.cache.set(cid, sisteritems)
+                        logging.info(u"Site: %s Status: Updated. Pages: %d" % (sistername, len(sisteritems)))
+                    except IOError, (title, code, msg, headers): # code e.g. 304
+                        logging.warning(u"Site: %s Status: Not updated." % sistername)
+                        logging.exception("exception was:")
+                if current in sisteritems:
+                    url = sisteritems[current]
+                    items.append(('sisterwiki', url, sistername, ''))
         return items
 
     def parent_item(self, item_name):

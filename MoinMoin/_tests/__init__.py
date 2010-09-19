@@ -13,7 +13,8 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin import caching, config, security, user
+
+from MoinMoin import config, security, user
 from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
 from MoinMoin.storage.error import ItemAlreadyExistsError
@@ -105,7 +106,7 @@ def create_random_string_list(length=14, count=10):
 
 def nuke_xapian_index():
     """ completely delete everything in xapian index dir """
-    fpath = os.path.join(app.cfg.cache_dir, 'xapian')
+    fpath = app.cfg.xapian_index_dir
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 
