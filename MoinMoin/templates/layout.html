@@ -135,7 +135,7 @@
 </div>
 
 {{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
-
+{%- set null = clock.stop('render_template') -%}
 {%- set null = clock.stop('total') -%}
 {%- set timing_information = clock.dump() -%}
 {% if cfg.show_timings -%}

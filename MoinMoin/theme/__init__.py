@@ -35,6 +35,7 @@ def get_current_theme():
 
 
 def render_template(template, **context):
+    flaskg.clock.start('render_template')
     return render_theme_template(get_current_theme(), template, **context)
 
 
