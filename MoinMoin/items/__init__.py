@@ -183,33 +183,41 @@ class Item(object):
         """
         Return the internal representation of a document using a DOM Tree
         """
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        input_conv = reg.get(Type(self.mimetype), type_moin_document)
-        if not input_conv:
-            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', url_root=Iri(request.url_root))
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley')
-
-        # We can process the conversion
         flaskg.clock.start('conv_in_dom')
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        input = self.feed_input_conv()
-        doc = input_conv(input)
-        # XXX is the following assuming that the top element of the doc tree
-        # is a moin_page.page element? if yes, this is the wrong place to do that
-        # as not every doc will have that element (e.g. for images, we just get
-        # moin_page.object, for a tar item, we get a moin_page.table):
-        doc.set(moin_page.page_href, unicode(links))
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
+        hash_name = app.cfg.hash_algorithm
+        hash_hexdigest = self.rev[hash_name]
+        cid = wikiutil.cache_key(usage="internal_representation",
+                                 hash_name=hash_name,
+                                 hash_hexdigest=hash_hexdigest)
+        doc = app.cache.get(cid)
+        if doc is None:
+            # We will see if we can perform the conversion:
+            # FROM_mimetype --> DOM
+            # if so we perform the transformation, otherwise we don't
+            from MoinMoin.converter2 import default_registry as reg
+            from MoinMoin.util.iri import Iri
+            from MoinMoin.util.mime import Type, type_moin_document
+            from MoinMoin.util.tree import moin_page, xlink
+            input_conv = reg.get(Type(self.mimetype), type_moin_document)
+            if not input_conv:
+                raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+            link_conv = reg.get(type_moin_document, type_moin_document,
+                    links='extern', url_root=Iri(request.url_root))
+            smiley_conv = reg.get(type_moin_document, type_moin_document,
+                    icon='smiley')
+
+            # We can process the conversion
+            links = Iri(scheme='wiki', authority='', path='/' + self.name)
+            input = self.feed_input_conv()
+            doc = input_conv(input)
+            # XXX is the following assuming that the top element of the doc tree
+            # is a moin_page.page element? if yes, this is the wrong place to do that
+            # as not every doc will have that element (e.g. for images, we just get
+            # moin_page.object, for a tar item, we get a moin_page.table):
+            doc.set(moin_page.page_href, unicode(links))
+            doc = smiley_conv(doc)
+            doc = link_conv(doc)
+            app.cache.set(cid, doc)
         flaskg.clock.stop('conv_in_dom')
         return doc
 
