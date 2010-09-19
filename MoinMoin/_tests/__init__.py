@@ -13,10 +13,11 @@ import os, shutil
 from flask import current_app as app
 from flask import flaskg
 
+
+from MoinMoin import config, security, user
 from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
 from MoinMoin.util import random_string
-from MoinMoin import user
-from MoinMoin import config, security
+from MoinMoin.storage.error import ItemAlreadyExistsError
 
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
@@ -55,39 +56,48 @@ def become_superuser(username=u"SuperUser"):
 
 # Creating and destroying test items --------------------------------
 
-def create_item(itemname, content, mimetype='text/x.moin.wiki', acl=None,
-                somedict=None, groupmember=None):
+def create_item(name, content, mimetype='text/x.moin.wiki', meta=None):
     """ create a item with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    item = Item.create(itemname)
-    meta = {}
-    if acl is not None:
-        meta[ACL] = acl
-    if somedict is not None:
-        meta[SOMEDICT] = somedict
-    if groupmember is not None:
-        meta[USERGROUP] = groupmember
+    item = Item.create(name)
+    if meta is None:
+        meta = {}
     item._save(meta, content, mimetype=mimetype)
-    return Item.create(itemname)
+    return Item.create(name)
 
-def append_item(itemname, content, groupmember=None):
+def update_item(name, revno, meta, data):
+    try:
+        item = flaskg.storage.create_item(name)
+    except ItemAlreadyExistsError:
+        item = flaskg.storage.get_item(name)
+    rev = item.create_revision(revno)
+    for k, v in meta.items():
+        rev[k] = v
+    if not 'name' in rev:
+        rev['name'] = name
+    if not 'mimetype' in rev:
+        rev['mimetype'] = u'application/octet-stream'
+    rev.write(data)
+    item.commit()
+    return item
+
+def append_item(name, content, meta=None):
     """ appends some content to an existing item """
+    # require existing item
+    assert flaskg.storage.has_item(name)
     if isinstance(content, unicode):
         content = content.encode(config.charset)
-    meta = {}
-    if flaskg.storage.has_item(itemname):
-        item = flaskg.storage.get_item(itemname)
-        rev = item.get_revision(-1)
-        group = rev.get(USERGROUP, {})
-        mimetype = rev.get("mimetype", {})
-    if groupmember is not None:
-        item = Item.create(itemname)
-        group.extend(groupmember)
-        meta[USERGROUP] = group
-
-    item._save(meta, content, mimetype=mimetype)
-    return Item.create(itemname)
+    item = flaskg.storage.get_item(name)
+    rev = item.get_revision(-1)
+    data = rev.read()
+    item_meta = dict(rev)
+    if meta is not None:
+        for key in meta:
+            attr = rev.get(key, {})
+            attr.extend(meta[key])
+            item_meta[key] = attr
+    return update_item(name, rev.revno + 1, item_meta, data + content)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
@@ -100,7 +110,7 @@ def nuke_xapian_index():
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
 
-def nuke_item(item_name):
+def nuke_item(name):
     """ complete destroys an item """
-    item = Item.create(item_name)
+    item = Item.create(name)
     item.destroy()
