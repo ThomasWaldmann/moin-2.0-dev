@@ -2,9 +2,10 @@
 MoinMoin - Smiley converter
 
 Replace all the text corresponding to a smiley, by the corresponding
-<object> tag for the DOM Tree.
+element for the DOM Tree.
 
-@copyright: 2009 MoinMoin:ValentinJaniaut
+@copyright: 2010 MoinMoin:ValentinJaniaut,
+            2010 MoinMoin:ThomasWaldmann
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -12,48 +13,45 @@ import re
 
 from emeraldtree import ElementTree as ET
 
-from flask import url_for
-
-from MoinMoin.util.iri import Iri
-from MoinMoin.util.tree import moin_page, xlink
+from MoinMoin.util.tree import moin_page
 
 class Converter(object):
     """
-    Replace each smiley by the corresponding <object> in the DOM Tree
+    Replace each smiley by the corresponding element in the DOM Tree
     """
     smileys = {
-        # markup: (image filename, w, h)
-        'X-(': ('angry.png', 16, 16),
-        ':D': ('biggrin.png', 16, 16),
-        '<:(': ('frown.png', 16, 16),
-        ':o': ('redface.png', 16, 16),
-        ':(': ('sad.png', 16, 16),
-        ':)': ('smile.png', 16, 16),
-        'B)': ('smile2.png', 16, 16),
-        ':))': ('smile3.png', 16, 16),
-        ';)': ('smile4.png', 16, 16),
-        '/!\\': ('alert.png', 16, 16),
-        '<!>': ('attention.png', 16, 16),
-        '(!)': ('idea.png', 16, 16),
-        ':-?': ('tongue.png', 16, 16),
-        ':\\': ('ohwell.png', 16, 16),
-        '>:>': ('devil.png', 16, 16),
-        '|)': ('tired.png', 16, 16),
-        ':-(': ('sad.png', 16, 16),
-        ':-)': ('smile.png', 16, 16),
-        'B-)': ('smile2.png', 16, 16),
-        ':-))': ('smile3.png', 16, 16),
-        ';-)': ('smile4.png', 16, 16),
-        '|-)': ('tired.png', 16, 16),
-        '(./)': ('checkmark.png', 16, 16),
-        '{OK}': ('thumbs-up.png', 16, 16),
-        '{X}': ('icon-error.png', 16, 16),
-        '{i}': ('icon-info.png', 16, 16),
-        '{1}': ('prio1.png', 15, 13),
-        '{2}': ('prio2.png', 15, 13),
-        '{3}': ('prio3.png', 15, 13),
-        '{*}': ('star_on.png', 16, 16),
-        '{o}': ('star_off.png', 16, 16),
+        # markup: smiley name
+        'X-(': 'angry',
+        ':D': 'biggrin',
+        '<:(': 'frown',
+        ':o': 'redface',
+        ':(': 'sad',
+        ':)': 'smile',
+        'B)': 'smile2',
+        ':))': 'smile3',
+        ';)': 'smile4',
+        '/!\\': 'alert',
+        '<!>': 'attention',
+        '(!)': 'idea',
+        ':-?': 'tongue',
+        ':\\': 'ohwell',
+        '>:>': 'devil',
+        '|)': 'tired',
+        ':-(': 'sad',
+        ':-)': 'smile',
+        'B-)': 'smile2',
+        ':-))': 'smile3',
+        ';-)': 'smile4',
+        '|-)': 'tired',
+        '(./)': 'checkmark',
+        '{OK}': 'thumbs-up',
+        '{X}': 'icon-error',
+        '{i}': 'icon-info',
+        '{1}': 'prio1',
+        '{2}': 'prio2',
+        '{3}': 'prio3',
+        '{*}': 'star_on',
+        '{o}': 'star_off',
     }
 
     smiley_rule = ur"""
@@ -107,39 +105,32 @@ class Converter(object):
     def do_smiley(self, element):
         """
         From a text, return a list with smileys replaced
-        by object elements, and the former text for the
-        other element of the list.
+        by the appropriate elements, and the former text for the
+        other elements of the list.
         """
         # We split our string into different items arround
         # the matched smiley.
         splitted_string = re.split(self.smiley_re, element)
         # And then for each item of the list,
-        # if it is a smiley, we replace it by an object element
+        # if it is a smiley, we replace it by the appropriate element
         return [self.replace_smiley(item) for item in splitted_string]
 
     def replace_smiley(self, text):
         """
-        Replace a given string by an <object>
+        Replace a given string by the appropriate
         element if the string is exactly a smiley.
         Otherwise return the string without any change.
         """
         # Remove the space of the smiley_text if any
-        smiley_text = text.strip()
+        smiley_markup = text.strip()
 
-        if smiley_text in self.smileys:
-            icon, h, w = self.smileys[smiley_text]
-            attrib = {}
-            key = xlink.href
-            # TODO: Retrieve the name of the theme used by the user
-            #        to get the correct smiley image
-            attrib[key] = Iri(url_for('static', filename="images/smileys/%s" % icon))
-            attrib[moin_page('type')] = "image/png"
-            # We return an object element instead of the text
-            return ET.Element(moin_page('object'), attrib=attrib, children=[smiley_text])
-
-        # if the text was not a smiley, just return the text
-        # without any transformations
-        return text
+        if smiley_markup in self.smileys:
+            smiley_name = self.smileys[smiley_markup]
+            attrib = {moin_page('class'): 'moin-' + smiley_name}
+            return ET.Element(moin_page.span, attrib=attrib, children=[smiley_markup])
+        else:
+            # if the text was not a smiley, just return the markup without any transformations
+            return text
 
 from . import default_registry
 from MoinMoin.util.mime import type_moin_document
