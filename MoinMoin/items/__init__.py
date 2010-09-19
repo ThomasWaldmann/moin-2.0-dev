@@ -193,10 +193,6 @@ class Item(object):
         input_conv = reg.get(Type(self.mimetype), type_moin_document)
         if not input_conv:
             raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall')
-        macro_conv = reg.get(type_moin_document, type_moin_document,
-                macros='expandall')
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', url_root=Iri(request.url_root))
         smiley_conv = reg.get(type_moin_document, type_moin_document,
@@ -212,21 +208,34 @@ class Item(object):
         # as not every doc will have that element (e.g. for images, we just get
         # moin_page.object, for a tar item, we get a moin_page.table):
         doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = macro_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
         flaskg.clock.stop('conv_in_dom')
+        return doc
+
+    def _expand_document(self, doc):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import type_moin_document
+        include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
+        macro_conv = reg.get(type_moin_document, type_moin_document, macros='expandall')
+        flaskg.clock.start('conv_include')
+        doc = include_conv(doc)
+        flaskg.clock.stop('conv_include')
+        flaskg.clock.start('conv_macro')
+        doc = macro_conv(doc)
+        flaskg.clock.stop('conv_macro')
         return doc
 
     def _render_data(self):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import html
+        include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
+        macro_conv = reg.get(type_moin_document, type_moin_document, macros='expandall')
         # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'))
+        html_conv = reg.get(type_moin_document, Type('application/x-xhtml-moin-page'))
         doc = self.internal_representation()
+        doc = self._expand_document(doc)
         flaskg.clock.start('conv_dom_html')
         doc = html_conv(doc)
         flaskg.clock.stop('conv_dom_html')
@@ -1114,6 +1123,8 @@ class DocBook(MarkupItem):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import docbook, xlink
+
+        doc = self._expand_document(doc)
 
         # We convert the internal representation of the document
         # into a DocBook document
