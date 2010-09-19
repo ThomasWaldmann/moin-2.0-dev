@@ -19,8 +19,9 @@ acliter = security.ACLStringIterator
 AccessControlList = security.AccessControlList
 
 from MoinMoin.user import User
+from MoinMoin.items import ACL
 
-from MoinMoin._tests import create_item
+from MoinMoin._tests import update_item
 from MoinMoin._tests import become_trusted
 
 class TestACLStringIterator(object):
@@ -296,7 +297,10 @@ class TestItemAcls(object):
     def setup_method(self, method):
         become_trusted(username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
-            create_item(item_name, item_content, acl=item_acl)
+            if item_acl is not None:
+                update_item(item_name, 0, {ACL: item_acl}, item_content)
+            else:
+                update_item(item_name, 0, {}, item_content)
 
     def testItemACLs(self):
         """ security: test item acls """
@@ -376,7 +380,10 @@ class TestItemHierachicalAcls(object):
     def setup_method(self, method):
         become_trusted(username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
-            create_item(item_name, item_content, acl=item_acl)
+            if item_acl is not None:
+                update_item(item_name, 0, {ACL: item_acl}, item_content)
+            else:
+                update_item(item_name, 0, {}, item_content)
 
     def testItemACLs(self):
         """ security: test item acls """

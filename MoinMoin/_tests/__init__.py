@@ -15,7 +15,7 @@ from flask import flaskg
 
 
 from MoinMoin import config, security, user
-from MoinMoin.items import Item, ACL, SOMEDICT, USERGROUP
+from MoinMoin.items import Item
 from MoinMoin.util import random_string
 from MoinMoin.storage.error import ItemAlreadyExistsError
 
@@ -55,25 +55,18 @@ def become_superuser(username=u"SuperUser"):
         app.cfg.superuser.append(username)
 
 # Creating and destroying test items --------------------------------
-
-def create_item(name, content, mimetype='text/x.moin.wiki', meta=None):
-    """ create a item with some content """
-    if isinstance(content, unicode):
-        content = content.encode(config.charset)
-    item = Item.create(name)
-    if meta is None:
-        meta = {}
-    item._save(meta, content, mimetype=mimetype)
-    return Item.create(name)
-
 def update_item(name, revno, meta, data):
+    """ creates or updates an item  """
+    if isinstance(data, unicode):
+        data = data.encode(config.charset)
     try:
         item = flaskg.storage.create_item(name)
     except ItemAlreadyExistsError:
         item = flaskg.storage.get_item(name)
+
     rev = item.create_revision(revno)
-    for k, v in meta.items():
-        rev[k] = v
+    for key, value in meta.items():
+        rev[key] = value
     if not 'name' in rev:
         rev['name'] = name
     if not 'mimetype' in rev:
@@ -81,23 +74,6 @@ def update_item(name, revno, meta, data):
     rev.write(data)
     item.commit()
     return item
-
-def append_item(name, content, meta=None):
-    """ appends some content to an existing item """
-    # require existing item
-    assert flaskg.storage.has_item(name)
-    if isinstance(content, unicode):
-        content = content.encode(config.charset)
-    item = flaskg.storage.get_item(name)
-    rev = item.get_revision(-1)
-    data = rev.read()
-    item_meta = dict(rev)
-    if meta is not None:
-        for key in meta:
-            attr = rev.get(key, {})
-            attr.extend(meta[key])
-            item_meta[key] = attr
-    return update_item(name, rev.revno + 1, item_meta, data + content)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
