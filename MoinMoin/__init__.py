@@ -26,6 +26,7 @@ from flask import current_app as app
 from flaskext.babel import Babel
 from flaskext.babel import gettext as _
 from flaskext.babel import lazy_gettext as N_
+from flaskext.cache import Cache
 from flaskext.themes import setup_themes
 
 from werkzeug import ImmutableDict
@@ -104,6 +105,9 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     # register before/after request functions
     app.before_request(before)
     app.after_request(after)
+    cache = Cache()
+    cache.init_app(app)
+    app.cache = cache
     # init storage
     app.unprotected_storage = init_unprotected_backends(app)
     import_export_xml(app)

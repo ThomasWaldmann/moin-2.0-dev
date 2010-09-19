@@ -18,11 +18,19 @@
 import os, re, time, datetime, shutil, base64
 import tarfile
 import zipfile
+import tempfile
 from StringIO import StringIO
 import json
 import hashlib
 
-from MoinMoin import caching, log
+try:
+    import PIL
+    from PIL import Image as PILImage
+    from PIL.ImageChops import difference as PILdiff
+except ImportError:
+    PIL = None
+
+from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from flask import current_app as app
@@ -36,9 +44,6 @@ from MoinMoin.theme import render_template
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
-
-from MoinMoin.items.sendcache import SendCache
-
 
 COLS = 80
 ROWS_DATA = 20
@@ -178,50 +183,67 @@ class Item(object):
         """
         Return the internal representation of a document using a DOM Tree
         """
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        input_conv = reg.get(Type(self.mimetype), type_moin_document)
-        if not input_conv:
-            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall')
-        macro_conv = reg.get(type_moin_document, type_moin_document,
-                macros='expandall')
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', url_root=Iri(request.url_root))
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley')
-
-        # We can process the conversion
         flaskg.clock.start('conv_in_dom')
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        input = self.feed_input_conv()
-        doc = input_conv(input)
-        # XXX is the following assuming that the top element of the doc tree
-        # is a moin_page.page element? if yes, this is the wrong place to do that
-        # as not every doc will have that element (e.g. for images, we just get
-        # moin_page.object, for a tar item, we get a moin_page.table):
-        doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = macro_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
+        hash_name = app.cfg.hash_algorithm
+        hash_hexdigest = self.rev[hash_name]
+        cid = wikiutil.cache_key(usage="internal_representation",
+                                 hash_name=hash_name,
+                                 hash_hexdigest=hash_hexdigest)
+        doc = app.cache.get(cid)
+        if doc is None:
+            # We will see if we can perform the conversion:
+            # FROM_mimetype --> DOM
+            # if so we perform the transformation, otherwise we don't
+            from MoinMoin.converter2 import default_registry as reg
+            from MoinMoin.util.iri import Iri
+            from MoinMoin.util.mime import Type, type_moin_document
+            from MoinMoin.util.tree import moin_page, xlink
+            input_conv = reg.get(Type(self.mimetype), type_moin_document)
+            if not input_conv:
+                raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+            link_conv = reg.get(type_moin_document, type_moin_document,
+                    links='extern', url_root=Iri(request.url_root))
+            smiley_conv = reg.get(type_moin_document, type_moin_document,
+                    icon='smiley')
+
+            # We can process the conversion
+            links = Iri(scheme='wiki', authority='', path='/' + self.name)
+            input = self.feed_input_conv()
+            doc = input_conv(input)
+            # XXX is the following assuming that the top element of the doc tree
+            # is a moin_page.page element? if yes, this is the wrong place to do that
+            # as not every doc will have that element (e.g. for images, we just get
+            # moin_page.object, for a tar item, we get a moin_page.table):
+            doc.set(moin_page.page_href, unicode(links))
+            doc = smiley_conv(doc)
+            doc = link_conv(doc)
+            app.cache.set(cid, doc)
         flaskg.clock.stop('conv_in_dom')
+        return doc
+
+    def _expand_document(self, doc):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import type_moin_document
+        include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
+        macro_conv = reg.get(type_moin_document, type_moin_document, macros='expandall')
+        flaskg.clock.start('conv_include')
+        doc = include_conv(doc)
+        flaskg.clock.stop('conv_include')
+        flaskg.clock.start('conv_macro')
+        doc = macro_conv(doc)
+        flaskg.clock.stop('conv_macro')
         return doc
 
     def _render_data(self):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import html
+        include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
+        macro_conv = reg.get(type_moin_document, type_moin_document, macros='expandall')
         # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'))
+        html_conv = reg.get(type_moin_document, Type('application/x-xhtml-moin-page'))
         doc = self.internal_representation()
+        doc = self._expand_document(doc)
         flaskg.clock.start('conv_dom_html')
         doc = html_conv(doc)
         flaskg.clock.stop('conv_dom_html')
@@ -618,6 +640,7 @@ There is no help, you're doomed!
             return "The items have different data."
 
     _render_data_diff_text = _render_data_diff
+    _render_data_diff_raw = _render_data_diff
 
     def _convert(self):
         return "Impossible to convert the data to the mimetype : %s" % request.values.get('mimetype')
@@ -630,28 +653,12 @@ There is no help, you're doomed!
             return Response(status=304)
 
     def _do_get_modified(self, hash):
-        from_cache = request.values.get('from_cache')
         member = request.values.get('member')
-        return self._do_get(hash, from_cache, member)
+        return self._do_get(hash, member)
 
-    def _do_get(self, hash, from_cache=None, member=None):
+    def _do_get(self, hash, member=None):
         filename = None
-        if from_cache:
-            content_disposition = None
-            sendcache = SendCache(from_cache)
-            headers = sendcache._get_headers()
-            for key, value in headers:
-                lkey = key.lower()
-                if lkey == 'content-type':
-                    content_type = value
-                elif lkey == 'content-length':
-                    content_length = value
-                elif lkey == 'content-disposition':
-                    content_disposition = value
-                else:
-                    request.headers.add(key, value) # XXX WRONG! Must be response!
-            file_to_send = sendcache._get_datafile()
-        elif member: # content = file contained within a archive item revision
+        if member: # content = file contained within a archive item revision
             path, filename = os.path.split(member)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(app.cfg)
@@ -728,9 +735,9 @@ class TarMixin(object):
             raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
         if isinstance(name, unicode):
             name = name.encode('utf-8')
-        cache = caching.CacheEntry("TarContainer", self.name, 'wiki')
-        tmp_fname = cache._fname
-        tf = tarfile.TarFile(tmp_fname, mode='a')
+        temp_fname = os.path.join(tempfile.gettempdir(), 'TarContainer_' +
+                                  wikiutil.cache_key(usage='TarContainer', name=self.name))
+        tf = tarfile.TarFile(temp_fname, mode='a')
         ti = tarfile.TarInfo(name)
         if isinstance(content, str):
             if content_length is None:
@@ -747,16 +754,15 @@ class TarMixin(object):
         if tf_members - expected_members:
             msg = "found unexpected members in container item %r" % (self.name, )
             logging.error(msg)
-            cache.remove()
+            os.remove(temp_fname)
             raise StorageError(msg)
-
         if tf_members == expected_members:
             # everything we expected has been added to the tar file, save the container as revision
             meta = {"mimetype": self.mimetype}
-            cache.open(mode='rb')
-            self._save(meta, cache, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
-            cache.close()
-            cache.remove()
+            data = open(temp_fname, 'rb')
+            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
+            data.close()
+            os.remove(temp_fname)
 
 
 class ApplicationXTar(TarMixin, Application):
@@ -837,21 +843,15 @@ class TransformableBitmapImage(RenderableBitmapImage):
     """ We can transform (resize, rotate, mirror) some image types """
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
-    def _transform(self, content_type, cache, size=None, transpose_op=None):
+    def _transform(self, content_type, size=None, transpose_op=None):
         """ resize to new size (optional), transpose according to exif infos,
-            write data as content_type (default: same ct as original image)
-            to the cache.
+            result data should be content_type.
         """
         try:
             from PIL import Image as PILImage
         except ImportError:
             # no PIL, we can't do anything, we just output the revision data as is
-            outfile = cache.data_cache
-            outfile.open(mode='wb')
-            shutil.copyfileobj(self.rev, outfile)
-            outfile.close()
-            cache.put(None, content_type=content_type)
-            return
+            return content_type, self.rev.read()
 
         if content_type == 'image/jpeg':
             output_type = 'JPEG'
@@ -889,11 +889,11 @@ class TransformableBitmapImage(RenderableBitmapImage):
         }
         image = transpose_func[transpose_op](image)
 
-        outfile = cache.data_cache
-        outfile.open(mode='wb')
+        outfile = StringIO()
         image.save(outfile, output_type)
+        data = outfile.getvalue()
         outfile.close()
-        cache.put(None, content_type=content_type)
+        return content_type, data
 
     def _do_get_modified(self, hash):
         try:
@@ -913,60 +913,67 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # resize requested, XXX check ACL behaviour! XXX
             hash_name = app.cfg.hash_algorithm
             hash_hexdigest = self.rev[hash_name]
-            cache_meta = [ # we use a list to have order stability
-                (hash_name, hash_hexdigest),
-                ('width', width),
-                ('height', height),
-                ('transpose', transpose),
-            ]
-            cache = SendCache.from_meta(cache_meta)
-            if not cache.exists():
+            cid = wikiutil.cache_key(usage="ImageTransform",
+                                     hash_name=hash_name,
+                                     hash_hexdigest=hash_hexdigest,
+                                     width=width, height=height, transpose=transpose)
+            c = app.cache.get(cid)
+            if c is None:
                 content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
-                self._transform(content_type, cache=cache, size=size, transpose_op=transpose)
-            from_cache = cache.key
+                content_type, data = self._transform(content_type, size=size, transpose_op=transpose)
+                headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
+                app.cache.set(cid, (headers, data))
+            else:
+                # XXX TODO check ACL behaviour
+                headers, data = c
+            return Response(data, headers=headers)
         else:
-            from_cache = request.values.get('from_cache')
-        return self._do_get(hash, from_cache=from_cache)
+            return self._do_get(hash)
 
     def _render_data_diff(self, oldrev, newrev):
-        try:
-            from PIL import Image as PILImage
-            from PIL.ImageChops import difference as PILdiff
-        except ImportError:
+        if PIL is None:
             # no PIL, we can't do anything, we just call the base class method
             return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
-
-        content_type = newrev[MIMETYPE]
-        if content_type == 'image/jpeg':
-            output_type = 'JPEG'
-        elif content_type == 'image/png':
-            output_type = 'PNG'
-        elif content_type == 'image/gif':
-            output_type = 'GIF'
-        else:
-            raise ValueError("content_type %r not supported" % content_type)
-
-        oldimage = PILImage.open(oldrev)
-        newimage = PILImage.open(newrev)
-        oldimage.load()
-        newimage.load()
-
-        diffimage = PILdiff(newimage, oldimage)
-
-        hash_name = app.cfg.hash_algorithm
-        cache_meta = [ # we use a list to have order stability
-            (hash_name, oldrev[hash_name], newrev[hash_name]),
-        ]
-        cache = SendCache.from_meta(cache_meta)
-        if not cache.exists():
-            outfile = cache.data_cache
-            outfile.open(mode='wb')
-            diffimage.save(outfile, output_type)
-            outfile.close()
-            cache.put(None, content_type=content_type)
-        url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
+        url = url_for('frontend.diffraw', item_name=self.name, rev1=oldrev.revno, rev2=newrev.revno)
         return '<img src="%s" />' % escape(url)
+
+    def _render_data_diff_raw(self, oldrev, newrev):
+        hash_name = app.cfg.hash_algorithm
+        cid = wikiutil.cache_key(usage="ImageDiff",
+                                 hash_name=hash_name,
+                                 hash_old=oldrev[hash_name],
+                                 hash_new=newrev[hash_name])
+        c = app.cache.get(cid)
+        if c is None:
+            if PIL is None:
+                abort(404)
+
+            content_type = newrev[MIMETYPE]
+            if content_type == 'image/jpeg':
+                output_type = 'JPEG'
+            elif content_type == 'image/png':
+                output_type = 'PNG'
+            elif content_type == 'image/gif':
+                output_type = 'GIF'
+            else:
+                raise ValueError("content_type %r not supported" % content_type)
+
+            oldimage = PILImage.open(oldrev)
+            newimage = PILImage.open(newrev)
+            oldimage.load()
+            newimage.load()
+            diffimage = PILdiff(newimage, oldimage)
+            outfile = StringIO()
+            diffimage.save(outfile, output_type)
+            data = outfile.getvalue()
+            outfile.close()
+            headers = wikiutil.file_headers(content_type=content_type, content_length=len(data))
+            app.cache.set(cid, (headers, data))
+        else:
+            # XXX TODO check ACL behaviour
+            headers, data = c
+        return Response(data, headers=headers)
 
     def _render_data_diff_text(self, oldrev, newrev):
         return super(TransformableBitmapImage, self)._render_data_diff_text(oldrev, newrev)
@@ -1124,6 +1131,8 @@ class DocBook(MarkupItem):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import docbook, xlink
+
+        doc = self._expand_document(doc)
 
         # We convert the internal representation of the document
         # into a DocBook document

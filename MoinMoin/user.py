@@ -31,7 +31,7 @@ from flask import flaskg, session, request, url_for
 from werkzeug import escape
 
 from MoinMoin import _, N_
-from MoinMoin import config, caching, wikiutil
+from MoinMoin import config, wikiutil
 from MoinMoin.util import random_string
 from MoinMoin.util.interwiki import getInterwikiHome
 

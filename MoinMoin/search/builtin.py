@@ -19,7 +19,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
-from MoinMoin import wikiutil, config, caching
+from MoinMoin import wikiutil, config
 from MoinMoin.util import lock, filesys
 from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMatch, getSearchResults
 
