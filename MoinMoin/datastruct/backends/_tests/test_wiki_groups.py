@@ -74,7 +74,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         members = create_random_string_list(length=15, count=1234)
         test_user = create_random_string_list(length=15, count=1)[0]
         create_item(u'UserGroup', text,  meta={USERGROUP: members})
-        append_item(u'UserGroup', text, meta={USERGROUP: [test_user]})
+        append_item(u'UserGroup', '', meta={USERGROUP: [test_user]})
         result = test_user in flaskg.groups['UserGroup']
 
         assert result
@@ -91,7 +91,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
 
         create_item(u'UserGroup', text, meta={USERGROUP: members})
         new_user = create_random_string_list(length=15, count=1)[0]
-        append_item(u'UserGroup', text, meta={USERGROUP: [new_user]})
+        append_item(u'UserGroup', '', meta={USERGROUP: [new_user]})
 
         result = new_user in flaskg.groups[u'UserGroup']
         assert result
@@ -135,7 +135,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         has_rights_before = acl.may(u"AnotherUser", "read")
 
         # update item - add AnotherUser to a item group NewGroup
-        append_item(u'NewGroup', text, meta={USERGROUP: ["AnotherUser"]})
+        append_item(u'NewGroup', '', meta={USERGROUP: ["AnotherUser"]})
 
         has_rights_after = acl.may(u"AnotherUser", "read")
 

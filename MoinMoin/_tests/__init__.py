@@ -89,13 +89,14 @@ def append_item(name, content, meta=None):
         content = content.encode(config.charset)
     item = flaskg.storage.get_item(name)
     rev = item.get_revision(-1)
+    data = rev.read()
     item_meta = dict(rev)
     if meta is not None:
         for key in meta:
             attr = rev.get(key, {})
             attr.extend(meta[key])
             item_meta[key] = attr
-    return update_item(name, rev.revno + 1, item_meta, content)
+    return update_item(name, rev.revno + 1, item_meta, data + content)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
