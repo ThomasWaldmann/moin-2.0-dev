@@ -1,5 +1,5 @@
     # This is a sample configuration snippet that shows moin's auth configuration.
-    # See HelpOnSessions, HelpOnAuthentication and HelpOnConfiguration for more infos.
+    # See HelpOnAuthentication and HelpOnConfiguration for more infos.
 
     # authentication methods used (default shown, see also other snippets):
     # if autocreate is True user profiles are created automatically
@@ -12,8 +12,11 @@
     #from MoinMoin.auth import GivenAuth
     #auth = [GivenAuth(autocreate=True)]
 
-    # a list of form field names to be disabled in the UserPreferences.
-    #user_form_disable = ['name', ]
- 
-    # a list of form field names to be removed from the UserPreferences.
-    #user_form_remove = ['password', 'password2', ]
+    # auth methods that get a user into "Trusted" group:
+    #auth_methods_trusted = ['http', ]
+
+    # The default (ENABLED) password_checker will keep users from choosing too
+    # short or too easy passwords. If you don't like this and your site has
+    # rather low security requirements, feel free to DISABLE the checker by:
+    #password_checker = None # None means "don't do any password strength checks"
+
