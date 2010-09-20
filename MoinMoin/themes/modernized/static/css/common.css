@@ -629,3 +629,29 @@ TD.tip {
 
 /* admonition end */
 
+/* css smileys */
+.moin-alert { background: url('../img/smileys/alert.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-angry { background: url('../img/smileys/angry.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-attention { background: url('../img/smileys/attention.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-biggrin { background: url('../img/smileys/biggrin.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-checkmark { background: url('../img/smileys/checkmark.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-devil { background: url('../img/smileys/devil.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-frown { background: url('../img/smileys/frown.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-icon-error { background: url('../img/smileys/icon-error.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-icon-info { background: url('../img/smileys/icon-info.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-idea { background: url('../img/smileys/idea.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-ohwell { background: url('../img/smileys/ohwell.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-prio1 { background: url('../img/smileys/prio1.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-prio2 { background: url('../img/smileys/prio2.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-prio3 { background: url('../img/smileys/prio3.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-redface { background: url('../img/smileys/redface.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-sad { background: url('../img/smileys/sad.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile { background: url('../img/smileys/smile.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile2 { background: url('../img/smileys/smile2.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile3 { background: url('../img/smileys/smile3.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile4 { background: url('../img/smileys/smile4.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-star_off { background: url('../img/smileys/star_off.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-star_on { background: url('../img/smileys/star_on.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-thumbs-up { background: url('../img/smileys/thumbs-up.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-tired { background: url('../img/smileys/tired.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-tongue { background: url('../img/smileys/tongue.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
