@@ -5,19 +5,21 @@
 
 # additional files not known by setup.py
 include README MANIFEST.in setup.cfg moin.spec
-include wikiserver.py wikiserverconfig.py wikiserverlogging.conf wikiconfig.py
+include wikiconfig.py
 
 # documentation and licenses
 recursive-include docs *
 
 # include stuff for translators
-recursive-include   MoinMoin/i18n *
+recursive-include   MoinMoin/translations *
 
 # include html templates
 recursive-include   MoinMoin/templates *
+recursive-include   MoinMoin/apps/admin/templates *
+recursive-include   MoinMoin/apps/misc/templates *
 
 # include static htdocs
-recursive-include   MoinMoin/web/static/htdocs *
+recursive-include   MoinMoin/static *
 
 # include non-py stuff from werkzeug
 recursive-include   MoinMoin/support/werkzeug/debug *
