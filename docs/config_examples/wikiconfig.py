@@ -1,28 +1,18 @@
-# -*- coding: iso-8859-1 -*-
-# IMPORTANT! This encoding (charset) setting MUST be correct! If you live in a
-# western country and you don't know that you use utf-8, you probably want to
-# use iso-8859-1 (or some other iso charset). If you use utf-8 (a Unicode
-# encoding) you MUST use: coding: utf-8
-# That setting must match the encoding your editor uses when you modify the
-# settings below. If it does not, special non-ASCII chars will be wrong.
+# -*- coding: utf-8 -*-
+# IMPORTANT! This encoding (charset) setting MUST be correct and match the
+# the encoding your editor uses when you modify this file.
+# Otherwise non-ASCII chars will be wrong.
 
 """
-    MoinMoin - Configuration for a single wiki
-
-    If you run a single wiki only, you can omit the farmconfig.py config
-    file and just use wikiconfig.py - it will be used for every request
-    we get in that case.
+    MoinMoin - Wiki Configuration
 
     Note that there are more config options than you'll find in
     the version of this file that is installed by default; see
     the module MoinMoin.config.default for a full list of names and their
-    default values.
+    default values (but do not edit THAT module).
 
     Also, the URL http://moinmo.in/HelpOnConfiguration has
     a list of config options.
-
-    ** Please do not use this file for a wiki farm. Use the sample file
-    from the wikifarm directory instead! **
 """
 
 import os
@@ -76,7 +66,7 @@ class Config(DefaultConfig):
     # b) if wiki content is maintained in many languages
     #item_root = u"FrontPage"
 
-    # The interwiki name used in interwiki links
+    # The interwiki name used in interwiki links (set it and never change!)
     #interwikiname = u'UntitledWiki'
     # Show the interwiki name (and link it to item_root) in the Theme,
     # nice for farm setups or when your logo does not show the wiki's name.
@@ -97,8 +87,7 @@ class Config(DefaultConfig):
 
     # Mail --------------------------------------------------------------
 
-    # Configure to enable subscribing to pages (disabled by default)
-    # or sending forgotten passwords.
+    # Configure mail to enable subscribing to pages or password recovery.
 
     # SMTP server, e.g. "mail.provider.com" (None to disable mail)
     #mail_smarthost = ""
@@ -125,7 +114,7 @@ class Config(DefaultConfig):
     ]
 
     # The default theme anonymous or new users get
-    theme_default = 'modern'
+    theme_default = 'modernized'
 
 
     # Language options --------------------------------------------------
@@ -150,7 +139,4 @@ class Config(DefaultConfig):
 
     # Show users hostnames in RecentChanges
     show_hosts = 1
-
-    # Enable graphical charts, requires gdchart.
-    #chart_options = {'width': 600, 'height': 300}
 
