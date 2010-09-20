@@ -1,10 +1,5 @@
-# -*- coding: iso-8859-1 -*-
-"""MoinMoin Desktop Edition (MMDE) - Configuration
-
-ONLY to be used for MMDE - if you run a personal wiki on your notebook or PC.
-
-This is NOT intended for internet or server or multiuser use due to relaxed security settings!
-"""
+# -*- coding: utf-8 -*-
+"""MoinMoin Wiki - Configuration"""
 
 import sys, os
 
@@ -49,7 +44,6 @@ class Config(DefaultConfig):
                                              after=u'', ),
                             )
 
-    surge_action_limits = None # no surge protection
     sitename = u'My MoinMoin'
     logo = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
