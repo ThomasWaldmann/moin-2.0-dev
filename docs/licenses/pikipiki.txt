@@ -1,4 +1,6 @@
-MoinMoin is based on PikiPiki, this is PikiPiki's copyright:
+MoinMoin was originally based on PikiPiki (as of MoinMoin 2.0 it is rather
+unlikely that anything from the PikiPiki codebase is left, but we include its
+(c) and license just for the case):
 
     Copyright (C) 1999, 2000 Martin Pool <mbp@humbug.org.au>
 
