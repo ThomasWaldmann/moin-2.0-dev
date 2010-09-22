@@ -79,8 +79,8 @@ class ConfigFunctionality(object):
         self.cache.item_group_regexact = re.compile(u'^%s$' % self.item_group_regex, re.UNICODE)
         self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
 
-        if not isinstance(self.superuser, list):
-            msg = """The superuser setting in your wiki configuration is not a list
+        if not isinstance(self.superusers, list):
+            msg = """The superusers setting in your wiki configuration is not a list
                      (e.g. ['Sample User', 'AnotherUser']).
                      Please change it in your wiki configuration and try again."""
             raise error.ConfigurationError(msg)
@@ -216,7 +216,7 @@ file. It should match the actual charset of the configuration file.
             'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
-            'superuser', 'textchas_disabled_group', 'supplementation_item_names',
+            'superusers', 'textchas_disabled_group', 'supplementation_item_names',
             'logo', 'credits', 'html_pagetitle',
             'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
             'html_head',
@@ -372,7 +372,7 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'auth': ('Authentication / Authorization / Security settings', None, (
-    ('superuser', [],
+    ('superusers', [],
      "List of trusted user names [Unicode] with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
     ('auth', DefaultExpression('[MoinAuth()]'),
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
