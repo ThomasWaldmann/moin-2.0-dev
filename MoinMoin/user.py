@@ -738,11 +738,7 @@ class User(object):
 
     def isSuperUser(self):
         """ Check if this user is superuser """
-        if not self.valid:
-            return False
-        superusers = app.cfg.superuser
-        assert isinstance(superusers, (list, tuple))
-        return self.name and self.name in superusers
+        return self.valid and self.name and self.name in app.cfg.superuser
 
     def host(self):
         """ Return user host """
