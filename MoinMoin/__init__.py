@@ -43,7 +43,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 
-from MoinMoin.theme import setup_jinja_env
+from MoinMoin.themes import setup_jinja_env
 
 def create_app(config=None):
     """simple wrapper around create_app_ext() for flask-script"""

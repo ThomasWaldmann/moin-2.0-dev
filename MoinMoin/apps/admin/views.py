@@ -17,7 +17,7 @@ from flask import flaskg
 from werkzeug import escape
 
 from MoinMoin import _, N_
-from MoinMoin.theme import render_template
+from MoinMoin.themes import render_template
 from MoinMoin.apps.admin import admin
 from MoinMoin import user
 

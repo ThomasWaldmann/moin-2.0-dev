@@ -17,7 +17,7 @@ from flask import current_app as app
 
 from MoinMoin.apps.misc import misc
 
-from MoinMoin.theme import render_template
+from MoinMoin.themes import render_template
 from MoinMoin import wikiutil
 from MoinMoin.storage.error import NoSuchRevisionError, NoSuchItemError
 

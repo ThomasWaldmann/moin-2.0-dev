@@ -40,7 +40,7 @@ from flask import request, url_for, send_file, Response, abort, escape
 from werkzeug import is_resource_modified
 
 from MoinMoin import _, N_
-from MoinMoin.theme import render_template
+from MoinMoin.themes import render_template
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError

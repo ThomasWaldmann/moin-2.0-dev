@@ -29,7 +29,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import _, N_
-from MoinMoin.theme import render_template
+from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
