@@ -109,9 +109,8 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     cache.init_app(app)
     app.cache = cache
     # init storage
-    app.unprotected_storage = init_unprotected_backends(app)
+    app.unprotected_storage, app.storage = init_backends(app)
     import_export_xml(app)
-    app.storage = init_protected_backends(app)
     babel = Babel(app)
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
@@ -162,21 +161,20 @@ def set_umask(new_mask=0777^config.umask):
         pass
 
 
-def init_unprotected_backends(app):
-    """ initialize the backend
-
-        This is separate from init because the conftest request setup needs to be
-        able to create fresh data storage backends in between init and init_backend.
-    """
+def init_backends(app):
+    """ initialize the backend """
     # A ns_mapping consists of several lines, where each line is made up like this:
     # mountpoint, unprotected backend, protection to apply as a dict
-    # We don't consider the protection here. That is done in init_protected_backends.
     ns_mapping = app.cfg.namespace_mapping
+    index_uri = app.cfg.router_index_uri
     # Just initialize with unprotected backends.
     unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
-    index_uri = app.cfg.router_index_uri
     unprotected_storage = router.RouterBackend(unprotected_mapping, index_uri=index_uri)
-    return unprotected_storage
+    # Protect each backend with the acls provided for it in the mapping at position 2
+    amw = acl.AclWrapperBackend
+    protected_mapping = [(ns, amw(app.cfg, backend, **acls)) for ns, backend, acls in ns_mapping]
+    storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
+    return unprotected_storage, storage
 
 
 def import_export_xml(app):
@@ -219,22 +217,6 @@ def import_export_xml(app):
         app.cfg.save_xml = None
         backend = app.unprotected_storage
         serialize(backend, xmlfile)
-
-
-def init_protected_backends(app):
-    """
-    This function is invoked after the user has been set up. setup_user needs access to
-    storage and the ACL middleware needs access to the user's name. Hence we first
-    init the unprotected backends so setup_user can access storage, and protect the
-    backends after the user has been set up.
-    """
-    amw = acl.AclWrapperBackend
-    ns_mapping = app.cfg.namespace_mapping
-    # Protect each backend with the acls provided for it in the mapping at position 2
-    protected_mapping = [(ns, amw(app.cfg, backend, **acls)) for ns, backend, acls in ns_mapping]
-    index_uri = app.cfg.router_index_uri
-    storage = router.RouterBackend(protected_mapping, index_uri=index_uri)
-    return storage
 
 
 def setup_user():
