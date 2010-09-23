@@ -10,7 +10,7 @@
 from flask import current_app as app
 
 from MoinMoin._tests import wikiconfig
-from MoinMoin.theme import ThemeSupport
+from MoinMoin.themes import ThemeSupport
 
 
 class TestNaviBar(object):
