@@ -14,7 +14,7 @@ import re
 import difflib
 import time
 
-from flask import request, url_for, flash, Response, redirect, session
+from flask import request, url_for, flash, Response, redirect, session, abort
 from flask import flaskg
 from flask import current_app as app
 from flaskext.themes import get_themes_list
@@ -34,6 +34,7 @@ from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 
 @frontend.route('/+dispatch', methods=['GET', ])
@@ -94,8 +95,11 @@ def favicon():
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(item_name, rev_no=rev)
-    rev_nos = item.rev.item.list_revisions()
+    try:
+        item = Item.create(item_name, rev_no=rev)
+        rev_nos = item.rev.item.list_revisions()
+    except AccessDeniedError:
+        abort(403)
     if rev_nos:
         first_rev = rev_nos[0]
         last_rev = rev_nos[-1]
@@ -127,7 +131,10 @@ def redirect_show_item(item_name):
 @frontend.route('/+dom/<int:rev>/<itemname:item_name>')
 @frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
 def show_dom(item_name, rev):
-    item = Item.create(item_name, rev_no=rev)
+    try:
+        item = Item.create(item_name, rev_no=rev)
+    except AccessDeniedError:
+        abort(403)
     if isinstance(item, NonExistent):
         status = 404
     else:
@@ -142,7 +149,10 @@ def show_dom(item_name, rev):
 @frontend.route('/+meta/<int:rev>/<itemname:item_name>')
 def show_item_meta(item_name, rev):
     flaskg.user.addTrail(item_name)
-    item = Item.create(item_name, rev_no=rev)
+    try:
+        item = Item.create(item_name, rev_no=rev)
+    except AccessDeniedError:
+        abort(403)
     rev_nos = item.rev.item.list_revisions()
     if rev_nos:
         first_rev = rev_nos[0]
@@ -165,7 +175,10 @@ def show_item_meta(item_name, rev):
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
 @frontend.route('/+get/<itemname:item_name>', defaults=dict(rev=-1))
 def get_item(item_name, rev):
-    item = Item.create(item_name, rev_no=rev)
+    try:
+        item = Item.create(item_name, rev_no=rev)
+    except AccessDeniedError:
+        abort(403)
     return item.do_get()
 
 @frontend.route('/+convert/<itemname:item_name>')
@@ -180,12 +193,18 @@ def convert_item(item_name):
     with the internal representation of the item.
     """
     mimetype = request.values.get('mimetype')
-    item = Item.create(item_name, rev_no=-1)
+    try:
+        item = Item.create(item_name, rev_no=-1)
+    except AccessDeniedError:
+        abort(403)
     # We don't care about the name of the converted object
     # It should just be a name which does not exist.
     # XXX Maybe use a random name to be sure it does not exist
     item_name_converted = item_name + 'converted'
-    converted_item = Item.create(item_name_converted, mimetype=mimetype)
+    try:
+        converted_item = Item.create(item_name_converted, mimetype=mimetype)
+    except AccessDeniedError:
+        abort(403)
     return converted_item._convert(item.internal_representation())
 
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
@@ -193,7 +212,10 @@ def convert_item(item_name):
 def highlight_item(item_name, rev):
     from MoinMoin.items import Text, NonExistent
     from MoinMoin.util.tree import html
-    item = Item.create(item_name, rev_no=rev)
+    try:
+        item = Item.create(item_name, rev_no=rev)
+    except AccessDeniedError:
+        abort(403)
     if isinstance(item, Text):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
@@ -229,23 +251,32 @@ def modify_item(item_name):
     """
     mimetype = request.values.get('mimetype')
     template_name = request.values.get('template')
-    item = Item.create(item_name, mimetype=mimetype)
+    try:
+        item = Item.create(item_name, mimetype=mimetype)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         content = item.do_modify(template_name)
         return content
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
-            item.modify()
-        if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw', 'application/x-svgdraw'):
-            # TWikiDraw/AnyWikiDraw/SvgDraw POST more than once, redirecting would break them
-            return "OK"
+            try:
+                item.modify()
+                if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw', 'application/x-svgdraw'):
+                    # TWikiDraw/AnyWikiDraw/SvgDraw POST more than once, redirecting would break them
+                    return "OK"
+            except AccessDeniedError:
+                abort(403)
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
 def revert_item(item_name, rev):
-    item = Item.create(item_name, rev_no=rev)
+    try:
+        item = Item.create(item_name, rev_no=rev)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         return render_template(item.revert_template,
                                item=item, item_name=item_name,
@@ -258,7 +289,10 @@ def revert_item(item_name, rev):
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
 def copy_item(item_name):
-    item = Item.create(item_name)
+    try:
+        item = Item.create(item_name)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         return render_template(item.copy_template,
                                item=item, item_name=item_name,
@@ -276,7 +310,10 @@ def copy_item(item_name):
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
 def rename_item(item_name):
-    item = Item.create(item_name)
+    try:
+        item = Item.create(item_name)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         return render_template(item.rename_template,
                                item=item, item_name=item_name,
@@ -294,7 +331,10 @@ def rename_item(item_name):
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
 def delete_item(item_name):
-    item = Item.create(item_name)
+    try:
+        item = Item.create(item_name)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         return render_template(item.delete_template,
                                item=item, item_name=item_name,
@@ -316,7 +356,10 @@ def destroy_item(item_name, rev):
     else:
         _rev = rev
         destroy_item = False
-    item = Item.create(item_name, rev_no=_rev)
+    try:
+        item = Item.create(item_name, rev_no=_rev)
+    except AccessDeniedError:
+        abort(403)
     if request.method == 'GET':
         return render_template(item.destroy_template,
                                item=item, item_name=item_name,
@@ -331,7 +374,10 @@ def destroy_item(item_name, rev):
 
 @frontend.route('/+index/<itemname:item_name>')
 def index(item_name):
-    item = Item.create(item_name)
+    try:
+        item = Item.create(item_name)
+    except AccessDeniedError:
+        abort(403)
     index = item.flat_index()
     return render_template(item.index_template,
                            item=item, item_name=item_name,
@@ -874,7 +920,10 @@ def diffraw(item_name):
     # TODO get_item and get_revision calls may raise an AccessDeniedError.
     #      If this happens for get_item, don't show the diff at all
     #      If it happens for get_revision, we may just want to skip that rev in the list
-    item = flaskg.storage.get_item(item_name)
+    try:
+        item = flaskg.storage.get_item(item_name)
+    except AccessDeniedError:
+        abort(403)
     rev1 = request.values.get('rev1')
     rev2 = request.values.get('rev2')
     return _diff_raw(item, rev1, rev2)
@@ -885,7 +934,10 @@ def diffsince(item_name, timestamp):
     date = timestamp
     # this is how we get called from "recent changes"
     # try to find the latest rev1 before bookmark <date>
-    item = flaskg.storage.get_item(item_name)
+    try:
+        item = flaskg.storage.get_item(item_name)
+    except AccessDeniedError:
+        abort(403)
     revnos = item.list_revisions()
     revnos.reverse()  # begin with latest rev
     for revno in revnos:
@@ -904,7 +956,10 @@ def diff(item_name):
     # TODO get_item and get_revision calls may raise an AccessDeniedError.
     #      If this happens for get_item, don't show the diff at all
     #      If it happens for get_revision, we may just want to skip that rev in the list
-    item = flaskg.storage.get_item(item_name)
+    try:
+        item = flaskg.storage.get_item(item_name)
+    except AccessDeniedError:
+        abort(403)
     rev1 = request.values.get('rev1')
     rev2 = request.values.get('rev2')
     return _diff(item, rev1, rev2)
@@ -960,7 +1015,10 @@ def _diff(item, revno1, revno2):
 
     commonmt = _common_mimetype(oldrev, newrev)
 
-    item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
+    try:
+        item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
+    except AccessDeniedError:
+        abort(403)
     rev_nos = item.rev.item.list_revisions()
     return render_template(item.diff_template,
                            item=item, item_name=item.name,
@@ -979,7 +1037,10 @@ def _diff_raw(item, revno1, revno2):
 
     commonmt = _common_mimetype(oldrev, newrev)
 
-    item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
+    try:
+        item = Item.create(item.name, mimetype=commonmt, rev_no=newrevno)
+    except AccessDeniedError:
+        abort(403)
     return item._render_data_diff_raw(oldrev, newrev)
 
 
@@ -1164,7 +1225,10 @@ class NestedItemListBuilder(object):
 
     def childs(self, name):
         # does not recurse
-        item = flaskg.storage.get_item(name)
+        try:
+            item = flaskg.storage.get_item(name)
+        except AccessDeniedError:
+            return []
         rev = item.get_revision(-1)
         itemlinks = rev.get(ITEMLINKS, [])
         return [child for child in itemlinks if self.is_ok(child)]
