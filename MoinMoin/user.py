@@ -814,8 +814,8 @@ Please use the link below to change your password to a known value:
 
 %(link)s
 
-""") % {'link': url_for('frontend.recoverpass',
-                        username=self.name, token=token, _external=True)}
+""", link=url_for('frontend.recoverpass',
+                        username=self.name, token=token, _external=True))
 
         subject = _('[%(sitename)s] Your wiki password recovery link',
                     sitename=self._cfg.sitename or "Wiki")
