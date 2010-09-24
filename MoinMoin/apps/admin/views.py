@@ -23,7 +23,7 @@ from MoinMoin import user
 
 @admin.route('/')
 def index():
-    return render_template('admin/index.html')
+    return render_template('admin/index.html', item_name="+admin")
 
 
 @admin.route('/userbrowser')
@@ -45,7 +45,7 @@ def userbrowser():
             disabled=u.disabled,
             groups=[], # TODO
             ))
-    return render_template('admin/userbrowser.html', user_accounts=user_accounts)
+    return render_template('admin/userbrowser.html', user_accounts=user_accounts, item_name="+admin/Userbrowser")
 
 
 @admin.route('/userprofile/<user_name>', methods=['GET', 'POST', ])
@@ -100,7 +100,7 @@ def sysitems_upgrade():
         action = 'syspages_upgrade'
         label = 'Upgrade System Pages'
         return render_template('admin/sysitems_upgrade.html',
-                              )
+                               item_name="+admin/System items upgrade")
     if request.method == 'POST':
         xmlfile = request.files.get('xmlfile')
         try:
