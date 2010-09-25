@@ -39,8 +39,7 @@ class WikiGroups(BaseGroupsBackend):
         """
         To find group pages, app.cfg.cache.item_group_regexact pattern is used.
         """
-        all_items = flaskg.storage.iteritems()
-        # XXX Is this independent of current user?
+        all_items = flaskg.unprotected_storage.iteritems()
         item_list = [item.name for item in all_items
                      if self.item_group_regex.search(item.name)]
         return iter(item_list)
@@ -49,7 +48,7 @@ class WikiGroups(BaseGroupsBackend):
         return WikiGroup(name=group_name, backend=self)
 
     def _retrieve_members(self, group_name):
-        item = flaskg.storage.get_item(group_name)
+        item = flaskg.unprotected_storage.get_item(group_name)
         rev = item.get_revision(-1)
         usergroup = rev.get(USERGROUP, {})
         return usergroup
