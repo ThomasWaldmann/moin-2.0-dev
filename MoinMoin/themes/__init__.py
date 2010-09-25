@@ -13,7 +13,7 @@ import urllib
 
 from flask import current_app as app
 from flask import flaskg
-from flask import url_for
+from flask import url_for, request
 from flaskext.themes import get_theme, render_theme_template
 
 from MoinMoin import log
@@ -37,6 +37,20 @@ def get_current_theme():
 def render_template(template, **context):
     flaskg.clock.start('render_template')
     return render_theme_template(get_current_theme(), template, **context)
+
+
+def themed_error(e):
+    item_name = request.view_args.get('item_name', u'')
+    if e.code == 403:
+        title = N_('Access denied')
+        description = N_('You are not allowed to access this resource.')
+    else:
+        # if we have no special code, we just return the HTTPException instance
+        return e
+    content = render_template('error.html',
+                              item_name=item_name,
+                              title=title, description=description)
+    return content, e.code
 
 
 class ThemeSupport(object):

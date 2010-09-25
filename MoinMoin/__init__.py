@@ -43,7 +43,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 
-from MoinMoin.themes import setup_jinja_env
+from MoinMoin.themes import setup_jinja_env, themed_error
 
 def create_app(config=None):
     """simple wrapper around create_app_ext() for flask-script"""
@@ -115,6 +115,7 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
     setup_themes(app)
+    app.error_handlers[403] = themed_error
     return app
 
 
