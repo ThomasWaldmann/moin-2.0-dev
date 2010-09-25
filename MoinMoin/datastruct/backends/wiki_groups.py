@@ -23,7 +23,7 @@ class WikiGroup(GreedyGroup):
 
     def _load_group(self):
         group_name = self.name
-        if flaskg.storage.has_item(group_name):
+        if flaskg.unprotected_storage.has_item(group_name):
             members, member_groups = super(WikiGroup, self)._load_group()
             return members, member_groups
         else:
@@ -33,7 +33,7 @@ class WikiGroup(GreedyGroup):
 class WikiGroups(BaseGroupsBackend):
 
     def __contains__(self, group_name):
-        return self.is_group_name(group_name) and flaskg.storage.has_item(group_name)
+        return self.is_group_name(group_name) and flaskg.unprotected_storage.has_item(group_name)
 
     def __iter__(self):
         """
