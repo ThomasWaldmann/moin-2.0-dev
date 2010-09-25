@@ -6,7 +6,8 @@
 
     @copyright: 2008-2010 MoinMoin:ThomasWaldmann,
                 2001-2003 Juergen Hermann <jh@web.de>,
-                2010 MoinMoin:DiogenesAugusto
+                2010 MoinMoin:DiogenesAugusto,
+                2010 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -32,18 +33,17 @@ def userbrowser():
     User Account Browser
     """
     # XXX add superuser check
-    #isgroup = app.cfg.cache.item_group_regexact.search
-    #groupnames = list(rootpage.getPageList(user='', filter=isgroup))
+    groupnames = flaskg.groups
     user_accounts = []
     for uid in user.getUserList():
         u = user.User(uid)
-        #groups = [groupname for groupname in groupnames if flaskg.dicts.has_member(groupname, account.name)])
+        groups = [group_name for groupname in groupnames if u.name in groupnames[groupname]]
         user_accounts.append(dict(
             uid=uid,
             name=u.name,
             email=u.email,
             disabled=u.disabled,
-            groups=[], # TODO
+            groups=groups,
             ))
     return render_template('admin/userbrowser.html', user_accounts=user_accounts, item_name="+admin/Userbrowser")
 
