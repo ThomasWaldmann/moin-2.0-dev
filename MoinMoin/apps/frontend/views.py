@@ -256,6 +256,8 @@ def modify_item(item_name):
     except AccessDeniedError:
         abort(403)
     if request.method == 'GET':
+        if not flaskg.user.may.write(item_name):
+            abort(403)
         content = item.do_modify(template_name)
         return content
     elif request.method == 'POST':
