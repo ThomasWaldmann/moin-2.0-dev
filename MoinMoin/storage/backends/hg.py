@@ -12,6 +12,11 @@
     - offline, commandline edits with support of custom mercurial extensions
       for non-trivial tasks
 
+    Note: the related MoinMoin/action/GraphInfo.py code, which provided a
+          graphical history view for hg backend was removed at 2010-09-25,
+          because it needed refactoring for flask/jinja2, but was unmaintained.
+          If you'ld like to work on it, pull it from repo history.
+
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
