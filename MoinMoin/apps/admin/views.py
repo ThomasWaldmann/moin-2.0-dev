@@ -33,17 +33,16 @@ def userbrowser():
     User Account Browser
     """
     # XXX add superuser check
-    groupnames = flaskg.groups
+    groups = flaskg.groups
     user_accounts = []
     for uid in user.getUserList():
         u = user.User(uid)
-        groups = [group_name for groupname in groupnames if u.name in groupnames[groupname]]
         user_accounts.append(dict(
             uid=uid,
             name=u.name,
             email=u.email,
             disabled=u.disabled,
-            groups=groups,
+            groups=[groupname for groupname in groups if u.name in groups[groupname]],
             ))
     return render_template('admin/userbrowser.html', user_accounts=user_accounts, item_name="+admin/Userbrowser")
 
