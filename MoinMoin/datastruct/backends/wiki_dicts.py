@@ -22,8 +22,8 @@ class WikiDict(BaseDict):
 
     def _load_dict(self):
         dict_name = self.name
-        if flaskg.storage.has_item(dict_name):
-            item = flaskg.storage.get_item(dict_name)
+        if flaskg.unprotected_storage.has_item(dict_name):
+            item = flaskg.unprotected_storage.get_item(dict_name)
             rev = item.get_revision(-1)
             somedict = rev.get(SOMEDICT, {})
             return somedict
@@ -34,13 +34,13 @@ class WikiDict(BaseDict):
 class WikiDicts(BaseDictsBackend):
 
     def __contains__(self, dict_name):
-        return self.is_dict_name(dict_name) and flaskg.storage.has_item(dict_name)
+        return self.is_dict_name(dict_name) and flaskg.unprotected_storage.has_item(dict_name)
 
     def __getitem__(self, dict_name):
         return WikiDict(name=dict_name, backend=self)
 
     def _retrieve_items(self, dict_name):
-        item = flaskg.storage.get_item(dict_name)
+        item = flaskg.unprotected_storage.get_item(dict_name)
         rev = item.get_revision(-1)
         somedict = rev.get(SOMEDICT, {})
         return somedict

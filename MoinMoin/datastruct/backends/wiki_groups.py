@@ -50,5 +50,5 @@ class WikiGroups(BaseGroupsBackend):
     def _retrieve_members(self, group_name):
         item = flaskg.unprotected_storage.get_item(group_name)
         rev = item.get_revision(-1)
-        usergroup = rev.get(USERGROUP, {})
+        usergroup = rev.get(USERGROUP, [])
         return usergroup
