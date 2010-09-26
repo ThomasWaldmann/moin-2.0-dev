@@ -35,6 +35,7 @@ from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
+from MoinMoin.signalling import item_displayed
 
 
 @frontend.route('/+dispatch', methods=['GET', ])
@@ -95,6 +96,8 @@ def favicon():
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
     flaskg.user.addTrail(item_name)
+    item_displayed.send(app._get_current_object(),
+                        item_name=item_name)
     try:
         item = Item.create(item_name, rev_no=rev)
         rev_nos = item.rev.item.list_revisions()
