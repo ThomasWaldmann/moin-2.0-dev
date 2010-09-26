@@ -158,6 +158,18 @@ shipped: 2010h
 minimum: 2010h(?)
 
 
+flatland
+========
+shipped: repo checkout at revision 269:6c5d262d7eff
+minimum: repo checkout at revision 269:6c5d262d7eff(?)
+
+
+blinker
+=======
+shipped: 1.1
+minimum: 1.1(?)
+
+
 Replacements for Python stdlib modules
 ======================================
 
