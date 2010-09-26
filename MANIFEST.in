@@ -15,6 +15,7 @@ recursive-include   MoinMoin/translations *
 
 # include html templates
 recursive-include   MoinMoin/templates *
+recursive-include   MoinMoin/themes/modernized *
 recursive-include   MoinMoin/apps/admin/templates *
 recursive-include   MoinMoin/apps/misc/templates *
 
@@ -37,4 +38,6 @@ recursive-include   wiki *
 # omit revision control, python bytecode
 global-exclude *.pyc
 global-exclude *.pyo
+global-exclude *.orig
+global-exclude *.rej
 
