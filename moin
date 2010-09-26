@@ -66,8 +66,4 @@ manager.add_command("moin", Server(host='127.0.0.1', port=8080))
 
 
 if __name__ == "__main__":
-    args = sys.argv
-    if len(args) == 1:
-        # if we are called without params, just run the server
-        args.append('moin')
-    manager.run()
+    manager.run(default_command='moin')
