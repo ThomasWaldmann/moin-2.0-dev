@@ -35,7 +35,7 @@ from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
-from MoinMoin.signalling import item_displayed
+from MoinMoin.signalling import item_displayed, item_modified
 
 
 @frontend.route('/+dispatch', methods=['GET', ])
@@ -268,6 +268,8 @@ def modify_item(item_name):
         if not cancelled:
             try:
                 item.modify()
+                item_modified.send(app._get_current_object(),
+                                   item_name=item_name)
                 if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw', 'application/x-svgdraw'):
                     # TWikiDraw/AnyWikiDraw/SvgDraw POST more than once, redirecting would break them
                     return "OK"
