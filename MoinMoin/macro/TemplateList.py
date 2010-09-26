@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.macro2.PagenameList import Macro as PNLMacro
+from MoinMoin.macro.PagenameList import Macro as PNLMacro
 
 class Macro(PNLMacro):
     def macro(self, needle=u''):

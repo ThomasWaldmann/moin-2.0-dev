@@ -13,7 +13,7 @@
 """
 
 from MoinMoin import _, N_
-from MoinMoin.macro2._base import MacroInlineBase
+from MoinMoin.macro._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
     """ Return a translation of args, or args as is """

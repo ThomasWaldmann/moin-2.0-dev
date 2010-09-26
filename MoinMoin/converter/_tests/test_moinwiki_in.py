@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.moinwiki_in
+MoinMoin - Tests for MoinMoin.converter.moinwiki_in
 
 @copyright: 2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -50,7 +50,7 @@ class TestConverter(object):
             yield (self.do, ) + i
 
     def test_args(self):
-        from MoinMoin.converter2._args import Arguments
+        from MoinMoin.converter._args import Arguments
         from MoinMoin.util.iri import Iri
         data = [
             (u'Text',

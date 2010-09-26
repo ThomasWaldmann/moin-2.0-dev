@@ -12,7 +12,7 @@ import time
 from flask import flaskg
 from flaskext.babel import format_date
 
-from MoinMoin.macro2._base import MacroInlineBase
+from MoinMoin.macro._base import MacroInlineBase
 
 class MacroDateTimeBase(MacroInlineBase):
     def parse_time(self, args):

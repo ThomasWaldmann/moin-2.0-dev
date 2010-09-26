@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2._args
+MoinMoin - Tests for MoinMoin.converter._args
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -7,7 +7,7 @@ MoinMoin - Tests for MoinMoin.converter2._args
 
 import py.test
 
-from MoinMoin.converter2._args import *
+from MoinMoin.converter._args import *
 
 def test_Arguments___init__():
     positional = []

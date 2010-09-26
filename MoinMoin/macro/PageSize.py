@@ -8,7 +8,7 @@
 """
 
 from MoinMoin.Page import Page
-from MoinMoin.macro2._base import MacroNumberPageLinkListBase
+from MoinMoin.macro._base import MacroNumberPageLinkListBase
 
 class Macro(MacroNumberPageLinkListBase):
     def macro(self):

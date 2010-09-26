@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-MoinMoin - Tests for MoinMoin.converter2.moinwiki_out
+MoinMoin - Tests for MoinMoin.converter.moinwiki_out
 
 @copyright: 2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
@@ -9,7 +9,7 @@ MoinMoin - Tests for MoinMoin.converter2.moinwiki_out
 import py.test
 import re
 
-from MoinMoin.converter2.moinwiki_out import *
+from MoinMoin.converter.moinwiki_out import *
 
 
 class Base(object):
@@ -138,4 +138,4 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
-coverage_modules = ['MoinMoin.converter2.moinwiki_out']
+coverage_modules = ['MoinMoin.converter.moinwiki_out']

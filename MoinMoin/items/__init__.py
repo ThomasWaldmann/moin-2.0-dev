@@ -198,7 +198,7 @@ class Item(object):
             # We will see if we can perform the conversion:
             # FROM_mimetype --> DOM
             # if so we perform the transformation, otherwise we don't
-            from MoinMoin.converter2 import default_registry as reg
+            from MoinMoin.converter import default_registry as reg
             from MoinMoin.util.iri import Iri
             from MoinMoin.util.mime import Type, type_moin_document
             from MoinMoin.util.tree import moin_page, xlink
@@ -227,7 +227,7 @@ class Item(object):
         return doc
 
     def _expand_document(self, doc):
-        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.converter import default_registry as reg
         from MoinMoin.util.mime import type_moin_document
         include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
         macro_conv = reg.get(type_moin_document, type_moin_document, macros='expandall')
@@ -240,7 +240,7 @@ class Item(object):
         return doc
 
     def _render_data(self):
-        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.converter import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import html
         include_conv = reg.get(type_moin_document, type_moin_document, includes='expandall')
@@ -1058,7 +1058,7 @@ class MarkupItem(Text):
         """
         super(MarkupItem, self).before_revision_commit(newrev, data)
 
-        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.converter import default_registry as reg
         from MoinMoin.util.iri import Iri
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import moin_page
@@ -1133,7 +1133,7 @@ class DocBook(MarkupItem):
 
     def _convert(self, doc):
         from emeraldtree import ElementTree as ET
-        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.converter import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.tree import docbook, xlink
 

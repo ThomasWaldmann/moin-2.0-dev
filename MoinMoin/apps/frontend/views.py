@@ -217,11 +217,11 @@ def highlight_item(item_name, rev):
     except AccessDeniedError:
         abort(403)
     if isinstance(item, Text):
-        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.converter import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
         data_text = item.data_storage_to_internal(item.data)
         # TODO: use registry as soon as it is in there
-        from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
+        from MoinMoin.converter.pygments_in import Converter as PygmentsConverter
         pygments_conv = PygmentsConverter(mimetype=item.mimetype)
         doc = pygments_conv(data_text.split(u'\n'))
         # TODO: Real output format

@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.link
+MoinMoin - Tests for MoinMoin.converter.link
 
 @copyright: 2007 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -9,7 +9,7 @@ import py.test
 
 from emeraldtree import tree as ET
 
-from MoinMoin.converter2.link import *
+from MoinMoin.converter.link import *
 from MoinMoin.util.iri import Iri
 
 class TestConverterExternOutput(object):

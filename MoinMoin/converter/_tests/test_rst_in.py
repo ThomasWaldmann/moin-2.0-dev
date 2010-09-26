@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.rst_in
+MoinMoin - Tests for MoinMoin.converter.rst_in
 
 @copyright: 2008 MoinMoin:BastianBlank
             2010 MoinMoin:DmitryAndreev
@@ -9,7 +9,7 @@ MoinMoin - Tests for MoinMoin.converter2.rst_in
 import py.test
 import re
 
-from MoinMoin.converter2.rst_in import *
+from MoinMoin.converter.rst_in import *
 
 
 class TestConverter(object):
@@ -152,4 +152,4 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
         out = self.conv(input.split(u'\n'), **args)
         assert self.serialize(out) == output
 
-coverage_modules = ['MoinMoin.converter2.rst_in']
+coverage_modules = ['MoinMoin.converter.rst_in']

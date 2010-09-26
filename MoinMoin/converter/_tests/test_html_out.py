@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.html_out
+MoinMoin - Tests for MoinMoin.converter.html_out
 
 @copyright: 2007 MoinMoin:BastianBlank
             2010 MoinMoin:ValentinJaniaut
@@ -20,7 +20,7 @@ from emeraldtree.tree import *
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.converter2.html_out import *
+from MoinMoin.converter.html_out import *
 
 class Base(object):
     input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (

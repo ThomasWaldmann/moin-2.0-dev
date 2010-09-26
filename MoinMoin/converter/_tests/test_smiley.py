@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.smiley
+MoinMoin - Tests for MoinMoin.converter.smiley
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details
@@ -18,7 +18,7 @@ import flask
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.converter2.smiley import *
+from MoinMoin.converter.smiley import *
 
 class Base(object):
     input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:xlink="%s"' % (

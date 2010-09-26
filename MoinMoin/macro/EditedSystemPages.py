@@ -10,7 +10,7 @@
 from flask import flaskg
 
 from MoinMoin.Page import Page
-from MoinMoin.macro2._base import MacroPageLinkListBase
+from MoinMoin.macro._base import MacroPageLinkListBase
 
 class Macro(MacroPageLinkListBase):
     def macro(self):

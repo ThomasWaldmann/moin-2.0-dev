@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.mediawiki_in
+MoinMoin - Tests for MoinMoin.converter.mediawiki_in
 
 @copyright: 2008 MoinMoin:BastianBlank
             2010 MoinMoin:DmitryAndreev
@@ -9,7 +9,7 @@ MoinMoin - Tests for MoinMoin.converter2.mediawiki_in
 import py.test
 import re
 
-from MoinMoin.converter2.mediawiki_in import *
+from MoinMoin.converter.mediawiki_in import *
 
 
 class TestConverter(object):
@@ -141,4 +141,4 @@ Apple
         print self.serialize(out)
         assert self.serialize(out) == output
 
-coverage_modules = ['MoinMoin.converter2.mediawiki_in']
+coverage_modules = ['MoinMoin.converter.mediawiki_in']

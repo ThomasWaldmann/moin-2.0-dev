@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2._wiki_macro
+MoinMoin - Tests for MoinMoin.converter._wiki_macro
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -8,10 +8,10 @@ MoinMoin - Tests for MoinMoin.converter2._wiki_macro
 import py.test
 import re
 
-from MoinMoin.converter2._args import Arguments
+from MoinMoin.converter._args import Arguments
 from MoinMoin.util.tree import xlink
 
-from MoinMoin.converter2._wiki_macro import *
+from MoinMoin.converter._wiki_macro import *
 
 
 class TestConverter(object):

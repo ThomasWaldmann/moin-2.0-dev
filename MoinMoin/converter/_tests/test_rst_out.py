@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.rst_out
+MoinMoin - Tests for MoinMoin.converter.rst_out
 
 @copyright: 2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
@@ -8,7 +8,7 @@ MoinMoin - Tests for MoinMoin.converter2.rst_out
 import py.test
 import re
 
-from MoinMoin.converter2.rst_out import *
+from MoinMoin.converter.rst_out import *
 
 
 class Base(object):
@@ -182,4 +182,4 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
-coverage_modules = ['MoinMoin.converter2.rst_out']
+coverage_modules = ['MoinMoin.converter.rst_out']

@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.docbook_out
+MoinMoin - Tests for MoinMoin.converter.docbook_out
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
@@ -19,7 +19,7 @@ from emeraldtree.tree import *
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.converter2.docbook_out import *
+from MoinMoin.converter.docbook_out import *
 
 class Base(object):
     input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s" xmlns:xml="%s"' % (

@@ -10,7 +10,7 @@
 from flask import flaskg
 
 from MoinMoin.util.tree import moin_page, xlink
-from MoinMoin.macro2._base import MacroInlineBase
+from MoinMoin.macro._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
     def macro(self, email=unicode, text=u''):

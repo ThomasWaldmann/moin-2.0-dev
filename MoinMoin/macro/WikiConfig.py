@@ -13,7 +13,7 @@ from flask import flaskg
 
 from MoinMoin import _, N_
 from MoinMoin.config import default as defaultconfig
-from MoinMoin.macro2._base import MacroBlockBase
+from MoinMoin.macro._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page
 
 class Macro(MacroBlockBase):
