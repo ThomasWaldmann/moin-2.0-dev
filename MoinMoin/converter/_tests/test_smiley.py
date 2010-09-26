@@ -21,17 +21,15 @@ logging = log.getLogger(__name__)
 from MoinMoin.converter.smiley import *
 
 class Base(object):
-    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:xlink="%s"' % (
+    input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s"' % (
         moin_page.namespace,
         moin_page.namespace,
-        xlink.namespace,
     )
     output_namespaces = {
         moin_page.namespace: '',
-        xlink.namespace: 'xlink',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace, }
+    namespaces_xpath = {}
 
     input_re = re.compile(r'^(<[a-z:]+)')
     output_re = re.compile(r'\s+xmlns="[^"]+"')
@@ -63,19 +61,16 @@ class TestConverter(Base):
     def test_base(self):
         data = [
             ('<page><body><p>bla bla :-) bla bla</p></body></page>',
-              '/page/body/p/object[@xlink:href="/static/images/smileys/smile.png"]'),
+              '/page/body/p/span[@class="moin-smile"]'),
             ('<page><body><code>bla bla :-) bla bla</code></body></page>',
              '/page/body[code="bla bla :-) bla bla"]'),
             ('<page><body><p>:-) :-(</p></body></page>',
-             '/page/body/p[object[1][@xlink:href="/static/images/smileys/smile.png"]][object[2][@xlink:href="/static/images/smileys/sad.png"]]'),
+             '/page/body/p[span[1][@class="moin-smile"]][span[2][@class="moin-sad"]]'),
             ('<page><body><p><strong>:-)</strong></p></body></page>',
-             '/page/body/p/strong/object[@xlink:href="/static/images/smileys/smile.png"]'),
+             '/page/body/p/strong/span[@class="moin-smile"]'),
             # Test to check we do not have bug with newline in the string
             ('<page><body><p>1\n2\n3\n4</p></body></page>',
              '/page/body[p="1\n2\n3\n4"]'),
-            # Test to check the attributes are correctly converted
-            ('<page><body><p><a xlink:href="uri">link</a></p></body></page>',
-             '/page/body/p/a[@xlink:href="uri"][text()="link"]'),
             # Test with space between the elements
             ('<page><body><table-of-content />     <p>text</p></body></page>',
              '/page/body[p="text"]'),
