@@ -106,7 +106,7 @@ def test_sourcecode():
         if stat.S_ISREG(mode): # is a regular file
             if (path.lower().endswith('.py') and st.st_mtime >= RECENTLY and
                 should_check_file(path, st.st_mtime)):
-                yield check_py_file, reldir, path, st.st_mtime
+                yield reldir, check_py_file, reldir, path, st.st_mtime
         elif stat.S_ISDIR(mode): # is a directory
             for entry in os.listdir(path):
                 if not entry.startswith('.'):
