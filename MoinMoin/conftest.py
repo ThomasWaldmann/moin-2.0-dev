@@ -29,8 +29,7 @@ import sys
 
 import py
 
-rootdir = py.path.local(__file__)
-moindir = rootdir.join("..")
+moindir = py.path.local(__file__).dirpath()
 
 from MoinMoin import create_app_ext, before
 from MoinMoin._tests import maketestwiki, wikiconfig
@@ -82,13 +81,8 @@ def init_test_app(given_config):
     return app, ctx
 
 
-class MoinTestFunction(py.test.collect.Function):
-    def execute(self, target, *args):
-        target(*args)
-
 
 class MoinClassCollector(py.test.collect.Class):
-    Function = MoinTestFunction
 
     def setup(self):
         cls = self.obj
@@ -140,7 +134,6 @@ class MoinClassCollector(py.test.collect.Class):
 
 class Module(py.test.collect.Module):
     Class = MoinClassCollector
-    Function = MoinTestFunction
 
     def __init__(self, *args, **kwargs):
         given_config = wikiconfig.Config
