@@ -7,6 +7,7 @@ import code
 import string
 import getpass
 import inspect
+import warnings
 
 import argparse
 
@@ -182,19 +183,6 @@ class Command(object):
         
         return parser
 
-    def handle(self, app, prog, name, remaining_args):
-        command_parser = self.create_parser(prog + " " + name)
-        if getattr(self, 'capture_all_args', False):
-            command_namespace, unparsed_args = \
-                command_parser.parse_known_args(remaining_args)
-            positional_args = [unparsed_args]
-        else:
-            command_namespace = command_parser.parse_args(remaining_args)
-            positional_args = []
-
-        with app.test_request_context():
-            self.run(*positional_args, **command_namespace.__dict__)
-
     def run(self):
 
         """
@@ -204,6 +192,29 @@ class Command(object):
 
         raise NotImplementedError
 
+    def prompt(self, name, default=None):
+        warnings.warn_explicit(
+            "Command.prompt is deprecated, use prompt() function instead")
+
+        prompt(name, default)
+
+    def prompt_pass(self, name, default=None):
+        warnings.warn_explicit(
+            "Command.prompt_pass is deprecated, use prompt_pass() function instead")
+
+        prompt_pass(name, default)
+
+    def prompt_bool(self, name, default=False):
+        warnings.warn_explicit(
+            "Command.prompt_bool is deprecated, use prompt_bool() function instead")
+
+        prompt_bool(name, default)
+
+    def prompt_choices(self, name, choices, default=None):
+        warnings.warn_explicit(
+            "Command.choices is deprecated, use prompt_choices() function instead")
+
+        prompt_choices(name, choices, default)
 
 class Shell(Command):
 
@@ -284,18 +295,20 @@ class Server(Command):
                          This can be overriden in the command line by 
                          passing the **-r** flag.
                          
+    :param options: :func:`werkzeug.run_simple` options.
     """
 
     description = 'Runs the Flask development server i.e. app.run()'
 
     def __init__(self, host='127.0.0.1', port=5000, use_debugger=True,
-        use_reloader=True):
+        use_reloader=True, **options):
 
 
         self.port = port
         self.host = host
         self.use_debugger = use_debugger
         self.use_reloader = use_reloader
+        self.server_options = options
     
     def get_options(self):
 
@@ -344,7 +357,8 @@ class Server(Command):
                 port=port,
                 debug=use_debugger,
                 use_debugger=use_debugger,
-                use_reloader=use_reloader)
+                use_reloader=use_reloader,
+                **self.server_options)
 
 
 class InvalidCommand(Exception):
@@ -580,7 +594,7 @@ class Manager(object):
 
         rv = []
 
-        for name, command in sorted(self._commands.iteritems()):
+        for name, command in self._commands.iteritems():
             usage = name
             description = command.description or ''
             usage = format % (name, description)
@@ -617,10 +631,21 @@ class Manager(object):
             if arg in args:
                 remaining_args.append(arg)
 
+        command_parser = command.create_parser(prog + " " + name)
+        if getattr(command, 'capture_all_args', False):
+            command_namespace, unparsed_args = \
+                command_parser.parse_known_args(remaining_args)
+            positional_args = [unparsed_args]
+        else:
+            command_namespace = command_parser.parse_args(remaining_args)
+            positional_args = []
+        
         app = self.create_app(**app_namespace.__dict__)
-        command.handle(app, prog, name, remaining_args)
 
-    def run(self, commands=None):
+        with app.test_request_context():
+            command.run(*positional_args, **command_namespace.__dict__)
+
+    def run(self, commands=None, default_command=None):
         
         """
         Prepares manager to receive command line input. Usually run
@@ -628,14 +653,25 @@ class Manager(object):
 
         :param commands: optional dict of commands. Appended to any commands 
                          added using add_command().
+
+        :param default_command: name of default command to run if no 
+                                arguments passed.
         """
 
         if commands:
             self._commands.update(commands)
-        
+
         try:
+            if len(sys.argv) == 1 and default_command is not None:
+                command = default_command
+            else:
+                command = sys.argv[1]
+
+            if command is None:
+                raise InvalidCommand, "Please provide a command"
+
             self.handle(sys.argv[0],
-                        sys.argv[1],
+                        command,
                         sys.argv[2:])
             
             sys.exit(0)
