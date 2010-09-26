@@ -8,20 +8,19 @@ Additionally, we check that the files have no crlf (Windows style) line endings.
 @license: MIT licensed
 """
 
-import os, re, time, stat
-
+import re, time
+import py
 import pep8
 
-from MoinMoin.conftest import moindir
 
-ROOT = str(moindir)
+moindir = py.path.local(__file__).pypkgpath()
 
-EXCLUDE = [
-    '/contrib/TWikiDrawPlugin', # 3rd party java stuff
-    '/support', # 3rd party libs or non-broken stdlib stuff
-    '/MoinMoin/static', # this is our dist static stuff
-    '/MoinMoin/_tests/wiki', # this is our test wiki
-]
+EXCLUDE = set([
+    #'/contrib/TWikiDrawPlugin', # 3rd party java stuff
+    moindir/'support', # 3rd party libs or non-broken stdlib stuff
+    moindir/'static', # this is our dist static stuff
+    moindir/'_tests/wiki', # this is our test wiki
+])
 
 TRAILING_SPACES = 'nochange' # 'nochange' or 'fix'
                              # use 'fix' with extreme caution and in a separate changeset!
@@ -37,6 +36,7 @@ try:
             x.set('user.moin-pep8-tested-mtime', '%d' % mtime)
         except IOError:
             # probably not supported
+            global mark_file_ok
             mark_file_ok = lambda path, mtime: None
 
     def should_check_file(path, mtime):
@@ -47,6 +47,7 @@ try:
             return mtime > mt
         except IOError:
             # probably not supported
+            global should_check_file
             should_check_file = lambda path, mtime: True
         return True
 except ImportError:
@@ -92,29 +93,18 @@ def check_py_file(reldir, path, mtime):
     assert error_count == 0
     mark_file_ok(path, mtime)
 
-def test_sourcecode():
-    def walk(reldir):
-        if reldir in EXCLUDE:
-            #print "Skippping %r..." % reldir
-            return
-        if reldir:
-            path = os.path.join(ROOT, *reldir.split('/'))
-        else:
-            path = ROOT
-        st = os.stat(path)
-        mode = st.st_mode
-        if stat.S_ISREG(mode): # is a regular file
-            if (path.lower().endswith('.py') and st.st_mtime >= RECENTLY and
-                should_check_file(path, st.st_mtime)):
-                yield reldir, check_py_file, reldir, path, st.st_mtime
-        elif stat.S_ISDIR(mode): # is a directory
-            for entry in os.listdir(path):
-                if not entry.startswith('.'):
-                    for _ in walk('%s/%s' % (reldir, entry)):
-                        yield _
+def pytest_generate_tests(metafunc):
+    for pyfile in sorted(moindir.visit('*.py', lambda p: p not in EXCLUDE)):
+        relpath = moindir.bestrelpath(pyfile)
+        metafunc.addcall(id=relpath, funcargs={'path': pyfile})
 
-    global EXCLUDE
-    EXCLUDE = dict([(path, True) for path in EXCLUDE]) # dict lookup is faster
-    for _ in walk(''):
-        yield _
+def test_sourcecode(path):
+    mtime = path.stat().mtime
+    if mtime < RECENTLY:
+        py.test.skip("source change not recent")
+    if not should_check_file(str(path), mtime):
+        py.test.skip("source marked as should not be checked")
+
+    check_py_file(str(moindir.bestrelpath(path)), str(path), mtime)
+
 
