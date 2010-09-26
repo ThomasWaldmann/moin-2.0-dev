@@ -61,7 +61,7 @@ from MoinMoin import create_app
 from flaskext.script import Manager, Server
 
 manager = Manager(create_app)
-manager.add_option('-c', '--config', dest='config', required=False)
+manager.add_option('-c', '--config', dest='config', required=False, default=wiki_config)
 manager.add_command("moin", Server(host='127.0.0.1', port=8080))
 
 
@@ -70,7 +70,4 @@ if __name__ == "__main__":
     if len(args) == 1:
         # if we are called without params, just run the server
         args.append('moin')
-    if '-c' not in args and '--config' not in args:
-        # if no config is given, use the wiki_config we discovered already
-        args.extend(['-c', wiki_config])
     manager.run()
