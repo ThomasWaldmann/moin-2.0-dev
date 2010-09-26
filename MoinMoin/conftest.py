@@ -29,8 +29,6 @@ import sys
 
 import py
 
-moindir = py.path.local(__file__).dirpath()
-
 from MoinMoin import create_app_ext, before
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
