@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.macro2._base
+MoinMoin - Tests for MoinMoin.macro._base
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -8,7 +8,7 @@ MoinMoin - Tests for MoinMoin.macro2._base
 import py.test
 py.test.skip("test is out of sync with tested code")
 
-from MoinMoin.macro2._base import *
+from MoinMoin.macro._base import *
 
 def test_MacroBase___init__():
     request = object()

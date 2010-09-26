@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 from MoinMoin import _, N_
 from MoinMoin import wikiutil
-from MoinMoin.converter2._args import Arguments
+from MoinMoin.converter._args import Arguments
 from MoinMoin.util import iri
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page
@@ -63,10 +63,10 @@ class Converter(object):
         elem_body = context_block and moin_page.body() or moin_page.inline_body()
         elem_error = moin_page.error()
 
-        cls = wikiutil.importPlugin(app.cfg, 'macro2', name, function='Macro')
+        cls = wikiutil.importPlugin(app.cfg, 'macro', name, function='Macro')
 
         try:
-            macro = cls() # XXX refactor all macro2 macros so they are OK without "request"
+            macro = cls() # XXX refactor all macros so they are OK without "request"
             ret = macro((), args, page, alt, context_block)
 
             elem_body.append(ret)

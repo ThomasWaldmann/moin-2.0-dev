@@ -10,7 +10,7 @@ Provides a goto box.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import _, N_
-from MoinMoin.macro2._base import MacroBlockBase
+from MoinMoin.macro._base import MacroBlockBase
 from MoinMoin.util.tree import html
 
 class Macro(MacroBlockBase):

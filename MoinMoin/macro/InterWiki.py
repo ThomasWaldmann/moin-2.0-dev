@@ -10,7 +10,7 @@ from flask import current_app as app
 
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.util.interwiki import join_wiki
-from MoinMoin.macro2._base import MacroBlockBase
+from MoinMoin.macro._base import MacroBlockBase
 
 class Macro(MacroBlockBase):
     def macro(self):

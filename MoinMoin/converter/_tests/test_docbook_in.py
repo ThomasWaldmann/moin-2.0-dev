@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-MoinMoin - Tests for MoinMoin.converter2.docbook_in
+MoinMoin - Tests for MoinMoin.converter.docbook_in
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
@@ -20,7 +20,7 @@ from emeraldtree.tree import *
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.converter2.docbook_in import *
+from MoinMoin.converter.docbook_in import *
 
 class Base(object):
     input_namespaces = ns_all = u'xmlns="%s" xmlns:xlink="%s"' % (

@@ -15,7 +15,7 @@ random.seed()
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.items import Item, AccessDeniedError
-from MoinMoin.macro2._base import MacroInlineBase
+from MoinMoin.macro._base import MacroInlineBase
 
 
 class Macro(MacroInlineBase):

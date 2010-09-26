@@ -8,7 +8,7 @@
 
 from flask import flaskg
 
-from MoinMoin.macro2._base import MacroInlineBase
+from MoinMoin.macro._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
     def macro(self, page=unicode, key=unicode):

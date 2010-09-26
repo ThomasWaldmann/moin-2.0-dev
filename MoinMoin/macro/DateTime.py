@@ -10,7 +10,7 @@
 from flask import flaskg
 from flaskext.babel import format_datetime
 
-from MoinMoin.macro2.Date import MacroDateTimeBase
+from MoinMoin.macro.Date import MacroDateTimeBase
 
 class Macro(MacroDateTimeBase):
     def macro(self, stamp=None):

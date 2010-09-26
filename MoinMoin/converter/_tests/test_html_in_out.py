@@ -1,6 +1,6 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.html_in and
-           MoinMoin.converter2.html_out.
+MoinMoin - Tests for MoinMoin.converter.html_in and
+           MoinMoin.converter.html_out.
 
            It will check that roundtrip conversion is working well.
 
@@ -20,8 +20,8 @@ except:
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.converter2.html_in import Converter as HTML_IN
-from MoinMoin.converter2.html_out import Converter as HTML_OUT
+from MoinMoin.converter.html_in import Converter as HTML_IN
+from MoinMoin.converter.html_out import Converter as HTML_OUT
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class Base(object):

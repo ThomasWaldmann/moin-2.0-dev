@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2._args_wiki
+MoinMoin - Tests for MoinMoin.converter._args_wiki
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -7,7 +7,7 @@ MoinMoin - Tests for MoinMoin.converter2._args_wiki
 
 import py.test
 
-from MoinMoin.converter2._args_wiki import *
+from MoinMoin.converter._args_wiki import *
 
 def test():
     yield (do,

@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.html_in
+MoinMoin - Tests for MoinMoin.converter.html_in
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
@@ -18,7 +18,7 @@ from emeraldtree.tree import *
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
-from MoinMoin.converter2.html_in import *
+from MoinMoin.converter.html_in import *
 
 class Base(object):
     namespaces = {

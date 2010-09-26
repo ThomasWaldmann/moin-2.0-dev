@@ -300,7 +300,7 @@ class ThemeSupport(object):
         if item_name and parent_item_name:
             return parent_item_name
 
-    # TODO: reimplement on-wiki-page sidebar definition with converter2
+    # TODO: reimplement on-wiki-page sidebar definition with MoinMoin.converter
 
     # Properties ##############################################################
 

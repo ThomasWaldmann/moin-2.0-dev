@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.moinwiki19_in
+MoinMoin - Tests for MoinMoin.converter.moinwiki19_in
 
 @copyright: 2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.

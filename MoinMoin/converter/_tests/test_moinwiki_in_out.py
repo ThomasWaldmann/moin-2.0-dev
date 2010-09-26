@@ -13,8 +13,8 @@ import re
 
 from emeraldtree import ElementTree as ET
 from MoinMoin.util.tree import moin_page, xlink
-from MoinMoin.converter2.moinwiki_in import Converter as conv_in
-from MoinMoin.converter2.moinwiki_out import Converter as conv_out
+from MoinMoin.converter.moinwiki_in import Converter as conv_in
+from MoinMoin.converter.moinwiki_out import Converter as conv_out
 
 
 class TestConverter(object):

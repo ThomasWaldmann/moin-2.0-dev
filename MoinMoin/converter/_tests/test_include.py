@@ -1,5 +1,5 @@
 """
-MoinMoin - Tests for MoinMoin.converter2.include
+MoinMoin - Tests for MoinMoin.converter.include
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -7,7 +7,7 @@ MoinMoin - Tests for MoinMoin.converter2.include
 
 import py.test
 
-from MoinMoin.converter2.include import *
+from MoinMoin.converter.include import *
 
 def test_XPointer():
     x = XPointer('a')

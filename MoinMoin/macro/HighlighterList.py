@@ -15,8 +15,8 @@ import pygments.lexers
 
 from MoinMoin import _, N_
 from MoinMoin.util.tree import moin_page
-from MoinMoin.macro2._base import MacroBlockBase
-from MoinMoin.converter2._table import TableMixin
+from MoinMoin.macro._base import MacroBlockBase
+from MoinMoin.converter._table import TableMixin
 
 
 class Macro(TableMixin, MacroBlockBase):
