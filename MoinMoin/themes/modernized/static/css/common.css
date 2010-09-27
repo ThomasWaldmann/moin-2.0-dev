@@ -1,334 +1,331 @@
-/*  common.css - MoinMoin Default Styles
+/* common.css - MoinMoin Default Styles
 
-Copyright (c) 2001, 2002, 2003 by Juergen Hermann
-              2010 MoinMoin:DiogenesAugusto
+    Copyright: 2001, 2002, 2003 MoinMoin:JuergenHermann
+    Copyright: 2010 MoinMoin:DiogenesAugusto
+    Copyright: 2010 MoinMoin:RogerHaase
+    License: GNU GPL v2 or later, see COPYING for details.
 */
 
-/* content styles */
+/* 
+Copied from:  http://code.google.com/p/html5resetcss/
 
-html {
-    background-color: white;
-    color: black;
-    font-family: sans-serif;
-    font-size: 1em;
-}
-
-body {
-    margin: 0;
-}
-
-/* Links */
-
-a {color: #0044B3;}
-/* a:visited {color: #597BB3;} */
-a:visited {color: #FF7BB3;}
-
-a.nonexistent:visited, a.nonexistent, 
-a.badinterwiki:visited, a.badinterwiki {color: gray;}
-
-a.www:before {content: url(../img/moin-www.png); margin: 0 0.2em;}
-a.http:before {content: url(../img/moin-www.png); margin: 0 0.2em;}
-a.https:before {content: url(../img/moin-www.png); margin: 0 0.2em;}
-a.file:before {content: url(../img/moin-ftp.png); margin: 0 0.2em;}
-a.ftp:before {content: url(../img/moin-ftp.png); margin: 0 0.2em;}
-a.nntp:before {content: url(../img/moin-news.png); margin: 0 0.2em;}
-a.news:before {content: url(../img/moin-news.png); margin: 0 0.2em;}
-a.telnet:before, a.ssh:before {content: url(../img/moin-telnet.png); margin: 0 0.2em;}
-a.irc:before, a.ircs:before  {content: url(../img/moin-telnet.png); margin: 0 0.2em;}
-a.mailto:before {content: url(../img/moin-email.png); margin: 0 0.2em;}
-a.attachment:before {content: url(../img/moin-attach.png); margin: 0 0.2em;}
-a.badinterwiki:before {content: url(../img/moin-inter.png); margin: 0 0.2em;}
-a.interwiki:before {content: url(../img/moin-inter.png); margin: 0 0.2em;}
-a.action:before {content: url(../img/moin-action.png); margin: 0 0.2em;}
-
-li p {
-    margin: .25em 0;
-}
-
-li.gap {
-    margin-top: 0.5em;
-}
-
-dt {
-    margin-top: 0.5em;
-    font-weight: bold;
-}
-
-dd {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-dd p {
-    margin: 0.25em 0;
-}
-
-a, img, img.drawing {
-    border: 0;
-}
-
-pre {
-    border: 1pt solid #AEBDCC;
-    background-color: #F3F5F7;
-    padding: 5pt;
-    font-family: courier, monospace;
-    white-space: pre;
-    /* begin css 3 or browser specific rules - do not remove!
-    see: http://forums.techguy.org/archive/index.php/t-249849.html */
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    white-space: -moz-pre-wrap;
-    white-space: -pre-wrap;
-    white-space: -o-pre-wrap;
-    /* end css 3 or browser specific rules */
-}
-
-pre.comment {
-    background-color: #CCCCCC;
-    color: red;
-    padding: 0;
-    margin: 0;
-    border: 0;
-}
-
-pre.comment:before {
-    content: url(../img/attention.png);
-}
+html5doctor.com Reset Stylesheet
+v1.6.1
+Last Updated: 2010-09-17
+Author: Richard Clark - http: //richclarkdesign.com 
+Twitter: @rich_clark
+*/
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, 
+blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins, 
+kbd, q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, figcaption, figure, footer, header, hgroup, 
+menu, nav, section, summary, time, mark, audio, 
+video { margin: 0; padding: 0; border: 0; outline: 0; 
+            font-size: 100%; vertical-align: baseline; background: transparent; }
+body { line-height: 1; }
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav,
+section { display: block; }
+nav ul { list-style: none; }
+blockquote, q { quotes: none; }
+blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+a { margin: 0; padding: 0; font-size: 100%; vertical-align: baseline; background: transparent; }
+ins { background-color: #ff9; color: #000; text-decoration: none; }
+mark { background-color: #ff9; color: #000; font-style: italic; font-weight: bold; }
+del { text-decoration: line-through; }
+abbr[title], dfn[title] { border-bottom: 1px dotted; cursor: help; }
+table { border-collapse: collapse; border-spacing: 0; }
+hr { display: block; height: 1px; border: 0; border-top: 1px solid #cccccc; margin: 1em 0; padding: 0; }
+input, select { vertical-align: middle; }
+/* end HTML5 reset */
 
 
-/* .comment css definition must be top of .red/.green/.blue or it won't work */
-.comment { color: #555555; background-color: #DDDDFF; }
 
-.red { background-color: #FFCCCC; }
-.green { background-color: #CCFFCC; }
-.blue { background-color: #CCCCFF; }
+/* odds and ends */
+html { color: black; font-family: sans-serif; }
+div, p { margin: 1em 0; }
+sub { vertical-align: sub; }
+sup { vertical-align: super; }
+ins { background-color: #FFF; text-decoration: underline; }
+.big { font-size: 1.17em; }
+.small { font-size: .83em; }
+.u { text-decoration: underline; }
+.strike { text-decoration: line-through; }
+
+/* headings - from: http: //www.w3.org/TR/CSS2/sample.html */
+h1 { font-size: 2em; margin: .67em 0; }
+h2 { font-size: 1.5em; margin: .75em 0; }
+h3 { font-size: 1.17em; margin: .83em 0; }
+h4 { margin: 1.12em 0; }
+h5 { font-size: .83em; margin: 1.5em 0; }
+h6 { font-size: .75em; margin: 1.67em 0; }
+
+/* Links - most themes will override */
+a { text-decoration: none; }
+a:link { color: blue; }
+a:visited { color: purple; }
+a:hover { color: red; }
+a:active { color: red; } 
+
+/* dead links */
+a.nonexistent:visited,
+a.nonexistent,
+a.badinterwiki:visited,
+a.badinterwiki { color: gray; }
+
+/* lists */
+ol, ul { margin-left: 40px }
+li p { margin: .25em 0; }
+ol.upperalpha_list { list-style-type: upper-alpha; }
+ol.loweralpha_list { list-style-type: lower-alpha; }
+ol.upperroman_list { list-style-type: upper-roman; }
+ol.lowerroman_list { list-style-type: lower-roman; }
+ol, ul { margin-top: 1em; }
+li ol, li ul { margin-top: .25em; }
+
+/* definitions */
+dt { margin-top: 0.5em; font-weight: bold; }
+dd { font-size: .92em; margin-left: 40px; margin-top: 0; margin-bottom: 0; }
+dd p { margin: 0.25em 0; }
+
+/* horizontal rule ---- and custom rules ----- to ---------- */
+hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .5em 0; }
+.hr1 { height: 2px; }
+.hr2 { height: 3px; }
+.hr3 { height: 4px; }
+.hr4 { height: 5px; }
+.hr5 { height: 6px; }
+.hr6 { height: 7px; }
+
+/* eye catchers */
+.warning,
+.error { color: red; }
+strong.highlight { background-color: #CCE0FF; padding: 1px; }
+
+/* pre */
+pre { border: 1pt solid #AEBDCC; background-color: #F3F5F7; padding: 5pt; 
+            font-family: courier, monospace; margin: .33em 0; white-space: pre; }
+pre.comment { background-color: #CCC; color: red; padding: 0; margin: 0; border: 0; }
+pre.comment:before { content: url(../img/attention.png); }
+
+/* tables */
+table { margin: 0.5em 0 0 0.5em; border-collapse: collapse; }
+th, td { padding: 0.25em 0.5em 0.25em 0.5em; border: 1pt solid #ADB9CC; vertical-align: middle; }
+td p { margin: 0; padding: 0; }
+
+/* TableOfContents macro */
+div.table-of-contents { border: 1px solid #BBB; color: black; background-color: #EEE; 
+            font-size: 80%; text-align: left; margin: 0.5em 0 0.5em 1em; 
+            padding: 0.5em 0.75em 0.5em 0.5em; max-width: 50%; display: inline-table; }
+div.table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
+div.table-of-contents ul { margin: 0; list-style: none; }
+div.table-of-contents li { margin: 0; padding: 0; }
+p.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
+            letter-spacing: 0.075em; }
+
+/* Navigation macro */
+table.navigation { background: #FFF; float: right; margin: 2px; }
+
+/* footnotes */
+.footnotes div { width: 5em; border-top: 1pt solid gray; }
+.footnotes ol { padding: 0 2em; margin: 0 0 1em; }
+.footnotes li { }
+
+/* revision navigation */
+#moin-rev-navigation { list-style: none; text-align: center; }
+#moin-rev-navigation li { display: inline; }
+.moin-disabled { color: gray; }
+.moin-rev-navigation-current { font-size: 1.5em; text-transform: uppercase; }
+.moin-rev-navigation-older,
+.moin-rev-navigation-newer { padding: 0 20px 0 20px; }
+
+/* wiki parser  */
+.comment { color: #555; background-color: #DDF; }
+.red { background-color: #FCC; }
+.green { background-color: #CFC; }
+.blue { background-color: #CCF; }
 .yellow { background-color: #FFF29F; }
 .orange { background-color: #FFD59B; }
-
-.solid { border: 2px solid #000000; padding: 2px; }
-.dashed { border: 2px dashed #000000; padding: 2px; }
-.dotted { border: 2px dotted #000000; padding: 2px; }
-
+.solid { border: 2px solid #000; padding: 2px; }
+.dashed { border: 2px dashed #000; padding: 2px; }
+.dotted { border: 2px dotted #000; padding: 2px; }
 .left { text-align: left; }
 .center { text-align: center; }
 .right { text-align: right; }
 .justify { text-align: justify; }
 
-table
-{
-    margin: 0.5em 0 0 0.5em;
-    border-collapse: collapse;
-}
-
-th, td
-{
-    padding: 0.25em 0.5em 0.25em 0.5em;
-    border: 1pt solid #ADB9CC;
-}
-
-td p {
-    margin: 0;
-    padding: 0;
-}
-/* TableOfContents macro */
-div.table-of-contents {
-    border: 1px solid #bbbbbb;
-    color: black;
-    background-color: #eeeeee;
-    font-size: 80%;
-    text-align: left;
-    margin: 0.5em 0 0.5em 1em;
-    padding: 0.5em 0.75em 0.5em 0.5em;
-    max-width: 50%;
-    display: inline-table;
-}
-div.table-of-contents ol {
-    margin: 0;
-    padding: 0 0 0 2em;
-}
-div.table-of-contents ul {
-    margin: 0;
-    list-style:none;
-}
-div.table-of-contents li {
-    margin:0;
-    padding: 0;
-}
-p.table-of-contents-heading {
-    font-weight:bold;
-    padding:0;
-    margin: 0 0 0.5em 0;
-    letter-spacing: 0.075em;
-}
-
-/* Navigation macro */
-table.navigation {
-    background: #fff;
-    margin: 0;
-}
-
-.footnotes div {
-    width: 5em;
-    border-top: 1pt solid gray;
-}
-
-.footnotes ol {
-    padding: 0 2em;
-    margin: 0 0 1em;
-}
-
-.footnotes li {
-}
-
-.moin-info {
-    float: right;
-    font-size: 0.7em;
-    color: gray;
-}
-
-#moin-pageinfo {
-    margin-top: 2em;
-}
-
-.seperator {
-    color: gray;
-}
-
-#moin-pagebottom {clear: both;}
-
-/* revision navigation */
-
-#moin-rev-navigation {
-    list-style:none;
-    text-align:center;
-}
-
-#moin-rev-navigation li {
-    display:inline;
-}
-
-.moin-disabled {
-    color:gray;
-}
-
-.moin-rev-navigation-current {
-    font-size:18pt;
-    text-transform:uppercase;
-}
-
-.moin-rev-navigation-older, .moin-rev-navigation-newer {
-    padding: 0 20px 0 20px;
-}
-
-
-/* standard rule ---- */
-hr {
-    height: 1pt;
-    background-color: #9C9C9C;
-    border: 0;
-}
-
-/* custom rules ----- to ---------- */
-.hr1 {height: 2pt;}
-.hr2 {height: 3pt;}
-.hr3 {height: 4pt;}
-.hr4 {height: 5pt;}
-.hr5 {height: 6pt;}
-.hr6 {height: 7pt;}
-
-/* Replacement for deprecated html 3 <u> element and html 4 <strike> */
-.u {text-decoration: underline;}
-.strike {text-decoration: line-through;}
-
-/* eye catchers */
-.warning, .error
-{
-    color: red;
-}
-
-strong.highlight 
-{
-    background-color: #CCE0FF;
-    padding: 1pt;
-}
-
+/* User Preferences */
+.userpref table, .userpref td { border: none; }
 
 /* Recent changes */
+.rcrss { float: right; margin: 0 7px 0 14px; height: 0; position: relative; top: 9px; }
+.recentchanges table { clear: both; border-collapse: collapse; border: 1px solid #4D7DA9; }
+.recentchanges td { vertical-align: top; border: none; background: #e6eaf0; }
+.recentchanges .rcdaybreak td { background: #81BBF2; border: none; border: 1px solid #4D7DA9; }
+.rcdaybreak td a { font-size: 0.88em; }
+.rcicon1,
+.rcicon2 { text-align: center; }
+.rcpagelink { width: 33%; }
+.rctime { font-size: 0.88em; white-space: nowrap; }
+.rceditor { white-space: nowrap; font-size: 0.88em; }
+.rccomment { width: 50%; color: gray; font-size: 0.88em; }
 
-.rcrss {
-    float: right;
-    margin: 0 7px 0 14px;
-    height: 0;
-    position: relative;
-    top: 9px;
-}
-*[div="rtl"] .rcrss {
-    float: left;
-}
-.recentchanges[dir="rtl"] .rcrss {
-    float: left;
-}
+/* Search results */
+.advancedsearch { border: 1px solid #ADB9CC; }
+.advancedsearch td { vertical-align: top; background-color: #E7E7E7; border: 0px; }
+.advancedsearch td.searchfor { font-weight: bold; }
+.advancedsearch input { border: 1px solid #ADB9CC; background-color: #fff; }
+.advancedsearch input[disabled] { background-color: #EEE; }
+.advancedsearch td.submit { border-top: 1px solid #ADB9CC; background-color: #FFF; text-align: right; }
+.advancedsearch optioni,
+.advancedsearch select { border: 1px solid #ADB9CC; background-color: #FFF; }
+.searchresults dt { margin-top: 1em; font-weight: normal; }
+.searchresults dd,
+.searchresults p { font-size: 0.85em; }
+.searchresults .searchhitinfobar { color: #008000; margin-left: 15px; margin-top: 0; }
+p.searchstats { font-size: 0.8em; text-align: right; width: 100%; background-color: #E6EAF0; 
+            border-top: 1px solid #9088DC; padding: 2px; }
+p.searchhint { background-color: #E6EAF0; border: 1px solid #9088DC; padding: 2px; }
+.searchpages { margin-left: auto; margin-right: auto; }
+.searchpages tr,
+.searchpages td { border: 0; padding: 5px; margin: 0; text-align: center; vertical-align: middle; 
+            color: #b93a58; font-weight: bold; font-size: 1.05em; }
+.searchpages td a,
+.searchpages td a:link { text-decoration: underline; }
 
-.recentchanges table {
-    clear: both;
-    border-collapse: collapse;
+/* edit and edit preview page  */
+textarea { border: 1px solid #8cacbb; font-family: monospace; margin: .33em 0; padding: 3px; width: 100%; }
+input#comment { border: 1px solid #8cacbb; display: inline; margin: .33em 0; padding: 3px; width: 70%; }
+/*  placeholder
+#editor-help { font-size: small; background-color: #EEEEFF; }
+#editor-comment { font-size: 100%; border: 1px solid #8cacbb; color: black; background-color: white; 
+            vertical-align: middle; padding: 1px; display: inline; width: 70%; }
+#preview,
+#previewbelow { border: 1px solid #6C7680; padding: 10px 30px 20px 30px; background: url(../img/draft.png); margin-top: 0.5em; }
+*/
 
-    border: 1px solid #4d7da9;
-}
+/* textchas */
+/* placeholder
+#textcha { font-size: 100%; margin-top: 0.5em; border: 2px solid #FF8888; color: black; vertical-align: middle; padding: 3px 2px; }
+#textcha-answer { border: 2px solid #000000; padding: 3px 2px; }
+*/
 
-.recentchanges td {
-    vertical-align: top;
-    border: none;
-    background: #e6eaf0;
-}
+/* diffs */
+/* placeholder
+.diff { width:99%; table-layout: fixed; }
+.diff-header { font-weight: bold; }
+.diff-title { background-color: #C0C0C0; }
+.diff-added { background-color: #E0FFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
+            font-family: courier, monospace; }
+.diff-removed { background-color: #FFFFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
+            font-family: courier, monospace; }
+.diff-added span { background-color: #80FF80; }
+.diff-removed span { background-color: #FFFF80; }
+td.diff-info { vertical-align: top; }
+div.diff-info { white-space: nowrap; }
+div.diff-info-rev-comment span.diff-info-value { white-space: normal; }
+div.diff-info-header { background-color: #E8E8E8; width: 100%; padding: 0.25em 0.5em; margin: -0.25em -0.5em; margin-bottom: 0.25em; text-align: center; }
+td.diff-same { text-align: center; border: 0; }
+*/
 
+/* MonthCalendar css */
+/* placeholder, none of this is working yet */
+/* days without and with pages linked to them */
+a.cal-emptyday { color: #777; text-align: center; }
+a.cal-usedday { color: #000; font-weight: bold; text-align: center; }
+/* general stuff: workdays, weekend, today */
+td.cal-workday { background-color: #DDF; text-align: center; }
+td.cal-weekend { background-color: #FDD; text-align: center; }
+td.cal-today { background-color: #CFC; border-style: solid; border-width: 2px; text-align: center; }
+/* invalid places on the monthly calendar sheet */
+td.cal-invalidday { background-color: #CCC; }
+/* links to prev/next month/year */
+a.cal-link { color: #000; text-decoration: none; }
+th.cal-header { background-color: #DBF; text-align: center; }
+/* for MonthCalendar mouseover info boxes */
+TABLE.tip { color: black; background-color: #F88; font-size: small; font-weight: normal; 
+            border-style: solid; border-width: 1px; }
+TH.tip { background-color: #F44; font-weight: bold; text-align: center; }
+TD.tip { text-align: left; }
 
-.recentchanges .rcdaybreak td {
-    background: #81BBF2;
-    border: none;
-    border: 1px solid #4d7da9;
-}
+/* admonitions */
+#moin-content div.caution,
+#moin-content div.important,
+#moin-content div.note,
+#moin-content div.tip,
+#moin-content div.warning { border: 1px solid #E5E5E5; background-color: #F9F9FF; 
+            background-repeat: no-repeat; background-position: 8px 8px;  color: black; 
+            margin: 10px 30px 10px 30px; min-height: 64px; padding-left: 64px; }
+#moin-content div.caution p,
+#moin-content div.important p,
+#moin-content div.note p,
+#moin-content div.tip p,
+#moin-content div.warning p { margin-top: 8px; /*to align text with big graphic*/ }
+#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
+#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
+#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
+#moin-content div.caution { background-image: url("../img/admonitions/caution.png"); }
+#moin-content div.warning { background-image: url("../img/admonitions/warning.png"); }
+/* remove borders of fieldset in copy/rename/delete/revert/modify actions */
+#moin-content form fieldset { border: none; padding: 0; }
 
-.rcdaybreak td a {
-    font-size: 0.88em;
-}
+/* smileys */
+.moin-alert { background: url('../img/smileys/alert.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-angry { background: url('../img/smileys/angry.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-attention { background: url('../img/smileys/attention.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-biggrin { background: url('../img/smileys/biggrin.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-checkmark { background: url('../img/smileys/checkmark.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-devil { background: url('../img/smileys/devil.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-frown { background: url('../img/smileys/frown.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-icon-error { background: url('../img/smileys/icon-error.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-icon-info { background: url('../img/smileys/icon-info.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-idea { background: url('../img/smileys/idea.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-ohwell { background: url('../img/smileys/ohwell.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-prio1 { background: url('../img/smileys/prio1.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-prio2 { background: url('../img/smileys/prio2.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-prio3 { background: url('../img/smileys/prio3.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
+.moin-redface { background: url('../img/smileys/redface.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-sad { background: url('../img/smileys/sad.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile { background: url('../img/smileys/smile.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile2 { background: url('../img/smileys/smile2.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile3 { background: url('../img/smileys/smile3.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-smile4 { background: url('../img/smileys/smile4.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-star_off { background: url('../img/smileys/star_off.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-star_on { background: url('../img/smileys/star_on.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-thumbs-up { background: url('../img/smileys/thumbs-up.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-tired { background: url('../img/smileys/tired.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
+.moin-tongue { background: url('../img/smileys/tongue.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
 
-.rcicon1, .rcicon2 {
-    text-align: center;
-}
+/* icons for external links */
+a.www:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
+a.http:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
+a.https:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
+a.file:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
+a.ftp:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
+a.nntp:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
+a.news:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
+a.telnet:before,
+a.ssh:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
+a.irc:before,
+a.ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
+a.mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
+a.attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
+a.badinterwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
+a.interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
+a.action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
 
-.rcpagelink {
-    width: 33%;
-}
-
-.rctime {
-    font-size: 0.88em;
-    white-space: nowrap;
-}
-
-.rceditor {
-    white-space: nowrap;
-    font-size: 0.88em;
-}
-
-.rccomment {
-    width: 50%;
-    color: gray;
-    font-size: 0.88em;
-}
-
-
-/* User Preferences */
-
-.userpref table, .userpref td {
-    border: none;
-}
+/* Flash messages used by Flask */
+.moin-flash-hint { font-style: italic; }
+.moin-flash-info { float: none; font-size: 1em; color: black; }
+.moin-flash-info:before { content: url('../img/icon-info.png'); margin: 0 0.2em; }
+.moin-flash-warning:before { content: url('../img/alert.png'); margin: 0 0.2em; }
+.moin-flash-error:before { content: url('../img/icon-error.png'); margin: 0 0.2em; }
 
 /* auto-generated by pygments */
-.highlight .hll { background-color: #ffffcc }
-.highlight  { background: #f8f8f8; }
+.highlight .hll { background-color: #FFC }
+.highlight { background: #F8F8F8; }
 .highlight .c { color: #408080; font-style: italic } /* Comment */
-.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .err { border: 1px solid #F00 } /* Error */
 .highlight .k { color: #008000; font-weight: bold } /* Keyword */
 .highlight .o { color: #666666 } /* Operator */
 .highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
@@ -366,7 +363,7 @@ strong.highlight
 .highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .highlight .nv { color: #19177C } /* Name.Variable */
 .highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
-.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .w { color: #BBBBBB } /* Text.Whitespace */
 .highlight .mf { color: #666666 } /* Literal.Number.Float */
 .highlight .mh { color: #666666 } /* Literal.Number.Hex */
 .highlight .mi { color: #666666 } /* Literal.Number.Integer */
@@ -387,236 +384,3 @@ strong.highlight
 .highlight .vg { color: #19177C } /* Name.Variable.Global */
 .highlight .vi { color: #19177C } /* Name.Variable.Instance */
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
-
-
-/* Search results */
-.advancedsearch {
-    border: 1pt solid #ADB9CC;
-}
-
-.advancedsearch td {
-    vertical-align: top;
-    background-color: #E7E7E7;    
-    border: 0px;
-}
-
-.advancedsearch td.searchfor {
-    font-weight: bold;
-}
-
-.advancedsearch input {
-    border: 1px solid #ADB9CC;
-    background-color: #fff;
-}
-
-.advancedsearch input[disabled] {
-    background-color: #eee;
-}
-
-.advancedsearch td.submit {
-    border-top: 1px solid #ADB9CC;
-    background-color: #fff;
-    text-align: right;
-}
-
-.advancedsearch optioni, 
-.advancedsearch select {
-    border: 1px solid #ADB9CC;
-    background-color: #fff;
-}
-
-
-.searchresults dt {
-    margin-top: 1em;
-    font-weight: normal;
-}
-
-.searchresults dd, .searchresults p {
-    font-size: 0.85em;
-}
-
-.searchresults .searchhitinfobar {
-    color: #008000;
-    margin-left: 15px;
-    margin-top: 0;
-}
-
-p.searchstats {
-    font-size: 0.8em;
-    text-align: right;
-    width: 100%;
-    background-color: #E6EAF0;
-    border-top: 1px solid #9088DC;
-    padding: 2px;
-}
-
-p.searchhint {
-    background-color: #E6EAF0;
-    border: 1px solid #9088DC;
-    padding: 2px;
-}
-
-.searchpages {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.searchpages tr, .searchpages td {
-    border: 0;
-    padding: 5px;
-    margin: 0;
-    text-align: center;
-    vertical-align: middle;
-    color: #b93a58;
-    font-weight: bold;
-    font-size: 1.05em;
-}
-
-.searchpages td a, .searchpages td a:link {
-    text-decoration: underline;
-}
-
-/* MonthCalendar css */
-
-/* days without and with pages linked to them */
-a.cal-emptyday {
-    color: #777777;
-    text-align: center;
-}
-a.cal-usedday {
-    color: #000000;
-    font-weight: bold;
-    text-align: center;
-}
-/* general stuff: workdays, weekend, today */
-td.cal-workday {
-    background-color: #DDDDFF;
-    text-align: center;
-}
-td.cal-weekend {
-    background-color: #FFDDDD;
-    text-align: center;
-}
-td.cal-today {
-    background-color: #CCFFCC;
-    border-style: solid;
-    border-width: 2pt;
-    text-align: center;
-}
-/* invalid places on the monthly calendar sheet */
-td.cal-invalidday {
-    background-color: #CCCCCC;
-}
-/* links to prev/next month/year */
-a.cal-link {
-    color: #000000;
-    text-decoration: none;
-}
-th.cal-header {
-    background-color: #DDBBFF;
-    text-align: center;
-}
-
-/* for MonthCalendar mouseover info boxes */
-TABLE.tip {
-    color: black;
-    background-color: #FF8888;
-    font-size: small;
-    font-weight: normal;
-    border-style: solid;
-    border-width: 1px;
-}
-
-TH.tip {
-    background-color: #FF4444;
-    font-weight: bold;
-    text-align: center;
-}
-
-TD.tip {
-    text-align: left;
-}
-*[dir="rtl"] TD.tip {
-    text-align: right;
-}
-
-/* end MonthCalendar stuff */
-
-/* Flash messages used by Flask */
-
-.moin-flash-hint {font-style: italic;}
-.moin-flash-info {
-    float: none;
-    font-size: 1em;
-    color: black;
-}
-.moin-flash-info:before {content: url('../img/icon-info.png'); margin: 0 0.2em;}
-.moin-flash-warning:before {content: url('../img/alert.png'); margin: 0 0.2em;}
-.moin-flash-error:before {content: url('../img/icon-error.png'); margin: 0 0.2em;}
-
-
-/* admonition start */
-#moin-content div.caution, 
-#moin-content div.important, 
-#moin-content div.note, 
-#moin-content div.tip, 
-#moin-content div.warning {
-    border: 1pt solid #E5E5E5;
-    background-color: #F9F9FF;
-    color: black;
-
-    margin: 10pt 30pt 10pt 30pt;
-    background-repeat: no-repeat;
-    background-position: 8px 8px;
-    min-height: 64px; /*64=48+8+8 but doesn't work with IE*/
-    padding-left: 64px;
-}
-
-#moin-content div.caution p, 
-#moin-content div.important p, 
-#moin-content div.note p, 
-#moin-content div.tip p, 
-#moin-content div.warning p {
-    margin-top: 8px; /*to align text with bg graphic*/
-}
-
-#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
-#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
-#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
-#moin-content div.caution { background-image: url("../img/admonitions/caution.png"); }
-#moin-content div.warning { background-image: url("../img/admonitions/warning.png"); }
-
-/* remove borders of fieldset in copy/rename/delete/revert/modify actions */
-#moin-content form fieldset {
-    border: none;
-    padding: 0;
-}
-
-/* admonition end */
-
-/* css smileys */
-.moin-alert { background: url('../img/smileys/alert.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-angry { background: url('../img/smileys/angry.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-attention { background: url('../img/smileys/attention.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-biggrin { background: url('../img/smileys/biggrin.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-checkmark { background: url('../img/smileys/checkmark.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-devil { background: url('../img/smileys/devil.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-frown { background: url('../img/smileys/frown.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-icon-error { background: url('../img/smileys/icon-error.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-icon-info { background: url('../img/smileys/icon-info.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-idea { background: url('../img/smileys/idea.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-ohwell { background: url('../img/smileys/ohwell.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-prio1 { background: url('../img/smileys/prio1.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
-.moin-prio2 { background: url('../img/smileys/prio2.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
-.moin-prio3 { background: url('../img/smileys/prio3.png') no-repeat; display: inline-block; width: 15px; height: 13px; overflow: hidden; text-indent: -9999px; }
-.moin-redface { background: url('../img/smileys/redface.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-sad { background: url('../img/smileys/sad.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-smile { background: url('../img/smileys/smile.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-smile2 { background: url('../img/smileys/smile2.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-smile3 { background: url('../img/smileys/smile3.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-smile4 { background: url('../img/smileys/smile4.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-star_off { background: url('../img/smileys/star_off.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-star_on { background: url('../img/smileys/star_on.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-thumbs-up { background: url('../img/smileys/thumbs-up.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-tired { background: url('../img/smileys/tired.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
-.moin-tongue { background: url('../img/smileys/tongue.png') no-repeat; display: inline-block; width: 16px; height: 16px; overflow: hidden; text-indent: -9999px; }
