@@ -1,4 +1,9 @@
-/*  msie.css - MoinMoin MS Internet explorer bug workarounds */
+/*  msie.css - MoinMoin MS Internet explorer bug workarounds 
+
+    Copyright: 2003 MoinMoin:JuergenHermann
+    Copyright: 2010 MoinMoin:RogerHaase
+    License: GNU GPL v2 or later, see COPYING for details.
+*/
 
 /* IE6 and IE7 both suck with :before */
 a.www { padding-left: 19px; background: url(../img/moin-www.png) left center no-repeat; }
@@ -35,3 +40,5 @@ span.anchor { display: none; }
  */
 * html div#moin-page, * html div#moin-header { height: 0.001%; }
 
+/*  avoid a gap between navibar and pageline on IE7  */
+#moin-navibar { zoom: 1; }
