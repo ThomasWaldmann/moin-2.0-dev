@@ -68,10 +68,10 @@ a:hover { color: red; }
 a:active { color: red; } 
 
 /* dead links */
-a.nonexistent:visited,
-a.nonexistent,
+a.moin-nonexistent:visited,
+a.moin-nonexistent,
 a.badinterwiki:visited,
-a.badinterwiki { color: gray; }
+a.badinterwiki { color: #444; }
 
 /* lists */
 ol, ul { margin-left: 40px }

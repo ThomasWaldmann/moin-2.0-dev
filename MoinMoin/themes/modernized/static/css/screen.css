@@ -13,8 +13,8 @@ a:visited { text-decoration: none; color: #04A; }
 a:visited:hover { text-decoration: none; color: red; }
 a:hover,
 a:active { text-decoration: underline; color: green; }
-a.nonexistent:link { color: #666; }
-a.nonexistent:hover { color: black; text-decoration: underline; } 
+a.moin-nonexistent:link { color: #666; }
+a.moin-nonexistent:hover { color: black; text-decoration: underline; } 
 a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; background: #E7E7E7; 
             border: 1px solid #9C9C9C; padding: 0.5em; text-align: center; }
 
