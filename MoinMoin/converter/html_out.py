@@ -254,13 +254,13 @@ class Converter(object):
                 style = attrib.get('list-style-type')
                 if style:
                     if style == 'upper-alpha':
-                        attrib_new[html('class')] = 'upperalpha_list'
+                        attrib_new[html('class')] = 'moin-upperalpha_list'
                     elif style == 'upper-roman':
-                        attrib_new[html('class')] = 'upperroman_list'
+                        attrib_new[html('class')] = 'moin-upperroman_list'
                     elif style == 'lower-roman':
-                        attrib_new[html('class')] = 'lowerroman_list'
+                        attrib_new[html('class')] = 'moin-lowerroman_list'
                     elif style == 'lower-alpha':
-                        attrib_new[html('class')] = 'loweralpha_list'
+                        attrib_new[html('class')] = 'moin-loweralpha_list'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
@@ -392,12 +392,12 @@ class Converter(object):
             if generate == '85%':
                 attribute = {}
                 key = html('class')
-                attribute[key] = 'small'
+                attribute[key] = 'moin-small'
                 return self.new_copy(html.span, elem, attribute)
             elif generate == '120%':
                 attribute = {}
                 key = html('class')
-                attribute[key] = 'big'
+                attribute[key] = 'moin-big'
                 return self.new_copy(html.span, elem, attribute)
         generate = attrib.get('element')
         if generate:

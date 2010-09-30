@@ -47,10 +47,13 @@ div, p { margin: 1em 0; }
 sub { vertical-align: sub; }
 sup { vertical-align: super; }
 ins { background-color: #FFF; text-decoration: underline; }
-.big { font-size: 1.17em; }
-.small { font-size: .83em; }
+/* fix tests -- currently checking <big> and <small> */
+.moin-big { font-size: 1.17em; }
+.moin-small { font-size: .83em; }
+/* replaced by <ins> and <del> respectively
 .u { text-decoration: underline; }
 .strike { text-decoration: line-through; }
+*/
 
 /* headings - from: http: //www.w3.org/TR/CSS2/sample.html */
 h1 { font-size: 2em; margin: .67em 0; }
@@ -70,16 +73,16 @@ a:active { color: red; }
 /* dead links */
 a.moin-nonexistent:visited,
 a.moin-nonexistent,
-a.badinterwiki:visited,
-a.badinterwiki { color: #444; }
+a.moin-badinterwiki:visited,
+a.moin-badinterwiki { color: #444; }
 
 /* lists */
 ol, ul { margin-left: 40px }
 li p { margin: .25em 0; }
-ol.upperalpha_list { list-style-type: upper-alpha; }
-ol.loweralpha_list { list-style-type: lower-alpha; }
-ol.upperroman_list { list-style-type: upper-roman; }
-ol.lowerroman_list { list-style-type: lower-roman; }
+ol.moin-upperalpha_list { list-style-type: upper-alpha; }
+ol.moin-loweralpha_list { list-style-type: lower-alpha; }
+ol.moin-upperroman_list { list-style-type: upper-roman; }
+ol.moin-lowerroman_list { list-style-type: lower-roman; }
 ol, ul { margin-top: 1em; }
 li ol, li ul { margin-top: .25em; }
 
@@ -310,7 +313,7 @@ a.irc:before,
 a.ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
 a.mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
 a.attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
-a.badinterwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
+a.moin-badinterwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
 a.interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
 a.action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
 

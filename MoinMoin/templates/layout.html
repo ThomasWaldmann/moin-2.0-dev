@@ -75,7 +75,7 @@
             <a href="{{ url_for('frontend.show_item', item_name=item_href)|e }}"
             {%- if wiki_name -%}
                 title="{{ wiki_name }}"
-                class="{% if err %}badinterwiki{% else %}interwiki{% endif %}"
+                class="{% if err %}moin-badinterwiki{% else %}interwiki{% endif %}"
             {%- else -%}
                 {% if not exists -%}class="moin-nonexistent"{%- endif -%}
             {%- endif %}>
