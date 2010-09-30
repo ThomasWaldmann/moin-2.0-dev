@@ -15,9 +15,10 @@ a:hover,
 a:active { text-decoration: underline; color: green; }
 a.moin-nonexistent:link { color: #666; }
 a.moin-nonexistent:hover { color: black; text-decoration: underline; } 
+/* placeholder - not used yet
 a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; background: #E7E7E7; 
             border: 1px solid #9C9C9C; padding: 0.5em; text-align: center; }
-
+*/
 
 /* moin-header */
 #moin-header { margin: 1px; padding: 1px; background: #E6EAF0; line-height: 1.12em; }
