@@ -132,7 +132,7 @@ class ConverterExternOutput(ConverterBase):
                 path = page.path[1:] + path[1:]
 
             if not flaskg.storage.has_item(unicode(path)):
-                elem.set(html.class_, 'nonexistent')
+                elem.set(html.class_, 'moin-nonexistent')
         else:
             path = page.path[1:]
 
