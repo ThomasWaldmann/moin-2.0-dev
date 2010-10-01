@@ -126,7 +126,7 @@ class Converter(object):
 
         if smiley_markup in self.smileys:
             smiley_name = self.smileys[smiley_markup]
-            attrib = {moin_page('class'): 'moin-' + smiley_name}
+            attrib = {moin_page('class'): 'moin-text-icon moin-' + smiley_name}
             return ET.Element(moin_page.span, attrib=attrib, children=[smiley_markup])
         else:
             # if the text was not a smiley, just return the markup without any transformations
