@@ -454,10 +454,14 @@ class Converter(ConverterMacro):
                 list_type = 'definition', None
             elif list_numbers:
                 list_type = 'ordered', None
-            elif list_alpha:
+            elif list_alpha == 'A.':
                 list_type = 'ordered', 'upper-alpha'
-            elif list_roman:
+            elif list_alpha:
+                list_type = 'ordered', 'lower-alpha'
+            elif list_roman == 'I.':
                 list_type = 'ordered', 'upper-roman'
+            elif list_roman:
+                list_type = 'ordered', 'lower-roman'
             elif list_bullet:
                 list_type = 'unordered', None
 
