@@ -19,6 +19,7 @@ def split_body(body):
     while body.startswith('#'):
         try:
             line, body = body.split('\n', 1) # extract first line
+            line = line.rstrip('\r')
         except ValueError:
             line = body
             body = ''
