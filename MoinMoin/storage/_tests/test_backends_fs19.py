@@ -12,9 +12,10 @@ import py.test
 
 from flask import current_app as app
 
+from MoinMoin.items import TAGS
 from MoinMoin.storage import Item
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
-from MoinMoin.storage.backends.fs19 import FSPageBackend, regenerate_acl
+from MoinMoin.storage.backends.fs19 import FSPageBackend, regenerate_acl, process_categories
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 item_data = "Foo Bar"
@@ -217,5 +218,61 @@ class TestAclRegeneration(object):
         for acl, expected in tests:
             result = regenerate_acl(acl, acl_rights_valid)
             assert result == expected
+
+
+class TestTagsGeneration(object):
+    """
+    test tags generation from categories
+    """
+    def testTagsGeneration(self):
+        tests = [
+            (u'', u'', []),
+            (u"""1\r
+----\r
+""",
+             u"""1\r
+""",
+             []),
+            (u"""2\r
+----\r
+CategoryFoo\r
+""",
+             u"""2\r
+""",
+             [u'CategoryFoo']),
+            (u"""3\r
+----\r
+CategoryFoo CategoryBar\r
+""",
+             u"""3\r
+""",
+             [u'CategoryFoo', u'CategoryBar']),
+            (u"""4\r
+----\r
+CategoryFoo\r
+CategoryBar\r
+""",
+             u"""4\r
+""",
+             [u'CategoryFoo', u'CategoryBar']),
+            (u"""5\r
+----\r
+CategoryFoo\r
+CategoryBar\r
+\r
+what ever\r
+""",
+             u"""5\r
+\r
+what ever\r
+""",
+             [u'CategoryFoo', u'CategoryBar']),
+        ]
+        for data, expected_data, expected_tags in tests:
+            meta = dict(MIMETYPE='text/x.moin.wiki')
+            data = process_categories(meta, data)
+            assert meta.get(TAGS, []) == expected_tags
+            assert data == expected_data
+
 
 

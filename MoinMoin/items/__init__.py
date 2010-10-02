@@ -73,6 +73,7 @@ MIMETYPE = "mimetype"
 SIZE = "size"
 LANGUAGE = "language"
 ITEMLINKS = "itemlinks"
+TAGS = "tags"
 
 EDIT_LOG_ACTION = "edit_log_action"
 EDIT_LOG_ADDR = "edit_log_addr"

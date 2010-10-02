@@ -35,7 +35,8 @@ from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                           IS_SYSITEM, SYSITEM_VERSION
+                           IS_SYSITEM, SYSITEM_VERSION, \
+                           TAGS
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
 from MoinMoin.storage.backends._flatutils import split_body
 
@@ -161,7 +162,8 @@ class FSPageBackend(Backend):
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
     def __init__(self, path, idx_path, syspages=False, deleted_mode=DELETED_MODE_KEEP,
-                 default_markup=u'wiki'):
+                 default_markup=u'wiki',
+                 item_category_regex=ur'(?P<all>Category(?P<key>(?!Template)\S+))'):
         """
         Initialise filesystem backend.
 
@@ -184,6 +186,7 @@ class FSPageBackend(Backend):
         assert deleted_mode in (DELETED_MODE_KILL, DELETED_MODE_KEEP, )
         self.deleted_mode = deleted_mode
         self.format_default = default_markup
+        self.item_category_regex = re.compile(item_category_regex, re.UNICODE)
         self.idx = Index(idx_path)
 
     def _get_item_path(self, name, *args):
@@ -323,7 +326,7 @@ class FsPageRevision(StoredRevision):
         StoredRevision.__init__(self, item, revno)
         if revno == -1: # not used by converter, but nice to try a life wiki
             revno = item._fs_current
-        backend = item._backend
+        backend = self._backend = item._backend
         revpath = backend._get_rev_path(item.name, revno)
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
@@ -377,6 +380,7 @@ class FsPageRevision(StoredRevision):
         if item._syspages:
             meta[IS_SYSITEM] = True
             meta[SYSITEM_VERSION] = item._syspages
+        data = self._process_data(meta, data)
         data = data.encode(config.charset)
         meta['__size'] = len(data) # needed for converter checks
         hash_name, hash_digest = hash_hexdigest(data)
@@ -392,6 +396,46 @@ class FsPageRevision(StoredRevision):
         acl_line = self._fs_meta.get(ACL)
         if acl_line is not None:
             self._fs_meta[ACL] = regenerate_acl(acl_line, config.ACL_RIGHTS_VALID)
+
+
+    def _process_data(self, meta, data):
+        """ In moin 1.x markup, not all metadata is stored in the page's header.
+            E.g. categories are stored in the footer of the page content. For
+            moin2, we extract that stuff from content and put it into metadata.
+        """
+        if meta[MIMETYPE] == mimetype_moinwiki:
+            data = self._process_categories(meta, data)
+        return data
+
+
+    def _process_categories(self, meta, data):
+        # process categories to tags
+        # find last ---- in the data plus the categories below it
+        m = re.search(r'\n\r?\s*-----*', data[::-1])
+        if m:
+            start = m.start()
+            end = m.end()
+            # categories are after the ---- line
+            if start > 0:
+                categories = data[-start:]
+            else:
+                categories = u''
+            # remove the ---- line from the content
+            data = data[:-end]
+            if categories:
+                # for CategoryFoo, group 'all' matches CategoryFoo, group 'key' matches just Foo
+                # we use 'all' so we don't need to rename category items
+                matches = list(self._backend.item_category_regex.finditer(categories))
+                if matches:
+                    tags = [m.group('all') for m in matches]
+                    meta.setdefault(TAGS, []).extend(tags)
+                    # remove everything between first and last category from the content
+                    start = matches[0].start()
+                    end = matches[-1].end()
+                    rest = categories[:start] + categories[end:]
+                    data += u'\r\n' + rest.lstrip()
+            data = data.rstrip() + u'\r\n'
+        return data
 
 
 class FsAttachmentItem(Item):
