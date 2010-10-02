@@ -18,8 +18,8 @@ function searchChange(e) {
 
 function searchSetDisabled(flag) {
     // Enable or disable search
-    document.getElementById('fullsearch').disabled = flag;
-    document.getElementById('titlesearch').disabled = flag;
+    document.getElementById('moin-fullsearch').disabled = flag;
+    document.getElementById('moin-titlesearch').disabled = flag;
 }
 
 function searchFocus(e) {
@@ -816,23 +816,23 @@ $(function() {
     });
 
     // Functions related to search form
-    var e = document.getElementById('searchinput');
+    var e = document.getElementById('moin-searchinput');
     searchChange(e);
     searchBlur(e);
     
-    $('#searchinput').blur(function(){
+    $('#moin-searchinput').blur(function(){
         searchBlur(this);
     });
 
-    $('#searchinput').focus(function(){
+    $('#moin-searchinput').focus(function(){
         searchFocus(this);
     });
 
-    $('#searchinput').change(function(){
+    $('#moin-searchinput').change(function(){
         searchChange(this);
     });
 
-    $('#searchinput').keyup(function(){
+    $('#moin-searchinput').keyup(function(){
         searchChange(this);
     });
 

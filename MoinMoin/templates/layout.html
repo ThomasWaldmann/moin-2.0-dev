@@ -6,14 +6,14 @@
 
 <div id="moin-header">
 {% block header %}
-    <form id="searchform" method="get" action="{{ url_for('frontend.search')|e }}">
+    <form id="moin-searchform" method="get" action="{{ url_for('frontend.search')|e }}">
         <div>
             <input type="hidden" name="do" value="fullsearch" />
             <input type="hidden" name="context" value="180" />
-            <label for="searchinput">{{ _('Search') }}</label>
-            <input id="searchinput" type="text" name="value" value="{{ request.values.get('value', '')|e }}" size="20" />
-            <input id="titlesearch" name="titlesearch" type="submit" value="{{ _('Titles') }}" />
-            <input id="fullsearch" name="fullsearch" type="submit" value="{{ _('Text') }}" />
+            <label for="moin-searchinput">{{ _('Search') }}</label>
+            <input id="moin-searchinput" type="text" name="value" value="{{ request.values.get('value', '')|e }}" size="20" />
+            <input id="moin-titlesearch" name="titlesearch" type="submit" value="{{ _('Titles') }}" />
+            <input id="moin-fullsearch" name="fullsearch" type="submit" value="{{ _('Text') }}" />
         </div>
     </form>
 

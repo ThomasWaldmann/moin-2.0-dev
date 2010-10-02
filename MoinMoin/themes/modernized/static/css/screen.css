@@ -24,10 +24,10 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 #moin-header { margin: 1px; padding: 1px; background: #E6EAF0; line-height: 1.12em; }
 
 /* moin-header searchform */
-#searchform { margin: 8px .5em; padding: 0; font-size: 0.82em; float: right;  text-align: right; }
-#searchform input { font-size: 100%; vertical-align: middle; }
-#searchform label { display:none; }
-#searchform div { margin: 0; }
+#moin-searchform { margin: 8px .5em; padding: 0; font-size: 0.82em; float: right;  text-align: right; }
+#moin-searchform input { font-size: 100%; vertical-align: middle; }
+#moin-searchform label { display:none; }
+#moin-searchform div { margin: 0; }
 
 /* moin-header moin-logo -- logos may be text only */
 #moin-logo { float: left; margin: 5px 10px; padding: 0; font-size: 1.4em; line-height: 1em; font-weight: bold; }
