@@ -48,10 +48,11 @@ DELETED_MODE_KEEP = 'keep'
 DELETED_MODE_KILL = 'kill'
 
 mimetype_default = u'text/plain'
+mimetype_moinwiki = u'text/x.moin.wiki'
 format_to_mimetype = {
     'wiki': u'text/x.moin.wiki',
-    'text/wiki': u'text/x.moin.wiki',
-    'text/moin-wiki': u'text/x.moin.wiki',
+    'text/wiki': mimetype_moinwiki,
+    'text/moin-wiki': mimetype_moinwiki,
     'creole': u'text/x.moin.creole',
     'text/creole': u'text/x.moin.creole',
     'rst': u'text/rst',
@@ -348,7 +349,7 @@ class FsPageRevision(StoredRevision):
             except NoSuchRevisionError:
                 pass # should not happen
             meta[EDIT_LOG_MTIME] += 1 # it is now either 0 or prev rev mtime + 1
-            data = ''
+            data = u''
             try:
                 editlog_data = editlog.find_rev(revno)
             except KeyError:
@@ -370,16 +371,16 @@ class FsPageRevision(StoredRevision):
                         EDIT_LOG_ACTION: u'SAVE',
                     }
             meta, data = split_body(content)
-            data = data.encode(config.charset)
         meta.update(editlog_data)
-        meta['__size'] = len(data) # needed for converter checks
         format = meta.pop('format', backend.format_default)
         meta[MIMETYPE] = format_to_mimetype.get(format, mimetype_default)
-        hash_name, hash_digest = hash_hexdigest(data)
-        meta[hash_name] = hash_digest
         if item._syspages:
             meta[IS_SYSITEM] = True
             meta[SYSITEM_VERSION] = item._syspages
+        data = data.encode(config.charset)
+        meta['__size'] = len(data) # needed for converter checks
+        hash_name, hash_digest = hash_hexdigest(data)
+        meta[hash_name] = hash_digest
         self._fs_meta = {}
         for k, v in meta.iteritems():
             if isinstance(v, list):
