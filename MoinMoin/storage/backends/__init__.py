@@ -14,13 +14,14 @@ from flask import flaskg
 
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
-from MoinMoin.storage.backends import router, fs, fs2, memory
+from MoinMoin.storage.backends import router, fs, fs2, fs19, memory
 
 
 CONTENT = 'content'
 USERPROFILES = 'userprofiles'
 TRASH = 'trash'
 
+FS19_PREFIX = "fs19:"
 FS_PREFIX = "fs:"
 FS2_PREFIX = "fs2:"
 HG_PREFIX = "hg:"
@@ -38,6 +39,27 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
     If the user did not specify anything, we use three FSBackends with user/,
     data/ and trash/ directories by default.
     """
+    # XXX How to properly get these values from the users config?
+    ns_content = u'/'
+    ns_user_profile = u'UserProfile/'
+    ns_trash = u'Trash/'
+
+    if not content_acl:
+        content_acl = dict(
+            before=u'',
+            default=u'All:read,write,create', # mostly harmless by default
+            after=u'',
+            hierarchic=False,
+        )
+
+    if not user_profile_acl:
+        user_profile_acl = dict(
+            before=u'All:', # harmless by default
+            default=u'',
+            after=u'',
+            hierarchic=False,
+        )
+
     def _create_backends(BackendClass, backend_uri, index_uri):
         backends = []
         for name in [CONTENT, USERPROFILES, TRASH, ]:
@@ -76,29 +98,21 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         index_uri = 'sqlite://' # default is memory
         content, userprofile, trash, router_index_uri = _create_backends(memory.MemoryBackend, instance_uri, index_uri)
 
+    elif backend_uri.startswith(FS19_PREFIX):
+        # special case: old moin19 stuff
+        from os import path
+        data_dir = backend_uri[len(FS19_PREFIX):]
+        userprofile = fs19.FSUserBackend(path.join(data_dir, 'user'), '/dev/shm') # assumes user below data_dir
+        content = fs19.FSPageBackend(data_dir, '/dev/shm', deleted_mode='keep', default_markup=u'wiki')
+        namespace_mapping = [
+                        # no trash
+                        (ns_user_profile, userprofile, user_profile_acl),
+                        (ns_content, content, content_acl),
+        ]
+        return namespace_mapping, 'sqlite://'
+
     else:
         raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
-
-    if not content_acl:
-        content_acl = dict(
-            before=u'',
-            default=u'All:read,write,create', # mostly harmless by default
-            after=u'',
-            hierarchic=False,
-        )
-
-    if not user_profile_acl:
-        user_profile_acl = dict(
-            before=u'All:', # harmless by default
-            default=u'',
-            after=u'',
-            hierarchic=False,
-        )
-
-    # XXX How to properly get these values from the users config?
-    ns_content = u'/'
-    ns_user_profile = u'UserProfile/'
-    ns_trash = u'Trash/'
 
     namespace_mapping = [
                     (ns_trash, trash, content_acl),
