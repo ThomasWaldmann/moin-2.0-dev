@@ -83,6 +83,7 @@ ol.moin-upperalpha_list { list-style-type: upper-alpha; }
 ol.moin-loweralpha_list { list-style-type: lower-alpha; }
 ol.moin-upperroman_list { list-style-type: upper-roman; }
 ol.moin-lowerroman_list { list-style-type: lower-roman; }
+ul.moin-nobullet_list { list-style-type: none; }
 ol, ul { margin-top: 1em; }
 li ol, li ul { margin-top: .25em; }
 

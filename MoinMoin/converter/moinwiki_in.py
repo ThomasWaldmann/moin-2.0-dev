@@ -462,9 +462,12 @@ class Converter(ConverterMacro):
                 list_type = 'ordered', 'upper-roman'
             elif list_roman:
                 list_type = 'ordered', 'lower-roman'
-            elif list_bullet:
+            elif list_bullet == u'*':
                 list_type = 'unordered', None
-
+            elif list_begin == '. ':
+                # list_bullet == None, so list_begin is used for above test
+                list_type = 'unordered', 'no-bullet'
+                
         element_use = None
         while len(stack) > 1:
             cur = stack.top()
