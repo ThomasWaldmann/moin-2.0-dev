@@ -447,7 +447,8 @@ class Converter(ConverterMacro):
 
         level = len(indent)
 
-        list_type = 'unordered', 'none'
+        # default to blockquote / indented text / bulletless list
+        list_type = 'unordered', 'no-bullet'
 
         if list_begin:
             if list_definition:
@@ -464,9 +465,6 @@ class Converter(ConverterMacro):
                 list_type = 'ordered', 'lower-roman'
             elif list_bullet == u'*':
                 list_type = 'unordered', None
-            elif list_begin == '. ':
-                # list_bullet == None, so list_begin is used for above test
-                list_type = 'unordered', 'no-bullet'
                 
         element_use = None
         while len(stack) > 1:
