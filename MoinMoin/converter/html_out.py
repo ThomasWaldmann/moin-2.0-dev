@@ -263,6 +263,9 @@ class Converter(object):
                         attrib_new[html('class')] = 'moin-loweralpha_list'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
+                style = attrib.get('list-style-type')
+                if style and style == 'no-bullet':
+                    attrib_new[html('class')] = 'moin-nobullet_list'
                 ret = self.new(html.ul, attrib_new)
             else:
                 raise ElementException('page:item-label-generate does not support "%s"' % generate)
