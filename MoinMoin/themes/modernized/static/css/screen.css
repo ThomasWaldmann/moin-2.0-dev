@@ -78,13 +78,12 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 .moin-info { float: right; font-size: 0.7em; color: gray; }
 
 /* moin-page moin-footer */
-/* version and timings not working yet */
-#moin-footer { clear: both; margin: 0; padding: 0; }
+#moin-footer { clear: both; margin: 0 0; }
 #moin-credits,
-#version,
-#moin-timings{ margin: 5px 10px; padding: 0; text-align: center; font-size: 0.88em; color: #6C7680; }
+#moin-version,
+#moin-timings{ margin: 5px 10px; text-align: center; font-size: 0.75em; color: #6C7680; }
 #moin-credits li,
-#moin-timings li { display: inline; padding: 0 2px; margin: 0 4px; }
+#moin-timings li { display: inline-block; margin: 0 10px; padding: 2px 0; }
 #moin-credits img { vertical-align: middle; }
 
 /* wikiconfig -- page_footer1/2 and page_header1/2 if defined */
