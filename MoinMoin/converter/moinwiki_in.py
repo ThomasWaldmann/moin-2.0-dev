@@ -400,7 +400,7 @@ class Converter(ConverterMacro):
                 (?P<list_definition_text> .*? )
                 ::
             )
-            \s+
+            \s*
             |
             (?P<list_numbers> [0-9]+\. )
             \s+
