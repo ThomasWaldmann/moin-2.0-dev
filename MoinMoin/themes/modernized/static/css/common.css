@@ -216,10 +216,12 @@ input#comment { border: 1px solid #8cacbb; display: inline; margin: .33em 0; pad
 #textcha-answer { border: 2px solid #000000; padding: 3px 2px; }
 */
 
-/* history */
+/* global history and page history */
 .moin-hist-rev input { float: left; }
 .moin-hist-rev { margin: 0; }
+#moin-global-history,
 #moin-page-history { font-size: 75%; }
+#moin-global-history td,
 #moin-page-history td { vertical-align: top; }
 
 /* diffs */
