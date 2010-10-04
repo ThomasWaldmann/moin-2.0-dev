@@ -67,7 +67,6 @@ class FSBackend(BackendBase):
         """
         self._path = path
         self._name_db = os.path.join(path, 'name-mapping')
-        self._history = os.path.join(path, 'history')
         self._itemspace = 128
         self._revmeta_reserved_space = reserved_metadata_space
 
@@ -82,16 +81,6 @@ class FSBackend(BackendBase):
         if not os.path.exists(self._name_db):
             self._do_locked(self._name_db + '.lock', self._create_new_cdb, None)
 
-        # on NFS, append semantics are broken, so decorate the _addhistory
-        # method with a lock
-        if nfs:
-            _addhistory = self._addhistory
-            def locked_addhistory(args):
-                itemid, revid, ts = args
-                _addhistory(itemid, revid, ts)
-            historylock = self._history + '.lock'
-            self._addhistory = lambda itemid, revid, ts: self._do_locked(historylock, locked_addhistory, (itemid, revid, ts))
-
     def _create_new_cdb(self, arg):
         """
         Create new name-mapping if it doesn't exist yet,
@@ -100,71 +89,6 @@ class FSBackend(BackendBase):
         if not os.path.exists(self._name_db):
             maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
             maker.finish()
-
-    def history(self, reverse=True):
-        """
-        History implementation reading the log file.
-        """
-        try:
-            historyfile = open(self._history, 'rb')
-        except IOError, err:
-            if err.errno != errno.ENOENT:
-                raise
-            return
-        offs = 0
-        if reverse:
-            historyfile.seek(0, 2)
-            offs = historyfile.tell() - 1
-            # shouldn't happen, but let's be sure we don't get a partial record
-            offs -= offs % 16
-        while offs >= 0:
-            if reverse:
-                # seek to current position
-                historyfile.seek(offs)
-                # decrease current position by 16 to get to previous item
-                offs -= 16
-
-            # read history item
-            rec = historyfile.read(16)
-            if len(rec) < 16:
-                break
-
-            itemid, revno, tstamp = struct.unpack('!LLQ', rec)
-            itemid = str(itemid)
-            try:
-                inamef = open(os.path.join(self._path, itemid, 'name'), 'rb')
-                iname = inamef.read().decode('utf-8')
-                inamef.close()
-                # try to open the revision file just in case somebody
-                # removed it manually
-                revpath = os.path.join(self._path, itemid, 'rev.%d' % revno)
-                revf = open(revpath)
-                revf.close()
-            except IOError, err:
-                if err.errno != errno.ENOENT:
-                    raise
-                # oops, no such file, item/revision removed manually?
-                continue
-            item = Item(self, iname)
-            item._fs_item_id = itemid
-            rev = StoredRevision(item, revno, tstamp)
-            rev._fs_revpath = revpath
-            rev._fs_file = None
-            rev._fs_metadata = None
-            yield rev
-
-    def _addhistory(self, itemid, revid, ts):
-        """
-        Add a history item with current timestamp and the given data.
-
-        @param itemid: item's ID, must be a decimal integer in a string
-        @param revid: revision ID, must be an integer
-        @param ts: timestamp
-        """
-        itemid = long(itemid)
-        historyfile = open(self._history, 'ab')
-        historyfile.write(struct.pack('!LLQ', itemid, revid, ts))
-        historyfile.close()
 
     def _get_item_id(self, itemname):
         """
@@ -437,8 +361,6 @@ class FSBackend(BackendBase):
                 if err.errno != errno.EEXIST:
                     raise
                 raise RevisionAlreadyExistsError("")
-
-        self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
 
     def _rollback_item(self, rev):
         rev._fs_file.close()
