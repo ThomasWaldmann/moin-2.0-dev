@@ -4,7 +4,7 @@
     {% if history %}
     <h1>{{ _("History of '%(item_name)s'", item_name=item_name) }}</h1>
     <form action="{{ url_for('frontend.diff', item_name=item_name) }}" method="GET">
-        <div id="page-history">
+        <div id="moin-page-history">
         <table>
             <tr>
                 <th>Name</th>
@@ -20,12 +20,14 @@
             {% for rev in history %}
             <tr>
                 <td>{{ rev.name|e }}</td>
-                <td>{{ rev.revno }}</td>
+                <td class="moin-integer">{{ rev.revno }}</td>
                 <td>{{ rev.timestamp|datetimeformat }}</td>
-                <td>{{ rev.size }}</td>
+                <td class="moin-integer">{{ rev.size }}</td>
                 <td>
-                    <input type="radio" name="rev1" value="{{ rev.revno }}" />
-                    <input type="radio" name="rev2" value="{{ rev.revno }}" />
+                    <div class="moin-hist-rev">
+                        <input type="radio" name="rev1" value="{{ rev.revno }}" />
+                        <input type="radio" name="rev2" value="{{ rev.revno }}" />
+                    </div>
                 </td>
                 <td>{{ utils.editor_info(rev) }}</td>
                 <td>{{ rev.mimetype|e }}</td>
