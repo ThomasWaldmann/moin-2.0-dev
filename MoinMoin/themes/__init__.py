@@ -336,7 +336,8 @@ class ThemeSupport(object):
         menu = [
             # title, internal name, endpoint, disabled
             (_('Global History'), 'global_history', 'frontend.global_history', False, ),
-            (_('Global Index'), 'global_index', 'frontend.global_index', False, ),
+            (_('Global Items Index'), 'global_index', 'frontend.global_index', False, ),
+            (_('Global Tags Index'), 'global_tags', 'frontend.global_tags', False, ),
             # Translation may need longer or shorter separator:
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
