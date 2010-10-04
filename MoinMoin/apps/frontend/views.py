@@ -1249,3 +1249,32 @@ class NestedItemListBuilder(object):
                 return True
         return False
 
+
+@frontend.route('/+tags')
+def global_tags():
+    """
+    show a list of all tags in this wiki
+    
+    TODO: make a nice tag cloud
+    """
+    counts_tags_names = flaskg.storage.all_tags()
+    counts_tags_names = sorted(counts_tags_names, reverse=True)
+    tags = [tag for count, tag, names in counts_tags_names]
+    return render_template("global_tags.html",
+                           headline=_("All tags in this wiki (most popular first)"),
+                           item_name='',
+                           tags=tags)
+
+
+@frontend.route('/+tags/<itemname:tag>')
+def tagged_items(tag):
+    """
+    show all items' names that have tag <tag>
+    """
+    item_names = flaskg.storage.tagged_items(tag)
+    return render_template("item_link_list.html",
+                           headline=_("Items tagged with %(tag)s", tag=tag),
+                           item_name=tag,
+                           item_names=item_names)
+
+

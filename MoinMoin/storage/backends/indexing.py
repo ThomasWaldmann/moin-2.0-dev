@@ -53,6 +53,19 @@ class IndexingBackendMixin(object):
             except (NoSuchItemError, NoSuchRevisionError), e:
                 logging.exception("history processing catched exception")
 
+    def all_tags(self):
+        """
+        Return a unsorted list of tuples (count, tag, tagged_itemnames) for all
+        tags.
+        """
+        return self._index.all_tags()
+
+    def tagged_items(self, tag):
+        """
+        Return a list of item names of items that are tagged with <tag>.
+        """
+        return self._index.tagged_items(tag)
+
 
 class IndexingItemMixin(object):
     """
@@ -158,7 +171,8 @@ from sqlalchemy.sql import and_, exists, asc, desc
 
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT
+                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
+                           TAGS
 
 class ItemIndex(object):
     """
@@ -184,6 +198,7 @@ class ItemIndex(object):
             Column('name', Unicode(VALUE_LEN), index=True, unique=True),
             Column('mimetype', Unicode(VALUE_LEN), index=True),
             Column('acl', Unicode(VALUE_LEN)),
+            Column('tags', Unicode(VALUE_LEN)),
         )
 
         # revisions have a revno and a parent item
@@ -239,6 +254,7 @@ class ItemIndex(object):
             name=rev_metas[NAME],
             mimetype=rev_metas[MIMETYPE],
             acl=rev_metas.get(ACL, ''),
+            tags=u'|' + u'|'.join(rev_metas.get(TAGS, [])) + u'|',
         ).execute()
 
     def remove_item(self, metas):
@@ -350,3 +366,19 @@ class ItemIndex(object):
             rev_metas = self.rev_kvstore.retrieve_kv(rev_id)
             yield (rev_datetime, mountpoint + name, revno, rev_metas)
 
+    def all_tags(self):
+        item_table = self.item_table
+        result = select([item_table.c.name, item_table.c.tags],
+                        item_table.c.tags != u'||').execute().fetchall()
+        tags_names = {}
+        for name, tags in result:
+            for tag in tags.split(u'|')[1:-1]:
+                tags_names.setdefault(tag, []).append(name)
+        counts_tags_names = [(len(names), tag, names) for tag, names in tags_names.items()]
+        return counts_tags_names
+
+    def tagged_items(self, tag):
+        item_table = self.item_table
+        result = select([item_table.c.name],
+                        item_table.c.tags.like('%%|%s|%%' % tag)).execute().fetchall()
+        return [row[0] for row in result]
