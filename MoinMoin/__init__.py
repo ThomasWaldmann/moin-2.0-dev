@@ -110,6 +110,7 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     app.cache = cache
     # init storage
     app.unprotected_storage, app.storage = init_backends(app)
+    app.unprotected_storage.index_rebuild() # XXX run this from a script
     import_export_xml(app)
     babel = Babel(app)
     babel.localeselector(get_locale)
