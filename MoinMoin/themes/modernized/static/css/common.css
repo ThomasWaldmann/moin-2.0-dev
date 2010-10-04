@@ -91,6 +91,7 @@ li ol, li ul { margin-top: .25em; }
 dt { margin-top: 0.5em; font-weight: bold; }
 dd { font-size: .92em; margin-left: 40px; margin-top: 0; margin-bottom: 0; }
 dd p { margin: 0.25em 0; }
+dd + dd p { margin-top: .67em; }
 
 /* horizontal rule ---- and custom rules ----- to ---------- */
 hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .5em 0; }
