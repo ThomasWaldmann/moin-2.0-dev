@@ -1,0 +1,13 @@
+{% extends theme("layout.html") %}
+{% block content %}
+{% if headline %}
+<h1>{{ headline }}</h1>
+{% endif %}
+{% if tags %}
+<ul>
+    {% for tag in tags %}
+    <li><a href="{{ url_for('frontend.tagged_items', tag=tag)|e }}">{{ tag }}</a></li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

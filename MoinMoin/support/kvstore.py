@@ -146,7 +146,8 @@ class KVStore(object):
                        ).execute().fetchone()
         if result:
             key_id, wanted_value_type = result
-            assert wanted_value_type == value_type
+            assert wanted_value_type == value_type, "wanted: %r have: %r name: %r value: %r" % (
+                   wanted_value_type, value_type, name, value)
         else:
             res = key_table.insert().values(name=name, value_type=value_type).execute()
             key_id = res.last_inserted_ids()[0]
