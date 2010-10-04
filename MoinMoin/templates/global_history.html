@@ -8,15 +8,15 @@
 
 {% block content %}
 <h1>{{ _("Global History") }}</h1>
-    <table class="history">
+    <table id="moin-global-history">
         <thead>
             <tr>
                 <th>Timestamp</th>
                 <th>Action</th>
-                <th>Item name</th>
-                <th>Revision #</th>
-                <th>Revision type</th>
-                <th>Submitter</th>
+                <th>Name</th>
+                <th>Rev.</th>
+                <th>Mime Type</th>
+                <th>Editor</th>
                 <th>Comment</th>
             </tr>
         </thead>
@@ -27,7 +27,7 @@
             <td>{{ rev.edit_log_action }}</td>
             <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name)|e }}">{{ rev.item.name|e }}</a>
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
-            <td>{{ rev.revno }}</td>
+            <td class="moin-integer">{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
             <td>{{ utils.editor_info(rev) }}</td>
             <td>{{ rev.edit_log_comment }}</td>
