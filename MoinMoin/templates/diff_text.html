@@ -1,4 +1,5 @@
 {% import "utils.html" as utils %}
+
 {% macro diff_nav(side, item_name, rev1, rev2, min_revno, max_revno) %}
     {% set revno1 = rev1.revno %}
     {% set revno2 = rev2.revno %}
@@ -21,21 +22,21 @@
         {% set min_reached = revno2 - 1 < min_revno %}
         {% set max_reached = revno2 + 1 > max_revno %}
     {% endif %}
-    <div class="diff-info diff-info-header">
+    <div class="moin-diff-info moin-diff-info-heading">
         {% if min_reached %}
-        <span class="diff-no-nav-link diff-prev-link diff-old-rev"
+        <span class="moin-diff-no-nav-link moin-diff-prev-link moin-diff-old-rev"
               title="{{ _('No older revision') }}">←</span>
         {% else %}
-        <a class="diff-nav-link diff-prev-link diff-old-rev"
+        <a class="moin-diff-nav-link moin-diff-prev-link moin-diff-old-rev"
            href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1older, rev2=revno2older) }}"
            title="{{ _('Use older revision') }}">←</a>
         {% endif %}
         {{ _('Revision %(revno)d as of %(date_time)s', revno=revno, date_time=date_time|datetimeformat) }}
         {% if max_reached %}
-        <span class="diff-no-nav-link diff-next-link diff-old-rev"
+        <span class="moin-diff-no-nav-link moin-diff-next-link moin-diff-old-rev"
               title="{{ _('No newer revision') }}">→</span>
         {% else %}
-        <a class="diff-nav-link diff-next-link diff-old-rev"
+        <a class="moin-diff-nav-link moin-diff-next-link moin-diff-old-rev"
            href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1newer, rev2=revno2newer) }}"
            title="{{ _('Use newer revision') }}">→</a>
         {% endif %}
@@ -43,45 +44,45 @@
 {% endmacro %}
 
 {% macro show_meta(rev) %}
-    <div class="diff-info diff-info-rev-author">
-        <span class="diff-info-caption">Editor:</span>
-        <span class="diff-info-value">
+    <div class="moin-diff-info moin-diff-info-rev-author">
+        <span class="moin-diff-info-caption">Editor:</span>
+        <span class="moin-diff-info-value">
             {{ utils.editor_info(rev) }}
         </span>
     </div>
-    <div class="diff-info diff-info-rev-size">
-        <span class="diff-info-caption">Size:</span>
-        <span class="diff-info-value">{{ rev.size }}</span>
+    <div class="moin-diff-info moin-diff-info-rev-size">
+        <span class="moin-diff-info-caption">Size:</span>
+        <span class="moin-diff-info-value">{{ rev.size }}</span>
     </div>
-    <div class="diff-info diff-info-rev-comment">
-        <span class="diff-info-caption">Comment:</span>
-        <span class="diff-info-value">{{ rev['edit_log_comment'] }}</span>
+    <div class="moin-diff-info moin-diff-info-rev-comment">
+        <span class="moin-diff-info-caption">Comment:</span>
+        <span class="moin-diff-info-value">{{ rev['edit_log_comment'] }}</span>
     </div>
 {% endmacro %}
 
-<table class="diff">
+<table class="moin-diff">
     <tr>
-        <td class="diff-info">
+        <td class="moin-diff-header">
             {{ diff_nav(1, item_name, oldrev, newrev, min_revno, max_revno) }}
             {{ show_meta(oldrev) }}
         </td>
-        <td class="diff-info">
+        <td class="moin-diff-header">
             {{ diff_nav(2, item_name, oldrev, newrev, min_revno, max_revno) }}
             {{ show_meta(newrev) }}
         </td>
     </tr>
     <tr>
-        <td class="diff-removed"><span>{{ _('Deletions are marked like this.') }}</span></td>
-        <td class="diff-added"><span>{{ _('Additions are marked like this.') }}</span></td>
+        <td class="moin-diff-removed"><span>{{ _('Deletions are marked like this.') }}</span></td>
+        <td class="moin-diff-added"><span>{{ _('Additions are marked like this.') }}</span></td>
     </tr>
     {% for llineno, lcontent, rlineno, rcontent in diffs %}
-    <tr class="diff-title">
-        <td><a href="#{{ llineno }}">{{ _('Line') }} {{ llineno }}:</a></td>
-        <td><a href="#{{ rlineno }}">{{ _('Line') }} {{ rlineno }}:</a></td>
-    </tr>
-    <tr>
-        <td class="diff-removed">{{ lcontent }}</td>
-        <td class="diff-added">{{ rcontent }}</td>
-    </tr>
+        <tr class="moin-diff-line-number">
+            <td><a href="#{{ llineno }}">{{ _('Line') }} {{ llineno }}:</a></td>
+            <td><a href="#{{ rlineno }}">{{ _('Line') }} {{ rlineno }}:</a></td>
+        </tr>
+        <tr>
+            <td class="moin-diff-removed">{{ lcontent }}</td>
+            <td class="moin-diff-added">{{ rcontent }}</td>
+        </tr>
     {% endfor %}
 </table>

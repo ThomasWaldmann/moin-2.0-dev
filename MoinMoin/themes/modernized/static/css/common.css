@@ -216,22 +216,22 @@ input#comment { border: 1px solid #8cacbb; display: inline; margin: .33em 0; pad
 */
 
 /* diffs */
-/* placeholder
-.diff { width:99%; table-layout: fixed; }
-.diff-header { font-weight: bold; }
-.diff-title { background-color: #C0C0C0; }
-.diff-added { background-color: #E0FFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
+.moin-diff { width:99%; table-layout: fixed; }
+.moin-diff-header { vertical-align: top; font-size: 92%; }
+.moin-diff-info { margin: .33em .25em; }
+.moin-diff-info-value { white-space: normal; }
+.moin-diff-info-heading { background-color: #E8E8E8; width: 100%; padding: 0.25em 0.5em; 
+            margin: -0.25em -0.5em; margin-bottom: 0.25em; text-align: center; }
+.moin-diff-info-caption {display: inline-block; min-width: 5em; }
+
+.moin-diff-line-number { background-color: #C0C0C0; }
+.moin-diff-added { background-color: #E0FFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
             font-family: courier, monospace; }
-.diff-removed { background-color: #FFFFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
+.moin-diff-removed { background-color: #FFFFE0; vertical-align: top; width: 50%; white-space: pre-wrap; word-wrap: break-word; 
             font-family: courier, monospace; }
-.diff-added span { background-color: #80FF80; }
-.diff-removed span { background-color: #FFFF80; }
-td.diff-info { vertical-align: top; }
-div.diff-info { white-space: nowrap; }
-div.diff-info-rev-comment span.diff-info-value { white-space: normal; }
-div.diff-info-header { background-color: #E8E8E8; width: 100%; padding: 0.25em 0.5em; margin: -0.25em -0.5em; margin-bottom: 0.25em; text-align: center; }
-td.diff-same { text-align: center; border: 0; }
-*/
+.moin-diff-added span { background-color: #80FF80; }
+.moin-diff-removed span { background-color: #FFFF80; }
+
 
 /* MonthCalendar css */
 /* placeholder, none of this is working yet */
