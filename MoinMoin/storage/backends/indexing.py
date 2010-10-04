@@ -37,6 +37,8 @@ class IndexingBackendMixin(object):
         super(IndexingBackendMixin, self).__init__(*args, **kw)
         self._index = ItemIndex(index_uri)
 
+    def index_rebuild(self):
+        return self._index.index_rebuild(self)
 
     def history(self, reverse=True, item_name=u'', start=None, end=None):
         """
@@ -213,8 +215,19 @@ class ItemIndex(object):
         item_kvmeta = KVStoreMeta('item', metadata, Integer)
         rev_kvmeta = KVStoreMeta('rev', metadata, Integer)
         metadata.create_all()
+        self.metadata = metadata
         self.item_kvstore = KVStore(item_kvmeta)
         self.rev_kvstore = KVStore(rev_kvmeta)
+
+    def index_rebuild(self, backend):
+        self.metadata.drop_all()
+        self.metadata.create_all()
+        for item in backend.iteritems():
+            item.update_index()
+            for revno in item.list_revisions():
+                rev = item.get_revision(revno)
+                logging.debug("rebuild %s %d" % (rev[NAME], revno))
+                rev.update_index()
 
     def get_item_id(self, uuid):
         """
