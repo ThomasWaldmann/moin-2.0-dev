@@ -3,7 +3,7 @@
 
 {% block item %}
 <h1>{{ _("Create Account") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.register')) }}
   {{ forms.render_errors(form) }}
   <dl>

@@ -163,9 +163,9 @@ table.navigation { background: #FFF; float: right; margin: 2px; }
 .justify { text-align: justify; }
 
 /* user settings pages -- also login, lost password, and register pages */
-.moin-user-settings dd { margin-bottom: 1em; }
-.moin-user-settings dd input { width: 20em; }
-.moin-user-settings dt label.required:after { content: '*'; color: gray; }
+.moin-form dd { margin-bottom: 1em; }
+.moin-form dd input { width: 20em; }
+.moin-form dt label.required:after { content: '*'; color: gray; }
 
 /* Recent changes */
 .rcrss { float: right; margin: 0 7px 0 14px; height: 0; position: relative; top: 9px; }
