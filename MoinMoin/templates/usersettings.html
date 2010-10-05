@@ -15,7 +15,7 @@
 
 {% elif part == 'personal' %}
 <h1>{{ _("Personal Settings") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -30,7 +30,7 @@
 
 {% elif part == 'password' %}
 <h1>{{ _("Change Password") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -44,7 +44,7 @@
 
 {% elif part == 'notification' %}
 <h1>{{ _("Notification Settings") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -56,7 +56,7 @@
 
 {% elif part == 'ui' %}
 <h1>{{ _("Wiki Appearance Settings") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -70,7 +70,7 @@
 
 {% elif part == 'navigation' %}
 <h1>{{ _("Navigation Settings") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -82,7 +82,7 @@
 
 {% elif part == 'options' %}
 <h1>{{ _("Options Settings") }}</h1>
-<div class="moin-user-settings">
+<div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}
   <dl>
