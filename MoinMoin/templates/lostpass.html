@@ -3,6 +3,7 @@
 
 {% block item %}
 <h1>{{ _("Lost Password") }}</h1>
+<div class="moin-user-settings">
 {{ _("Please note that you only need to fill out one form field.") }}
 {{ gen.form.open(form, method="post", action=url_for('frontend.lostpass')) }}
   {{ forms.render_errors(form) }}
@@ -12,5 +13,6 @@
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
+</div>
 {% endblock %}
 

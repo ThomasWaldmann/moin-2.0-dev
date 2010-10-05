@@ -3,6 +3,7 @@
 
 {% block item %}
 <h1>{{ _("Create Account") }}</h1>
+<div class="moin-user-settings">
 {{ gen.form.open(form, method="post", action=url_for('frontend.register')) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -13,5 +14,6 @@
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
+</div>
 {% endblock %}
 
