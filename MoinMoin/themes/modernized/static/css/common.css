@@ -105,7 +105,9 @@ hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .5em 0; }
 
 /* eye catchers */
 .warning,
-.error { color: red; }
+.error { color: red; background: #888; } /* obsolete , find and change to moin-warning, moin-error */
+.moin-warning,
+.moin-error { color: red; }
 strong.highlight { background-color: #CCE0FF; padding: 1px; }
 
 /* pre */
@@ -160,8 +162,9 @@ table.navigation { background: #FFF; float: right; margin: 2px; }
 .right { text-align: right; }
 .justify { text-align: justify; }
 
-/* User Preferences */
-.userpref table, .userpref td { border: none; }
+/* user settings pages */
+.moin-user-settings dd { margin-bottom: 1em; }
+.moin-user-settings dd input { width: 20em; }
 
 /* Recent changes */
 .rcrss { float: right; margin: 0 7px 0 14px; height: 0; position: relative; top: 9px; }
