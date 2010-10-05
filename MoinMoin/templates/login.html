@@ -3,6 +3,7 @@
 
 {% block item %}
 <h1>{{ _("Login") }}</h1>
+<div class="moin-user-settings">
 {{ gen.form.open(form, method="post", action=url_for('frontend.login')) }}
   {{ forms.render_errors(form) }}
   <dl>
@@ -15,5 +16,6 @@
   </dl>
   {{ gen.input(form['submit'], type='submit') }}
 {{ gen.form.close() }}
+</div>
 {% endblock %}
 

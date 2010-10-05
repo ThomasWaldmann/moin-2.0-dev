@@ -35,7 +35,7 @@ def button_filter(tagname, attributes, contents, context, bind):
 button_filter.tags = set(['input', 'button'])
 
 
-def error_filter_factory(class_='error'):
+def error_filter_factory(class_='moin-error'):
     """Returns an HTML generation filter annotating field CSS class on error.
 
     :param class: The css class to apply in case of validation error on a
