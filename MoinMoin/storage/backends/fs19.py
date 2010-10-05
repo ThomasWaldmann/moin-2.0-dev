@@ -404,38 +404,38 @@ class FsPageRevision(StoredRevision):
             moin2, we extract that stuff from content and put it into metadata.
         """
         if meta[MIMETYPE] == mimetype_moinwiki:
-            data = self._process_categories(meta, data)
+            data = process_categories(meta, data, self._backend.item_category_regex)
         return data
 
 
-    def _process_categories(self, meta, data):
-        # process categories to tags
-        # find last ---- in the data plus the categories below it
-        m = re.search(r'\n\r?\s*-----*', data[::-1])
-        if m:
-            start = m.start()
-            end = m.end()
-            # categories are after the ---- line
-            if start > 0:
-                categories = data[-start:]
-            else:
-                categories = u''
-            # remove the ---- line from the content
-            data = data[:-end]
-            if categories:
-                # for CategoryFoo, group 'all' matches CategoryFoo, group 'key' matches just Foo
-                # we use 'all' so we don't need to rename category items
-                matches = list(self._backend.item_category_regex.finditer(categories))
-                if matches:
-                    tags = [m.group('all') for m in matches]
-                    meta.setdefault(TAGS, []).extend(tags)
-                    # remove everything between first and last category from the content
-                    start = matches[0].start()
-                    end = matches[-1].end()
-                    rest = categories[:start] + categories[end:]
-                    data += u'\r\n' + rest.lstrip()
-            data = data.rstrip() + u'\r\n'
-        return data
+def process_categories(meta, data, item_category_regex):
+    # process categories to tags
+    # find last ---- in the data plus the categories below it
+    m = re.search(r'\n\r?\s*-----*', data[::-1])
+    if m:
+        start = m.start()
+        end = m.end()
+        # categories are after the ---- line
+        if start > 0:
+            categories = data[-start:]
+        else:
+            categories = u''
+        # remove the ---- line from the content
+        data = data[:-end]
+        if categories:
+            # for CategoryFoo, group 'all' matches CategoryFoo, group 'key' matches just Foo
+            # we use 'all' so we don't need to rename category items
+            matches = list(item_category_regex.finditer(categories))
+            if matches:
+                tags = [m.group('all') for m in matches]
+                meta.setdefault(TAGS, []).extend(tags)
+                # remove everything between first and last category from the content
+                start = matches[0].start()
+                end = matches[-1].end()
+                rest = categories[:start] + categories[end:]
+                data += u'\r\n' + rest.lstrip()
+        data = data.rstrip() + u'\r\n'
+    return data
 
 
 class FsAttachmentItem(Item):
