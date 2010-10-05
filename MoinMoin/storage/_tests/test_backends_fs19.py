@@ -268,9 +268,10 @@ what ever\r
 """,
              [u'CategoryFoo', u'CategoryBar']),
         ]
+        item_category_regex = re.compile(ur'(?P<all>Category(?P<key>(?!Template)\S+))', re.UNICODE)
         for data, expected_data, expected_tags in tests:
             meta = dict(MIMETYPE='text/x.moin.wiki')
-            data = process_categories(meta, data)
+            data = process_categories(meta, data, item_category_regex)
             assert meta.get(TAGS, []) == expected_tags
             assert data == expected_data
 
