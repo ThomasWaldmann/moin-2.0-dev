@@ -261,6 +261,9 @@ class Converter(object):
                         attrib_new[html('class')] = 'moin-lowerroman_list'
                     elif style == 'lower-alpha':
                         attrib_new[html('class')] = 'moin-loweralpha_list'
+                start_number = attrib.get('list-start')
+                if start_number:
+                    attrib_new[html('start')] = start_number
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 style = attrib.get('list-style-type')
