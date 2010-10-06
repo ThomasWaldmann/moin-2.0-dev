@@ -254,13 +254,13 @@ class Converter(object):
                 style = attrib.get('list-style-type')
                 if style:
                     if style == 'upper-alpha':
-                        attrib_new[html('class')] = 'moin-upperalpha_list'
+                        attrib_new[html('class')] = 'moin-upperalpha-list'
                     elif style == 'upper-roman':
-                        attrib_new[html('class')] = 'moin-upperroman_list'
+                        attrib_new[html('class')] = 'moin-upperroman-list'
                     elif style == 'lower-roman':
-                        attrib_new[html('class')] = 'moin-lowerroman_list'
+                        attrib_new[html('class')] = 'moin-lowerroman-list'
                     elif style == 'lower-alpha':
-                        attrib_new[html('class')] = 'moin-loweralpha_list'
+                        attrib_new[html('class')] = 'moin-loweralpha-list'
                 start_number = attrib.get('list-start')
                 if start_number:
                     attrib_new[html('start')] = start_number
@@ -268,7 +268,7 @@ class Converter(object):
             elif generate == 'unordered':
                 style = attrib.get('list-style-type')
                 if style and style == 'no-bullet':
-                    attrib_new[html('class')] = 'moin-nobullet_list'
+                    attrib_new[html('class')] = 'moin-nobullet-list'
                 ret = self.new(html.ul, attrib_new)
             else:
                 raise ElementException('page:item-label-generate does not support "%s"' % generate)
