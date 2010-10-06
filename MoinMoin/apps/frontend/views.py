@@ -1253,15 +1253,30 @@ class NestedItemListBuilder(object):
 @frontend.route('/+tags')
 def global_tags():
     """
-    show a list of all tags in this wiki
-    
-    TODO: make a nice tag cloud
+    show a list or tag cloud of all tags in this wiki
     """
     counts_tags_names = flaskg.storage.all_tags()
-    counts_tags_names = sorted(counts_tags_names, reverse=True)
-    tags = [tag for count, tag, names in counts_tags_names]
+    if counts_tags_names:
+        # sort by tag name
+        counts_tags_names = sorted(counts_tags_names, key=lambda e: e[1])
+        # this is a simple linear scaling
+        counts = [e[0] for e in counts_tags_names]
+        count_min = min(counts)
+        count_max = max(counts)
+        weight_max = 9.99
+        if count_min == count_max:
+            scale = weight_max / 2
+        else:
+            scale = weight_max / (count_max - count_min)
+        def cls(count, tag):
+            # return the css class for this tag
+            weight = scale * (count - count_min)
+            return "weight%d" % int(weight)  # weight0, ..., weight9
+        tags = [(cls(count, tag), tag) for count, tag, names in counts_tags_names]
+    else:
+        tags = []
     return render_template("global_tags.html",
-                           headline=_("All tags in this wiki (most popular first)"),
+                           headline=_("All tags in this wiki"),
                            item_name='',
                            tags=tags)
 
