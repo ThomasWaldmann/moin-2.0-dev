@@ -78,7 +78,8 @@ a.moin-badinterwiki:visited,
 a.moin-badinterwiki { color: #444; }
 
 /* lists */
-ol, ul { margin-left: 40px }
+ol, ul { margin-left: 3em; }
+ol ol, ul ul, ol ul, ul ol { margin-left: 2em; }
 li p { margin: .25em 0; }
 ol.moin-upperalpha_list { list-style-type: upper-alpha; }
 ol.moin-loweralpha_list { list-style-type: lower-alpha; }

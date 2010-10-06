@@ -402,13 +402,13 @@ class Converter(ConverterMacro):
             )
             \s*
             |
-            (?P<list_numbers> [0-9]+\. )
+            (?P<list_numbers> [0-9]+\. (\#(?P<list_start_number>[0-9]+))?)
             \s+
             |
-            (?P<list_alpha> [aA]\. )
+            (?P<list_alpha> [aA]\. (\#(?P<list_start_alpha>[0-9]+))?)
             \s+
             |
-            (?P<list_roman> [iI]\. )
+            (?P<list_roman> [iI]\. (\#(?P<list_start_roman>[0-9]+))?)
             \s+
             |
             (?P<list_bullet> \* )
@@ -443,6 +443,7 @@ class Converter(ConverterMacro):
             indent, text, list_begin=None, list_definition=None,
             list_definition_text=None, list_numbers=None,
             list_alpha=None, list_roman=None, list_bullet=None,
+            list_start_number=None, list_start_roman=None, list_start_alpha=None,
             list_none=None):
 
         level = len(indent)
@@ -455,11 +456,11 @@ class Converter(ConverterMacro):
                 list_type = 'definition', None
             elif list_numbers:
                 list_type = 'ordered', None
-            elif list_alpha == 'A.':
+            elif list_alpha and list_alpha[:2] == 'A.':
                 list_type = 'ordered', 'upper-alpha'
             elif list_alpha:
                 list_type = 'ordered', 'lower-alpha'
-            elif list_roman == 'I.':
+            elif list_roman and list_roman[:2] == 'I.':
                 list_type = 'ordered', 'upper-roman'
             elif list_roman:
                 list_type = 'ordered', 'lower-roman'
@@ -489,6 +490,8 @@ class Converter(ConverterMacro):
                     attrib[moin_page.item_label_generate] = list_type[0]
                 if list_type[1]:
                     attrib[moin_page.list_style_type] = list_type[1]
+                if list_start_number or list_start_alpha or list_start_roman:
+                    attrib[moin_page.list_start] = list_start_number or list_start_alpha or list_start_roman
                 element = moin_page.list(attrib=attrib)
                 element.level, element.list_type = level, list_type
                 stack.push(element)
