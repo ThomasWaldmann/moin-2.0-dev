@@ -25,12 +25,12 @@
         <tr>
             <td>{{ rev.timestamp|datetimeformat }}</td>
             <td>{{ rev.edit_log_action }}</td>
-            <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name)|e }}">{{ rev.item.name|e }}</a>
+            <td class="moin-wordwrap"><a href="{{ url_for('frontend.show_item', item_name=rev.item.name)|e }}">{{ rev.item.name|e }}</a>
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
             <td class="moin-integer">{{ rev.revno }}</td>
-            <td>{{ rev.mimetype }}</td>
-            <td>{{ utils.editor_info(rev) }}</td>
-            <td>{{ rev.edit_log_comment }}</td>
+            <td class="moin-wordwrap">{{ rev.mimetype }}</td>
+            <td class="moin-wordwrap">{{ utils.editor_info(rev) }}</td>
+            <td class="moin-wordwrap">{{ rev.edit_log_comment }}</td>
         </tr>
         {% endfor %}
         </tbody>

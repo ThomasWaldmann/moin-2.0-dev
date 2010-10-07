@@ -838,3 +838,23 @@ $(function() {
 
     
 });
+
+// Firefox 3.6 does not support CSS with {word-wrap: break-word;} within td elements
+// insert zero-width-space into long words after every 5 characters
+jQuery(document).ready(function(){
+    if (!jQuery.browser.mozilla) {
+        return;
+    }
+    var wrapElements = jQuery(".moin-wordwrap");
+    var words;
+    for (i = 0; i < wrapElements.length; i++) {
+        if ((wrapElements[i].tagName == 'TD') && (wrapElements[i].innerHTML == wrapElements[i].textContent)) {
+            words = wrapElements[i].textContent.split(" ");
+            for (j = 0; j < words.length; j++) {
+                words[j] = words[j].replace(/(.{5})/g,"$1\u200B");
+            wrapElements[i].textContent = words.join(" ");
+            }
+        }
+    }
+});
+

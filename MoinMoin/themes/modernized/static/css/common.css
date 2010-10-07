@@ -228,6 +228,7 @@ input#comment { border: 1px solid #8cacbb; display: inline; margin: .33em 0; pad
 #moin-page-history { font-size: 75%; }
 #moin-global-history td,
 #moin-page-history td { vertical-align: top; }
+.moin-wordwrap { word-break: break-all;  word-wrap: break-word; } /* Firefox needs javascript assistance within tables */
 
 /* diffs */
 .moin-diff { width:99%; table-layout: fixed; }
