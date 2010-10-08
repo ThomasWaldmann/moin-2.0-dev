@@ -19,7 +19,7 @@
             </tr>
             {% for rev in history %}
             <tr>
-                <td class="moin-wordwrap">{{ rev.name|e }}</td>
+                <td class="moin-wordbreak">{{ rev.name|e }}</td>
                 <td class="moin-integer">{{ rev.revno }}</td>
                 <td>{{ rev.timestamp|datetimeformat }}</td>
                 <td class="moin-integer">{{ rev.size }}</td>
@@ -29,9 +29,9 @@
                         <input type="radio" name="rev2" value="{{ rev.revno }}" />
                     </div>
                 </td>
-                <td class="moin-wordwrap">{{ utils.editor_info(rev) }}</td>
-                <td class="moin-wordwrap">{{ rev.mimetype|e }}</td>
-                <td class="moin-wordwrap">{{ rev.edit_log_comment|e }}</td>
+                <td class="moin-wordbreak">{{ utils.editor_info(rev) }}</td>
+                <td class="moin-wordbreak">{{ rev.mimetype|e }}</td>
+                <td class="moin-wordbreak">{{ rev.edit_log_comment|e }}</td>
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
                 <td><a href="{{ url_for('frontend.show_item_meta', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('meta') }}</a></td>
                 <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('download') }}</a></td>
