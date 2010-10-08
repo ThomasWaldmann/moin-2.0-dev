@@ -841,20 +841,32 @@ $(function() {
 
 // Firefox 3.6 does not support CSS with {word-wrap: break-word;} within td elements
 // insert zero-width-space into long words after every 5 characters
-jQuery(document).ready(function(){
+function moinInsertZWS(target) {
+    var words;
+    if (target.tagName && target.textContent && target.textContent.length > 5) {
+        words = target.textContent.split(" ");
+        for (var i = 0; i < words.length; i++) {
+            words[i] = words[i].replace(/(.{5})/g,"$1\u200B");
+        }
+        target.textContent = words.join(" ");
+    }
+}
+// find TD nodes that require word-breaking and break them 
+function moinFirefoxWordBreak() {
     if (!jQuery.browser.mozilla) {
         return;
     }
-    var wrapElements = jQuery(".moin-wordwrap");
-    var words;
-    for (i = 0; i < wrapElements.length; i++) {
-        if ((wrapElements[i].tagName == 'TD') && (wrapElements[i].innerHTML == wrapElements[i].textContent)) {
-            words = wrapElements[i].textContent.split(" ");
-            for (j = 0; j < words.length; j++) {
-                words[j] = words[j].replace(/(.{5})/g,"$1\u200B");
-            wrapElements[i].textContent = words.join(" ");
+    var wrapElements = document.getElementsByClassName("moin-wordbreak");
+    var child;
+    for (var i = 0; i < wrapElements.length; i++) {
+        if (wrapElements[i].tagName == 'TD') {
+            moinInsertZWS(wrapElements[i]);
+            child = wrapElements[i].firstChild;
+            while (child) {
+                moinInsertZWS(child);
+                child = child.nextSibling;
             }
         }
     }
-});
-
+}
+jQuery(moinFirefoxWordBreak);
