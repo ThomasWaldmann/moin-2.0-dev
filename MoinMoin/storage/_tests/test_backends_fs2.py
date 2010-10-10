@@ -16,7 +16,7 @@ class TestFS2Backend(BackendTest):
 
     def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')
-        return FS2Backend(self.tempdir, nfs=True)
+        return FS2Backend(self.tempdir)
 
     def kill_backend(self):
         try:
