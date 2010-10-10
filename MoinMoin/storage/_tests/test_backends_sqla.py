@@ -17,8 +17,6 @@ from MoinMoin.storage.backends.sqla import SQLAlchemyBackend, SQLARevision, Data
 
 
 class TestSQLABackend(BackendTest):
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         return SQLAlchemyBackend(verbose=True)

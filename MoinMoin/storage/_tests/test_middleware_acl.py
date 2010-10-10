@@ -22,8 +22,6 @@ class TestACLMiddleware(BackendTest):
     class Config(wikiconfig.Config):
         content_acl = dict(default=u"All:admin,read,write,destroy,create")
 
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.

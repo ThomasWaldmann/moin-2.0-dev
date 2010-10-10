@@ -19,8 +19,6 @@ from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.flatfile import FlatFileBackend
 
 class TestFlatFileBackend(BackendTest):
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')

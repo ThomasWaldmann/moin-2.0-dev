@@ -17,8 +17,6 @@ class TestMemoryBackend(BackendTest):
     """
     Test the MemoryBackend
     """
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         return MemoryBackend()
@@ -27,26 +25,17 @@ class TestMemoryBackend(BackendTest):
         pass
 
 class TestTracingBackend(BackendTest):
-    def __init__(self):
-        BackendTest.__init__(self, None)
-        self.be = None
 
     def create_backend(self):
-        assert self.be is None
         import random
-        self.be = TracingBackend()#"/tmp/codebuf%i.py" % random.randint(1, 2**30))
-        return self.be
+        return TracingBackend()#"/tmp/codebuf%i.py" % random.randint(1, 2**30))
 
     def kill_backend(self):
-        assert self.be is not None
+        func = self.backend.get_func()
         try:
-            func = self.be.get_func()
-            try:
-                func(MemoryBackend()) # should not throw any exc
-            except:
-                # I get exceptions here because py.test seems to handle setup/teardown incorrectly
-                # in generative tests
-                pass #print "EXC"
-        finally:
-            self.be = None
+            func(MemoryBackend()) # should not throw any exc
+        except:
+            # I get exceptions here because py.test seems to handle setup/teardown incorrectly
+            # in generative tests
+            pass #print "EXC"
 
