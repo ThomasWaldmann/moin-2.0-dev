@@ -539,10 +539,10 @@ class BackendTest(object):
         item = self.backend.create_item(u'ts1')
         rev = item.create_revision(0)
         assert rev.timestamp is None
+        rev.timestamp = 42
         item.commit()
-        assert rev.timestamp is not None
         item = self.backend.get_item(u'ts1')
-        assert item.get_revision(0).timestamp == rev.timestamp
+        assert item.get_revision(0).timestamp == 42
 
     def test_size(self):
         item = self.backend.create_item(u'size1')
