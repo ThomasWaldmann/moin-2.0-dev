@@ -50,14 +50,12 @@ class FSBackend(BackendBase):
     Basic filesystem backend, described at
     http://moinmo.in/JohannesBerg/FilesystemStorage
     """
-    def __init__(self, path, nfs=False, reserved_metadata_space=508):
+    def __init__(self, path, reserved_metadata_space=508):
         """
         Initialise filesystem backend, creating initial files and
         some internal structures.
 
         @param path: storage path
-        @param nfs: set to True if operating on NFS to avoid using O_APPEND
-                    semantics which break on NFS
         @param reserved_metadata_space: space reserved for revision metadata
                                         initially, increase if you expect a
                                         lot of very long ACL strings or so.
