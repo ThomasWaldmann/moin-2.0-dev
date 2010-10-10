@@ -26,6 +26,11 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
+                           TAGS
+HASH_ALGORITHM = 'sha1'
 
 
 class IndexingBackendMixin(object):
@@ -142,6 +147,14 @@ class IndexingRevisionMixin(object):
         revno = self.revno
         if self.timestamp is None:
             self.timestamp = time.time()
+        if NAME not in self:
+            self[NAME] = name
+        if 'uuid' not in self:
+            self['uuid'] = name # XXX
+        if MIMETYPE not in self:
+            self[MIMETYPE] = 'application/octet-stream'
+        if HASH_ALGORITHM not in self:
+            self[HASH_ALGORITHM] = '0' # XXX
         metas = self
         logging.debug("item %r revno %d update index:" % (name, revno))
         for k, v in metas.items():
@@ -170,11 +183,6 @@ from kvstore import KVStoreMeta, KVStore
 from sqlalchemy import Table, Column, Integer, String, Unicode, DateTime, PickleType, MetaData, ForeignKey
 from sqlalchemy import create_engine, select
 from sqlalchemy.sql import and_, exists, asc, desc
-
-from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
-                           TAGS
 
 class ItemIndex(object):
     """

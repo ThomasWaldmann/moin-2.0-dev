@@ -574,17 +574,18 @@ class BackendTest(object):
         assert rev.size == 4
 
     def test_various_revision_metadata_values(self):
-        def test_value(value, revno):
-            item = self.backend.create_item(u'valid_values_%s' % revno)
+        def test_value(value, no):
+            item = self.backend.create_item(u'valid_values_%d' % no)
             rev = item.create_revision(0)
-            rev["key"] = value
+            key = "key%d" % no
+            rev[key] = value
             item.commit()
             rev = item.get_revision(0)
-            assert rev["key"] == value
+            assert rev[key] == value
 
-        for revno, value in enumerate(('string', 13, 42L, 3.14, 23+0j,
+        for no, value in enumerate(('string', 13, 42L, 3.14, 23+0j,
                                        ('1', 1, 1L, 1+0j, (1, ), ), u'ąłć', (u'ó', u'żźć'), )):
-            yield test_value, value, revno
+            yield test_value, value, no
 
     def test_history(self):
         order = [(u'first', 0, ), (u'second', 0, ), (u'first', 1, ), (u'a', 0), (u'child/my_subitem', 0) ]
