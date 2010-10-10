@@ -41,10 +41,8 @@ class BackendTest(object):
     sandboxed.
     """
 
-    def __init__(self, backend, valid_names=item_names, invalid_names=invalid_names):
-        self.backend = backend
-        self.valid_names = valid_names
-        self.invalid_names = invalid_names
+    valid_names=item_names
+    invalid_names=invalid_names
 
     def setup_method(self, method):
         self.backend = self.create_backend()

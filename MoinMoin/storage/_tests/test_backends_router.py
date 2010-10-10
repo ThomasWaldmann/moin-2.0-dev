@@ -21,8 +21,6 @@ class TestRouterBackend(BackendTest):
     """
     Test the MemoryBackend
     """
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         self.root = MemoryBackend()

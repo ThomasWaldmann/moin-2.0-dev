@@ -13,8 +13,6 @@ from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.fs import FSBackend
 
 class TestFSBackend(BackendTest):
-    def __init__(self):
-        BackendTest.__init__(self, None)
 
     def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')
