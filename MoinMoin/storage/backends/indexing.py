@@ -26,7 +26,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
+from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            TAGS
@@ -149,8 +149,8 @@ class IndexingRevisionMixin(object):
             self.timestamp = time.time()
         if NAME not in self:
             self[NAME] = name
-        if 'uuid' not in self:
-            self['uuid'] = name # XXX
+        if UUID not in self:
+            self[UUID] = uuid = name # XXX
         if MIMETYPE not in self:
             self[MIMETYPE] = 'application/octet-stream'
         if HASH_ALGORITHM not in self:
@@ -159,7 +159,6 @@ class IndexingRevisionMixin(object):
         logging.debug("item %r revno %d update index:" % (name, revno))
         for k, v in metas.items():
             logging.debug(" * rev meta %r: %r" % (k, v))
-        uuid = name # XXX
         self._index.add_rev(uuid, revno, self.timestamp, metas)
 
     def remove_index(self):
@@ -256,7 +255,7 @@ class ItemIndex(object):
         note: if item does not exist already, it is added
         """
         name = metas.get(NAME, '') # item name (if revisioned: same as current revision's name) XXX not there yet
-        uuid = metas.get('uuid', name) # item uuid (never changes) XXX we use name as long we have no uuid
+        uuid = metas.get(UUID, name) # item uuid (never changes) XXX we use name as long we have no uuid
         item_table = self.item_table
         item_id = self.get_item_id(uuid)
         if item_id is None:
@@ -285,7 +284,7 @@ class ItemIndex(object):
         note: does not remove revisions, these should be removed first
         """
         item_table = self.item_table
-        uuid = metas['uuid'] # item uuid (never changes)
+        uuid = metas[UUID] # item uuid (never changes)
         item_id = self.get_item_id(uuid)
         if item_id is not None:
             self.item_kvstore.store_kv(item_id, {})

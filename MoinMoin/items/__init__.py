@@ -49,6 +49,7 @@ COLS = 80
 ROWS_DATA = 20
 ROWS_META = 10
 
+UUID = "uuid"
 NAME = "name"
 NAME_OLD = "name_old"
 

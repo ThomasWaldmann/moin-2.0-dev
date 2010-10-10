@@ -32,7 +32,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
+from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            IS_SYSITEM, SYSITEM_VERSION, \
@@ -301,7 +301,7 @@ class FsPageItem(Item):
             except NoSuchRevisionError:
                 raise NoSuchItemError('deleted_mode wants killing/ignoring of page %r and its attachments' % itemname)
         uuid = backend.idx.content_uuid(itemname)
-        self.uuid = self._fs_meta['uuid'] = uuid
+        self.uuid = self._fs_meta[UUID] = uuid
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
@@ -466,7 +466,7 @@ class FsAttachmentItem(Item):
         self._fs_parent_acl = acl
         self._syspages = backend._syspages
         uuid = backend.idx.content_uuid(name)
-        self.uuid = self._fs_meta['uuid'] = uuid
+        self.uuid = self._fs_meta[UUID] = uuid
 
 class FsAttachmentRevision(StoredRevision):
     """ A moin 1.9 filesystem item revision (attachment) """
@@ -674,7 +674,7 @@ class FsUserItem(Item):
             uuid = backend.idx.user_uuid(name=meta['name'], old_id=old_id)
             itemname = unicode(uuid)
             Item.__init__(self, backend, itemname) # XXX init again, with itemname
-        self.uuid = meta['uuid'] = uuid
+        self.uuid = meta[UUID] = uuid
 
     def _parse_userprofile(self, old_id):
         meta_file = codecs.open(self._backend._get_item_path(old_id), "r", config.charset)
