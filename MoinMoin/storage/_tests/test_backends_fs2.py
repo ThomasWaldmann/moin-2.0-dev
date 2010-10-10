@@ -11,12 +11,13 @@ import py, os, tempfile, shutil
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.fs2 import FS2Backend
+from MoinMoin.storage.backends.router import RouterBackend
 
 class TestFS2Backend(BackendTest):
 
     def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')
-        return FS2Backend(self.tempdir)
+        return RouterBackend([('/', FS2Backend(self.tempdir))], index_uri='sqlite://')
 
     def kill_backend(self):
         try:
