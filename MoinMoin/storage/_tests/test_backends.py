@@ -717,12 +717,17 @@ class BackendTest(object):
         assert len(list(dst.history())) == 1
         assert dst.has_item(dollys_name)
         rev = dst.get_item(dollys_name).get_revision(0)
-        assert rev.read() == "maeh"
-        assert {'origin': 'reagenzglas'} == dict(rev.iteritems())
+        data = rev.read()
+        assert data == "maeh"
+        meta = dict(rev.iteritems())
+        assert 'origin' in meta
+        assert meta['origin'] == 'reagenzglas'
 
         assert dst.has_item(brothers_name)
         item = dst.get_item(brothers_name)
-        assert {'no revisions': True} == dict(item.iteritems())
+        meta = dict(item.iteritems())
+        assert 'no revisions' in meta
+        assert meta['no revisions'] is True
 
     def test_iteritems_item_names_after_rename(self):
         item = self.backend.create_item(u'first')
