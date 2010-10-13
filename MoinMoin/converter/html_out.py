@@ -42,6 +42,7 @@ class Attributes(object):
     visit_number_rows_spanned = Attribute('rowspan')
     visit_style = Attribute('style')
     visit_title = Attribute('title')
+    visit_id = Attribute('id')
 
     def __init__(self, element):
         self.element = element
