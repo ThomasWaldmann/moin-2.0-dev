@@ -144,13 +144,14 @@ class IndexingRevisionMixin(object):
         this is automatically called by item.commit() and can be used by a indexer script also.
         """
         name = self.item.name
+        uuid = name # XXX
         revno = self.revno
         if self.timestamp is None:
             self.timestamp = time.time()
         if NAME not in self:
             self[NAME] = name
         if UUID not in self:
-            self[UUID] = uuid = name # XXX
+            self[UUID] = uuid
         if MIMETYPE not in self:
             self[MIMETYPE] = 'application/octet-stream'
         if HASH_ALGORITHM not in self:
