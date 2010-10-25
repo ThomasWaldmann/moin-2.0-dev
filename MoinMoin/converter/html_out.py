@@ -374,8 +374,13 @@ class Converter(object):
     def visit_moinpage_quote(self, elem):
         return self.new_copy(html.quote, elem)
 
-    def visit_moinpage_separator(self, elem):
-        return self.new(html.hr)
+    def visit_moinpage_separator(self, elem, default_height=3, class_name='moin-hr%s'):
+        attrib = Attributes(elem)
+        height = attrib.get('separator-height')
+        if not height:
+            height = default_height
+        attribute = {'class': class_name % height}
+        return self.new_copy(html.hr, elem, attribute)        
 
     def visit_moinpage_span(self, elem):
         # TODO : Fix bug if a span has multiple attributes
@@ -526,7 +531,7 @@ class ConverterPage(Converter):
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
-                attrib_h = {html.class_: 'table-of-contents-heading'}
+                attrib_h = {html.class_: 'moin-table-of-contents-heading'}
                 elem_h = html.p(
                         attrib=attrib_h, children=[_('Contents')])
                 elem.append(elem_h)
@@ -624,7 +629,7 @@ class ConverterPage(Converter):
     def visit_moinpage_table_of_content(self, elem):
         level = int(elem.get(moin_page.outline_level, 6))
 
-        attrib = {html.class_: 'table-of-contents'}
+        attrib = {html.class_: 'moin-table-of-contents'}
         elem = self.new(html.div, attrib)
 
         self._special_stack[-1].add_toc(elem, level)
