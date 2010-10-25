@@ -51,10 +51,6 @@ ins { background-color: #FFF; text-decoration: underline; }
 .moin-big { font-size: 1.17em; }
 .moin-small { font-size: .83em; }
 .moin-integer { text-align: right; padding-right: 1em; }
-/* replaced by <ins> and <del> respectively
-.u { text-decoration: underline; }
-.strike { text-decoration: line-through; }
-*/
 
 /* headings - from: http: //www.w3.org/TR/CSS2/sample.html */
 h1 { font-size: 2em; margin: .67em 0; }
@@ -96,13 +92,13 @@ dd p { margin: 0.25em 0; }
 dd + dd p { margin-top: .67em; }
 
 /* horizontal rule ---- and custom rules ----- to ---------- */
-hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .5em 0; }
-.hr1 { height: 2px; }
-.hr2 { height: 3px; }
-.hr3 { height: 4px; }
-.hr4 { height: 5px; }
-.hr5 { height: 6px; }
-.hr6 { height: 7px; }
+hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .9em 0; }
+.moin-hr1 { height: 2px; }
+.moin-hr2 { height: 3px; }
+.moin-hr3 { height: 5px; }
+.moin-hr4 { height: 7px; }
+.moin-hr5 { height: 9px; }
+.moin-hr6 { height: 12px; }
 
 /* eye catchers */
 .warning,
@@ -123,13 +119,13 @@ th, td { padding: 0.25em 0.5em 0.25em 0.5em; border: 1pt solid #ADB9CC; vertical
 td p { margin: 0; padding: 0; }
 
 /* TableOfContents macro */
-div.table-of-contents { border: 1px solid #BBB; color: black; background-color: #EEE; 
-            font-size: 80%; text-align: left; margin: 0.5em 0 0.5em 1em; 
+.moin-table-of-contents { border: 1px solid #BBB; color: black; background-color: #EEE; 
+            float: right; font-size: 80%; text-align: left; margin: 0.5em 0 0.5em 1em; 
             padding: 0.5em 0.75em 0.5em 0.5em; max-width: 50%; display: inline-table; }
-div.table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
-div.table-of-contents ul { margin: 0; list-style: none; }
-div.table-of-contents li { margin: 0; padding: 0; }
-p.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
+.moin-table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
+.moin-table-of-contents ul { margin: 0; list-style: none; }
+.moin-table-of-contents li { margin: 0; padding: 0; }
+.moin-table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
             letter-spacing: 0.075em; }
 
 /* Navigation macro */
@@ -148,20 +144,7 @@ table.navigation { background: #FFF; float: right; margin: 2px; }
 .moin-rev-navigation-older,
 .moin-rev-navigation-newer { padding: 0 20px 0 20px; }
 
-/* wiki parser  */
-.comment { color: #555; background-color: #DDF; }
-.red { background-color: #FCC; }
-.green { background-color: #CFC; }
-.blue { background-color: #CCF; }
-.yellow { background-color: #FFF29F; }
-.orange { background-color: #FFD59B; }
-.solid { border: 2px solid #000; padding: 2px; }
-.dashed { border: 2px dashed #000; padding: 2px; }
-.dotted { border: 2px dotted #000; padding: 2px; }
-.left { text-align: left; }
-.center { text-align: center; }
-.right { text-align: right; }
-.justify { text-align: justify; }
+
 
 /* user settings pages -- also login, lost password, and register pages */
 .moin-form dd { margin-bottom: 1em; }
@@ -285,7 +268,22 @@ TABLE.tip { color: black; background-color: #F88; font-size: small; font-weight:
 TH.tip { background-color: #F44; font-weight: bold; text-align: center; }
 TD.tip { text-align: left; }
 
-/* admonitions */
+/* wiki parser  - no moin- prefix added here, these classes are used within pages: {{{#!wiki solid  */
+.comment { color: #555; background-color: #DDF; }
+.red { background-color: #FCC; }
+.green { background-color: #CFC; }
+.blue { background-color: #CCF; }
+.yellow { background-color: #FFF29F; }
+.orange { background-color: #FFD59B; }
+.solid { border: 2px solid #000; padding: 2px; }
+.dashed { border: 2px dashed #888; padding: 2px; }
+.dotted { border: 2px dotted #000; padding: 2px; }
+.left { text-align: left; }
+.center { text-align: center; }
+.right { text-align: right; }
+.justify { text-align: justify; }
+
+/* admonitions  - no moin- prefix added  here, these classes are used within pages: {{{#!wiki caution */
 #moin-content div.caution,
 #moin-content div.important,
 #moin-content div.note,

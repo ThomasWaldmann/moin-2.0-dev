@@ -378,7 +378,11 @@ class Converter(ConverterMacro):
 
     def block_separator_repl(self, _iter_content, stack, separator):
         stack.clear()
-        stack.top_append(moin_page.separator())
+        separator_height = min((len(separator) - 3), 6)
+        separator_height = max(separator_height, 1)
+        attrib = {moin_page.separator_height: separator_height}
+        elem = moin_page.separator(attrib=attrib)
+        stack.top_append(elem)
 
     block_table = r"""
         ^
