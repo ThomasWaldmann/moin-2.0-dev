@@ -144,8 +144,6 @@ table.navigation { background: #FFF; float: right; margin: 2px; }
 .moin-rev-navigation-older,
 .moin-rev-navigation-newer { padding: 0 20px 0 20px; }
 
-
-
 /* user settings pages -- also login, lost password, and register pages */
 .moin-form dd { margin-bottom: 1em; }
 .moin-form dd input { width: 20em; }
@@ -296,13 +294,11 @@ TD.tip { text-align: left; }
 #moin-content div.note p,
 #moin-content div.tip p,
 #moin-content div.warning p { margin-top: 8px; /*to align text with big graphic*/ }
-#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
-#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
-#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
 #moin-content div.caution { background-image: url("../img/admonitions/caution.png"); }
+#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
+#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
+#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
 #moin-content div.warning { background-image: url("../img/admonitions/warning.png"); }
-/* remove borders of fieldset in copy/rename/delete/revert/modify actions */
-#moin-content form fieldset { border: none; padding: 0; }
 
 /* smileys -- <span class="moin-text-icon moin-smile">:-)</span> */
 .moin-text-icon { font-size: 0; color: transparent; }
