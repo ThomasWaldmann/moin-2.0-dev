@@ -328,23 +328,23 @@ TD.tip { text-align: left; }
 .moin-tired:before { content: url('../img/smileys/tired.png'); }
 .moin-tongue:before { content: url('../img/smileys/tongue.png'); }
 
-/* icons for external links */
-a.www:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.http:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.https:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.file:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
-a.ftp:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
-a.nntp:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
-a.news:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
-a.telnet:before,
-a.ssh:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
-a.irc:before,
-a.ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
-a.mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
-a.attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
+/* icons for external links -- www, mailto, attachment, interwiki, and action are not working yet */
+a.moin-www:before,
+a.moin-http:before,
+a.moin-https:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
+a.moin-file:before,
+a.moin-ftp:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
+a.moin-nntp:before,
+a.moin-news:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
+a.moin-telnet:before,
+a.moin-ssh:before,
+a.moin-irc:before,
+a.moin-ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
+a.moin-mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
+a.moin-attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
 a.moin-badinterwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
-a.interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
-a.action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
+a.moin-interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
+a.moin-action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
 
 /* Flash messages used by Flask */
 .moin-flash-hint { font-style: italic; }
