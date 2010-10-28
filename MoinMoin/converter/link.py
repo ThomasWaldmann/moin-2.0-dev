@@ -43,6 +43,8 @@ class ConverterBase(object):
                 self.handle_wikilocal(elem, href, page)
             elif href.scheme == 'wiki':
                 self.handle_wiki(elem, href)
+            else:
+                elem.set(html.class_, 'moin-' + href.scheme)
 
         for child in elem.iter_elements():
             self(child, page)
