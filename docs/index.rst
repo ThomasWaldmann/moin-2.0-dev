@@ -1,0 +1,68 @@
+===============================
+MoinMoin Documentation Overview
+===============================
+
+.. warning::
+
+   This documentation **only** applies to **MoinMoin version 2** (aka moin2,
+   moin 2.0, mm2, MoinMoin2, etc.), except where explicitely noted otherwise.
+   moin2 is very different from moin 1.x, so neither old docs will apply to
+   new moin, nor vice versa.
+
+Introducing MoinMoin
+====================
+
+.. toctree::
+   :maxdepth: 2
+
+   intro/general
+   intro/features
+
+Using MoinMoin
+==============
+
+.. toctree::
+   :maxdepth: 2
+
+   user/markups
+
+Administrating MoinMoin
+=======================
+
+.. toctree::
+   :maxdepth: 2
+
+   admin/install
+   admin/configure
+   admin/changes
+   admin/upgrade
+   admin/backup
+   man/moin
+
+Getting Support for and Contributing to MoinMoin
+================================================
+
+.. toctree::
+   :maxdepth: 2
+
+   devel/support
+   devel/translate
+
+Developping of MoinMoin
+=======================
+
+.. toctree::
+   :maxdepth: 2
+
+   devel/development
+   devel/reference
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+* :ref:`glossary`
+
