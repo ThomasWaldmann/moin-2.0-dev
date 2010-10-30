@@ -5,7 +5,7 @@
 Changes in MoinMoin
 ===================
 
-.. include:: ../../docs/CHANGES
+.. include:: ../changes/CHANGES
 
 .. todo::
 
