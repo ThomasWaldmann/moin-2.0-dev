@@ -132,9 +132,10 @@ td p { margin: 0; padding: 0; }
 table.navigation { background: #FFF; float: right; margin: 2px; }
 
 /* footnotes */
-.footnotes div { width: 5em; border-top: 1pt solid gray; }
-.footnotes ol { padding: 0 2em; margin: 0 0 1em; }
-.footnotes li { }
+.moin-footnote a,
+.moin-footnotes sup a {font-size: .87em; }
+.moin-footnotes {border-top: 1pt solid gray; margin: 0 1em; }
+.moin-footnotes p {margin: 0 0 .33em 1em; font-size: .92em; }
 
 /* revision navigation */
 #moin-rev-navigation { list-style: none; text-align: center; }
