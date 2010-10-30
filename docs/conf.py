@@ -25,7 +25,8 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.viewcode',
+              'sphinx.ext.graphviz', 'sphinx.ext.inheritance_diagram', ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -229,4 +230,14 @@ texinfo_documents = [
 texinfo_appendices = []
 
 todo_include_todos = True
+
+# Inheritance diagrams, use it like:
+# .. inheritance-diagram::
+#    MoinMoin.items.MoinWiki
+    
+inheritance_graph_attrs = dict(rankdir="LR", size='"12.0, 16.0"',
+                               fontsize=20, ratio='compress')
+
+inheritance_node_attrs = dict(shape='box', fontsize=20, height=0.75,
+                              color='yellow', style='filled')
 

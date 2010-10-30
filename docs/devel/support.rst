@@ -1,7 +1,3 @@
-==========================
-Getting and giving Support
-==========================
-
 MoinMoin Supports You
 =====================
 
