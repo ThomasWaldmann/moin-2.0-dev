@@ -527,8 +527,11 @@ class ConverterPage(Converter):
         special_root.root = ret
 
         for special in self._special:
-            for elem in special.footnotes():
-                special.root.append(elem)
+            if special._footnotes:
+                footnotes_div = html.div({html.class_: "moin-footnotes"})
+                special.root.append(footnotes_div)
+                for elem in special.footnotes():
+                    footnotes_div.append(elem)
 
             for elem, headings in special.tocs():
                 attrib_h = {html.class_: 'moin-table-of-contents-heading'}
@@ -613,7 +616,7 @@ class ConverterPage(Converter):
         id = self._id.gen_id('note')
 
         elem_ref = ET.XML("""
-<html:sup xmlns:html="%s" html:id="note-%d-ref"><html:a html:href="#note-%d">%d</html:a></html:sup>
+<html:sup xmlns:html="%s" html:id="note-%d-ref" html:class="moin-footnote"><html:a html:href="#note-%d">%d</html:a></html:sup>
 """ % (html, id, id, id))
 
         elem_note = ET.XML("""
@@ -621,7 +624,6 @@ class ConverterPage(Converter):
 """ % (html, id, id, id))
 
         elem_note.extend(body)
-
         self._special_stack[-1].add_footnote(elem_note)
 
         return elem_ref
