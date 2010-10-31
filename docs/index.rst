@@ -1,7 +1,3 @@
-===============================
-MoinMoin Documentation Overview
-===============================
-
 .. warning::
 
    This documentation **only** applies to **MoinMoin version 2** (aka moin2,
