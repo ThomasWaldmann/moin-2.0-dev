@@ -373,14 +373,9 @@ class Converter(object):
 
     def visit_moinpage_quote(self, elem):
         return self.new_copy(html.quote, elem)
-
-    def visit_moinpage_separator(self, elem, default_height=3, class_name='moin-hr%s'):
-        attrib = Attributes(elem)
-        height = attrib.get('separator-height')
-        if not height:
-            height = default_height
-        attribute = {'class': class_name % height}
-        return self.new_copy(html.hr, elem, attribute)        
+ 
+    def visit_moinpage_separator(self, elem):
+        return self.new_copy(html.hr, elem)    
 
     def visit_moinpage_span(self, elem):
         # TODO : Fix bug if a span has multiple attributes

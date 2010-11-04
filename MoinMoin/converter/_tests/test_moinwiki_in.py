@@ -44,7 +44,7 @@ class TestConverter(object):
             (u'{{http://moinmo.in/|MoinMoin}}',
                 '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>', None, 'unknown'),
             (u'----',
-                '<page><body><separator /></body></page>'),
+                '<page><body><separator class="moin-hr1" /></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
