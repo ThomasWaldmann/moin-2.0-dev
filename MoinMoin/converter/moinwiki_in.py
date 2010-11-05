@@ -936,15 +936,15 @@ class Converter(ConverterMacro):
     """
 
     def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
-        
-        def add_attr_to_style(attrib, attr, decode=1):
-            if decode:
-                attr = attr.strip().decode('unicode-escape')
-                if attr.endswith(';'):
-                    attr = attr + ' '
-                else:
-                    attr = attr + '; '
-            attrib[moin_page('style')] =  attrib.get(moin_page('style'), "") + attr
+
+        def add_attr_to_style(attrib, attr):
+            attr = attr.strip().decode('unicode-escape')
+            if not attr.endswith(';'):
+                attr = attr + ';'
+            if attrib.get(moin_page('style'), ""):
+                attrib[moin_page('style')] =  attrib.get(moin_page('style'), "") + " " + attr
+            else:
+                attrib[moin_page('style')] =  attr
         
         element = moin_page.table_cell()
         stack.push(element)
@@ -954,7 +954,7 @@ class Converter(ConverterMacro):
 
         if cell_args:
             cell_args = _TableArguments()(cell_args)
-            no_errors = 1
+            no_errors = True
             
             # any positional parameters will be errors;  retrieved as (key=None, value="some-positional-param"); 
             for key, value in cell_args.items():
@@ -1001,11 +1001,11 @@ class Converter(ConverterMacro):
                     cell_markup = cell.split('>')[0]
                     cell_markup = cell_markup.split('<')[1]
                     msg1 = _('Error:')
-                    msg2 = _('is not permitted inside')
+                    msg2 = _('is invalid within')
                     cell_text = '[ %s "%s" %s <%s>&nbsp;]<<BR>>%s' % (msg1, error, msg2, cell_markup, cell_text)
                     if no_errors:
-                        add_attr_to_style(element.attrib, 'background-color: pink; color: black; ', decode=0)
-                    no_errors = 0
+                        add_attr_to_style(element.attrib, 'background-color: pink; color: black;')
+                    no_errors = False
 
         self.parse_inline(cell_text, stack, self.inline_re)
 
