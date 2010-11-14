@@ -215,7 +215,9 @@ class TestConverter(object):
             (u'||<99%>Cell||\n',
                 '<page><body><table><table-body><table-row><table-cell style="width: 99%;">Cell</table-cell></table-row></table-body></table></body></page>'),
             (u'||<X>Cell||\n',
-                '<page><body><table><table-body><table-row><table-cell style="background-color: pink; color: black;">[ Error: "X" is invalid within &lt;X&gt; ]><line-break />Cell</table-cell></table-row></table-body></table></body></page>'),
+                # u'\xa0' below is equal to &nbsp;
+                '<page><body><table><table-body><table-row><table-cell style="background-color: pink; color: black;">[ Error: "X" is invalid within &lt;X&gt;' + 
+                u'\xa0' + ']<line-break />Cell</table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
