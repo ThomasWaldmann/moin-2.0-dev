@@ -5,6 +5,7 @@ import sys, os
 
 from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
+from MoinMoin.util.interwiki import InterWikiMap
 
 
 class Config(DefaultConfig):
@@ -43,6 +44,10 @@ class Config(DefaultConfig):
                                              default=u'All:read,write,create,destroy,admin',
                                              after=u'', ),
                             )
+
+    # This enables interwiki mapping, assuming names/urls are stored in
+    # wiki/data/intermap.txt
+    interwiki_map = InterWikiMap.from_file(os.path.join(data_dir, 'intermap.txt')).iwmap
 
     sitename = u'My MoinMoin'
     logo = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
