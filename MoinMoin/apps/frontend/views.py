@@ -448,7 +448,7 @@ def orphaned_items():
         linked_items.update(current_rev.get(ITEMLINKS, []))
     orphans = all_items - linked_items
     return render_template('orphans.html',
-                           item_name='Orphaned Items',
+                           item_name=u'Orphaned Items',
                            item_names=orphans)
 
 @frontend.route('/+quicklink/<itemname:item_name>')
