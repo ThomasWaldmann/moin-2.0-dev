@@ -435,6 +435,15 @@ def global_history():
                            history=history,
                           )
 
+@frontend.route('/+orphans')
+def orphaned_items():
+    """ Return a list of items not being linked by another items, that makes
+        them sometimes not discoverable. """
+    orphans = [item.name for item in flaskg.storage.iteritems()
+               if not item.get(ITEMLINKS, [])]
+    return render_template('item_link_list.html',
+                           item_name='Orphaned Items',
+                           item_names=orphans)
 
 @frontend.route('/+quicklink/<itemname:item_name>')
 def quicklink_item(item_name):
