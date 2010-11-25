@@ -440,7 +440,7 @@ def global_history():
 def orphaned_items():
     """ Return a list of items not being linked by another items, that makes
         them sometimes not discoverable. """
-    # creae a list containing all items linked
+    # create a list containing all items linked
     linked_pages = set()
     for item in flaskg.storage.iteritems():
         for link in item.get_revision(-1).get(ITEMLINKS, []):
