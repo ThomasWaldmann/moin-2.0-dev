@@ -13,6 +13,7 @@
 import re
 import difflib
 import time
+from itertools import chain
 
 from flask import request, url_for, flash, Response, redirect, session, abort
 from flask import flaskg
@@ -439,8 +440,10 @@ def global_history():
 def orphaned_items():
     """ Return a list of items not being linked by another items, that makes
         them sometimes not discoverable. """
+    linked = set(chain.from_iterable(item.get_revision(-1).get(ITEMLINKS, [])
+                                     for item in flaskg.storage.iteritems()))
     orphans = [item.name for item in flaskg.storage.iteritems()
-               if not item.get(ITEMLINKS, [])]
+               if item.name not in linked]
     return render_template('item_link_list.html',
                            item_name='Orphaned Items',
                            item_names=orphans)
