@@ -447,7 +447,7 @@ def orphaned_items():
         current_rev = item.get_revision(-1)
         linked_items.update(current_rev.get(ITEMLINKS, []))
     orphans = all_items - linked_items
-    return render_template('orphaned.html',
+    return render_template('orphans.html',
                            item_name='Orphaned Items',
                            item_names=orphans)
 
