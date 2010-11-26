@@ -37,14 +37,15 @@ from werkzeug import escape
 class TextCha(object):
     """ Text CAPTCHA support """
 
-    def __init__(self, question=None):
+    def __init__(self, form):
         """ Initialize the TextCha.
 
-            @param question: see _init_qa()
+            @param form: flatland form to use; must subclass TextChaizedForm
         """
         self.user_info = flaskg.user.valid and flaskg.user.name or request.remote_addr
         self.textchas = self._get_textchas()
-        self._init_qa(question)
+        self._init_qa(form['textcha_question'].value)
+        self.form = form
 
     def _get_textchas(self):
         """ get textchas from the wiki config for the user's language (or default_language or en) """
@@ -53,7 +54,9 @@ class TextCha(object):
         user = flaskg.user
         disabled_group = cfg.textchas_disabled_group
         textchas = cfg.textchas
-        use_textchas = disabled_group and user.name and user.name in groups.get(disabled_group, [])
+
+        use_textchas = not (disabled_group and user.name and user.name in groups.get(disabled_group, []))
+
         if textchas and use_textchas:
             locales = [user.locale, cfg.locale_default, 'en', ]
             for locale in locales:
@@ -102,65 +105,14 @@ class TextCha(object):
         """
         return not not self.textchas # we don't want to return the dict
 
-    def check_answer(self, given_answer):
-        """ check if the given answer to the question is correct """
-        if self.is_enabled():
-            if self.answer_re is not None:
-                success = self.answer_re.match(given_answer.strip()) is not None
-            else:
-                # someone trying to cheat!?
-                success = False
-            success_status = success and u"success" or u"failure"
-            logging.info(u"TextCha: %s (u='%s', a='%s', re='%s', q='%s')" % (
-                             success_status,
-                             self.user_info,
-                             given_answer,
-                             self.answer_regex,
-                             self.question,
-                             ))
-            return success
-        else:
-            return True
+    def amend_form(self):
+        """ Amend the form by doing the following:
 
-    def _make_form_values(self, question, given_answer):
-        question_form = escape(question, True)
-        given_answer_form = escape(given_answer, True)
-        return question_form, given_answer_form
-
-    def _extract_form_values(self, form=None):
-        if form is None:
-            form = request.form
-        question = form.get('textcha-question')
-        given_answer = form.get('textcha-answer', u'')
-        return question, given_answer
-
-    def render(self, form=None):
-        """ Checks if textchas are enabled and returns HTML for one,
-            or an empty string if they are not enabled.
-
-            @return: unicode result html
+            * set the question if textcha is enabled, or
+            * make the fields optional if it isn't.
         """
         if self.is_enabled():
-            question, given_answer = self._extract_form_values(form)
-            if question is None:
-                question = self.question
-            question_form, given_answer_form = self._make_form_values(question, given_answer)
-            result = u"""
-<div id="textcha">
-<span id="textcha-question">%s</span>
-<input type="hidden" name="textcha-question" value="%s">
-<input id="textcha-answer" type="text" name="textcha-answer" value="%s" size="20" maxlength="80">
-</div>
-""" % (escape(question), question_form, given_answer_form)
+            self.form['textcha_question'].set(self.question)
         else:
-            result = u''
-        return result
-
-    def check_answer_from_form(self, form=None):
-        if self.is_enabled():
-            question, given_answer = self._extract_form_values(form)
-            self._init_qa(question)
-            return self.check_answer(given_answer)
-        else:
-            return True
-
+            self.form['textcha_question'].optional = True
+            self.form['textcha'].optional = True
