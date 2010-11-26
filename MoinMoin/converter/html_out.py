@@ -558,8 +558,8 @@ class ConverterPage(Converter):
                         stack_push(html.li())
 
                     attrib = {html.href: '#' + id}
-                    #Go through the last item in the text b/c of the permalink icon
-                    text = ''.join(elem.itertext())[:1]
+                    # Ignore the last character in the text so permalink icon doesn't show in TOC
+                    text = ''.join(elem.itertext())[:-1]
                     elem_a = html.a(attrib, children=[text])
                     stack_top_append(elem_a)
 
