@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MoinMoin - HTML output converter
 
@@ -14,7 +15,7 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import _, N_
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink, xml
+from MoinMoin.util.tree import html, moin_page, xlink, xml, Name
 
 
 class ElementException(RuntimeError):
@@ -472,6 +473,10 @@ class SpecialPage(object):
         self._footnotes.append(elem)
 
     def add_heading(self, elem, level, id=None):
+        elem.append(html.a(attrib={
+            html.href:"#%s" % id,
+            html.class_:"permalink"
+        }, children=(u"¶",)))
         self._headings.append((elem, level, id))
 
     def add_toc(self, elem, maxlevel):
@@ -553,7 +558,8 @@ class ConverterPage(Converter):
                         stack_push(html.li())
 
                     attrib = {html.href: '#' + id}
-                    text = ''.join(elem.itertext())
+                    #Go through the last item in the text b/c of the permalink icon
+                    text = ''.join(elem.itertext())[:1]
                     elem_a = html.a(attrib, children=[text])
                     stack_top_append(elem_a)
 
