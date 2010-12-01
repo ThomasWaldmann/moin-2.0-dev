@@ -943,7 +943,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # no PIL, we can't do anything, we just call the base class method
             return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
         url = url_for('frontend.diffraw', item_name=self.name, rev1=oldrev.revno, rev2=newrev.revno)
-        return '<img src="%s" />' % escape(url)
+        return '<img src="%s" />' % escape(url) #HHH
 
     def _render_data_diff_raw(self, oldrev, newrev):
         hash_name = app.cfg.hash_algorithm
@@ -1247,10 +1247,9 @@ class TWikiDraw(TarMixin, Image):
             image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
             title = _('Clickable drawing: %(filename)s', filename=item_name)
 
-            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid) #HHH
         else:
-            return '<img src="%s" alt="%s" />' % (png_url, title)
-
+            return '<img src="%s" alt="%s" />' % (png_url, title) #HHH
 
 class AnyWikiDraw(TarMixin, Image):
     """
@@ -1320,10 +1319,9 @@ class AnyWikiDraw(TarMixin, Image):
             # unxml, because 4.01 concrete will not validate />
             image_map = image_map.replace(u'/>', u'>')
             title = _('Clickable drawing: %(filename)s', filename=self.name)
-            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid) #HHH
         else:
-            return '<img src="%s" alt="%s" />' % (png_url, title)
-
+            return '<img src="%s" alt="%s" />' % (png_url, title) #HHH
 
 class SvgDraw(TarMixin, Image):
     """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
@@ -1363,5 +1361,4 @@ class SvgDraw(TarMixin, Image):
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
-        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
-
+        return '<img src="%s" alt="%s" />' % (png_url, drawing_url) #HHH

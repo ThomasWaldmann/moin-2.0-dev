@@ -3,6 +3,7 @@
 {% block layout %}
 
 {{ theme_supp.emit_custom_html(cfg.html_before_header) }}
+{#  HHH  #}
 
 <div id="moin-header">
 {% block header %}
@@ -20,6 +21,7 @@
     {% if cfg.logo %}
     <div id="moin-logo">
         <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
+    {#  HHH  #}
     </div>
     {% endif %}
 
@@ -109,6 +111,7 @@
 </div>
 
 {{ theme_supp.emit_custom_html(cfg.html_after_header) }}
+{#  HHH  #}
 
 <div id="moin-page" lang="{{ theme_supp.content_lang }}" dir="{{ theme_supp.content_dir }}">
     {% block item -%}
@@ -122,6 +125,7 @@
 </div>
 
 {{ theme_supp.emit_custom_html(cfg.html_before_footer) }}
+{#  HHH  #}
 
 <div id="moin-footer">
 {% block footer %}
@@ -135,6 +139,7 @@
 </div>
 
 {{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
+{#  HHH  #}
 {%- set null = clock.stop('render_template') -%}
 {%- set null = clock.stop('total') -%}
 {%- set timing_information = clock.dump() -%}

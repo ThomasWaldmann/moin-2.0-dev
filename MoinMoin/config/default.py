@@ -456,7 +456,7 @@ options_no_group_name = {
     ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
-    ('credits',
+    ('credits', #HHH
      [
        '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
        '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',

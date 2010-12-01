@@ -1017,10 +1017,12 @@ msgstr ""
 #, python-format
 msgid "<br> System pages upgrade failed due to the following error: %s."
 msgstr ""
+#HHH
 
 #: MoinMoin/action/syspages_upgrade.py:39
 msgid "<br> System pages have been upgraded successfully!"
 msgstr ""
+#HHH
 
 #: MoinMoin/action/thread_monitor.py:20 MoinMoin/action/thread_monitor.py:43
 msgid "You are not allowed to use this action."
@@ -1065,11 +1067,13 @@ msgid ""
 "If you do not have an account, <a href=\"%(userprefslink)s\">you can "
 "create one now</a>. "
 msgstr ""
+#HHH
 
 #: MoinMoin/auth/__init__.py:265
 #, python-format
 msgid "<a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
 msgstr ""
+#HHH
 
 #: MoinMoin/auth/botbouncer.py:45
 msgid "Could not contact botbouncer.com."

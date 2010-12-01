@@ -246,6 +246,7 @@ class MoinAuth(BaseAuth):
                 register_url=url_for('frontend.register'))
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>',
                  recover_url=url_for('frontend.lostpass'))
+        #HHH
         return msg
 
 
