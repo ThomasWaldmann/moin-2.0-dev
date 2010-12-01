@@ -55,7 +55,7 @@ def atom(item_name):
                     # simple text diff for changes
                     previous_rev = item.get_revision(previous_revno)
                     content = hl_item._render_data_diff_text(previous_rev, this_rev)
-                    content = '<div><pre>%s</pre></div>' % content
+                    content = '<div><pre>%s</pre></div>' % content #HHH
                     content_type = 'xhtml'
                 else:
                     # full html rendering for new items

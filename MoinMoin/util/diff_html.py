@@ -72,12 +72,12 @@ def diff(old, new):
         if charobj.ratio() < 0.5:
             # Insufficient similarity.
             if leftpane:
-                leftresult = """<span>%s</span>""" % indent(escape(leftpane))
+                leftresult = """<span>%s</span>""" % indent(escape(leftpane)) #HHH
             else:
                 leftresult = ''
 
             if rightpane:
-                rightresult = """<span>%s</span>""" % indent(escape(rightpane))
+                rightresult = """<span>%s</span>""" % indent(escape(rightpane)) #HHH
             else:
                 rightresult = ''
         else:
@@ -88,18 +88,17 @@ def diff(old, new):
             rightresult = ''
             for thismatch in charmatch:
                 if thismatch[0] - charlast[0] != 0:
-                    leftresult += """<span>%s</span>""" % indent(
+                    leftresult += """<span>%s</span>""" % indent( #HHH
                         escape(leftpane[charlast[0]:thismatch[0]]))
                 if thismatch[1] - charlast[1] != 0:
-                    rightresult += """<span>%s</span>""" % indent(
+                    rightresult += """<span>%s</span>""" % indent( #HHH
                         escape(rightpane[charlast[1]:thismatch[1]]))
                 leftresult += escape(leftpane[thismatch[0]:thismatch[0] + thismatch[2]])
                 rightresult += escape(rightpane[thismatch[1]:thismatch[1] + thismatch[2]])
                 charlast = (thismatch[0] + thismatch[2], thismatch[1] + thismatch[2])
 
-        leftpane = '<br>'.join([indent(x) for x in leftresult.splitlines()])
-        rightpane = '<br>'.join([indent(x) for x in rightresult.splitlines()])
-
+        leftpane = '<br>'.join([indent(x) for x in leftresult.splitlines()]) #HHH
+        rightpane = '<br>'.join([indent(x) for x in rightresult.splitlines()]) #HHH
         result.append((llineno, leftpane, rlineno, rightpane))
 
         lastmatch = (match[0] + match[2], match[1] + match[2])
