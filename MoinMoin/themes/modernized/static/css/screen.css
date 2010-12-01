@@ -21,7 +21,9 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 */
 
 /* moin-header */
-#moin-header { margin: 1px; padding: 1px; background: #E6EAF0; line-height: 1.12em; }
+#moin-header { margin: 1px; padding: 1px;
+               background: url(../img/white_clouds.png); /* background: #E6EAF0; */
+               line-height: 1.12em; }
 
 /* moin-header searchform */
 #moin-searchform { margin: 8px .5em; padding: 0; font-size: 0.82em; float: right;  text-align: right; }
