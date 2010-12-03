@@ -42,6 +42,8 @@ class MoinFlask(Flask):
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+if sys.hexversion < 0x2060000:
+    logging.warning("MoinMoin requires Python 2.6 or greater.")
 
 from MoinMoin.themes import setup_jinja_env, themed_error
 
