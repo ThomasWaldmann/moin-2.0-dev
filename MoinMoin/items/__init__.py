@@ -20,7 +20,7 @@ import tarfile
 import zipfile
 import tempfile
 from StringIO import StringIO
-import json
+
 import hashlib
 
 try:
@@ -32,6 +32,11 @@ except ImportError:
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from flask import current_app as app
 from flask import flaskg
