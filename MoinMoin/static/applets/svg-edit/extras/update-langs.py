@@ -10,7 +10,10 @@ Requires Python 2.6
 Copyright (c) 2010 Jeff Schiller
 """
 import os
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 from types import DictType
 
 def changeTooltipTarget(j):
