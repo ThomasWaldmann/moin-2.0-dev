@@ -72,6 +72,7 @@ Disallow: /+similar_names/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
 Disallow: /+backlinks/
+Disallow: /+orphans/
 Disallow: /+register
 Disallow: /+recoverpass
 Disallow: /+usersettings
