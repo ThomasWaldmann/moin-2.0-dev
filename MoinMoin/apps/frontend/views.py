@@ -72,6 +72,7 @@ Disallow: /+similar_names/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
 Disallow: /+backlinks/
+Disallow: /+wanteds/
 Disallow: /+orphans/
 Disallow: /+register
 Disallow: /+recoverpass
@@ -437,6 +438,30 @@ def global_history():
                            item_name=item_name, # XXX no item
                            history=history,
                           )
+
+@frontend.route('/+wanteds')
+def wanted_items():
+    """ Returns the list of non-existing items, which are wanted items and the
+        items they are linked to helps show what items still need to be
+        written and shows whether there are any broken links. """
+    all_items = set()
+    wanteds = {}
+    for item in flaskg.storage.iteritems():
+        current_item = item.name
+        all_items.add(current_item)
+        current_rev = item.get_revision(-1)
+        outgoing_links = current_rev.get(ITEMLINKS, [])
+        for linked_item in outgoing_links:
+            if linked_item not in all_items:
+                if linked_item not in wanteds:
+                    wanteds[linked_item] = []
+                wanteds[linked_item].append(current_item)
+        if current_item in wanteds:
+            # if a previously wanted item has been found in the items storage, remove it
+            del wanteds[current_item]
+    return render_template('wanteds.html',
+                           item_name=u'Wanted Items',
+                           wanteds=wanteds)
 
 @frontend.route('/+orphans')
 def orphaned_items():
