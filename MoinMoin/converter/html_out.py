@@ -474,9 +474,9 @@ class SpecialPage(object):
 
     def add_heading(self, elem, level, id=None):
         elem.append(html.a(attrib={
-            html.href:"#%s" % id,
-            html.class_:"permalink"
-        }, children=(u"¶",)))
+            html.href: "#%s" % id,
+            html.class_: "permalink",
+        }, children=(u"¶", )))
         self._headings.append((elem, level, id))
 
     def add_toc(self, elem, maxlevel):
