@@ -870,3 +870,24 @@ function moinFirefoxWordBreak() {
     }
 }
 jQuery(moinFirefoxWordBreak);
+
+/* For the overlays on transcluded objects */
+function removeURLPrefixes(url) {
+    return url.replace("+get/", "").replace("+modify/", "")
+}
+function attachHoverToObjects() {
+    $(".page-object").mouseenter(function(e) {
+        elements = $(".object-overlay", this)
+        elements.each(function(i) {
+            if (location.href == removeURLPrefixes(this.firstChild.href)) {
+                var elem = $(this)
+                setTimeout(function() {
+                    elem.hide()
+                }, 10)
+            }
+        })
+        
+        $(elements.slice(1)).hide()
+    })
+}
+$(document).ready(attachHoverToObjects)
