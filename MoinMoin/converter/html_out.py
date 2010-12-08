@@ -18,6 +18,42 @@ from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink, xml, Name
 
 
+def remove_overlay_prefixes(url):
+    """
+    Returns url without the prefixes, like +get or +modify
+    
+    TODO: Find a way to limit the removal to internal links only
+    This could remove +get or +modify for external links,
+        when they shouldn't really be removed.
+    """
+    return unicode(url).replace("+get/", "").replace("+modify/", "")
+
+
+def wrap_object_with_overlay(elem, href):
+    """
+    Given both an element and either an href or text, wraps an object with the appropriate div,
+    and attaches the overlay element.
+    """
+    txt = u"→"
+
+    href = remove_overlay_prefixes(href)
+
+    child = html.a(attrib={
+        html.href: href
+    }, children=(txt, ))
+
+    overlay = html.div(attrib={
+        html.class_: "object-overlay"
+    }, children=(child, ))
+
+    owrapper = html.div(attrib={
+        html.class_: "object-overlay-wrapper"
+    }, children=(overlay, ))
+
+    return html.div(attrib={
+        html.class_: "page-object"
+    }, children=(elem, owrapper))
+
 class ElementException(RuntimeError):
     pass
 
@@ -296,7 +332,23 @@ class Converter(object):
                                 break
 
         return ret
-
+    def eval_object_type(self, mimetype, href):
+        """
+        Returns the type of an object.
+        Return value is an str, one of the following:
+            image, video, audio, object
+        """
+        if Type('image/').issupertype(mimetype) and not Type('image/svg+xml').issupertype(mimetype):
+            # Firefox fails completely to show svg in img tags (displays: nothing).
+            # Firefox displays them with on object tag (but sometimes displays scrollbars without need).
+            return "img"
+        elif Type('video/').issupertype(mimetype):
+            return "video"
+        elif Type('audio/').issupertype(mimetype):
+            return "audio"
+        else:
+            # Nothing else worked...try using <object>
+            return "object"
     def visit_moinpage_object(self, elem):
         href = elem.get(xlink.href, None)
         if self.base_url:
@@ -308,30 +360,34 @@ class Converter(object):
                 h = href.path[-1]
         attrib = {}
         mimetype = Type(_type=elem.get(moin_page.type_, 'application/x-nonexistent'))
-        if Type('image/').issupertype(mimetype) and not Type('image/svg+xml').issupertype(mimetype):
-            # Firefox fails completely to show svg in img tags (displays: nothing).
-            # Firefox display them with on object tag (but sometimes displays scrollbars without need).
-            if href is not None:
-                attrib[html.src] = href
+        # Get the object type
+        obj_type = self.eval_object_type(mimetype, href)
+
+        # The attribute source attribute for img,video, and audio is the same (src)
+        # <object>'s attribute is 'data'
+        attr = html.src if obj_type != "object" else html.data
+
+        # The return element
+        new_elem = None
+
+        if href is not None:
+            # Set the attribute of the returned element appropriately
+            attrib[attr] = href
+
+        if obj_type == "img":
+            # Images have alt text
             alt = ''.join(str(e) for e in elem) # XXX handle non-text e
             if alt:
                 attrib[html.alt] = alt
-            return self.new(html.img, attrib)
-        elif Type('video/').issupertype(mimetype):
-            if href is not None:
-                attrib[html.src] = href
-            attrib[html.controls] = 'controls'
-            return self.new_copy(html.video, elem, attrib)
-        elif Type('audio/').issupertype(mimetype):
-            if href is not None:
-                attrib[html.src] = href
-            attrib[html.controls] = 'controls'
-            return self.new_copy(html.audio, elem, attrib)
+            new_elem = self.new(html.img, attrib)
+
         else:
-            # we feel lucky and try object element:
-            if href is not None:
-                attrib[html.data] = href
-            return self.new_copy(html.object, elem, attrib)
+            if obj_type != "object":
+                # Non-objects have the "controls" attribute
+                attrib[html.controls] = 'controls'
+            new_elem = self.new_copy(getattr(html, obj_type), elem, attrib)
+
+        return wrap_object_with_overlay(new_elem, href=href)
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(html.p, elem)
