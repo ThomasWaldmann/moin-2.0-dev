@@ -144,6 +144,8 @@ class ConfigFunctionality(object):
             raise error.ConfigurationError("No secret configured! You need to set secrets = 'somelongsecretstring' in your wiki config.")
 
         secret_key_names = ['wikiutil/tickets', ]
+        if self.textchas:
+            secret_key_names.append('security/textcha')
 
         secret_min_length = 10
         if isinstance(self.secrets, str):
@@ -401,6 +403,8 @@ options_no_group_name = {
      "Spam protection setup using site-specific questions/answers, see HelpOnSpam."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked !TextCha questions. [Unicode]"),
+    ('textchas_expiry_time', 600,
+     "Time [s] for a !TextCha to expire."),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
