@@ -12,7 +12,6 @@
 
     TODO:
     * roundtrip the question in some other way:
-     * use safe encoding / encryption for the q
      * make sure a q/a pair in the POST is for the q in the GET before
     * make some nice CSS
     * make similar changes to GUI editor
@@ -33,6 +32,18 @@ from flask import flaskg
 
 from werkzeug import escape
 
+import hashlib
+import hmac
+
+from time import time
+
+from flatland import Form, String
+from flatland.validation import Validator
+
+from MoinMoin import N_
+
+SHA1_LEN = 40 # length of hexdigest
+TIMESTAMP_LEN = 10 # length of timestamp
 
 class TextCha(object):
     """ Text CAPTCHA support """
@@ -44,7 +55,10 @@ class TextCha(object):
         """
         self.user_info = flaskg.user.valid and flaskg.user.name or request.remote_addr
         self.textchas = self._get_textchas()
-        self._init_qa(form['textcha_question'].value)
+        if self.textchas:
+            self.secret = app.cfg.secrets["security/textcha"]
+            self.expiry_time = app.cfg.textchas_expiry_time
+        self.init_qa(form['textcha_question'].value)
         self.form = form
 
     def _get_textchas(self):
@@ -65,7 +79,10 @@ class TextCha(object):
                     logging.debug(u"TextCha: using locale = '%s'" % locale)
                     return textchas[locale]
 
-    def _init_qa(self, question=None):
+    def _compute_signature(self, question, timestamp):
+        return hmac.new(self.secret, "%s%d" % (question, timestamp), digestmod=hashlib.sha1).hexdigest()
+
+    def init_qa(self, question=None):
         """ Initialize the question / answer.
 
          @param question: If given, the given question will be used.
@@ -74,20 +91,42 @@ class TextCha(object):
         if self.is_enabled():
             if question is None:
                 self.question = random.choice(self.textchas.keys())
+                self.timestamp = time()
+                self.signature = self._compute_signature(self.question, self.timestamp)
             else:
-                self.question = question
+                # the signature is the last SHA1_LEN bytes of the question
+                self.signature = question[-SHA1_LEN:]
+
+                # operate on the remainder
+                question = question[:-SHA1_LEN]
+
+                try:
+                    # the timestamp is the next TIMESTAMP_LEN bytes
+                    self.timestamp = int(question[-TIMESTAMP_LEN:])
+                except ValueError:
+                    self.question = None
+                else:
+                    if self.timestamp + self.expiry_time < time():
+                        self.question = None
+                    else:
+                        # there is a space between the timestamp and the question, so take away 1
+                        self.question = question[:-TIMESTAMP_LEN - 1]
+
+                        if self._compute_signature(self.question, self.timestamp) != self.signature:
+                            self.question = None
+
             try:
                 self.answer_regex = self.textchas[self.question]
                 self.answer_re = re.compile(self.answer_regex, re.U|re.I)
             except KeyError:
                 # this question does not exist, thus there is no answer
-                self.answer_regex = ur"[Never match for cheaters]"
+                self.answer_regex = ur"[Invalid question]"
                 self.answer_re = None
-                logging.warning(u"TextCha: Non-existing question '%s'. User '%s' trying to cheat?" % (
+                logging.warning(u"TextCha: Non-existing question '%s' for %s. May be invalid or user may be trying to cheat." % (
                                 self.question, self.user_info))
             except re.error:
                 logging.error(u"TextCha: Invalid regex in answer for question '%s'" % self.question)
-                self._init_qa()
+                self.init_qa()
 
     def is_enabled(self):
         """ check if textchas are enabled.
@@ -112,7 +151,33 @@ class TextCha(object):
             * make the fields optional if it isn't.
         """
         if self.is_enabled():
-            self.form['textcha_question'].set(self.question)
+            if self.question:
+                self.form['textcha_question'].set("%s %d%s" % (self.question, self.timestamp, self.signature))
         else:
             self.form['textcha_question'].optional = True
             self.form['textcha'].optional = True
+
+class TextChaValid(Validator):
+    """Validator for TextChas
+    """
+    textcha_incorrect_msg = N_('The entered TextCha was incorrect.')
+    textcha_invalid_msg = N_('The TextCha question is invalid or has expired. Please try again.')
+
+    def validate(self, element, state):
+        textcha = TextCha(element.parent)
+
+        if textcha.is_enabled():
+            if textcha.answer_re is None:
+                textcha.init_qa()
+                textcha.amend_form()
+                element.set("")
+                return self.note_error(element, state, 'textcha_invalid_msg')
+            if textcha.answer_re.match(element.value.strip()) is None:
+                return self.note_error(element, state, 'textcha_incorrect_msg')
+
+        return True
+
+class TextChaizedForm(Form):
+    """a form providing TextCha support"""
+    textcha_question = String
+    textcha = String.using(label=N_('TextCha')).validated_by(TextChaValid())

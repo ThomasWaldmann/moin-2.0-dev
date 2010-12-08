@@ -35,7 +35,7 @@ from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
-from MoinMoin.security.textcha import TextCha
+from MoinMoin.security.textcha import TextCha, TextChaizedForm, TextChaValid
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 from MoinMoin.signalling import item_displayed, item_modified
 
@@ -538,31 +538,6 @@ class ValidRegistration(Validator):
             return self.note_error(element, state, 'passwords_mismatch_msg')
 
         return True
-
-class TextChaValid(Validator):
-    """Validator for TextChas
-    """
-    textcha_incorrect_msg = N_('The entered TextCha was incorrect.')
-
-    # they probably are cheating; but don't be really blunt about it
-    textcha_cheating_msg = N_('The TextCha question was invalid. You may need to reload the form.')
-
-    def validate(self, element, state):
-        textcha = TextCha(element.parent)
-
-        if textcha.is_enabled():
-            if textcha.answer_re is None:
-                return self.note_error(element, state, 'textcha_cheating_msg')
-
-            if textcha.answer_re.match(element.value.strip()) is None:
-                return self.note_error(element, state, 'textcha_incorrect_msg')
-
-        return True
-
-class TextChaizedForm(Form):
-    """a form providing TextCha support"""
-    textcha_question = String
-    textcha = String.using(label=N_('TextCha')).validated_by(TextChaValid())
 
 class RegistrationForm(TextChaizedForm):
     """a simple user registration form"""
