@@ -21,7 +21,7 @@ from MoinMoin.util.tree import html, moin_page, xlink, xml, Name
 def remove_overlay_prefixes(url):
     """
     Returns url without the prefixes, like +get or +modify
-    
+
     TODO: Find a way to limit the removal to internal links only
     This could remove +get or +modify for external links,
         when they shouldn't really be removed.
