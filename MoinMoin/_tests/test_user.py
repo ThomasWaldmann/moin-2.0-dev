@@ -90,7 +90,7 @@ class TestLoginWithPassword(object):
         # generated with "htpasswd -nbm blaze 12345"
         password = '{APR1}$apr1$NG3VoiU5$PSpHT6tV0ZMKkSZ71E3qg.' # 12345
         self.createUser(name, password, True)
-        
+
         # Try to "login"
         theuser = user.User(name=name, password='12345')
         assert theuser.valid
@@ -103,7 +103,7 @@ class TestLoginWithPassword(object):
         name = u'Test User'
         password = '{MD5}$1$salt$etVYf53ma13QCiRbQOuRk/' # 12345
         self.createUser(name, password, True)
-        
+
         # Try to "login"
         theuser = user.User(name=name, password='12345')
         assert theuser.valid
@@ -117,7 +117,7 @@ class TestLoginWithPassword(object):
         # generated with "htpasswd -nbd blaze 12345"
         password = '{DES}gArsfn7O5Yqfo' # 12345
         self.createUser(name, password, True)
-        
+
         try:
             import crypt
             # Try to "login"
@@ -132,17 +132,17 @@ class TestLoginWithPassword(object):
         """
         # Create test user
         name = u'Test User'
-        # generated with online sha256 tool        
+        # generated with online sha256 tool
         # pass: 12345
         # salt: salt
         # base64 encoded
         password = '{SSHA256}r4ONZUfEyn9MUkcyDQkQ5MBNpdIerM24MasxFpuQBaFzYWx0'
 
         self.createUser(name, password, True)
-        
+
         # Try to "login"
         theuser = user.User(name=name, password='12345')
-        assert theuser.valid        
+        assert theuser.valid
 
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
@@ -193,8 +193,8 @@ class TestLoginWithPassword(object):
         password = '{SHA}jLIjfQZ5yojbZGTqxg2pY0VROWQ=' # 12345
         self.createUser(name, password, True)
 
-        # User is not required to be valid                
-        theuser = user.User(name=name, password='12345')        
+        # User is not required to be valid
+        theuser = user.User(name=name, password='12345')
         assert theuser.enc_password[:6] == '{SSHA}'
 
     def test_upgrade_password_from_apr1_to_ssha(self):
@@ -207,7 +207,7 @@ class TestLoginWithPassword(object):
         # generated with "htpasswd -nbm blaze 12345"
         password = '{APR1}$apr1$NG3VoiU5$PSpHT6tV0ZMKkSZ71E3qg.' # 12345
         self.createUser(name, password, True)
-        
+
         # User is not required to be valid
         theuser = user.User(name=name, password='12345')
         assert theuser.enc_password[:6] == '{SSHA}'
@@ -221,7 +221,7 @@ class TestLoginWithPassword(object):
         name = u'Test User'
         password = '{MD5}$1$salt$etVYf53ma13QCiRbQOuRk/' # 12345
         self.createUser(name, password, True)
-        
+
         # User is not required to be valid
         theuser = user.User(name=name, password='12345')
         assert theuser.enc_password[:6] == '{SSHA}'
@@ -236,8 +236,8 @@ class TestLoginWithPassword(object):
         # generated with "htpasswd -nbd blaze 12345"
         password = '{DES}gArsfn7O5Yqfo' # 12345
         self.createUser(name, password, True)
-        
-        # User is not required to be valid        
+
+        # User is not required to be valid
         theuser = user.User(name=name, password='12345')
         assert theuser.enc_password[:6] == '{SSHA}'
 
