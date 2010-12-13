@@ -132,10 +132,12 @@ class TestLoginWithPassword(object):
         """
         # Create test user
         name = u'Test User'
-        # generated with online sha256 tool
+        # generated with online sha256 tool        
         # pass: 12345
         # salt: salt
-        password = '{SSHA256}salt$af838d6547c4ca7f4c5247320d0910e4c04da5d21eaccdb831ab31169b9005a1'
+        # base64 encoded
+        password = '{SSHA256}r4ONZUfEyn9MUkcyDQkQ5MBNpdIerM24MasxFpuQBaFzYWx0'
+
         self.createUser(name, password, True)
         
         # Try to "login"

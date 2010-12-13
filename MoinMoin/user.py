@@ -430,6 +430,13 @@ class User(object):
                     return True, True
                 return False, False
         
+        if epwd[:9] == '{SSHA256}':
+            data = base64.decodestring(epwd[9:])
+            salt = data[32:]            
+            hash = hashlib.new('sha256', password.encode('utf-8'))            
+            hash.update(salt)                        
+            return hash.digest() == data[:32], False
+        
         if epwd[:6] == '{SSHA}':
             data = base64.decodestring(epwd[6:])
             salt = data[20:]
