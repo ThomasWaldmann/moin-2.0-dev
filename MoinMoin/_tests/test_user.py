@@ -121,10 +121,26 @@ class TestLoginWithPassword(object):
         try:
             import crypt
             # Try to "login"
-            theuser = user.User(self.request, name=name, password='12345')
+            theuser = user.User(name=name, password='12345')
             assert theuser.valid
         except ImportError:
             py.test.skip("Platform does not provide crypt module!")
+
+    def test_auth_with_ssha256_stored_password(self):
+        """
+        Create user with {SSHA256} password and check that user can login.
+        """
+        # Create test user
+        name = u'Test User'
+        # generated with online sha256 tool
+        # pass: 12345
+        # salt: salt
+        password = '{SSHA256}salt$af838d6547c4ca7f4c5247320d0910e4c04da5d21eaccdb831ab31169b9005a1'
+        self.createUser(name, password, True)
+        
+        # Try to "login"
+        theuser = user.User(name=name, password='12345')
+        assert theuser.valid        
 
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
