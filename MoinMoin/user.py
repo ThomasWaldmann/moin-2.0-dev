@@ -176,10 +176,10 @@ def encodePassword(pwd, salt=None):
     if salt is None:
         salt = random_string(20)
     assert isinstance(salt, str)
-    hash = hashlib.new('sha1', pwd)
+    hash = hashlib.new('sha256', pwd)
     hash.update(salt)
 
-    return '{SSHA}' + base64.encodestring(hash.digest() + salt).rstrip()
+    return '{SSHA256}' + base64.encodestring(hash.digest() + salt).rstrip()
 
 
 def normalizeName(name):
