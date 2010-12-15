@@ -81,6 +81,21 @@ class TestLoginWithPassword(object):
         theUser = user.User(name=name, password=password)
         assert theUser.valid
 
+    def test_auth_with_ssha_stored_password(self):
+        """
+        Create user with {SSHA} password and check that user can login.
+        """
+        # Create test user
+        name = u'Test User'
+        # pass = 12345
+        # salt = salt
+        password = '{SSHA}x4YEGdfI4i0qROaY3NTHCmwSJY5zYWx0'
+        self.createUser(name, password, True)
+
+        # Try to "login"
+        theuser = user.User(name=name, password='12345')
+        assert theuser.valid
+
     def test_auth_with_apr1_stored_password(self):
         """
         Create user with {APR1} password and check that user can login.
