@@ -184,6 +184,21 @@ class TestLoginWithPassword(object):
 
         assert not theUser.exists()
 
+    def test_upgrade_password_from_ssha_to_ssha256(self):
+        """
+        Create user with {SSHA} password and check that logging in
+        upgrades to {SSHA256}.
+        """
+        name = u'/no such user/'
+        #pass = MoinMoin
+        #salr = 12345
+        password = '{SSHA}xkDIIx1I7A4gC98Vt/+UelIkTDYxMjM0NQ=='
+        self.createUser(name, password, True)
+
+        # User is not required to be valid
+        theuser = user.User(name=name, password='12345')
+        assert theuser.enc_password[:9] == '{SSHA256}'
+
     def test_upgrade_password_from_sha_to_ssha256(self):
         """
         Create user with {SHA} password and check that logging in
