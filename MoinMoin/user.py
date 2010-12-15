@@ -408,7 +408,7 @@ class User(object):
 
                 if method == '{SSHA}':
                     d = base64.decodestring(epwd[6:])
-                    # d is of the form "<hash><salt>"                    
+                    # d is of the form "<hash><salt>"
                     salt = d[20:]
                     hash = hashlib.new('sha256', password.encode('utf-8'))
                     hash.update(salt)
@@ -444,13 +444,6 @@ class User(object):
             hash = hashlib.new('sha256', password.encode('utf-8'))
             hash.update(salt)
             return hash.digest() == data[:32], False
-
-        if epwd[:6] == '{SSHA}':
-            data = base64.decodestring(epwd[6:])
-            salt = data[20:]
-            hash = hashlib.new('sha1', password.encode('utf-8'))
-            hash.update(salt)
-            return hash.digest() == data[:20], False
 
         # No encoded password match, this must be wrong password
         return False, False
