@@ -6,7 +6,12 @@
 */
 
 /* moin-content */
-#moin-page { background-color: white; margin: 0; padding: 2px 20px 20px 20px; }
+#moin-page { 
+background-color: #F3F7FD;
+box-shadow: 1px 1px 33px -11px inset;
+margin: 0;
+padding: 2px 20px 20px;
+}
 /* links */
 a:link { color: #47F; text-decoration: none; }
 a:visited { text-decoration: none; color: #04A; }
