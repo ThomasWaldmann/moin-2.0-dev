@@ -21,7 +21,7 @@ class TestEncodePassword(object):
     def testAscii(self):
         """user: encode ascii password"""
         # u'MoinMoin' and 'MoinMoin' should be encoded to same result
-        expected = "{SSHA}xkDIIx1I7A4gC98Vt/+UelIkTDYxMjM0NQ=="
+        expected = "{SSHA256}n0JB8FCTQCpQeg0bmdgvTGwPKvxm8fVNjSRD+JGNs50xMjM0NQ=="
 
         result = user.encodePassword("MoinMoin", salt='12345')
         assert result == expected
@@ -31,7 +31,7 @@ class TestEncodePassword(object):
     def testUnicode(self):
         """ user: encode unicode password """
         result = user.encodePassword(u'סיסמה סודית בהחלט', salt='12345') # Hebrew
-        expected = "{SSHA}YiwfeVWdVW9luqyVn8t2JivlzmUxMjM0NQ=="
+        expected = "{SSHA256}pdYvYv+4Vph259sv/HAm7zpZTv4sBKX9ITOX/m00HMsxMjM0NQ=="
         assert result == expected
 
 
