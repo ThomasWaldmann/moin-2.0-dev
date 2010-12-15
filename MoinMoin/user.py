@@ -402,17 +402,10 @@ class User(object):
 
         # Check and upgrade passwords from earlier MoinMoin versions and
         # passwords imported from other wiki systems.
-        for method in ['{SSHA}', '{SHA}', '{APR1}', '{MD5}', '{DES}']:
+        for method in ['{SHA}', '{APR1}', '{MD5}', '{DES}']:
             if epwd.startswith(method):
                 d = epwd[len(method):]
 
-                if method == '{SSHA}':
-                    d = base64.decodestring(epwd[6:])
-                    # d is of the form "<hash><salt>"
-                    salt = d[20:]
-                    hash = hashlib.new('sha256', password.encode('utf-8'))
-                    hash.update(salt)
-                    enc = hash.digest().rstrip()
                 if method == '{SHA}':
                     enc = base64.encodestring(
                         hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
@@ -434,8 +427,22 @@ class User(object):
                     enc = crypt.crypt(password.encode('utf-8'), salt.encode('ascii'))
 
                 if epwd == method + enc:
-                    data['enc_password'] = encodePassword(password) # upgrade to SSHA
+                    data['enc_password'] = encodePassword(password) # upgrade to SSHA256
                     return True, True
+                return False, False
+
+        if epwd[:6] == '{SSHA}':
+            d = base64.decodestring(epwd[6:])
+            # d is of the form "<hash><salt>"
+            salt = d[20:]
+
+            hash = hashlib.new('sha1', password.encode('utf-8'))
+            hash.update(salt)
+
+            if hash.digest() == d[:20]:
+                data['enc_password'] = encodePassword(password) # upgrade to SSHA256
+                return True, True
+            else:
                 return False, False
 
         if epwd[:9] == '{SSHA256}':
