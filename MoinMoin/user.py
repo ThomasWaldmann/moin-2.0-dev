@@ -405,15 +405,14 @@ class User(object):
             if epwd.startswith(method):
                 d = epwd[len(method):]
 
-                if epwd[:6] == '{SSHA}':
-                    d = base64.decodestring(epwd[6:])
-                    # d is of the form "<hash><salt>"
-                    salt = d[20:]
-
+                if method == '{SSHA}':
+                    data = base64.decodestring(d)
+                    # data is of the form "<hash><salt>"
+                    salt = data[20:]
                     hash = hashlib.new('sha1', password.encode('utf-8'))
                     hash.update(salt)
                     enc = base64.encodestring(hash.digest() + salt).rstrip()
-                if method == '{SHA}':
+                elif method == '{SHA}':
                     enc = base64.encodestring(
                         hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
                 elif method == '{APR1}':
