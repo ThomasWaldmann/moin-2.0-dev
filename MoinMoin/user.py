@@ -389,7 +389,7 @@ class User(object):
         @rtype: 2 tuple (bool, bool)
         @return: password is valid, enc_password changed
         """
-        epwd = data['enc_password']        
+        epwd = data['enc_password']
 
         # If we have no password set, we don't accept login with username
         if not epwd:
@@ -401,23 +401,23 @@ class User(object):
         # encode password
         pw_utf8 = password.encode('utf-8')
 
-        if epwd[:9] == '{SSHA256}':
-            data = base64.decodestring(epwd[9:])
-            salt = data[32:]
-            hash = hashlib.new('sha256', pw_utf8)
-            hash.update(salt)
-            return hash.digest() == data[:32], False
-
-        # Check and upgrade passwords from earlier MoinMoin versions and
+        # Check and/or upgrade passwords from earlier MoinMoin versions and
         # passwords imported from other wiki systems.
-        for method in ['{SSHA}', '{SHA}', '{APR1}', '{MD5}', '{DES}']:
+        for method in ['{SSHA256}', '{SSHA}', '{SHA}', '{APR1}', '{MD5}', '{DES}']:
             if epwd.startswith(method):
                 d = epwd[len(method):]
 
-                if method == '{SSHA}':
-                    data = base64.decodestring(d)
-                    # data is of the form "<hash><salt>"
-                    salt = data[20:]
+                if method == '{SSHA256}':
+                    pw_hash = base64.decodestring(d)
+                    # pw_hash is of the form "<hash><salt>"
+                    salt = pw_hash[32:]
+                    hash = hashlib.new('sha256', pw_utf8)
+                    hash.update(salt)
+                    return hash.digest() == pw_hash[:32], False
+                elif method == '{SSHA}':
+                    pw_hash = base64.decodestring(d)
+                    # pw_hash is of the form "<hash><salt>"
+                    salt = pw_hash[20:]
                     hash = hashlib.new('sha1', pw_utf8)
                     hash.update(salt)
                     enc = base64.encodestring(hash.digest() + salt).rstrip()
