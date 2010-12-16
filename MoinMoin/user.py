@@ -413,7 +413,7 @@ class User(object):
                     salt = pw_hash[32:]
                     hash = hashlib.new('sha256', pw_utf8)
                     hash.update(salt)
-                    return hash.digest() == pw_hash[:32], False
+                    enc = base64.encodestring(hash.digest() + salt).rstrip()
                 elif method == '{SSHA}':
                     pw_hash = base64.decodestring(d)
                     # pw_hash is of the form "<hash><salt>"
@@ -440,8 +440,13 @@ class User(object):
                     enc = crypt.crypt(pw_utf8, salt.encode('ascii'))
 
                 if epwd == method + enc:
-                    data['enc_password'] = encodePassword(password) # upgrade to SSHA256
-                    return True, True
+                    # SSHA256 current password hash
+                    if method == '{SSHA256}':
+                        return True, False
+                    else:
+                        # stored password hashed with old hash method
+                        data['enc_password'] = encodePassword(password) # upgrade to SSHA256
+                        return True, True
                 return False, False
 
         # No encoded password match, this must be wrong password
