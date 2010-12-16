@@ -168,8 +168,7 @@ def encodePassword(pwd, salt=None):
     @param pwd: the cleartext password, (unicode)
     @param salt: the salt for the password (string)
     @rtype: string
-    @return: the password in apache htpasswd compatible SHA-encoding,
-        or None
+    @return: the password in SHA256-encoding
     """
     pwd = pwd.encode('utf-8')
 
