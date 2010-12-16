@@ -401,6 +401,13 @@ class User(object):
         # encode password
         pw_utf8 = password.encode('utf-8')
 
+        if epwd[:9] == '{SSHA256}':
+            data = base64.decodestring(epwd[9:])
+            salt = data[32:]
+            hash = hashlib.new('sha256', pw_utf8)
+            hash.update(salt)
+            return hash.digest() == data[:32], False
+
         # Check and upgrade passwords from earlier MoinMoin versions and
         # passwords imported from other wiki systems.
         for method in ['{SSHA}', '{SHA}', '{APR1}', '{MD5}', '{DES}']:
@@ -436,13 +443,6 @@ class User(object):
                     data['enc_password'] = encodePassword(password) # upgrade to SSHA256
                     return True, True
                 return False, False
-
-        if epwd[:9] == '{SSHA256}':
-            data = base64.decodestring(epwd[9:])
-            salt = data[32:]
-            hash = hashlib.new('sha256', pw_utf8)
-            hash.update(salt)
-            return hash.digest() == data[:32], False
 
         # No encoded password match, this must be wrong password
         return False, False
