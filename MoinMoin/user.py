@@ -389,7 +389,7 @@ class User(object):
         @rtype: 2 tuple (bool, bool)
         @return: password is valid, enc_password changed
         """
-        epwd = data['enc_password']
+        epwd = data['enc_password']        
 
         # If we have no password set, we don't accept login with username
         if not epwd:
@@ -398,6 +398,8 @@ class User(object):
         # require non empty password
         if not password:
             return False, False
+        # encode password
+        pw_utf8 = password.encode('utf-8')
 
         # Check and upgrade passwords from earlier MoinMoin versions and
         # passwords imported from other wiki systems.
@@ -409,28 +411,26 @@ class User(object):
                     data = base64.decodestring(d)
                     # data is of the form "<hash><salt>"
                     salt = data[20:]
-                    hash = hashlib.new('sha1', password.encode('utf-8'))
+                    hash = hashlib.new('sha1', pw_utf8)
                     hash.update(salt)
                     enc = base64.encodestring(hash.digest() + salt).rstrip()
                 elif method == '{SHA}':
-                    hash = hashlib.new('sha1', password.encode('utf-8'))
+                    hash = hashlib.new('sha1', pw_utf8)
                     enc = base64.encodestring(hash.digest()).rstrip()
                 elif method == '{APR1}':
                     # d is of the form "$apr1$<salt>$<hash>"
                     salt = d.split('$')[2]
-                    enc = md5crypt.apache_md5_crypt(password.encode('utf-8'),
-                                                    salt.encode('ascii'))
+                    enc = md5crypt.apache_md5_crypt(pw_utf8, salt.encode('ascii'))
                 elif method == '{MD5}':
                     # d is of the form "$1$<salt>$<hash>"
                     salt = d.split('$')[2]
-                    enc = md5crypt.unix_md5_crypt(password.encode('utf-8'),
-                                                  salt.encode('ascii'))
+                    enc = md5crypt.unix_md5_crypt(pw_utf8, salt.encode('ascii'))
                 elif method == '{DES}':
                     if crypt is None:
                         return False, False
                     # d is 2 characters salt + 11 characters hash
                     salt = d[:2]
-                    enc = crypt.crypt(password.encode('utf-8'), salt.encode('ascii'))
+                    enc = crypt.crypt(pw_utf8, salt.encode('ascii'))
 
                 if epwd == method + enc:
                     data['enc_password'] = encodePassword(password) # upgrade to SSHA256
@@ -440,7 +440,7 @@ class User(object):
         if epwd[:9] == '{SSHA256}':
             data = base64.decodestring(epwd[9:])
             salt = data[32:]
-            hash = hashlib.new('sha256', password.encode('utf-8'))
+            hash = hashlib.new('sha256', pw_utf8)
             hash.update(salt)
             return hash.digest() == data[:32], False
 
