@@ -413,8 +413,8 @@ class User(object):
                     hash.update(salt)
                     enc = base64.encodestring(hash.digest() + salt).rstrip()
                 elif method == '{SHA}':
-                    enc = base64.encodestring(
-                        hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
+                    hash = hashlib.new('sha1', password.encode('utf-8'))
+                    enc = base64.encodestring(hash.digest()).rstrip()
                 elif method == '{APR1}':
                     # d is of the form "$apr1$<salt>$<hash>"
                     salt = d.split('$')[2]
