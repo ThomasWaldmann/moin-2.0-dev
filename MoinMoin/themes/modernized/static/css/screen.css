@@ -8,9 +8,12 @@
 /* moin-content */
 #moin-page { 
 background-color: #F3F7FD;
-box-shadow: 1px 1px 33px -11px inset;
 margin: 0;
 padding: 2px 20px 20px;
+box-shadow: 1px 1px 33px -11px inset;
+/* support for firefox 3.5/3.6 and safari */
+-moz-box-shadow: 1px 1px 33px -11px inset;
+-webkit-box-shadow: 1px 1px 33px -11px inset;
 }
 /* links */
 a:link { color: #47F; text-decoration: none; }
