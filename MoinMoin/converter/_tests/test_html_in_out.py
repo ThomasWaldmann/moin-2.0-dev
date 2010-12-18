@@ -105,9 +105,9 @@ class TestConverter(Base):
             ('<html><p><u>underline</u></p></html>',
              '/div/p[ins="underline"]'),
             ('<html><p><big>Test</big></p></html>',
-              '/div/p/span[@class="big"][text()="Test"]'),
+              '/div/p/span[@class="moin-big"][text()="Test"]'),
             ('<html><p><small>Test</small></p></html>',
-              '/div/p/span[@class="small"][text()="Test"]'),
+              '/div/p/span[@class="moin-small"][text()="Test"]'),
             ('<html><p><ins>underline</ins></p></html>',
              '/div/p[ins="underline"]'),
             ('<html><p><del>Test</del></p></html>',
@@ -123,15 +123,15 @@ class TestConverter(Base):
     def test_span_html_element(self):
         data = [
             ('<html><p><abbr>Text</abbr></p></html>',
-             '/div/p[abbr="Text"]'),
+             '/div/p/span[@class="html-abbr"][text()="Text"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             '/div/p/span[@class="element-acronym"][text()="Text"]'),
+             '/div/p/span[@class="html-acronym"][text()="Text"]'),
             ('<html><p><address>Text</address></p></html>',
-             '/div/p[address="Text"]'),
+             '/div/p/span[@class="html-address"][text()="Text"]'),
             ('<html><p><dfn>Text</dfn></p></html>',
-             '/div/p[dfn="Text"]'),
+             '/div/p/span[@class="html-dfn"][text()="Text"]'),
             ('<html><p><kbd>Text</kbd></p></html>',
-             '/div/p[kbd="Text"]'),
+             '/div/p/span[@class="html-kbd"][text()="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -165,13 +165,13 @@ class TestConverter(Base):
             ('<html><div><ol><li>Item</li></ol></div></html>',
               '/div/div/ol[li="Item"]'),
             ('<html><div><ol type="A"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@class="upperalpha_list"][li="Item"]'),
+              '/div/div/ol[@class="moin-upperalpha-list"][li="Item"]'),
             ('<html><div><ol type="I"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@class="upperroman_list"][li="Item"]'),
+              '/div/div/ol[@class="moin-upperroman-list"][li="Item"]'),
             ('<html><div><ol type="a"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@class="loweralpha_list"][li="Item"]'),
+              '/div/div/ol[@class="moin-loweralpha-list"][li="Item"]'),
             ('<html><div><ol type="i"><li>Item<li></ol></div></html>',
-              '/div/div/ol[@class="lowerroman_list"][li="Item"]'),
+              '/div/div/ol[@class="moin-lowerroman-list"][li="Item"]'),
             ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
              '/div/div/dl[dt="Label"][dd="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
@@ -192,7 +192,7 @@ class TestConverter(Base):
             #('<html><div><img src="uri:test" /></div></html>',
             #  '/page/body/div/object/@xlink:href="uri:test"'),
             ('<html><div><object data="href"></object></div></html>',
-              '/div/div/object[@data="href"]'),
+              '/div/div/div/object[@data="href"]'),
         ]
         for i in data:
             yield (self.do, ) + i
