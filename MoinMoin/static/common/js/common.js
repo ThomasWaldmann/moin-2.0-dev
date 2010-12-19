@@ -2,6 +2,8 @@
 // MoinMoin commonly used JavaScript functions
 //
 
+var QUICKLINKS_EXPAND = ">>>";
+var QUICKLINKS_COLLAPSE = "<<<";
 // We keep here the state of the search box
 searchIsDisabled = false;
 
@@ -890,4 +892,106 @@ function attachHoverToObjects() {
         $(elements.slice(1)).hide()
     })
 }
+
 $(document).ready(attachHoverToObjects)
+
+/* 
+    For the quicklinks patch that 
+    makes all quicklinks after the 5th visible only by mousing over an icon.
+*/
+function getLinks() {
+    return jQuery(".userlink:not(.moin-navibar-icon)");
+}
+
+function createIcon(txt) {
+    var li = document.createElement("li");
+    li.setAttribute("class", "moin-userlink moin-navibar-icon");
+    
+    var txt = document.createTextNode(txt);
+    li.appendChild(txt);
+    
+    return li
+}
+
+function appendIcon(txt) {
+    var elem = createIcon(txt);
+    
+    document.getElementById("moin-navibar").appendChild(elem);
+    return elem
+}
+
+function shouldHide(links) {
+    return (links.length > 5);
+}
+
+function getHideableLinks() {
+    return getLinks().slice(5);
+}
+
+function hideShowHideableLinks(action) {
+    getHideableLinks().each(function(i) {
+        if (action == "hide") {
+            $(this).hide();
+        }
+        else  {
+            $(this).show();
+        }
+    });
+}
+
+function hideLinks() {
+    hideShowHideableLinks("hide");
+}
+
+function showLinks() {
+    hideShowHideableLinks("show");
+}
+
+function QuicklinksExpander() {
+    this.getLinks = getLinks;
+    this.appendIcon = appendIcon;
+    this.shouldHide = shouldHide;
+    this.getHideableLinks = getHideableLinks;
+    this.hideLinks = hideLinks;
+    this.showLinks = showLinks;
+    
+    this.navibar = $("#moin-header");
+    this.links = this.getLinks();
+    this.hideable = this.getHideableLinks();
+    
+    // If there's less than 5 items, don't bother doing anything.
+    if (this.shouldHide(this.links)) {
+        this.expandIcon = $(this.appendIcon(QUICKLINKS_EXPAND));
+        this.closeIcon = $(this.appendIcon(QUICKLINKS_COLLAPSE));
+        
+        this.closeIcon.hide();
+        
+        // Hide everything after the first 5
+        this.hideLinks();
+        
+        /* 
+        TODO: when FF4.0 becomes stable/popular, delete the following hack
+        and use function.bind(this)
+        */
+        var newThis = this;
+        
+        // When the user mouses over the icon link,
+        // Show the hidden links
+        this.expandIcon.mouseenter(function(e) {
+            newThis.showLinks();
+            newThis.expandIcon.hide();
+            newThis.closeIcon.show();
+            
+        });
+        
+        this.closeIcon.mouseenter(function(e) {
+            newThis.hideLinks();
+            newThis.expandIcon.show();
+            newThis.closeIcon.hide();
+        });
+    }
+}
+
+jQuery(document).ready(function() {
+    new QuicklinksExpander();
+})
