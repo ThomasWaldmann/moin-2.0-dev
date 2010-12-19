@@ -29,7 +29,7 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 */
 
 /* moin-header */
-#moin-header { margin: 1px; padding: 1px;
+#moin-header { margin: 0px; padding: 0px;
                background: url(../img/white_clouds.png); /* background: #E6EAF0; */
                line-height: 1.12em; }
 
@@ -45,7 +45,7 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 #moin-logo a { color: black; text-decoration: none; }
 
 /* moin-header moin-username */
-#moin-username { display: block; margin: 8px 12px 4px 12px; padding: 0; font-size: 0.82em; }
+#moin-username { display: block; margin: 0px 12px 4px 12px; padding: 0; font-size: 0.82em; }
 #moin-username form { display: inline; }
 #moin-username input { display: inline; padding: 0; margin: 0; border: none; background: transparent; color: blue; font-size: 0.82em; cursor: pointer; }
 #moin-username input:hover { color: red; }
@@ -55,7 +55,7 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 #moin-pagelocation { font-size: 1.5em; letter-spacing: 0.05em; }
 
 /* moin-header moin-pagetrail */
-#moin-pagetrail { margin: 0 0.88em 0.25em 0.88em; padding: 0; font-size: 0.88em; }
+#moin-pagetrail { margin: 0 0.88em 0.25em 12px; padding: 0; font-size: 0.88em; }
 
 /* moin-header moin-navibar */
 #moin-navibar { clear: both;  display: block; margin: 0; padding: 0 10px; font-size: 0.82em; }
@@ -84,7 +84,8 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 
 /* moin-pagebottom -- after moin-content and before moin-footer */
 #moin-pagebottom { clear: both; }
-#moin-pageinfo { margin-top: 2em; }
+#moin-pageinfo { display:none; /* XXX temp. fix to look less ugly */
+                 margin-top: 2em; }
 .moin-info { float: right; font-size: 0.7em; color: gray; }
 
 /* moin-page moin-footer */
