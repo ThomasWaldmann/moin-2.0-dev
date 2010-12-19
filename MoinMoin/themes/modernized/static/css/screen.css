@@ -5,9 +5,11 @@
     License: GNU GPL v2 or later, see COPYING for details.
 */
 
+/* general */
+body { background-color: #F3F7FD; }
+
 /* moin-content */
-#moin-page { 
-background-color: #F3F7FD;
+#moin-page {
 margin: 0;
 padding: 2px 20px 20px;
 box-shadow: 1px 1px 33px -11px inset;
@@ -15,6 +17,7 @@ box-shadow: 1px 1px 33px -11px inset;
 -moz-box-shadow: 1px 1px 33px -11px inset;
 -webkit-box-shadow: 1px 1px 33px -11px inset;
 }
+
 /* links */
 a:link { color: #47F; text-decoration: none; }
 a:visited { text-decoration: none; color: #04A; }
@@ -35,7 +38,9 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 
 /* moin-header searchform */
 #moin-searchform { margin: 8px .5em; padding: 0; font-size: 0.82em; float: right;  text-align: right; }
-#moin-searchform input { font-size: 100%; vertical-align: middle; }
+#moin-searchform input { font-size: 100%; vertical-align: middle;
+                         background-color: #F3F7FD; /* same as body bg col */
+                         border: 1px solid #A4B9DF; }
 #moin-searchform label { display:none; }
 #moin-searchform div { margin: 0; }
 
@@ -59,20 +64,20 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 
 /* moin-header moin-navibar */
 #moin-navibar { clear: both;  display: block; margin: 0; padding: 0 10px; font-size: 0.82em; }
-#moin-navibar li { float: left; display: inline; margin: 0 2px; padding: 2px 5px; border: 1px solid #ACD; 
+#moin-navibar li { float: left; display: inline; margin: 0 2px; padding: 2px 5px; border: 1px solid #A4B9DF; 
             border-bottom: none; white-space: nowrap; font-size: .88em; }
-#moin-navibar li.wikilink { background: white; }
-#moin-navibar li.userlink { background: #E6EAF0; }
+#moin-navibar li.wikilink { background: #F3F7FD; } /* same as body background */
+#moin-navibar li.userlink { background: #C4D9FF; }
 #moin-navibar a,
 #moin-navibar a:visited { color: black; text-decoration: none; }
-#moin-navibar li:hover { background: #D6E4F9; }
+#moin-navibar li:hover { background: #A4B9DF; }
 			
 /* moin-header moin-pageline  */
 #moin-pageline { clear: both; margin: 0; padding: 0; width: 100%; height: 4px; 
             border-bottom: 1px solid #4D7DA9; border-top: 1px solid #4D7DA9; background: #81BBF2; }
 
 /* moin-header moin-editbar -- also applies to moin-footer */
-.moin-editbar { clear: both; display: block; margin: 0; padding: 2px 8px; background: #D6E4F9; 
+.moin-editbar { clear: both; display: block; margin: 0; padding: 2px 8px; background: #C4D9FF; 
             font-size: 0.8em; border-bottom: 1px solid #4D7DA9; border-top: 1px solid #4D7DA9; margin-top: -1px; }
 .moin-editbar li { display: inline; padding: 0; margin: 4px 6px; }
 .moin-editbar a,
