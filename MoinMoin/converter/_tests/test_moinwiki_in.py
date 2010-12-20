@@ -135,7 +135,7 @@ class TestConverter(object):
             (u' Key:: Item',
                 '<page><body><list><list-item><list-item-label>Key</list-item-label><list-item-body><p>Item</p></list-item-body></list-item></list></body></page>'),
             (u'  Item',
-                '<page><body><list item-label-generate="unordered" list-style-type="none"><list-item><list-item-body><p>Item</p></list-item-body></list-item></list></body></page>'),
+                '<page><body><list item-label-generate="unordered" list-style-type="no-bullet"><list-item><list-item-body><p>Item</p></list-item-body></list-item></list></body></page>'),
             (u' *Item\nText',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body><p>Item</p></list-item-body></list-item></list><p>Text</p></body></page>'),
             (u' *Item\n Item',
