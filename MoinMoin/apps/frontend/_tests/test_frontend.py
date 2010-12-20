@@ -5,6 +5,10 @@
     @copyright: 2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+from MoinMoin.apps.frontend import views
+from werkzeug import ImmutableMultiDict
+from flask import flaskg
+from MoinMoin import user
 
 class TestFrontend(object):
     def test_root(self):
@@ -19,7 +23,7 @@ class TestFrontend(object):
             assert rv.headers['Content-Type'] == 'text/plain; charset=utf-8'
             assert 'Disallow:' in rv.data
 
-    def test_favicon(self):
+    def stest_favicon(self):
         with self.app.test_client() as c:
             rv = c.get('/favicon.ico')
             assert rv.status == '200 OK'
@@ -42,4 +46,84 @@ class TestFrontend(object):
             assert '<html>' in rv.data
             assert '</html>' in rv.data
 
+class TestUsersettings(object):
+    def setup_method(self, method):
+        # Save original user
+        self.saved_user = flaskg.user
 
+        # Create anon user for the tests
+        flaskg.user = user.User()
+
+        self.user = None
+
+    def teardown_method(self, method):
+        """ Run after each test
+
+        Remove user and reset user listing cache.
+        """
+        # Remove user file and user
+        if self.user is not None:
+            del self.user
+
+        # Restore original user
+        flaskg.user = self.saved_user
+
+    def test_suc_password_change(self):
+        self.createUser('moin', '12345')
+        flaskg.user = user.User(name='moin', password='12345')
+
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password1', u'123'),
+              ('usersettings_password_submit', u'Save'),
+              ('usersettings_password_password_current', u'12345'),
+              ('usersettings_password_password2', u'123')
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        valid = form.validate()
+        assert valid #form data is valid
+
+    def test_fail_password_change(self):
+        self.createUser('moin', '12345')
+        flaskg.user = user.User(name='moin', password='12345')
+
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password1', u'123'),
+              ('usersettings_password_submit', u'Save'),
+              ('usersettings_password_password_current', u'54321'),
+              ('usersettings_password_password2', u'123')
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        valid = form.validate()
+        assert not valid #form data is valid
+
+    # Helpers ---------------------------------------------------------
+
+    def createUser(self, name, password, pwencoded=False, email=None):
+        """ helper to create test user
+        """
+        # Create user
+        self.user = user.User()
+        self.user.name = name
+        self.user.email = email
+        if not pwencoded:
+            password = user.encodePassword(password)
+        self.user.enc_password = password
+
+        # Validate that we are not modifying existing user data file!
+        if self.user.exists():
+            self.user = None
+            py.test.skip("Test user exists, will not override existing user data file!")
+
+        # Save test user
+        self.user.save()
+
+        # Validate user creation
+        if not self.user.exists():
+            self.user = None
+            py.test.skip("Can't create test user")
