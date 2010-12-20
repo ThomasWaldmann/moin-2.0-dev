@@ -15,28 +15,6 @@
 {% block header %}
     {{ super() }}
     {{ editbar }}
-    <style type="text/css">
-        .permalink {
-            display:none;
-            cursor:pointer;
-            font-size: 80%;
-            margin-left: 3px;
-        }
-        a.permalink {
-            color:#95A09F
-        }
-        a:hover.permalink {
-            color:#C1CFCD
-        }
-        h1:hover .permalink, 
-        h2:hover .permalink, 
-        h3:hover .permalink,
-        h4:hover .permalink,
-        h5:hover .permalink,
-        h6:hover .permalink {
-            display:inline;
-        }
-    </style>
 {% endblock %}
 
 {% macro rev_navigation(view='frontend.show_item') %}
