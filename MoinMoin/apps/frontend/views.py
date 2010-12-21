@@ -818,7 +818,7 @@ class ValidChangePass(Validator):
         if not (element['password_current'].valid and element['password1'].valid and element['password2'].valid):
             return False
 
-        if not element['password_current'].value: # XXX add the real pw check
+        if not user.User(name=flaskg.user.name, password=element['password_current'].value).valid:
             return self.note_error(element, state, 'current_password_wrong_msg')
 
         if element['password1'].value != element['password2'].value:
