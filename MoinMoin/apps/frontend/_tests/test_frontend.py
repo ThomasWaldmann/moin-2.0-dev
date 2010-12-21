@@ -23,7 +23,7 @@ class TestFrontend(object):
             assert rv.headers['Content-Type'] == 'text/plain; charset=utf-8'
             assert 'Disallow:' in rv.data
 
-    def stest_favicon(self):
+    def test_favicon(self):
         with self.app.test_client() as c:
             rv = c.get('/favicon.ico')
             assert rv.status == '200 OK'
