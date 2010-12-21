@@ -76,8 +76,8 @@ class TestUsersettings(object):
         assert valid # form data is valid
 
     def test_user_unicode_password_change(self):
-        name = u'__שם משתמש לא קיים__' # Hebrew
-        password = name
+        name = 'moin'
+        password = u'__שם משתמש לא קיים__' # Hebrew
 
         self.createUser(name, password)
         flaskg.user = user.User(name=name, password=password)
