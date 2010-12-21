@@ -71,17 +71,7 @@ class TestUsersettings(object):
     def test_user_password_change(self):
         self.createUser('moin', '12345')
         flaskg.user = user.User(name='moin', password='12345')
-
-        FormClass = views.UserSettingsPasswordForm
-        request_form = ImmutableMultiDict(
-           [
-              ('usersettings_password_password1', u'123'),
-              ('usersettings_password_submit', u'Save'),
-              ('usersettings_password_password_current', u'12345'),
-              ('usersettings_password_password2', u'123')
-           ]
-        )
-        form = FormClass.from_flat(request_form)
+        form = self.fillPasswordChangeForm(u'12345', u'123', u'123')
         valid = form.validate()
         assert valid # form data is valid
 
@@ -91,17 +81,7 @@ class TestUsersettings(object):
 
         self.createUser(name, password)
         flaskg.user = user.User(name=name, password=password)
-
-        FormClass = views.UserSettingsPasswordForm
-        request_form = ImmutableMultiDict(
-           [
-              ('usersettings_password_password1', u'123'),
-              ('usersettings_password_submit', u'Save'),
-              ('usersettings_password_password_current', password),
-              ('usersettings_password_password2', u'123')
-           ]
-        )
-        form = FormClass.from_flat(request_form)
+        form = self.fillPasswordChangeForm(password, u'123', u'123')
         valid = form.validate()
         assert valid # form data is valid
 
@@ -112,34 +92,14 @@ class TestUsersettings(object):
 
         self.createUser(name, password)
         flaskg.user = user.User(name=name, password=password)
-
-        FormClass = views.UserSettingsPasswordForm
-        request_form = ImmutableMultiDict(
-           [
-              ('usersettings_password_password1', new_password),
-              ('usersettings_password_submit', u'Save'),
-              ('usersettings_password_password_current', password),
-              ('usersettings_password_password2', new_password)
-           ]
-        )
-        form = FormClass.from_flat(request_form)
+        form = self.fillPasswordChangeForm(password, new_password, new_password)
         valid = form.validate()
         assert valid # form data is valid
 
     def test_faul_user_password_change_pw_mismatch(self):
         self.createUser('moin', '12345')
         flaskg.user = user.User(name='moin', password='12345')
-
-        FormClass = views.UserSettingsPasswordForm
-        request_form = ImmutableMultiDict(
-           [
-              ('usersettings_password_password1', u'1234'),
-              ('usersettings_password_submit', u'Save'),
-              ('usersettings_password_password_current', u'12345'),
-              ('usersettings_password_password2', u'123')
-           ]
-        )
-        form = FormClass.from_flat(request_form)
+        form = self.fillPasswordChangeForm(u'12345', u'1234', u'123')
         valid = form.validate()
         # form data is invalid because password1 != password2
         assert not valid
@@ -147,22 +107,27 @@ class TestUsersettings(object):
     def test_fail_password_change(self):
         self.createUser('moin', '12345')
         flaskg.user = user.User(name='moin', password='12345')
-
-        FormClass = views.UserSettingsPasswordForm
-        request_form = ImmutableMultiDict(
-           [
-              ('usersettings_password_password1', u'123'),
-              ('usersettings_password_submit', u'Save'),
-              ('usersettings_password_password_current', u'54321'),
-              ('usersettings_password_password2', u'123')
-           ]
-        )
-        form = FormClass.from_flat(request_form)
+        form = self.fillPasswordChangeForm(u'54321', u'123', u'123')
         valid = form.validate()
         # form data is invalid because password_current != user.password
         assert not valid
 
     # Helpers ---------------------------------------------------------
+
+    def fillPasswordChangeForm(self, current_password, password1, password2):
+        """ helper to fill UserSettingsPasswordForm form
+        """
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password_current', current_password),
+              ('usersettings_password_password1', password1),
+              ('usersettings_password_password2', password2),
+              ('usersettings_password_submit', u'Save')
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        return form
 
     def createUser(self, name, password, pwencoded=False, email=None):
         """ helper to create test user
