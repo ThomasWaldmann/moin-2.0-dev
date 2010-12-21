@@ -68,7 +68,7 @@ class TestUsersettings(object):
         # Restore original user
         flaskg.user = self.saved_user
 
-    def test_suc_password_change(self):
+    def test_user_password_change(self):
         self.createUser('moin', '12345')
         flaskg.user = user.User(name='moin', password='12345')
 
@@ -83,7 +83,66 @@ class TestUsersettings(object):
         )
         form = FormClass.from_flat(request_form)
         valid = form.validate()
-        assert valid #form data is valid
+        assert valid # form data is valid
+
+    def test_user_unicode_password_change(self):
+        name = u'__שם משתמש לא קיים__' # Hebrew
+        password = name
+
+        self.createUser(name, password)
+        flaskg.user = user.User(name=name, password=password)
+
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password1', u'123'),
+              ('usersettings_password_submit', u'Save'),
+              ('usersettings_password_password_current', password),
+              ('usersettings_password_password2', u'123')
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        valid = form.validate()
+        assert valid # form data is valid
+
+    def test_user_password_change_to_unicode_pw(self):
+        name = 'moin'
+        password = '12345'
+        new_password = u'__שם משתמש לא קיים__' # Hebrew
+
+        self.createUser(name, password)
+        flaskg.user = user.User(name=name, password=password)
+
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password1', new_password),
+              ('usersettings_password_submit', u'Save'),
+              ('usersettings_password_password_current', password),
+              ('usersettings_password_password2', new_password)
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        valid = form.validate()
+        assert valid # form data is valid
+
+    def test_faul_user_password_change_pw_mismatch(self):
+        self.createUser('moin', '12345')
+        flaskg.user = user.User(name='moin', password='12345')
+
+        FormClass = views.UserSettingsPasswordForm
+        request_form = ImmutableMultiDict(
+           [
+              ('usersettings_password_password1', u'1234'),
+              ('usersettings_password_submit', u'Save'),
+              ('usersettings_password_password_current', u'12345'),
+              ('usersettings_password_password2', u'123')
+           ]
+        )
+        form = FormClass.from_flat(request_form)
+        valid = form.validate()
+        # form data is invalid because password1 != password2
+        assert not valid
 
     def test_fail_password_change(self):
         self.createUser('moin', '12345')
@@ -100,7 +159,8 @@ class TestUsersettings(object):
         )
         form = FormClass.from_flat(request_form)
         valid = form.validate()
-        assert not valid #form data is valid
+        # form data is invalid because password_current != user.password
+        assert not valid
 
     # Helpers ---------------------------------------------------------
 
