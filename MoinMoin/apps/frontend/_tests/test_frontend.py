@@ -69,14 +69,14 @@ class TestUsersettings(object):
         flaskg.user = self.saved_user
 
     def test_user_password_change(self):
-        self.createUser('moin', 'Xiwejr622')
-        flaskg.user = user.User(name='moin', password='Xiwejr622')
+        self.createUser(u'moin', u'Xiwejr622')
+        flaskg.user = user.User(name=u'moin', password=u'Xiwejr622')
         form = self.fillPasswordChangeForm(u'Xiwejr622', u'Woodoo645', u'Woodoo645')
         valid = form.validate()
         assert valid # form data is valid
 
     def test_user_unicode_password_change(self):
-        name = 'moin'
+        name = u'moin'
         password = u'__שם משתמש לא קיים__' # Hebrew
 
         self.createUser(name, password)
@@ -86,8 +86,8 @@ class TestUsersettings(object):
         assert valid # form data is valid
 
     def test_user_password_change_to_unicode_pw(self):
-        name = 'moin'
-        password = 'Xiwejr622'
+        name = u'moin'
+        password = u'Xiwejr622'
         new_password = u'__שם משתמש לא קיים__' # Hebrew
 
         self.createUser(name, password)
@@ -96,17 +96,17 @@ class TestUsersettings(object):
         valid = form.validate()
         assert valid # form data is valid
 
-    def test_faul_user_password_change_pw_mismatch(self):
-        self.createUser('moin', 'Xiwejr622')
-        flaskg.user = user.User(name='moin', password='Xiwejr622')
+    def test_fail_user_password_change_pw_mismatch(self):
+        self.createUser(u'moin', u'Xiwejr622')
+        flaskg.user = user.User(name=u'moin', password=u'Xiwejr622')
         form = self.fillPasswordChangeForm(u'Xiwejr622', u'Piped33', u'Woodoo645')
         valid = form.validate()
         # form data is invalid because password1 != password2
         assert not valid
 
     def test_fail_password_change(self):
-        self.createUser('moin', 'Xiwejr622')
-        flaskg.user = user.User(name='moin', password='Xiwejr622')
+        self.createUser(u'moin', u'Xiwejr622')
+        flaskg.user = user.User(name=u'moin', password=u'Xiwejr622')
         form = self.fillPasswordChangeForm(u'Xinetd33', u'Woodoo645', u'Woodoo645')
         valid = form.validate()
         # form data is invalid because password_current != user.password
