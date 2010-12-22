@@ -231,38 +231,30 @@ function load() {
 }
 
 
-var toc;
-// tocli stores the headers innerhtml.
-var tocli = [];
-
 function toggletoc() {
-	var topol = $('.firstOl');
-	var visible = topol.is(':visible');
-	if (visible)
+	var top_ol = $('.firstOl');
+	if (top_ol.is(':visible'))
 	{
-		topol.hide();
+		top_ol.hide();
 		$('.showhide').text('[+]');
 	}
 	else
 	{
-		topol.show();
+		top_ol.show();
 		$('.showhide').html('[-]');
 	}
 }
 
-function togglehead(num, id, text)
-{
-	var li = '.li' + id;
-	var topol = $(li + ' ol').eq(0);
-	var visible = topol.is(':visible');
-	if (visible)
+function togglehead(num, id, text) {
+	var top_ol = $('.li' + id + ' ol').eq(0);
+	if (top_ol.is(':visible'))
 	{
-		topol.hide();
+		top_ol.hide();
 		$('.m' + id).text('[+]');
 	}
 	else
 	{
-		topol.show();
+		top_ol.show();
 		$('.m' + id).text('[-]');
 	}
 }
