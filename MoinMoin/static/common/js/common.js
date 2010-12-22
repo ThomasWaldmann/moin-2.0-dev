@@ -236,26 +236,26 @@ function toggletoc() {
 	if (top_ol.is(':visible'))
 	{
 		top_ol.hide();
-		$('.showhide').text('[+]');
+		$('.tocall').text('[+]');
 	}
 	else
 	{
 		top_ol.show();
-		$('.showhide').html('[-]');
+		$('.tocall').text('[-]');
 	}
 }
 
 function togglehead(id) {
-	var top_ol = $('.li' + id + ' ol').eq(0);
+	var top_ol = $('#li' + id + ' ol').eq(0);
 	if (top_ol.is(':visible'))
 	{
 		top_ol.hide();
-		$('.m' + id).text('[+]');
+		$('#m' + id).text('[+]');
 	}
 	else
 	{
 		top_ol.show();
-		$('.m' + id).text('[-]');
+		$('#m' + id).text('[-]');
 	}
 }
 
