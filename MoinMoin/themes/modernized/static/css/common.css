@@ -141,8 +141,10 @@ box-shadow: 3px 3px 11px -7px;
 div.table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
 div.table-of-contents ul { margin: 0; list-style: none; }
 div.table-of-contents li { margin: 0; padding: 0; }
-p.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
+div.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
             letter-spacing: 0.075em; }
+.showhide { margin-left: 10px; }
+.tocamin { margin-left: 10px; }
 
 /* Navigation macro */
 table.navigation { background: #FFF; float: right; margin: 2px; }
