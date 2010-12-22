@@ -231,35 +231,6 @@ function load() {
 }
 
 
-function toggletoc() {
-	var top_ol = $('.table-of-contents ol');
-	if (top_ol.is(':visible'))
-	{
-		top_ol.hide();
-		$('.tocall').text('[+]');
-	}
-	else
-	{
-		top_ol.show();
-		$('.tocall').text('[-]');
-	}
-}
-
-function togglehead(id) {
-	var top_ol = $('#li' + id + ' ol').eq(0);
-	if (top_ol.is(':visible'))
-	{
-		top_ol.hide();
-		$('#m' + id).text('[+]');
-	}
-	else
-	{
-		top_ol.show();
-		$('#m' + id).text('[-]');
-	}
-}
-
-
 function before_unload(evt) {
     // TODO: Better to set this in the editor html, as it does not make
     // sense elsehwere.

@@ -588,14 +588,14 @@ class ConverterPage(Converter):
             for elem, headings in special.tocs():
                 headings = list(headings)
                 maxlevel = max(h[1] for h in headings)
-                headminlink = html.a(attrib={
-                                         html.class_: 'tocall showhide',
+                headtogglelink = html.a(attrib={
+                                         html.class_: 'showhide',
                                          html.href_: 'javascript:void()',
-                                         html.onclick_: 'toggletoc()',
+                                         html.onclick_: "$('.table-of-contents ol').toggle()",
                                      },
-                                     children=[('[-]'), ])
+                                     children=[('[+]'), ])
                 elem_h = html.div(attrib={html.class_: 'table-of-contents-heading'},
-                                  children=[_('Contents'), headminlink])
+                                  children=[_('Contents'), headtogglelink])
                 elem.append(elem_h)
                 stack = [elem]
 
@@ -607,7 +607,7 @@ class ConverterPage(Converter):
                     stack[-1].append(elem)
 
                 last_level = 0
-                old_min = ""
+                old_toggle = ""
                 for elem, level, id in headings:
                     need_item = last_level >= level
                     # Ignore the last character in the text so permalink icon doesn't show in TOC
@@ -618,24 +618,23 @@ class ConverterPage(Converter):
                         last_level -= 1
                     while last_level < level:
                         if maxlevel != 1:
-                            stack_top_append(old_min)
+                            stack_top_append(old_toggle)
                         stack_push(html.ol())
                         stack_push(html.li({html.id_: 'li%s' % id}))
                         last_level += 1
                     if need_item:
                         stack.pop()
                         stack_push(html.li({html.id_: 'li%s' % id}))
-                    minlink = html.a(attrib={
+                    togglelink = html.a(attrib={
                                          html.href_: "javascript:void()",
-                                         html.onclick_: "togglehead('%s')" % id,
-                                         html.id_: 'm%s' % id,
+                                         html.onclick_: "$('#li%s ol').toggle()" % id,
                                          html.class_: 'showhide',
                                      },
-                                     children=["[-]", ])
+                                     children=["[+]", ])
                     elem_a = html.a(attrib={html.href: '#' + id},
                                     children=[text, ])
                     stack_top_append(elem_a)
-                    old_min = minlink
+                    old_toggle = togglelink
         return ret
 
     def visit(self, elem,
