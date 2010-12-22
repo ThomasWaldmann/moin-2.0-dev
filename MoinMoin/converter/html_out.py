@@ -607,7 +607,6 @@ class ConverterPage(Converter):
                     stack[-1].append(elem)
 
                 last_level = 0
-                count = 0
                 old_min = ""
                 for elem, level, id in headings:
                     need_item = last_level >= level
@@ -620,7 +619,6 @@ class ConverterPage(Converter):
                     while last_level < level:
                         if maxlevel != 1:
                             stack_top_append(old_min)
-                        count += 1
                         if level == 1:
                             stack_push(html.ol({html.class_: 'firstOl'}))
                         else:
@@ -629,7 +627,6 @@ class ConverterPage(Converter):
                         last_level += 1
                     if need_item:
                         stack.pop()
-                        count += 1
                         stack_push(html.li({html.class_: 'li%s' % id}))
                     minlink = html.a(attrib={
                                          html.href_: "javascript:void()",
@@ -637,10 +634,7 @@ class ConverterPage(Converter):
                                          html.class_: 'm%s tocamin' % id,
                                      },
                                      children=["[-]", ])
-                    elem_a = html.a(attrib={
-                                        html.class_: 'a%s' % count,
-                                        html.href: '#' + id,
-                                    },
+                    elem_a = html.a(attrib={html.href: '#' + id},
                                     children=[text, ])
                     stack_top_append(elem_a)
                     old_min = minlink
