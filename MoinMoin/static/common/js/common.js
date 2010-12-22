@@ -232,7 +232,7 @@ function load() {
 
 
 function toggletoc() {
-	var top_ol = $('.firstOl');
+	var top_ol = $('.table-of-contents ol');
 	if (top_ol.is(':visible'))
 	{
 		top_ol.hide();

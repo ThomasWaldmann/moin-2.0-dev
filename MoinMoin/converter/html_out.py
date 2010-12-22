@@ -619,10 +619,7 @@ class ConverterPage(Converter):
                     while last_level < level:
                         if maxlevel != 1:
                             stack_top_append(old_min)
-                        if level == 1:
-                            stack_push(html.ol({html.class_: 'firstOl'}))
-                        else:
-                            stack_push(html.ol())
+                        stack_push(html.ol())
                         stack_push(html.li({html.class_: 'li%s' % id}))
                         last_level += 1
                     if need_item:
