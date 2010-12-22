@@ -231,6 +231,43 @@ function load() {
 }
 
 
+var toc;
+// tocli stores the headers innerhtml.
+var tocli = [];
+
+function toggletoc() {
+	var topol = $('.firstOl');
+	var visible = topol.is(':visible');
+	if (visible)
+	{
+		topol.hide();
+		$('.showhide').text('[+]');
+	}
+	else
+	{
+		topol.show();
+		$('.showhide').html('[-]');
+	}
+}
+
+function togglehead(num, id, text)
+{
+	var li = '.li' + id;
+	var topol = $(li + ' ol').eq(0);
+	var visible = topol.is(':visible');
+	if (visible)
+	{
+		topol.hide();
+		$('.m' + id).text('[+]');
+	}
+	else
+	{
+		topol.show();
+		$('.m' + id).text('[-]');
+	}
+}
+
+
 function before_unload(evt) {
     // TODO: Better to set this in the editor html, as it does not make
     // sense elsehwere.

@@ -586,39 +586,60 @@ class ConverterPage(Converter):
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
+                headingslevel = list(headings)
+                maxlevel = max(h[1] for h in headingslevel)
+                showhide = {html.class_: 'showhide', html.href_: 'javascript:void()',
+                            html.onclick_: 'toggletoc()'}
+                headminlink = html.a(attrib=showhide,
+                                     children=[('[-]')])
                 attrib_h = {html.class_: 'table-of-contents-heading'}
-                elem_h = html.p(
-                        attrib=attrib_h, children=[_('Contents')])
+                elem_h = html.div(
+                        attrib=attrib_h, children=[_('Contents'),headminlink])
                 elem.append(elem_h)
-
                 stack = [elem]
+
                 def stack_push(elem):
                     stack[-1].append(elem)
                     stack.append(elem)
+
                 def stack_top_append(elem):
                     stack[-1].append(elem)
 
                 last_level = 0
-                for elem, level, id in headings:
+                count = 0
+                old_min = ""
+                for elem, level, id in headingslevel:
                     need_item = last_level >= level
+                    # Ignore the last character in the text so permalink icon doesn't show in TOC
+                    text = ''.join(elem.itertext())[:-1]
                     while last_level > level:
                         stack.pop()
                         stack.pop()
                         last_level -= 1
                     while last_level < level:
-                        stack_push(html.ol())
-                        stack_push(html.li())
+                        if maxlevel != 1:
+                            stack_top_append(old_min)
+                        count += 1
+                        attr = {html.class_: 'li%s' % id}
+                        if level == 1:
+                            attr_ol = {html.class_: 'firstOl'}
+                            stack_push(html.ol(attr_ol))
+                        else:
+                            stack_push(html.ol())
+                        stack_push(html.li(attr))
                         last_level += 1
                     if need_item:
                         stack.pop()
-                        stack_push(html.li())
-
-                    attrib = {html.href: '#' + id}
-                    # Ignore the last character in the text so permalink icon doesn't show in TOC
-                    text = ''.join(elem.itertext())[:-1]
+                        count += 1
+                        attr = {html.class_: 'li%s' % id}
+                        stack_push(html.li(attr))
+                    attr_min = {html.href_: "javascript:void()", html.onclick_: "togglehead(%s,'%s','%s')" % (count, id, text),
+                                html.class_: 'm%s tocamin' % id}
+                    minlink = html.a(attr_min, "[-]")
+                    attrib = {html.class_: 'a%s' % count, html.href: '#' + id}
                     elem_a = html.a(attrib, children=[text])
                     stack_top_append(elem_a)
-
+                    old_min = minlink
         return ret
 
     def visit(self, elem,
