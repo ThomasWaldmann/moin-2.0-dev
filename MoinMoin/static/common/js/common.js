@@ -245,7 +245,7 @@ function toggletoc() {
 	}
 }
 
-function togglehead(num, id, text) {
+function togglehead(id) {
 	var top_ol = $('.li' + id + ' ol').eq(0);
 	if (top_ol.is(':visible'))
 	{

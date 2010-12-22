@@ -633,7 +633,7 @@ class ConverterPage(Converter):
                         stack_push(html.li({html.class_: 'li%s' % id}))
                     minlink = html.a(attrib={
                                          html.href_: "javascript:void()",
-                                         html.onclick_: "togglehead(%s,'%s','%s')" % (count, id, text),
+                                         html.onclick_: "togglehead('%s')" % id,
                                          html.class_: 'm%s tocamin' % id,
                                      },
                                      children=["[-]", ])
