@@ -586,15 +586,16 @@ class ConverterPage(Converter):
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
-                headingslevel = list(headings)
-                maxlevel = max(h[1] for h in headingslevel)
-                showhide = {html.class_: 'showhide', html.href_: 'javascript:void()',
-                            html.onclick_: 'toggletoc()'}
-                headminlink = html.a(attrib=showhide,
-                                     children=[('[-]')])
-                attrib_h = {html.class_: 'table-of-contents-heading'}
-                elem_h = html.div(
-                        attrib=attrib_h, children=[_('Contents'),headminlink])
+                headings = list(headings)
+                maxlevel = max(h[1] for h in headings)
+                headminlink = html.a(attrib={
+                                         html.class_: 'showhide',
+                                         html.href_: 'javascript:void()',
+                                         html.onclick_: 'toggletoc()',
+                                     },
+                                     children=[('[-]'), ])
+                elem_h = html.div(attrib={html.class_: 'table-of-contents-heading'},
+                                  children=[_('Contents'), headminlink])
                 elem.append(elem_h)
                 stack = [elem]
 
@@ -608,7 +609,7 @@ class ConverterPage(Converter):
                 last_level = 0
                 count = 0
                 old_min = ""
-                for elem, level, id in headingslevel:
+                for elem, level, id in headings:
                     need_item = last_level >= level
                     # Ignore the last character in the text so permalink icon doesn't show in TOC
                     text = ''.join(elem.itertext())[:-1]
@@ -620,24 +621,27 @@ class ConverterPage(Converter):
                         if maxlevel != 1:
                             stack_top_append(old_min)
                         count += 1
-                        attr = {html.class_: 'li%s' % id}
                         if level == 1:
-                            attr_ol = {html.class_: 'firstOl'}
-                            stack_push(html.ol(attr_ol))
+                            stack_push(html.ol({html.class_: 'firstOl'}))
                         else:
                             stack_push(html.ol())
-                        stack_push(html.li(attr))
+                        stack_push(html.li({html.class_: 'li%s' % id}))
                         last_level += 1
                     if need_item:
                         stack.pop()
                         count += 1
-                        attr = {html.class_: 'li%s' % id}
-                        stack_push(html.li(attr))
-                    attr_min = {html.href_: "javascript:void()", html.onclick_: "togglehead(%s,'%s','%s')" % (count, id, text),
-                                html.class_: 'm%s tocamin' % id}
-                    minlink = html.a(attr_min, "[-]")
-                    attrib = {html.class_: 'a%s' % count, html.href: '#' + id}
-                    elem_a = html.a(attrib, children=[text])
+                        stack_push(html.li({html.class_: 'li%s' % id}))
+                    minlink = html.a(attrib={
+                                         html.href_: "javascript:void()",
+                                         html.onclick_: "togglehead(%s,'%s','%s')" % (count, id, text),
+                                         html.class_: 'm%s tocamin' % id,
+                                     },
+                                     children=["[-]", ])
+                    elem_a = html.a(attrib={
+                                        html.class_: 'a%s' % count,
+                                        html.href: '#' + id,
+                                    },
+                                    children=[text, ])
                     stack_top_append(elem_a)
                     old_min = minlink
         return ret
