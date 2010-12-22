@@ -144,7 +144,6 @@ div.table-of-contents li { margin: 0; padding: 0; }
 div.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
             letter-spacing: 0.075em; }
 .showhide { margin-left: 10px; }
-.tocamin { margin-left: 10px; }
 
 /* Navigation macro */
 table.navigation { background: #FFF; float: right; margin: 2px; }

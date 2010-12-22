@@ -589,7 +589,7 @@ class ConverterPage(Converter):
                 headings = list(headings)
                 maxlevel = max(h[1] for h in headings)
                 headminlink = html.a(attrib={
-                                         html.class_: 'showhide',
+                                         html.class_: 'tocall showhide',
                                          html.href_: 'javascript:void()',
                                          html.onclick_: 'toggletoc()',
                                      },
@@ -620,15 +620,16 @@ class ConverterPage(Converter):
                         if maxlevel != 1:
                             stack_top_append(old_min)
                         stack_push(html.ol())
-                        stack_push(html.li({html.class_: 'li%s' % id}))
+                        stack_push(html.li({html.id_: 'li%s' % id}))
                         last_level += 1
                     if need_item:
                         stack.pop()
-                        stack_push(html.li({html.class_: 'li%s' % id}))
+                        stack_push(html.li({html.id_: 'li%s' % id}))
                     minlink = html.a(attrib={
                                          html.href_: "javascript:void()",
                                          html.onclick_: "togglehead('%s')" % id,
-                                         html.class_: 'm%s tocamin' % id,
+                                         html.id_: 'm%s' % id,
+                                         html.class_: 'showhide',
                                      },
                                      children=["[-]", ])
                     elem_a = html.a(attrib={html.href: '#' + id},
