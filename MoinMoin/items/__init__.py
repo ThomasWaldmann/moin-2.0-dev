@@ -79,6 +79,7 @@ MIMETYPE = "mimetype"
 SIZE = "size"
 LANGUAGE = "language"
 ITEMLINKS = "itemlinks"
+ITEMTRANSCLUSIONS = "itemtransclusions"
 TAGS = "tags"
 
 EDIT_LOG_ACTION = "edit_log_action"
@@ -1058,10 +1059,13 @@ class Text(Binary):
 
 
 class MarkupItem(Text):
-    """ some kind of item with markup (and internal links) """
+    """
+    some kind of item with markup
+    (internal links and transcluded items)
+    """
     def before_revision_commit(self, newrev, data):
         """
-        add ITEMLINKS metadata
+        add ITEMLINKS and ITEMTRANSCLUSIONS metadata
         """
         super(MarkupItem, self).before_revision_commit(newrev, data)
 
@@ -1071,16 +1075,17 @@ class MarkupItem(Text):
         from MoinMoin.util.tree import moin_page
 
         input_conv = reg.get(Type(self.mimetype), type_moin_document)
-        itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='itemlinks', url_root=Iri(request.url_root))
+        item_conv = reg.get(type_moin_document, type_moin_document,
+                items='refs', url_root=Iri(request.url_root))
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
         doc = input_conv(self.data_storage_to_internal(data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
-        doc = itemlinks_conv(doc)
-        newrev[ITEMLINKS] = itemlinks_conv.get_links()
+        doc = item_conv(doc)
 
+        newrev[ITEMLINKS] = item_conv.get_links()
+        newrev[ITEMTRANSCLUSIONS] = item_conv.get_transclusions()
 
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
