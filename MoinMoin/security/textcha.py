@@ -40,7 +40,7 @@ from time import time
 from flatland import Form, String
 from flatland.validation import Validator
 
-from MoinMoin import N_
+from MoinMoin import _
 
 SHA1_LEN = 40 # length of hexdigest
 TIMESTAMP_LEN = 10 # length of timestamp
@@ -160,8 +160,8 @@ class TextCha(object):
 class TextChaValid(Validator):
     """Validator for TextChas
     """
-    textcha_incorrect_msg = N_('The entered TextCha was incorrect.')
-    textcha_invalid_msg = N_('The TextCha question is invalid or has expired. Please try again.')
+    textcha_incorrect_msg = _('The entered TextCha was incorrect.')
+    textcha_invalid_msg = _('The TextCha question is invalid or has expired. Please try again.')
 
     def validate(self, element, state):
         textcha = TextCha(element.parent)
@@ -180,4 +180,4 @@ class TextChaValid(Validator):
 class TextChaizedForm(Form):
     """a form providing TextCha support"""
     textcha_question = String
-    textcha = String.using(label=N_('TextCha')).validated_by(TextChaValid())
+    textcha = String.using(label=_('TextCha')).validated_by(TextChaValid())
