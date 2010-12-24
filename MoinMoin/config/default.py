@@ -338,7 +338,7 @@ def _default_password_checker(cfg, username, password):
     password_lower = password.lower()
     if username in password or password in username or \
        username_lower in password_lower or password_lower in username_lower:
-        return _("Password is too easy (password contains name or name contains password).")
+        return _("Password is too easy to guess (password contains name or name contains password).")
 
     keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
                  ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
@@ -347,7 +347,7 @@ def _default_password_checker(cfg, username, password):
         rev_kbd = kbd[::-1]
         if password in kbd or password in rev_kbd or \
            password_lower in kbd or password_lower in rev_kbd:
-            return _("Password is too easy (keyboard sequence).")
+            return _("Password is too easy to guess (keyboard sequence).")
     return None
 
 
