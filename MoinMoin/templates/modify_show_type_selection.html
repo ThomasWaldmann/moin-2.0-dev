@@ -1,8 +1,8 @@
 {% extends theme("layout.html") %}
 {% block content %}
-<h1>Create new item?</h1>
+<h1>{{ _("Create new item?") }}</h1>
 <p>
-This item does not exist (yet), but you can try creating it now. Please select the type of the item you want to create.
+{{ _("This item does not exist (yet), but you can try creating it now. Please select the type of the item you want to create.") }}
 </p>
 <table>
     {% for gname, mimetypes in mimetype_groups %}

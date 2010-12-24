@@ -1,10 +1,10 @@
 {% extends theme("layout.html") %}
 {% block content %}
-<h1>Create new item?</h1>
+<h1>{{ _("Create new item?") }}</h1>
 <p>
-You can either <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mimetype, template='')|e }}">create the item from scratch</a> or select a template.
+{{ _("You can either <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mimetype, template='')|e }}">create the item from scratch</a> or select a template.")
 </p>
-<h2>Available template items</h2>
+<h2>{{ _("Available template items") }}</h2>
 <ul>
     {% for template in templates %}
     <li>

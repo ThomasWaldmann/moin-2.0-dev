@@ -10,7 +10,7 @@
     <li><a href="{{ url_for('frontend.usersettings', part='notification')|e }}">{{ _("Notification Settings") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='ui')|e }}">{{ _("Wiki Appearance Settings") }}</a></li>
     <li><a href="{{ url_for('frontend.usersettings', part='navigation')|e }}">{{ _("Navigation Settings") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='options')|e }}">{{ _("Options Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='options')|e }}">{{ _("Options") }}</a></li>
 </ul>
 
 {% elif part == 'personal' %}
@@ -81,7 +81,7 @@
 </div>
 
 {% elif part == 'options' %}
-<h1>{{ _("Options Settings") }}</h1>
+<h1>{{ _("Options") }}</h1>
 <div class="moin-form">
 {{ gen.form.open(form, method="post", action=url_for('frontend.usersettings', part=part)) }}
   {{ forms.render_errors(form) }}

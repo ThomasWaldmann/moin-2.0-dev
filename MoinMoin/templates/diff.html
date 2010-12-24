@@ -1,7 +1,7 @@
 {% extends theme("show.html") %}
 {% block content %}
 {% block headline %}
-<h1>Item: {{ newrev.item.name }} (Diff between revision {{ oldrev.revno }} and {{ newrev.revno }})</h1>
+<h1>{{ _("Item:") }} {{ newrev.item.name }} ({{ _("Diff between revision")}} {{ oldrev.revno }}) {{ _("and") }} {{ newrev.revno }})</h1>
 {% endblock %}
 {{ item._render_data_diff(oldrev, newrev) }}
 {% endblock %}
