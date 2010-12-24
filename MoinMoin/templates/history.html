@@ -7,15 +7,15 @@
         <div id="moin-page-history">
         <table>
             <tr>
-                <th>Name</th>
-                <th>Rev.</th>
-                <th>Timestamp</th>
-                <th>Size</th>
+                <th>{{ _("Name") }}</th>
+                <th>{{ _("Rev.") }}</th>
+                <th>{{ _("Timestamp") }}</th>
+                <th>{{ _("Size") }}</th>
                 <th><input type="submit" value="Diff" /></th>
-                <th>Editor</th>
-                <th>Mime Type</th>
-                <th>Comment</th>
-                <th colspan="6">Actions</th>
+                <th>{{ _("Editor") }}</th>
+                <th>{{ _("Mime") }} Type</th>
+                <th>{{ _("Comment") }}</th>
+                <th colspan="6">{{ _("Actions") }}</th>
             </tr>
             {% for rev in history %}
             <tr>
@@ -35,7 +35,7 @@
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
                 <td><a href="{{ url_for('frontend.show_item_meta', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('meta') }}</a></td>
                 <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('download') }}</a></td>
-                <td><a href="{{ url_for('frontend.highlight_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{_('highlight') }}</a></td>
+                <td><a href="{{ url_for('frontend.highlight_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('highlight') }}</a></td>
                 <td><a href="{{ url_for('frontend.revert_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('revert') }}</a></td>
                 <td><a href="{{ url_for('frontend.destroy_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('destroy') }}</a></td>
             </tr>

@@ -45,7 +45,7 @@
     {% endif %}
     
     {% if not rev %}
-    This item exists, but not this revision.
+    {{ _("This item, but not revision, exists.") }} 
     {% else %}
     {% block headline %}
     {# <h1>{{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1> #}
