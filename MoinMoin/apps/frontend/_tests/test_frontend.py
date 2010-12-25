@@ -199,7 +199,7 @@ class TestViews(object):
             self.items.append(page)
 
     def test_orphans(self):
-        expected_orphans = ['page4']
+        expected_orphans = sorted(['page4'])
         result_orphans = sorted(views._orphans(self.items))
 
         assert result_orphans == expected_orphans

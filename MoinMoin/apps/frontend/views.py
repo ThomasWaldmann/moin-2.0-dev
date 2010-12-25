@@ -486,12 +486,12 @@ def wanted_items():
 
 def _wanteds(items):
     """
-    Returns a list with all the names of non-existing items which are refed by
-    other items
+    Returns a dict with all the names of non-existing items which are refed by
+    other items and the items which are refed by
 
     @param items: all the items
     @type items: iteratable sequence
-    @return: the list of all wanted items
+    @return: a dict with all the wanted items and the items which are beign refed by
     """
     all_items = set()
     wanteds = {}
