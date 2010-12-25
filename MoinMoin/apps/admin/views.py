@@ -56,7 +56,7 @@ def userprofile(user_name):
     uid = user.getUserId(user_name)
     u = user.User(uid)
     if request.method == 'GET':
-        return _("userprofile of %(username)s: %(email)r", username=user_name,
+        return _("User profile of %(username)s: %(email)r", username=user_name,
                  email=(u.email, u.disabled))
 
     if request.method == 'POST':
