@@ -212,8 +212,7 @@ class Item(object):
             from MoinMoin.util.tree import moin_page, xlink
             input_conv = reg.get(Type(self.mimetype), type_moin_document)
             if not input_conv:
-                raise TypeError(_("We cannot handle the conversion from %(mimetype)s to the DOM tree",
-                                  mimetype=self.mimetype))
+                raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
             link_conv = reg.get(type_moin_document, type_moin_document,
                     links='extern', url_root=Iri(request.url_root))
             smiley_conv = reg.get(type_moin_document, type_moin_document,
@@ -346,8 +345,7 @@ class Item(object):
             new_rev.write(content)
             hash.update(content)
         else:
-            raise StorageError(_("unsupported content object: %(content)r",
-                                 content=content))
+            raise StorageError("unsupported content object: %r" % content)
         return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
@@ -748,9 +746,7 @@ class TarMixin(object):
         @param expected_members: set of expected member file names
         """
         if not name in expected_members:
-            raise StorageError(_("tried to add unexpected member %(unexp_name)r to container item %(name)r", 
-                                 unexp_name=name,
-                                 name=self.name))
+            raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
         if isinstance(name, unicode):
             name = name.encode('utf-8')
         temp_fname = os.path.join(tempfile.gettempdir(), 'TarContainer_' +
@@ -763,15 +759,14 @@ class TarMixin(object):
             content = StringIO(content) # we need a file obj
         elif not hasattr(content, 'read'):
             logging.error("unsupported content object: %r" % content)
-            raise StorageError(_("unsupported content object: %(content)r",
-                                 content=content)
+            raise StorageError("unsupported content object: %r" % content)
         assert content_length >= 0  # we don't want -1 interpreted as 4G-1
         ti.size = content_length
         tf.addfile(ti, content)
         tf_members = set(tf.getnames())
         tf.close()
         if tf_members - expected_members:
-            msg = _("found unexpected members in container item %(item)r", item=self.name)
+            msg = "found unexpected members in container item %r" % self.name
             logging.error(msg)
             os.remove(temp_fname)
             raise StorageError(msg)
@@ -879,7 +874,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
         elif content_type == 'image/gif':
             output_type = 'GIF'
         else:
-            raise ValueError(_("content_type %(content_type)r not supported", content_type=content_type))
+            raise ValueError("content_type %r not supported" % content_type)
 
         # revision obj has read() seek() tell(), thus this works:
         image = PILImage.open(self.rev)
@@ -976,8 +971,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             elif content_type == 'image/gif':
                 output_type = 'GIF'
             else:
-                raise ValueError(_("content_type %(content_type)r not supported",
-                                   content_type=content_type))
+                raise ValueError("content_type %r not supported" % content_type)
 
             oldimage = PILImage.open(oldrev)
             newimage = PILImage.open(newrev)

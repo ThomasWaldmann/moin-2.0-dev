@@ -344,7 +344,7 @@ class ACLStringIterator(object):
                 entries, self.rest = self.rest.split(':', 1)
             except ValueError:
                 self.finished = 1
-                raise StopIteration(_("Can't parse rest of string"))
+                raise StopIteration("Can't parse rest of string")
             if entries == '':
                 entries = []
             else:

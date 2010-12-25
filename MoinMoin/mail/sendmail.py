@@ -174,7 +174,7 @@ def sendmail(to, subject, text, mail_from=None):
             return (0, _("Mail not sent"))
 
     logging.debug("Mail sent successfully")
-    return (1, _("Mail sent sucessfully"))
+    return (1, _("Mail sent successfully"))
 
 def encodeSpamSafeEmail(email_address, obfuscation_text=''):
     """ Encodes a standard email address to an obfuscated address

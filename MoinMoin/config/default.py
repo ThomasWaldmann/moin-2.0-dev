@@ -80,9 +80,9 @@ class ConfigFunctionality(object):
         self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
 
         if not isinstance(self.superusers, list):
-            msg = _("""The superusers setting in your wiki configuration is not
+            msg = """The superusers setting in your wiki configuration is not
                     a list (e.g. ['Sample User', 'AnotherUser']).  Please change
-                    it in your wiki configuration and try again.""")
+                    it in your wiki configuration and try again."""
             raise error.ConfigurationError(msg)
 
         self._loadPluginModule()
