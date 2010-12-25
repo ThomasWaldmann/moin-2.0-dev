@@ -32,7 +32,7 @@ logging = log.getLogger(__name__)
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
-from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS
+from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS, ITEMTRANSCLUSIONS
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
 from MoinMoin.security.textcha import TextCha, TextChaizedForm, TextChaValid
@@ -71,7 +71,7 @@ Disallow: /+sitemap/
 Disallow: /+similar_names/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
-Disallow: /+backlinks/
+Disallow: /+backrefs/
 Disallow: /+wanteds/
 Disallow: /+orphans/
 Disallow: /+register
@@ -407,9 +407,30 @@ def global_index():
                           )
 
 
-@frontend.route('/+backlinks/<itemname:item_name>')
-def backlinks(item_name):
-    return _search(value='linkto:"%s"' % item_name, context=180)
+@frontend.route('/+backrefs/<itemname:item_name>')
+def backrefs(item_name):
+    """
+    Returns the list of all items that link or transclude this item
+
+    @param item_name: the name of the current item
+    @type item_name: unicode
+    @return: a page with all the items which link or transclude item_name
+    """
+    refs_here = set()
+    for item in flaskg.storage.iteritems():
+        current_item = item.name
+        current_revision = item.get_revision(-1)
+        links = set(current_revision.get(ITEMLINKS, []))
+        transclusions = set(current_revision.get(ITEMTRANSCLUSIONS, []))
+
+        refs = links.union(transclusions)
+        if item_name in refs:
+            refs_here.add(current_item)
+
+    return render_template('refs_here.html',
+                           item_name=u'Refers Here',
+                           item_names=refs_here
+                          )
 
 
 @frontend.route('/+search')
@@ -442,20 +463,23 @@ def global_history():
 @frontend.route('/+wanteds')
 def wanted_items():
     """ Returns the list of non-existing items, which are wanted items and the
-        items they are linked to helps show what items still need to be
-        written and shows whether there are any broken links. """
+        items they are linked or transcluded to helps show what items still need
+        to be written and shows whether there are any broken links. """
     all_items = set()
     wanteds = {}
     for item in flaskg.storage.iteritems():
         current_item = item.name
         all_items.add(current_item)
         current_rev = item.get_revision(-1)
-        outgoing_links = current_rev.get(ITEMLINKS, [])
-        for linked_item in outgoing_links:
-            if linked_item not in all_items:
-                if linked_item not in wanteds:
-                    wanteds[linked_item] = []
-                wanteds[linked_item].append(current_item)
+        # converting to sets so we can get the union
+        outgoing_links = set(current_rev.get(ITEMLINKS, []))
+        outgoing_transclusions = set(current_rev.get(ITEMTRANSCLUSIONS, []))
+        outgoing_refs = outgoing_links.union(outgoing_transclusions)
+        for refed_item in outgoing_refs:
+            if refed_item not in all_items:
+                if refed_item not in wanteds:
+                    wanteds[refed_item] = []
+                wanteds[refed_item].append(current_item)
         if current_item in wanteds:
             # if a previously wanted item has been found in the items storage, remove it
             del wanteds[current_item]
@@ -465,15 +489,18 @@ def wanted_items():
 
 @frontend.route('/+orphans')
 def orphaned_items():
-    """ Return a list of items not being linked by any other items, that makes
+    """ Return a list of items not being linked or transcluded
+        by any other items, that makes
         them sometimes not discoverable. """
     linked_items = set()
+    transcluded_items = set()
     all_items = set()
     for item in flaskg.storage.iteritems():
         all_items.add(item.name)
         current_rev = item.get_revision(-1)
         linked_items.update(current_rev.get(ITEMLINKS, []))
-    orphans = all_items - linked_items
+        transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
+    orphans = all_items - linked_items - transcluded_items
     return render_template('orphans.html',
                            item_name=u'Orphaned Items',
                            item_names=orphans)
