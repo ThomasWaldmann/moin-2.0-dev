@@ -12,7 +12,7 @@ from MoinMoin.macro._base import MacroInlineBase
 class Macro(MacroInlineBase):
     def macro(self, anchor=unicode):
         if not anchor:
-            raise ValueError("Anchor: you need to give an anchor name.")
+            raise ValueError("Anchor: you need to specify an anchor name.")
 
         return moin_page.span(attrib={moin_page.id: anchor})
 

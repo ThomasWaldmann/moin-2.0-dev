@@ -212,7 +212,8 @@ class Item(object):
             from MoinMoin.util.tree import moin_page, xlink
             input_conv = reg.get(Type(self.mimetype), type_moin_document)
             if not input_conv:
-                raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+                raise TypeError(_("We cannot handle the conversion from %(mimetype)s to the DOM tree",
+                                  mimetype=self.mimetype))
             link_conv = reg.get(type_moin_document, type_moin_document,
                     links='extern', url_root=Iri(request.url_root))
             smiley_conv = reg.get(type_moin_document, type_moin_document,
@@ -345,7 +346,8 @@ class Item(object):
             new_rev.write(content)
             hash.update(content)
         else:
-            raise StorageError("unsupported content object: %r" % content)
+            raise StorageError(_("unsupported content object: %(content)r",
+                                 content=content))
         return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
@@ -648,15 +650,16 @@ There is no help, you're doomed!
     def _render_data_diff(self, oldrev, newrev):
         hash_name = app.cfg.hash_algorithm
         if oldrev[hash_name] == newrev[hash_name]:
-            return "The items have the same data hash code (that means they very likely have the same data)."
+            return _("The items have the same data hash code (that means they very likely have the same data).")
         else:
-            return "The items have different data."
+            return _("The items have different data.")
 
     _render_data_diff_text = _render_data_diff
     _render_data_diff_raw = _render_data_diff
 
     def _convert(self):
-        return "Impossible to convert the data to the mimetype : %s" % request.values.get('mimetype')
+        return _("Impossible to convert the data to the mimetype :  %(mimetype)s", 
+                 mimetype=request.values.get('mimetype'))
 
     def do_get(self):
         hash = self.rev.get(app.cfg.hash_algorithm)
@@ -745,7 +748,9 @@ class TarMixin(object):
         @param expected_members: set of expected member file names
         """
         if not name in expected_members:
-            raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
+            raise StorageError(_("tried to add unexpected member %(unexp_name)r to container item %(name)r", 
+                                 unexp_name=name,
+                                 name=self.name))
         if isinstance(name, unicode):
             name = name.encode('utf-8')
         temp_fname = os.path.join(tempfile.gettempdir(), 'TarContainer_' +
@@ -758,14 +763,15 @@ class TarMixin(object):
             content = StringIO(content) # we need a file obj
         elif not hasattr(content, 'read'):
             logging.error("unsupported content object: %r" % content)
-            raise StorageError("unsupported content object: %r" % content)
+            raise StorageError(_("unsupported content object: %(content)r",
+                                 content=content)
         assert content_length >= 0  # we don't want -1 interpreted as 4G-1
         ti.size = content_length
         tf.addfile(ti, content)
         tf_members = set(tf.getnames())
         tf.close()
         if tf_members - expected_members:
-            msg = "found unexpected members in container item %r" % (self.name, )
+            msg = _("found unexpected members in container item %(item)r", item=self.name)
             logging.error(msg)
             os.remove(temp_fname)
             raise StorageError(msg)
@@ -873,7 +879,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
         elif content_type == 'image/gif':
             output_type = 'GIF'
         else:
-            raise ValueError("content_type %r not supported" % content_type)
+            raise ValueError(_("content_type %(content_type)r not supported", content_type=content_type))
 
         # revision obj has read() seek() tell(), thus this works:
         image = PILImage.open(self.rev)
@@ -970,7 +976,8 @@ class TransformableBitmapImage(RenderableBitmapImage):
             elif content_type == 'image/gif':
                 output_type = 'GIF'
             else:
-                raise ValueError("content_type %r not supported" % content_type)
+                raise ValueError(_("content_type %(content_type)r not supported",
+                                   content_type=content_type))
 
             oldimage = PILImage.open(oldrev)
             newimage = PILImage.open(newrev)

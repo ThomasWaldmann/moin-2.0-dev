@@ -23,6 +23,7 @@ from flask import current_app as app
 
 from flask import flaskg
 
+from MoinMoin import _, N_
 from MoinMoin import user
 
 
@@ -343,7 +344,7 @@ class ACLStringIterator(object):
                 entries, self.rest = self.rest.split(':', 1)
             except ValueError:
                 self.finished = 1
-                raise StopIteration("Can't parse rest of string")
+                raise StopIteration(_("Can't parse rest of string"))
             if entries == '':
                 entries = []
             else:

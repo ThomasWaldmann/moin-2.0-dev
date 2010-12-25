@@ -18,6 +18,7 @@ from flask import current_app as app
 
 from werkzeug.contrib.atom import AtomFeed
 
+from MoinMoin import _, N_
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def atom(item_name):
                     content_type = 'xhtml'
             except Exception, e:
                 logging.exception("content rendering crashed")
-                content = u'MoinMoin feels unhappy.'
+                content = _(u'MoinMoin feels unhappy.')
                 content_type = 'text'
             feed.add(title=name, title_type='text',
                      summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
