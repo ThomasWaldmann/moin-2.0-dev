@@ -472,9 +472,9 @@ def wanted_items():
         all_items.add(current_item)
         current_rev = item.get_revision(-1)
         # converting to sets so we can get the union
-        outgoing_links = set(current_rev.get(ITEMLINKS, []))
-        outgoing_transclusions = set(current_rev.get(ITEMTRANSCLUSIONS, []))
-        outgoing_refs = outgoing_links.union(outgoing_transclusions)
+        outgoing_links = current_rev.get(ITEMLINKS, [])
+        outgoing_transclusions = current_rev.get(ITEMTRANSCLUSIONS, [])
+        outgoing_refs = set(outgoing_transclusions + outgoing_links)
         for refed_item in outgoing_refs:
             if refed_item not in all_items:
                 if refed_item not in wanteds:
