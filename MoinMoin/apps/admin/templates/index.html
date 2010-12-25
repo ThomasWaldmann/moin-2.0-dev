@@ -2,8 +2,8 @@
 {% block content %}
 <h1>Admin Menu</h1>
 <ul>
-    <li><a href="{{ url_for('admin.userbrowser') }}">User Browser</a></li>
-    <li><a href="{{ url_for('admin.sysitems_upgrade') }}">Upgrade system items</a></li>
+    <li><a href="{{ url_for('admin.userbrowser') }}">{{ _("User Browser") }}</a></li>
+    <li><a href="{{ url_for('admin.sysitems_upgrade') }}">{{ _("Upgrade system items") }}</a></li>
 </ul>
 {% endblock %}
 

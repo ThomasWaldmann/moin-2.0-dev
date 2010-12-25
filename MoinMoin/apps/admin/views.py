@@ -56,7 +56,8 @@ def userprofile(user_name):
     uid = user.getUserId(user_name)
     u = user.User(uid)
     if request.method == 'GET':
-        return "userprofile of %s: %r" % (user_name, (u.email, u.disabled))
+        return _("userprofile of %(username)s: %(email)r", username=user_name,
+                 email=(u.email, u.disabled))
 
     if request.method == 'POST':
         key = request.form.get('key', '')

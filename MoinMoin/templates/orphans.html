@@ -4,7 +4,7 @@
 <h1>{{ headline }}</h1>
 {% endif %}
 {% if item_names %}
-{{ _("Total:") }} {{ item_names|count }}
+{{ _("Total: %(items)s", items=item_names|count) }}
 <ol type="1">
     {% for item_name in item_names %}
     <li><a href="{{ url_for('frontend.show_item', item_name=item_name)|e }}">{{ item_name }}</a></li>
