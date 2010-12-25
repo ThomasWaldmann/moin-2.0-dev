@@ -495,7 +495,7 @@ def _wanteds(items):
     """
     all_items = set()
     wanteds = {}
-    for item in flaskg.storage.iteritems():
+    for item in items:
         current_item = item.name
         all_items.add(current_item)
         current_rev = item.get_revision(-1)
@@ -543,7 +543,7 @@ def _orphans(items):
         linked_items.update(current_rev.get(ITEMLINKS, []))
         transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
     orphans = all_items - linked_items - transcluded_items
-    return orphans
+    return list(orphans)
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')
