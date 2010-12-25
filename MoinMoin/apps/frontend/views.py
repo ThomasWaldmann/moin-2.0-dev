@@ -410,14 +410,31 @@ def global_index():
 @frontend.route('/+backrefs/<itemname:item_name>')
 def backrefs(item_name):
     """
-    Returns the list of all items that link or transclude this item
+    Returns the list of all items that link or transclude item_name
 
     @param item_name: the name of the current item
     @type item_name: unicode
     @return: a page with all the items which link or transclude item_name
     """
+    refs_here = _backrefs(flaskg.storage.iteritems(), item_name)
+    return render_template('item_link_list.html',
+                           item_name=u'Refers Here',
+                           item_names=refs_here
+                          )
+
+
+def _backrefs(items, item_name):
+    """
+    Returns a list with all names of items which ref item_name
+
+    @param items: all the items
+    @type items: iteratable sequence
+    @param item_name: the name of the item transcluded or linked
+    @type item_name: unicode
+    @return: the list of all items which ref item_name
+    """
     refs_here = []
-    for item in flaskg.storage.iteritems():
+    for item in items:
         current_item = item.name
         current_revision = item.get_revision(-1)
         links = current_revision.get(ITEMLINKS, [])
@@ -426,11 +443,7 @@ def backrefs(item_name):
         refs = set(links + transclusions)
         if item_name in refs:
             refs_here.append(current_item)
-
-    return render_template('item_link_list.html',
-                           item_name=u'Refers Here',
-                           item_names=refs_here
-                          )
+    return refs_here
 
 
 @frontend.route('/+search')
@@ -462,9 +475,24 @@ def global_history():
 
 @frontend.route('/+wanteds')
 def wanted_items():
-    """ Returns the list of non-existing items, which are wanted items and the
+    """ Returns a page with the list of non-existing items, which are wanted items and the
         items they are linked or transcluded to helps show what items still need
         to be written and shows whether there are any broken links. """
+    wanteds = _wanteds(flaskg.storage.iteritems())
+    return render_template('wanteds.html',
+                           item_name=u'Wanted Items',
+                           wanteds=wanteds)
+
+
+def _wanteds(items):
+    """
+    Returns a list with all the names of non-existing items which are refed by
+    other items
+
+    @param items: all the items
+    @type items: iteratable sequence
+    @return: the list of all wanted items
+    """
     all_items = set()
     wanteds = {}
     for item in flaskg.storage.iteritems():
@@ -483,27 +511,40 @@ def wanted_items():
         if current_item in wanteds:
             # if a previously wanted item has been found in the items storage, remove it
             del wanteds[current_item]
-    return render_template('wanteds.html',
-                           item_name=u'Wanted Items',
-                           wanteds=wanteds)
+
+    return wanteds
+
 
 @frontend.route('/+orphans')
 def orphaned_items():
-    """ Return a list of items not being linked or transcluded
+    """ Return a page with the list of items not being linked or transcluded
         by any other items, that makes
         them sometimes not discoverable. """
+    orphan = _orphans(flaskg.storage.iteritems())
+    return render_template('item_link_list.html',
+                           item_name=u'Orphaned Items',
+                           item_names=orphan)
+
+
+def _orphans(items):
+    """
+    Returns a list with the names of all existing items not being refed by any other item
+
+    @param items: the list of all items
+    @type items: iteratable sequence
+    @return: the list of all orphaned items
+    """
     linked_items = set()
     transcluded_items = set()
     all_items = set()
-    for item in flaskg.storage.iteritems():
+    for item in items:
         all_items.add(item.name)
         current_rev = item.get_revision(-1)
         linked_items.update(current_rev.get(ITEMLINKS, []))
         transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
     orphans = all_items - linked_items - transcluded_items
-    return render_template('item_link_list.html',
-                           item_name=u'Orphaned Items',
-                           item_names=orphans)
+    return orphans
+
 
 @frontend.route('/+quicklink/<itemname:item_name>')
 def quicklink_item(item_name):
