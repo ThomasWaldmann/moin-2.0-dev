@@ -416,16 +416,16 @@ def backrefs(item_name):
     @type item_name: unicode
     @return: a page with all the items which link or transclude item_name
     """
-    refs_here = set()
+    refs_here = []
     for item in flaskg.storage.iteritems():
         current_item = item.name
         current_revision = item.get_revision(-1)
-        links = set(current_revision.get(ITEMLINKS, []))
-        transclusions = set(current_revision.get(ITEMTRANSCLUSIONS, []))
+        links = current_revision.get(ITEMLINKS, [])
+        transclusions = current_revision.get(ITEMTRANSCLUSIONS, [])
 
-        refs = links.union(transclusions)
+        refs = set(links + transclusions)
         if item_name in refs:
-            refs_here.add(current_item)
+            refs_here.append(current_item)
 
     return render_template('refs_here.html',
                            item_name=u'Refers Here',
