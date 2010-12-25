@@ -427,7 +427,7 @@ def backrefs(item_name):
         if item_name in refs:
             refs_here.append(current_item)
 
-    return render_template('refs_here.html',
+    return render_template('item_link_list.html',
                            item_name=u'Refers Here',
                            item_names=refs_here
                           )
@@ -501,7 +501,7 @@ def orphaned_items():
         linked_items.update(current_rev.get(ITEMLINKS, []))
         transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
     orphans = all_items - linked_items - transcluded_items
-    return render_template('orphans.html',
+    return render_template('item_link_list.html',
                            item_name=u'Orphaned Items',
                            item_names=orphans)
 
