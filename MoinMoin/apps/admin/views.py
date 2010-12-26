@@ -88,7 +88,7 @@ def mail_recovery_token():
     """
     Send user an email so he can reset his password.
     """
-    flash(_("mail recovery token not implemented yet"))
+    flash("mail recovery token not implemented yet")
     return redirect(url_for('admin.userbrowser'))
 
 
