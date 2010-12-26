@@ -342,7 +342,7 @@ class ThemeSupport(object):
             (_('Orphaned Items'), 'orphaned_items', 'frontend.orphaned_items', False, ),
             # Translation may need longer or shorter separator:
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
-            (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
+            (_('What refers here?'), 'backrefs', 'frontend.backrefs', False, ),
             (_('Local Site Map'), 'sitemap', 'frontend.sitemap', False, ),
             (_('Items with similar names'), 'similar_names', 'frontend.similar_names', False, ),
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
