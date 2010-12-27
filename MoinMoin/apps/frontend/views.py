@@ -29,6 +29,7 @@ from babel import Locale
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.auth.handle import handle_moin_login, handle_logout
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
@@ -845,8 +846,10 @@ def login():
                                form=form,
                               )
     if request.method == 'POST':
+        handle_moin_login(request.values)
         for msg in flaskg._login_messages:
             flash(msg, "error")
+
         form = LoginForm.from_flat(request.form)
         valid = form.validate()
         if valid:
@@ -868,6 +871,7 @@ def login():
 
 @frontend.route('/+logout')
 def logout():
+    handle_logout(flaskg.user)
     flash(_("You are now logged out."), "info")
     for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
         if key in session:
