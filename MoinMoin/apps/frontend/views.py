@@ -531,7 +531,7 @@ def _orphans(items):
     """
     Returns a list with the names of all existing items not being refed by any other item
 
-    @param items: the list of all items
+    @paraml items: the list of all items
     @type items: iteratable sequence
     @return: the list of all orphaned items
     """
@@ -850,7 +850,7 @@ def login():
         for msg in flaskg._login_messages:
             flash(msg, "error")
 
-        form = LoginForm.from_flat(request.form)
+        form = LoginForm.from_flat(flaskg.user, request.form)
         valid = form.validate()
         if valid:
             # we have a logged-in, valid user
