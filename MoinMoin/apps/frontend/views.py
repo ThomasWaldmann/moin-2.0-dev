@@ -846,11 +846,11 @@ def login():
                                form=form,
                               )
     if request.method == 'POST':
-        handle_moin_login(request.values)
+        handle_moin_login(flaskg.user, request.values)
         for msg in flaskg._login_messages:
             flash(msg, "error")
 
-        form = LoginForm.from_flat(flaskg.user, request.form)
+        form = LoginForm.from_flat(request.form)
         valid = form.validate()
         if valid:
             # we have a logged-in, valid user
