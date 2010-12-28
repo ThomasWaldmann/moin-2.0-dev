@@ -138,6 +138,7 @@ def redirect_show_item(item_name):
 @frontend.route('/+dom/<int:rev>/<itemname:item_name>')
 @frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
 def show_dom(item_name, rev):
+    converters = request.values.get('converters', 'smiley,link').split(',')
     try:
         item = Item.create(item_name, rev_no=rev)
     except AccessDeniedError:
@@ -147,7 +148,7 @@ def show_dom(item_name, rev):
     else:
         status = 200
     content = render_template('dom.xml',
-                              data_xml=item._render_data_xml(),
+                              data_xml=item._render_data_xml(converters),
                              )
     return Response(content, status, mimetype='text/xml')
 
