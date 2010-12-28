@@ -187,7 +187,7 @@ class Item(object):
     def feed_input_conv(self):
         return self.name
 
-    def internal_representation(self):
+    def internal_representation(self, converters=['smiley', 'link']):
         """
         Return the internal representation of a document using a DOM Tree
         """
@@ -227,8 +227,11 @@ class Item(object):
             # as not every doc will have that element (e.g. for images, we just get
             # moin_page.object, for a tar item, we get a moin_page.table):
             doc.set(moin_page.page_href, unicode(links))
-            doc = smiley_conv(doc)
-            doc = link_conv(doc)
+            for conv in converters:
+                if conv == 'smiley':
+                    doc = smiley_conv(doc)
+                elif conv == 'link':
+                    doc = link_conv(doc)
             if cid:
                 app.cache.set(cid, doc)
         flaskg.clock.stop('conv_in_dom')
@@ -269,9 +272,9 @@ class Item(object):
         flaskg.clock.stop('conv_serialize')
         return out
 
-    def _render_data_xml(self):
+    def _render_data_xml(self, converters):
         from MoinMoin.util.tree import moin_page, xlink, html
-        doc = self.internal_representation()
+        doc = self.internal_representation(converters)
 
         from array import array
         out = array('u')
