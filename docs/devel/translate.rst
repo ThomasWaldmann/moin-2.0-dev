@@ -2,19 +2,18 @@
 Translating MoinMoin
 ====================
 
-.. todo::
-
-   document how to add a new translation
-   how to fix existing translations
-
 If your language already exists
 -------------------------------
 
-Currently, there is a translation available for *German*, so if you
-want to work on this, you can follow these steps.
+To find out if someone already started a translation of moin2 into your
+language, check the folder MoinMoin/translations in the source tree.
+If there is a folder with your language code (locale) [#]_, you can just
+start with the steps below. If not, please take a look at `If your
+language doesn't exist yet`_.
 
-1. Make sure you have the latest version of the source tree (hg)
-   and you are able to "make" it.
+
+1. Make sure you have the latest version of the source tree (hg).
+   You will also need to have python installed.
 
 2. Go to the top directory and execute
    ::
@@ -40,16 +39,34 @@ want to work on this, you can follow these steps.
      It is a usual convention to have a maximal line-length of 80
      characters.
    
-   * Comments starting with "*#.*", "*#:*", "*#,*" or "*#|*" are
+   * Comments starting with "*#.*", "*#:*" or "*#|*" are
      auto-generated and should not be modified.
    
    * Comments starting with "# " (# and at least one whitespace) are
      translator-comments. You can modify/add them. They have to be 
      placed right before the auto-generated comments.
+   
+   * Comments starting with "*#,*" and separated with "," are flags.
+     They can be auto-generated, but they can also be set by the
+     translator.
+     
+     An important flag is "fuzzy". It shows that the msgstr string might
+     not be a correct translation (anymore). Only the translator can
+     judge if the translation requires further modification, or is
+     acceptable as is. Once satisfied with the translation, he/she then
+     removes this fuzzy attribute.
+     
+     
 
 4. Save the messages.po file and execute
    ::
      ./babel compile
+
+Guidelines for translators
+``````````````````````````
+In languages where a separate polite form of address exists (like the
+German "Sie"/"Du") always use the polite form.
+
    
 If your language doesn't exist yet
 ----------------------------------
@@ -75,3 +92,22 @@ the developers, but ...
    can remove the fuzzy flag, which prevents the file from being compiled.
 
 3. Follow the steps above (`If your language already exists`_).
+
+
+Note for developers
+-------------------
+
+If you made changes to any gettext string, please update the .pot file
+using::
+  ./babel extract
+
+Because this sometimes create large diffs, just because of a slight
+change in line numbers, you can of course use this command sparingly.
+Another option (for better readability) is to create a separate commit
+for this.
+
+
+------
+
+.. [#] For more information on locale strings, see
+   http://www.gnu.org/software/hello/manual/gettext/Locale-Names.html.
