@@ -224,9 +224,33 @@ def import_export_xml(app):
 
 
 def setup_user():
-    """ Retrieve a user object from the session or log in anonymously. """
+    """ Try to retrieve a valid user object from the request, be it
+    either through the session or through a login. """
+    # init some stuff for auth processing:
+    flaskg._login_multistage = None
+    flaskg._login_multistage_name = None
+    flaskg._login_messages = []
+
     # first try setting up from session
     userobj = auth.setup_from_session()
+
+    # then handle login/logout forms
+    form = request.values
+
+    if 'login_submit' in form:
+        # this is a real form, submitted by POST
+        params = {
+            'username': form.get('login_username'),
+            'password': form.get('login_password'),
+            'attended': True,
+            'stage': form.get('stage')
+        }
+        userobj = auth.handle_login(userobj, **params)
+    elif 'logout_submit' in form:
+        # currently just a GET link
+        userobj = auth.handle_logout(userobj)
+    else:
+        userobj = auth.handle_request(userobj)
 
     # if we still have no user obj, create a dummy:
     if not userobj:

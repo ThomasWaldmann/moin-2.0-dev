@@ -29,7 +29,6 @@ from babel import Locale
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.auth.handle import handle_moin_login, handle_logout
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
@@ -531,7 +530,7 @@ def _orphans(items):
     """
     Returns a list with the names of all existing items not being refed by any other item
 
-    @paraml items: the list of all items
+    @param items: the list of all items
     @type items: iteratable sequence
     @return: the list of all orphaned items
     """
@@ -846,10 +845,8 @@ def login():
                                form=form,
                               )
     if request.method == 'POST':
-        handle_moin_login(flaskg.user, request.values)
         for msg in flaskg._login_messages:
             flash(msg, "error")
-
         form = LoginForm.from_flat(request.form)
         valid = form.validate()
         if valid:
@@ -871,7 +868,6 @@ def login():
 
 @frontend.route('/+logout')
 def logout():
-    handle_logout(flaskg.user)
     flash(_("You are now logged out."), "info")
     for key in ['user.id', 'user.auth_method', 'user.auth_attribs', ]:
         if key in session:
