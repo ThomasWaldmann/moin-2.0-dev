@@ -31,6 +31,13 @@ elif cmd == 'compile':
     args = "babel compile -d %(trans_dir)s" % dict(
                trans_dir=trans_dir,
            )
+elif cmd == 'init':
+    lang = sys.argv[2]
+    args = "babel init -d %(trans_dir)s --locale %(lang)s -i %(pot)s" % dict(
+               trans_dir=trans_dir,
+               lang=lang,
+               pot=potfile,
+           )
 
 rc = CommandLineInterface().run(args.split())
 
