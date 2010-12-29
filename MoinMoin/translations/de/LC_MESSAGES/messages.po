@@ -1,17 +1,18 @@
 # Translations template for MoinMoin.
 # Copyright (C) 2010 ?
 # This file is distributed under the same license as the MoinMoin project (GNU GPL).
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+# Gerhard J. <gerhard.jungwirth3@gmail.com>, 2010.
 #
-#, fuzzy
+# , fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-12-28 14:16+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2010-12-28 16:28+0100\n"
+"Last-Translator: Gerhard J. <gerhard.jungwirth3@gmail.com>\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -129,12 +130,12 @@ msgstr ""
 #: MoinMoin/apps/frontend/views.py:947
 #: MoinMoin/templates/global_history.html:16 MoinMoin/templates/history.html:10
 msgid "Name"
-msgstr ""
+msgstr "Benutzername"
 
 #: MoinMoin/apps/frontend/views.py:615 MoinMoin/apps/frontend/views.py:616
 #: MoinMoin/apps/frontend/views.py:825
 msgid "Password"
-msgstr ""
+msgstr "Passwort"
 
 #: MoinMoin/apps/frontend/views.py:617 MoinMoin/apps/frontend/views.py:693
 #: MoinMoin/apps/frontend/views.py:913
@@ -196,7 +197,7 @@ msgstr ""
 
 #: MoinMoin/apps/frontend/views.py:826
 msgid "Log in"
-msgstr ""
+msgstr "Anmelden"
 
 #: MoinMoin/apps/frontend/views.py:871
 msgid "You are now logged out."
@@ -437,7 +438,7 @@ msgstr ""
 
 #: MoinMoin/search/results.py:299
 msgid "seconds"
-msgstr ""
+msgstr "Sekunden"
 
 #: MoinMoin/search/results.py:694
 msgid "Previous"
@@ -486,7 +487,7 @@ msgstr ""
 
 #: MoinMoin/storage/error.py:41
 msgid "Permission denied!"
-msgstr ""
+msgstr "Zugriff verweigert!"
 
 #: MoinMoin/storage/error.py:43
 msgid "You"
@@ -499,11 +500,11 @@ msgstr ""
 
 #: MoinMoin/templates/base.html:68 MoinMoin/templates/layout.html:14
 msgid "Search"
-msgstr ""
+msgstr "Suche"
 
 #: MoinMoin/templates/base.html:74 MoinMoin/templates/editbar.html:82
 msgid "More Actions:"
-msgstr ""
+msgstr "Weitere Aktionen:"
 
 #: MoinMoin/templates/copy.html:3
 #, python-format
@@ -675,11 +676,11 @@ msgstr ""
 #: MoinMoin/templates/history.html:5
 #, python-format
 msgid "History of '%(item_name)s'"
-msgstr ""
+msgstr "Versionsgeschichte von '%(item_name)s'"
 
 #: MoinMoin/templates/history.html:13
 msgid "Size"
-msgstr ""
+msgstr "Größe"
 
 #: MoinMoin/templates/history.html:16
 msgid "Mime"
@@ -732,11 +733,11 @@ msgstr ""
 
 #: MoinMoin/templates/layout.html:43
 msgid "Logout"
-msgstr ""
+msgstr "Abmelden"
 
 #: MoinMoin/templates/layout.html:47 MoinMoin/templates/login.html:5
 msgid "Login"
-msgstr ""
+msgstr "Anmelden"
 
 #: MoinMoin/templates/lostpass.html:5
 msgid "Lost Password"
@@ -749,7 +750,7 @@ msgstr ""
 #: MoinMoin/templates/meta.html:9
 #, python-format
 msgid "Metadata of '%(item_name)s'"
-msgstr ""
+msgstr "Metadaten von '%(item_name)s'"
 
 #: MoinMoin/templates/meta.html:10
 msgid "Revision"
