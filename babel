@@ -20,6 +20,13 @@ if cmd == 'extract':
                cfg=join(top_dir, 'babel.cfg'),
                out=potfile,
            )
+elif cmd == 'init':
+    lang = sys.argv[2]
+    args = "babel init -d %(trans_dir)s --locale %(lang)s -i %(pot)s" % dict(
+               trans_dir=trans_dir,
+               lang=lang,
+               pot=potfile,
+           )
 elif cmd == 'update':
     lang = sys.argv[2]
     args = "babel update --locale %(lang)s -i %(pot)s -d %(trans_dir)s" % dict(
@@ -28,16 +35,10 @@ elif cmd == 'update':
                lang=lang,
            )
 elif cmd == 'compile':
-    args = "babel compile -d %(trans_dir)s" % dict(
+    args = "babel compile  --statistics -d %(trans_dir)s" % dict(
                trans_dir=trans_dir,
            )
-elif cmd == 'init':
-    lang = sys.argv[2]
-    args = "babel init -d %(trans_dir)s --locale %(lang)s -i %(pot)s" % dict(
-               trans_dir=trans_dir,
-               lang=lang,
-               pot=potfile,
-           )
+
 
 rc = CommandLineInterface().run(args.split())
 
