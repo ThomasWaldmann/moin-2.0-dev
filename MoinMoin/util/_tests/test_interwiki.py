@@ -108,13 +108,14 @@ class TestInterWikiMapBackend(object):
             InterWikiMap.from_string(u'foobarbaz')
 
 
-    def test_dict_consistency(self):
+    def test_real_interwiki_map(self):
         """
         Test a 'real' interwiki file.
         """
         abspath = __file__.rsplit('MoinMoin')[0]
-        testfile = os.path.join(abspath, 'wiki', 'data', 'intermap.txt')
+        testfile = os.path.join(abspath, 'contrib', 'interwiki', 'intermap.txt')
         testiwm = InterWikiMap.from_file(testfile)
+
         assert 'MoinSrc' in testiwm.iwmap
         assert testiwm.iwmap['MoinMaster'] == 'http://master.moinmo.in/'
         assert 'PythonInfo' in testiwm.iwmap
