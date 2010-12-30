@@ -55,7 +55,7 @@ Having good language or documentation skills?
 ---------------------------------------------
 * If you are a native speaker of a language other than English, with a good
   understanding of English, consider helping with improving translation to
-  your language. **(not yet for moin2, too early!)**
+  your language. **(not yet for moin2, too early!)** see also :doc:`translate`
 * Improve the documentation (see below).
   Here is a list of all TODOs in this documentation:
 

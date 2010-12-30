@@ -23,7 +23,7 @@ language doesn't exist yet`_.
    language. It should be the name of a folder in MoinMoin/translations.
    For German it is "de".
 
-3. Open the file MoinMoin/translations/<locale>/LC_MESSAGES/messages.po
+3. Open the file ``MoinMoin/translations/<locale>/LC_MESSAGES/messages.po``
    and do your translation. A short explanation of this process follows:
    
    * find an entry, with an empty or bad translated text (the text after
@@ -31,7 +31,7 @@ language doesn't exist yet`_.
    
    * **never** edit the msgid string, just edit the msgstr field
    
-   * Variables like %(name)x (x can be any character) must be kept as
+   * Variables like ``%(name)x`` (x can be any character) must be kept as
      they are. They must occur in the translated text.
    
    * For better readability you can divide a text-string over more than
@@ -39,7 +39,7 @@ language doesn't exist yet`_.
      It is a usual convention to have a maximal line-length of 80
      characters.
    
-   * Comments starting with "*#.*", "*#:*" or "*#|*" are
+   * Comments starting with "#.", "*#:*" or "*#|*" are
      auto-generated and should not be modified.
    
    * Comments starting with "# " (# and at least one whitespace) are
@@ -85,14 +85,32 @@ the developers, but ...
    ::
      ./babel init <locale>
    
-2. Adjust the *MoinMoin/translations/<locale>/LC_MESSAGES/messages.po* .
+2. Adjust the ``MoinMoin/translations/<locale>/LC_MESSAGES/messages.po`` .
 
-   Especially edit the header (comment and first msgstr section), 
-   replace the placeholders (written in CAPITAL letters) and then you
-   can remove the fuzzy flag, which prevents the file from being compiled.
+   Follow the instructions in `First steps with a new *.po file`_ and
+   then you can remove the fuzzy flag, which prevents the file from
+   being compiled.
 
 3. Follow the steps above (`If your language already exists`_).
 
+First steps with a new *.po file
+````````````````````````````````
+
+A newly created need a few modifications to be done before every
+translator can use it.
+
+* replace "``PROJECT``" with "``MoinMoin 2``"
+
+* replace "``FIRST AUTHOR <EMAIL@ADDRESS>``" with the appropriate information
+  about you
+
+* replace "``PROJECT VERSION``" in the head msgstr with
+  "``MoinMoin 2.0``" (or newer if neccessary)
+  
+* change the value of "``Last-Translator``" to your data
+
+* change the value of "``Language-Team``" to
+  "``Language <moin-user@lists.sourceforge.net>``"
 
 Note for developers
 -------------------
