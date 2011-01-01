@@ -239,10 +239,12 @@ def setup_user():
 
     if 'login_submit' in form:
         # this is a real form, submitted by POST
+        # TODO generalise this function
         params = {
             'username': form.get('login_username'),
             'password': form.get('login_password'),
             'attended': True,
+            'openid': form.get('openid'),
             'stage': form.get('stage')
         }
         userobj = auth.handle_login(userobj, **params)
