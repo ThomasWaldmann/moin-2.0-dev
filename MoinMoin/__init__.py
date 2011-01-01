@@ -235,19 +235,10 @@ def setup_user():
     userobj = auth.setup_from_session()
 
     # then handle login/logout forms
-    form = request.values
-
+    form = request.values.to_dict()
     if 'login_submit' in form:
         # this is a real form, submitted by POST
-        # TODO generalise this function
-        params = {
-            'username': form.get('login_username'),
-            'password': form.get('login_password'),
-            'attended': True,
-            'openid': form.get('openid'),
-            'stage': form.get('stage')
-        }
-        userobj = auth.handle_login(userobj, **params)
+        userobj = auth.handle_login(userobj, **form)
     elif 'logout_submit' in form:
         # currently just a GET link
         userobj = auth.handle_logout(userobj)
