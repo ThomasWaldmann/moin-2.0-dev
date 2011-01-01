@@ -154,7 +154,9 @@ def get_multistage_continuation_url(auth_name, extra_fields={}):
     """
     # logically, this belongs to request, but semantically it should
     # live in auth so people do auth.get_multistage_continuation_url()
-    url = url_for('frontend.login', login='1', stage=auth_name, **extra_fields)
+
+    # the url should be absolute so we use _external
+    url = url_for('frontend.login', login='1', stage=auth_name, _external=True **extra_fields)
     logging.debug("multistage_continuation_url: %s" % url)
     return url
 
@@ -354,7 +356,8 @@ class GivenAuth(BaseAuth):
 
 
 def handle_login(userobj=None, username=None, password=None,
-                 attended=True, stage=None):
+                 attended=True, stage=None, openid=None):
+    # TODO generalise this function
     """
     Process a 'login' request by going through the configured authentication
     methods in turn. The passable keyword arguments are explained in more
@@ -364,6 +367,7 @@ def handle_login(userobj=None, username=None, password=None,
         'username': username,
         'password': password,
         'attended': attended,
+        'openid': openid,
         'multistage': (stage and True) or None
     }
     for authmethod in app.cfg.auth:

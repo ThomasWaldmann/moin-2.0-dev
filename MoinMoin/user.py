@@ -123,6 +123,18 @@ def get_by_email_address(email_address):
     if len(users) > 0:
         return users[0]
 
+def get_by_openid(openid):
+    """
+    Searches for a user using an openid identifier.
+
+    @param openid: the openid to filter with
+    @type openid: unicode
+    @return: the user whose openid is this one
+    @rtype: user object or None
+    """
+    users = get_by_filter('openid', openid)
+    if len(users) > 0:
+        return users[0]
 
 def getUserId(searchName):
     """ Get the user ID for a specific user NAME.
