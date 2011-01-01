@@ -2,8 +2,8 @@ from openid.store.memstore import MemoryStore
 from openid.consumer import consumer
 
 from flask import session, request, url_for
-from MoinMoin.auth import BaseAuth
-from MoinMoin.auth import ContinueLogin, CancelLogin,
+from MoinMoin.auth import BaseAuth, get_multistage_continuation_url
+from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, MultistageRedirectLogin
 from MoinMoin import _, N_
 
 # TODO
@@ -71,6 +71,8 @@ class OpenIDAuth(BaseAuth):
         # more can be added for extended functionality
 
     def login(self, userobj, **kw):
+        import pdb
+        pdb.set_trace()
         continuation = kw.get('multistage')
         # process another subsequent step
         if continuation:
