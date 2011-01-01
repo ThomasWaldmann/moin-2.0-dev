@@ -1,14 +1,26 @@
+"""
+    MoinMoin - OpenID authentication
+
+    This code handles login requests for openid multistage authnetication.
+    To work properly python-openid needs to be at least 2.2.4-1.
+
+    @copyright: 2010 MoinMoin:Nichita Utiu
+    @license: GNU GPL, see COPYING for details.
+"""
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from openid.store.memstore import MemoryStore
 from openid.consumer import consumer
 
 from flask import session, request, url_for
 from MoinMoin.auth import BaseAuth, get_multistage_continuation_url
 from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, MultistageRedirectLogin
+from openid.yadis.discover import DiscoveryFailure
+from openid.fetchers import HTTPFetchingError
 from MoinMoin import _, N_
 
-# TODO
-# add logging
-# add docstrings
 
 class OpenIDAuth(BaseAuth):
     def __init__(self):
@@ -21,6 +33,9 @@ class OpenIDAuth(BaseAuth):
         BaseAuth.__init__(self)
 
     def _handleContinuationVerify(self):
+        """
+        Handles the first stage continuation.
+        """
         # the consumer object with the storage in the memory
         oid_consumer = consumer.Consumer(session, MemoryStore())
 
@@ -38,13 +53,19 @@ class OpenIDAuth(BaseAuth):
         if oid_info.status == consumer.FAILURE:
             # verification has failed
             # return an error message with description of error
+            logging.debug(_("OpenIDError: %(error)s.") % {'error': info.message})
+
             error_message = _('OpenIDErorr: %(error)s') % {'error': oid_info.message}
             return CancelLogin(error_message)
         elif oid_info.status == consumer.CANCEL:
+            logging.debug(_("OpenID verification canceled."))
+
             # verification was canceled
             # return error
             return CancelLogin(_('OpenID verification canceled.'))
         elif oid_info.status == consumer.SUCCESS:
+            logging.debug(_('OpenID success. id: %(identity)s') % {'identity': info.identity_url})
+
             # we have successfully authenticated our openid
             # we get the uid of the user with this openid associated to him
             user_id = user.get_by_openid(oid_info.identity_url)
@@ -60,10 +81,14 @@ class OpenIDAuth(BaseAuth):
                 # show an appropriate message
                 return ContinueLogin(None, _('There is no user with this OpenID.'))
         else:
+            logging.debug(_("OpenID failure"))
             # the auth failed miserably
             return CancelLogin(_('OpenID failure.'))
 
     def _handleContinuation(self):
+        """
+        Handles continuations appropriately.
+        """
         # the current stage
         oidstage = request.values.get('oidstage')
         if oidstage == '1':
@@ -71,8 +96,10 @@ class OpenIDAuth(BaseAuth):
         # more can be added for extended functionality
 
     def login(self, userobj, **kw):
-        import pdb
-        pdb.set_trace()
+        """
+        Handles an login request and continues to multistage continuation
+        if necessary.
+        """
         continuation = kw.get('multistage')
         # process another subsequent step
         if continuation:
