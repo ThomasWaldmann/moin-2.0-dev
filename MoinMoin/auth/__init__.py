@@ -355,23 +355,23 @@ class GivenAuth(BaseAuth):
             return user_obj, True
 
 
-def handle_login(userobj=None, username=None, password=None,
-                 attended=True, stage=None, openid=None):
-    # TODO generalise this function
+def handle_login(userobj, **kw):
     """
     Process a 'login' request by going through the configured authentication
     methods in turn. The passable keyword arguments are explained in more
     detail at the top of this file.
     """
-    params = {
-        'username': username,
-        'password': password,
-        'attended': attended,
-        'openid': openid,
-        'multistage': (stage and True) or None
-    }
-    import pdb
-    pdb.set_trace()
+
+    stage = kw.get('stage')
+    params = {'username': kw.get('login_username'),
+              'password': kw.get('login_password'),
+              'multistage': (stage and True) or None,
+              'attended': True
+             }
+    # add the other parameters from the form
+    for param in kw.keys():
+        params[param] = kw.get(param)
+
     for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue
