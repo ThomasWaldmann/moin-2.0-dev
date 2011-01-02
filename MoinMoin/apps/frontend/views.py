@@ -851,10 +851,6 @@ def login():
         valid = form.validate()
         if valid:
             # we have a logged-in, valid user
-            userobj = flaskg.user
-            session['user.id'] = userobj.id
-            session['user.auth_method'] = userobj.auth_method
-            session['user.auth_attribs'] = userobj.auth_attribs
             return redirect(url_for('frontend.show_root'))
         else:
             # if no valid user, show form again (with hints)

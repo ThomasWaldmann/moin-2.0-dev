@@ -248,7 +248,11 @@ def setup_user():
     # if we still have no user obj, create a dummy:
     if not userobj:
         userobj = user.User(auth_method='invalid')
-
+    # if we have a valid user we store it in the session
+    if userobj.valid:
+        session['user.id'] = userobj.id
+        session['user.auth_method'] = userobj.auth_method
+        session['user.auth_attribs'] = userobj.auth_attribs
     return userobj
 
 
