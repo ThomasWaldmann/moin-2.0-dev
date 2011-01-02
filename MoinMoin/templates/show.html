@@ -60,23 +60,15 @@
     {% endif %}
 {% endblock %}
 
-{% block item %}
-    {{ super() }}
-    {% if rev %}
-    <div id="moin-pagebottom">
-        <p id="moin-pageinfo" class="moin-info" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
-            {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ item_name }}
-            (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
-            {{ _("last edit:") }} {{ utils.editor_info(rev) }} {{ rev.timestamp|datetimeformat }}
-        </p>
-    </div>
-    {% endif %}
-{% endblock %}
-
 {% block footer_hr %}{% endblock %}
 
 {% block footer %}
     {{ editbar }}
+    {% if rev %}
+    <p id="moin-pageinfo" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
+        {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}{{ item_name }} (rev {{rev.revno}})
+        {{ _("modified") }} {{ rev.timestamp|datetimeformat }} by {{ utils.editor_info(rev) }}
+    </p>
+    {% endif %}
     {{ super() }}
 {% endblock %}
