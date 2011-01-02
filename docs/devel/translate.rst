@@ -115,6 +115,29 @@ translator can use it.
 Note for developers
 -------------------
 
+Since we support newstyle gettext there is no need to use the
+``format()``-Method in internationalized Strings anymore. An example
+will explain this: instead of
+``gettext(u'Hello %(name)s!').format(name='World')`` you can just
+write ``gettext(u'Hello %(name)s!', name='World')``. Of course you
+can also use the short form ``_()``.
+
+If the translatable string contains a variable plural, that means
+the string contains an object which you don't know the exact quantity
+of at the time of writing the code, then you will have to use
+``ngettext()``. Note that this is not only needed for the decicion
+between one and more objects, because other languages have other
+(and more difficult) plurals than English. The usage is
+``ngettext(singular, plural, num, **variables)``. ``**variables``
+enables you to use the newstyle form just as explained above.
+
+For example:
+``ngettext ("%d file removed from %s", "%d files removed from %s", n, somestring, n)``
+
+``n`` has to appear twice because the first gives ngettext information
+about the exact number and the second is the variable for the format
+string replacement.
+
 If you made changes to any gettext string, please update the .pot file
 using::
   ./babel extract
