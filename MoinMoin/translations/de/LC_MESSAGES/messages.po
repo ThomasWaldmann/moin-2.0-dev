@@ -4,15 +4,14 @@
 # (GNU GPL).
 # Gerhard J. <gerhard.jungwirth3@gmail.com>, 2010.
 #
-# , fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
+"Project-Id-Version: MoinMoin 2.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-12-28 14:16+0100\n"
 "PO-Revision-Date: 2010-12-29 17:26+0100\n"
 "Last-Translator: Gerhard J. <gerhard.jungwirth3@gmail.com>\n"
-"Language-Team: de <LL@li.org>\n"
+"Language-Team: German <moin-user@lists.sourceforge.net>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"

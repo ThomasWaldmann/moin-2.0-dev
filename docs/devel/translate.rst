@@ -96,8 +96,7 @@ the developers, but ...
 First steps with a new *.po file
 ````````````````````````````````
 
-A newly created need a few modifications to be done before every
-translator can use it.
+A newly created translation needs a few initial preparations.
 
 * replace "``PROJECT``" with "``MoinMoin 2``"
 
@@ -118,21 +117,20 @@ Note for developers
 Since we support newstyle gettext there is no need to use the
 ``format()``-Method in internationalized Strings anymore. An example
 will explain this: instead of
-``gettext(u'Hello %(name)s!').format(name='World')`` you can just
-write ``gettext(u'Hello %(name)s!', name='World')``. Of course you
-can also use the short form ``_()``.
+``_(u'Hello %(name)s!') % dict(name='World')`` you can just
+write ``_(u'Hello %(name)s!', name='World')``.
 
 If the translatable string contains a variable plural, that means
 the string contains an object which you don't know the exact quantity
 of at the time of writing the code, then you will have to use
-``ngettext()``. Note that this is not only needed for the decicion
+``ngettext()``. Note that this is not only needed for the decision
 between one and more objects, because other languages have other
 (and more difficult) plurals than English. The usage is
 ``ngettext(singular, plural, num, **variables)``. ``**variables``
 enables you to use the newstyle form just as explained above.
 
 For example:
-``ngettext ("%d file removed from %s", "%d files removed from %s", n, somestring, n)``
+``ngettext("%(number)d file removed from %(directory)s", "%(number)d files removed from %(directory)s", num=n, number=n, directory=directory)``
 
 ``n`` has to appear twice because the first gives ngettext information
 about the exact number and the second is the variable for the format
@@ -142,9 +140,9 @@ If you made changes to any gettext string, please update the .pot file
 using::
   ./babel extract
 
-Because this sometimes create large diffs, just because of a slight
+Because this sometimes creates large diffs, just because of a slight
 change in line numbers, you can of course use this command sparingly.
-Another option (for better readability) is to create a separate commit
+Another option (for better readability) is to do a separate commit
 for this.
 
 
