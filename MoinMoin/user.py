@@ -43,7 +43,7 @@ from MoinMoin.util import random_string
 from MoinMoin.util.interwiki import getInterwikiHome
 
 
-def create_user(username, password, email):
+def create_user(username, password, email, openid):
     """ create a user """
     # Create user profile
     theuser = User(auth_method="new-user")
@@ -84,6 +84,12 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
     if theuser.email and app.cfg.user_email_unique:
         if get_by_email_address(theuser.email):
             return _("This email already belongs to somebody else.")
+
+    # Openid should be unique
+    theuser.openid = openid
+    if theuser.openid and app.cfg.user_openid_unique:
+        if get_by_openid(theuser.openid):
+            return _('This OpenID already belongs to somebody else.')
 
     # save data
     theuser.save()

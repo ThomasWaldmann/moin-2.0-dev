@@ -600,7 +600,8 @@ class ValidRegistration(Validator):
     def validate(self, element, state):
         if not (element['username'].valid and
                 element['password1'].valid and element['password2'].valid and
-                element['email'].valid and element['textcha'].valid):
+                element['email'].valid and element['textcha'].valid and
+                element['openid'].valid):
             return False
         if element['password1'].value != element['password2'].value:
             return self.note_error(element, state, 'passwords_mismatch_msg')
@@ -615,6 +616,7 @@ class RegistrationForm(TextChaizedForm):
     password1 = String.using(label=N_('Password')).validated_by(Present())
     password2 = String.using(label=N_('Password')).validated_by(Present())
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
     submit = String.using(default=N_('Register'), optional=True)
 
     validators = [ValidRegistration()]
@@ -657,6 +659,7 @@ def register():
             msg = user.create_user(username=form['username'].value,
                                    password=form['password1'].value,
                                    email=form['email'].value,
+                                   openid=form['openid'].value,
                                   )
             if msg:
                 flash(msg, "error")
