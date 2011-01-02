@@ -945,6 +945,7 @@ def usersettings(part):
         name = 'usersettings_personal' # "name" is duplicate
         name = String.using(label=N_('Name')).validated_by(Present())
         aliasname = String.using(label=N_('Alias-Name'), optional=True)
+        openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
         timezones_keys = pytz.common_timezones
         timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
