@@ -156,7 +156,7 @@ def get_multistage_continuation_url(auth_name, extra_fields={}):
     # live in auth so people do auth.get_multistage_continuation_url()
 
     # the url should be absolute so we use _external
-    url = url_for('frontend.login', login='1', stage=auth_name, _external=True, **extra_fields)
+    url = url_for('frontend.login', login_submit='1', stage=auth_name, _external=True, **extra_fields)
     logging.debug("multistage_continuation_url: %s" % url)
     return url
 
