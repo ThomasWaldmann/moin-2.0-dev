@@ -64,6 +64,10 @@
 
 {% block footer %}
     {{ editbar }}
+    {{ super() }}
+{% endblock %}
+
+{% block footer_meta %}
     {% if rev %}
     <p id="moin-pageinfo" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
         {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}{{ item_name }} (rev {{rev.revno}}),
@@ -75,5 +79,4 @@
     {%- endif -%}.
     </p>
     {% endif %}
-    {{ super() }}
 {% endblock %}
