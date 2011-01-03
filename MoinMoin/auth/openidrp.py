@@ -20,6 +20,7 @@ from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, Multi
 from openid.yadis.discover import DiscoveryFailure
 from openid.fetchers import HTTPFetchingError
 from MoinMoin import _, N_
+from MoinMoin import user
 
 
 class OpenIDAuth(BaseAuth):
@@ -44,44 +45,43 @@ class OpenIDAuth(BaseAuth):
         for key in request.values.keys():
             query[key] = request.values.get(key)
         # the current url(w/o query string)
-        url = request.base_url
+        url = get_multistage_continuation_url(self.name, {'oidstage': '1'})
 
         # we get the info about the authentification
-        oid_info = oid_consumer.complete(querry, url)
+        oid_info = oid_consumer.complete(query, url)
         # the identity we've retrieved from the response
-
         if oid_info.status == consumer.FAILURE:
             # verification has failed
             # return an error message with description of error
-            logging.debug(_("OpenIDError: %(error)s.") % {'error': info.message})
+            logging.debug("OpenIDError: %s" % oid_info.message)
 
-            error_message = _('OpenIDErorr: %(error)s') % {'error': oid_info.message}
+            error_message = _('OpenID Erorr')
             return CancelLogin(error_message)
         elif oid_info.status == consumer.CANCEL:
-            logging.debug(_("OpenID verification canceled."))
+            logging.debug("OpenID verification canceled.")
 
             # verification was canceled
             # return error
             return CancelLogin(_('OpenID verification canceled.'))
         elif oid_info.status == consumer.SUCCESS:
-            logging.debug(_('OpenID success. id: %(identity)s') % {'identity': info.identity_url})
+            logging.debug('OpenID success. id: %s' % oid_info.identity_url)
 
             # we have successfully authenticated our openid
             # we get the uid of the user with this openid associated to him
-            user_id = user.get_by_openid(oid_info.identity_url)
+            user_obj = user.get_by_openid(oid_info.identity_url)
 
             # if the user actually exists
-            if user_id:
+            if user_obj:
                 # we get the authenticated user object
-                new_user = user.User(uid=user_id, auth_method=self.name)
                 # success!
-                return ContinueLogin(new_user)
+                user_obj.auth_method = self.name
+                return ContinueLogin(user_obj)
             # there is no user with this openid
             else:
                 # show an appropriate message
                 return ContinueLogin(None, _('There is no user with this OpenID.'))
         else:
-            logging.debug(_("OpenID failure"))
+            logging.debug("OpenID failure")
             # the auth failed miserably
             return CancelLogin(_('OpenID failure.'))
 
