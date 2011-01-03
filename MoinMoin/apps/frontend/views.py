@@ -898,7 +898,7 @@ def login():
         for msg in flaskg._login_messages:
             flash(msg, "error")
         # get the form contents
-        form.from_flat(request.form)
+        form = LoginForm.from_flat(request.form)
         valid = form.validate()
         if valid:
             # we have a logged-in, valid user
