@@ -36,9 +36,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 class MoinFlask(Flask):
     # TODO: at all places where we insert html into output, use the Markup
     # class of flask/jinja so we can switch autoescape on in the end.
-    jinja_options = ImmutableDict(
-        autoescape=False,
-    )
+    select_jinja_autoescape = False
 
 
 from MoinMoin import log

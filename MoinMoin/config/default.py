@@ -219,7 +219,7 @@ file. It should match the actual charset of the configuration file.
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             'superusers', 'textchas_disabled_group', 'supplementation_item_names',
-            'logo', 'credits', 'html_pagetitle',
+            'logo', 'html_pagetitle',
             'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
             'html_head',
         )
@@ -459,15 +459,6 @@ options_no_group_name = {
      'show section numbers in headings by default'),
     ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
-
-    ('credits', #HHH
-     [
-       '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
-       '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
-       '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
-       '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
-     ],
-     'list of html5 (xmlish) fragments [Unicode], e.g. logos or strings for crediting.'),
 
     ('template_dirs', [], "list of directories with templates that will override theme and base templates."),
   )),

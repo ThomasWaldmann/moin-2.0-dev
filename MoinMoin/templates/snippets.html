@@ -1,0 +1,33 @@
+{# Use the template_dirs configuration option to override this template #}
+
+{% macro license_info() %}{% endmacro %}
+
+{% macro creditlogo(link, logo, alt, title) %}
+<a href="{{ link|e }}" title="{{ title|e }}"><img src="{{ logo|e }}" alt="{{ alt|e }}" /></a>
+{% endmacro %}
+
+{% macro creditlogos(start='<ul id="moin-creditlogos"><li>'|safe, end='</li></ul>'|safe, sep='</li><li>'|safe) %}
+{{ start }}
+{{ creditlogo('http://moinmo.in/', url_for('static', filename='common/logos/moinmoin_powered.png'),
+   'MoinMoin powered', 'This site uses the MoinMoin Wiki software.') }}
+{{ sep }}
+{{ creditlogo('http://moinmo.in/Python', url_for('static', filename='common/logos/python_powered.png'),
+   'Python powered', 'MoinMoin is written in Python.') }}
+{{ end }}
+{% endmacro %}
+
+{% macro credit(link, text, title) -%}
+<a href="{{ link|e }}" title="{{ title|e }}">{{ text|e }}</a>
+{%- endmacro %}
+
+{% macro credits(start='<p id="moin-credits">'|safe, end='</p>'|safe, sep='<span>&bull;</span>'|safe) %}
+{{ start }}
+{{ credit('http://moinmo.in/', 'MoinMoin Powered', 'This site uses the MoinMoin Wiki software.') }}
+{{ sep }}
+{{ credit('http://moinmo.in/Python', 'Python Powered', 'MoinMoin is written in Python.') }}
+{{ sep }}
+{{ credit('http://moinmo.in/GPL', 'GPL licensed', 'MoinMoin is GPL licensed.') }}
+{{ sep }}
+{{ credit('http://validator.w3.org/check?uri=referer', 'Valid HTML 5', 'Click here to validate this page.') }}
+{{ end }}
+{% endmacro %}

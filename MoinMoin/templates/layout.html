@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
-{% import "license.html" as license_info with context %}
-{% set license_info = license_info|string %}
+{% import "snippets.html" as snippets with context %}
+{% set license_info = snippets.license_info() %}
+{% set creditlogos = snippets.creditlogos() %}
+{% set credits = snippets.credits() %}
 
 {% block layout %}
 
@@ -133,21 +135,10 @@
 <div id="moin-footer">
 {% block footer %}
     {% block footer_hr %}<hr/>{% endblock %}
-    <ul id="moin-creditlogos">
-        <li><a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">
-            <img src="{{ url_for('static', filename='common/logos/moinmoin_powered.png')|e }}" alt="MoinMoin powered" />
-        </a></li>
-        <li><a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">
-            <img src="{{ url_for('static', filename='common/logos/python_powered.png')|e }}" alt="Python powered" />
-        </a></li>
-    </ul>
+    {{ creditlogos }}
     {% block footer_meta %}{% endblock %}
     {% if license_info %}<p id="moin-wikilicense">{{ license_info }}</p>{% endif %}
-    <p id="moin-credits">
-        {% for credit in cfg.credits -%}
-		{{ credit }}{% if not loop.last %} <span>&bull;</span>{% endif %}
-        {% endfor %}
-    </p>
+    {{ credits }}
 {% endblock %}
 </div>
 
