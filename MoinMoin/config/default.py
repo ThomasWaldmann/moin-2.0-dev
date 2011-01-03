@@ -22,6 +22,7 @@ from MoinMoin import _, N_
 from MoinMoin import config, error, util
 from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
+from MoinMoin.auth.openidrp import OpenIDAuth
 import MoinMoin.auth as authmodule
 from MoinMoin.security import AccessControlList
 
@@ -376,7 +377,7 @@ options_no_group_name = {
   'auth': ('Authentication / Authorization / Security settings', None, (
     ('superusers', [],
      "List of trusted user names [Unicode] with wiki system administration super powers (not to be confused with ACL admin rights!). Used for e.g. software installation, language installation via SystemPagesSetup and more. See also HelpOnSuperUser."),
-    ('auth', DefaultExpression('[MoinAuth()]'),
+    ('auth', DefaultExpression('[MoinAuth(), OpenIDAuth()]'),
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
