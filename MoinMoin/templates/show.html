@@ -66,8 +66,13 @@
     {{ editbar }}
     {% if rev %}
     <p id="moin-pageinfo" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
-        {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}{{ item_name }} (rev {{rev.revno}})
-        {{ _("modified") }} {{ rev.timestamp|datetimeformat }} by {{ utils.editor_info(rev) }}
+        {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}{{ item_name }} (rev {{rev.revno}}),
+        {{ _("modified") }} {{ rev.timestamp|datetimeformat }} by {{ utils.editor_info(rev) }}{% if rev.tags %},
+        {{ _("tagged") }}
+        {% for tag in rev.tags -%}
+        <a href="{{ url_for('frontend.tagged_items', tag=tag)|e }}">{{ tag|e }}</a>{% if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    {%- endif -%}.
     </p>
     {% endif %}
     {{ super() }}
