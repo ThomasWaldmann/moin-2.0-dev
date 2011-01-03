@@ -55,7 +55,7 @@ class OpenIDAuth(BaseAuth):
             # return an error message with description of error
             logging.debug("OpenIDError: %s" % oid_info.message)
 
-            error_message = _('OpenID Erorr')
+            error_message = _('OpenID Error')
             return CancelLogin(error_message)
         elif oid_info.status == consumer.CANCEL:
             logging.debug("OpenID verification canceled.")
@@ -67,7 +67,7 @@ class OpenIDAuth(BaseAuth):
             logging.debug('OpenID success. id: %s' % oid_info.identity_url)
 
             # we have successfully authenticated our openid
-            # we get the uid of the user with this openid associated to him
+            # we get the user with this openid associated to him
             user_obj = user.get_by_openid(oid_info.identity_url)
 
             # if the user actually exists
