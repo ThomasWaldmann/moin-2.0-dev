@@ -130,11 +130,11 @@
 <div id="moin-footer">
 {% block footer %}
     {% block footer_hr %}<hr/>{% endblock %}
-    <ul id="moin-credits">
+    <p id="moin-credits">
         {% for credit in cfg.credits -%}
-            <li> {{ credit }} </li>
+		{{ credit }}{% if not loop.last %} <span>&bull;</span>{% endif %}
         {% endfor %}
-    </ul>
+    </p>
 {% endblock %}
 </div>
 

@@ -93,9 +93,9 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 #moin-credits,
 #moin-version,
 #moin-timings{ margin: 10px 20px; text-align: left; font-size: 0.7em; color: #6C7680; }
-#moin-credits li,
 #moin-timings li { display: inline-block; margin: 0 20px 0 0; }
 #moin-credits img { vertical-align: middle; }
+#moin-credits span {display: inline-block; margin: 0 5px; }
 
 /* wikiconfig -- page_footer1/2 and page_header1/2 if defined */
 /* placeholder, not working yet */
