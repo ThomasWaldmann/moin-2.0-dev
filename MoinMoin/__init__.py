@@ -31,6 +31,8 @@ from flaskext.themes import setup_themes
 
 from werkzeug import ImmutableDict
 
+from jinja2 import ChoiceLoader, FileSystemLoader
+
 class MoinFlask(Flask):
     # TODO: at all places where we insert html into output, use the Markup
     # class of flask/jinja so we can switch autoescape on in the end.
@@ -117,7 +119,13 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     babel = Babel(app)
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
+    # configure templates
     setup_themes(app)
+    if app.cfg.template_dirs:
+        app.jinja_env.loader = ChoiceLoader([
+            FileSystemLoader(app.cfg.template_dirs),
+            app.jinja_env.loader,
+        ])
     app.error_handlers[403] = themed_error
     return app
 

@@ -468,6 +468,8 @@ options_no_group_name = {
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
      ],
      'list of html5 (xmlish) fragments [Unicode], e.g. logos or strings for crediting.'),
+
+    ('template_dirs', [], "list of directories with templates that will override theme and base templates."),
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (

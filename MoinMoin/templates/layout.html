@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% import "license.html" as license_info with context %}
+{% set license_info = license_info|string %}
+
 {% block layout %}
 
 {{ theme_supp.emit_custom_html(cfg.html_before_header) }}
@@ -139,6 +142,7 @@
         </a></li>
     </ul>
     {% block footer_meta %}{% endblock %}
+    {% if license_info %}<p id="moin-wikilicense">{{ license_info }}</p>{% endif %}
     <p id="moin-credits">
         {% for credit in cfg.credits -%}
 		{{ credit }}{% if not loop.last %} <span>&bull;</span>{% endif %}

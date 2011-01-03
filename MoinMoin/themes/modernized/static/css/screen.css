@@ -90,6 +90,7 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 /* moin-page moin-footer */
 #moin-footer { clear: both; margin: 0 0; }
 #moin-pageinfo,
+#moin-wikilicense,
 #moin-credits,
 #moin-version,
 #moin-timings{ margin: 10px 20px; text-align: left; font-size: 0.7em; color: #6C7680; }
