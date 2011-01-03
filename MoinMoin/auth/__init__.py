@@ -365,6 +365,7 @@ def handle_login(userobj, **kw):
     stage = kw.get('stage')
     params = {'username': kw.get('login_username'),
               'password': kw.get('login_password'),
+              'openid': kw.get('login_openid'),
               'multistage': (stage and True) or None,
               'attended': True
              }
