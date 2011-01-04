@@ -42,7 +42,8 @@ class AccessDeniedError(AccessError):
         else:
             username = username or N_("You")
             message = _("%(username)s may not %(priv)s '%(item)s'.",
-                        username=username, priv=priv, item=item)
+                        username=username, priv=_(priv), item=item)
+            # XXX add _('...') for all privs elsewhere for extraction
 
         AccessError.__init__(self, message)
 

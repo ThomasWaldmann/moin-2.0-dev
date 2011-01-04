@@ -285,9 +285,9 @@ class SearchResults(object):
             formatter.paragraph(1, attr={'class': 'searchstats'}),
             _("Results %(bs)s%(hitsFrom)d - %(hitsTo)d%(be)s "
                     "of %(aboutHits)s %(bs)s%(hits)d%(be)s results out of "
-                    "about %(pages)d pages.") %
+                    "about %(items)d items.") %
                 {'aboutHits': self.estimated_hits[0],
-                    'hits': self.estimated_hits[1], 'pages': self.pages,
+                    'hits': self.estimated_hits[1], 'items': self.pages,
                     'hitsFrom': hitsFrom + 1,
                     'hitsTo': hitsFrom +
                             min(self.estimated_hits[1] - hitsFrom,

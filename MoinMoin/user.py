@@ -856,6 +856,8 @@ Please use the link below to change your password to a known value:
 
 %(link)s
 
+If you didn't forget your password, please ignore this email.
+
 """, link=url_for('frontend.recoverpass',
                         username=self.name, token=token, _external=True))
 

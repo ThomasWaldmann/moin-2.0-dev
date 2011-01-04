@@ -659,7 +659,7 @@ There is no help, you're doomed!
     _render_data_diff_raw = _render_data_diff
 
     def _convert(self):
-        return _("Impossible to convert the data to the mimetype :  %(mimetype)s", 
+        return _("Impossible to convert the data to the mimetype: %(mimetype)s",
                  mimetype=request.values.get('mimetype'))
 
     def do_get(self):
