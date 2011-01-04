@@ -572,6 +572,7 @@ def subscribe_item(item_name):
     cfg = app.cfg
     msg = None
     if not u.valid:
+        # TODO There are no actions any more
         msg = _("You must login to use this action: %(action)s.", action="subscribe/unsubscribe"), "error"
     elif not u.may.read(item_name):
         msg = _("You are not allowed to subscribe to an item you may not read."), "error"

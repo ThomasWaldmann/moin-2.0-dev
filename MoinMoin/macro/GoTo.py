@@ -26,4 +26,4 @@ class Macro(MacroBlockBase):
 """ % (html,
         self.request.getScriptname(),
         self.page_name,
-        _("Go To Page"))) #HHH ?
+        _("Go To Item"))) #HHH ?

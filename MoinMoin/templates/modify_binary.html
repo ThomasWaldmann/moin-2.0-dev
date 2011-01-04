@@ -1,7 +1,7 @@
 {% extends "modify_applet.html" %}
 {% block extra_form %}
-<input class="button" type="submit" name="button_save" value="Save" />
-<input class="button" type="submit" name="button_cancel" value="Cancel" />
+<input class="button" type="submit" name="button_save" value="{{ _("Save") }}" />
+<input class="button" type="submit" name="button_cancel" value="{{ _("Cancel") }}" />
 <br />
 <label for="comment">{{ _("Comment:") }}</label><input type="text" id="comment" name="comment" size="80" maxlength="200" value="" />
 <br />
