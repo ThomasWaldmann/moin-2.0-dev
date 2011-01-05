@@ -144,14 +144,4 @@
 
 {{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
 {#  HHH  #}
-{%- set null = clock.stop('render_template') -%}
-{%- set null = clock.stop('total') -%}
-{%- set timing_information = clock.dump() -%}
-{% if cfg.show_timings -%}
-    <ul id="moin-timings">
-    {% for timing in timing_information -%}
-        <li> {{ timing }}</li>
-    {%- endfor %}
-    </ul>
-{%- endif -%}
 {% endblock %}
