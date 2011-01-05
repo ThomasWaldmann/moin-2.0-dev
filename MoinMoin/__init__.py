@@ -295,5 +295,7 @@ def before():
 
 
 def after(response):
+    flaskg.clock.stop('total')
+    del flaskg.clock
     return response
 

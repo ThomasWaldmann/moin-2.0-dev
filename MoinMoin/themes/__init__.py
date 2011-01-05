@@ -36,8 +36,9 @@ def get_current_theme():
 
 def render_template(template, **context):
     flaskg.clock.start('render_template')
-    return render_theme_template(get_current_theme(), template, **context)
-
+    output = render_theme_template(get_current_theme(), template, **context)
+    flaskg.clock.stop('render_template')
+    return output
 
 def themed_error(e):
     item_name = request.view_args.get('item_name', u'')
