@@ -654,7 +654,7 @@ options = {
        "if True, check email addresses for uniqueness and don't accept duplicates."),
 
       ('openid_unique', True,
-       "if True, check openids for uniqueness and don't accespt duplicates."),
+       "if True, check openids for uniqueness and don't accept duplicates."),
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),

@@ -802,45 +802,22 @@ def recoverpass():
                                   )
 
 
-class ValidMoinLogin(Validator):
-    """Validator for a valid moin login"""
-
-    def validate(self, element, state):
-        if not (element['username'].valid and element['password'].valid):
-            return False
-        # the real login happens at another place. if it worked, we have a valid user
-        if flaskg.user.valid:
-            return True
-        return False
-
-
-class ValidOpenIDLogin(Validator):
-    """
-    Validator for an openid login
-    """
-
-    def validate(self, element, state):
-        if not element['openid'].valid:
-            return False
-        if flaskg.user.valid:
-            return True
-        return False
-
-
-class ValidLogin(ValidMoinLogin, ValidOpenIDLogin):
+class ValidLogin(Validator):
     """
     Login validator
     """
     moin_fail_msg = N_('Either your username or password was invalid.')
-    openid_fail_msg = N_('Failed to autheniticate with this OpenID.')
+    openid_fail_msg = N_('Failed to authenticate with this OpenID.')
 
     def validate(self, element, state):
         # get the result from the other validators
-        moin_valid = ValidMoinLogin.validate(self, element, state)
-        openid_valid = ValidOpenIDLogin.validate(self, element, state)
+        moin_valid = element['username'].valid and element['password'].valid
+        openid_valid = element['openid'].valid
 
+        # none of them was valid
         if not (openid_valid or moin_valid):
             return False
+        # got our user!
         if flaskg.user.valid:
             return True
         # no valid user -> show appropriate message
@@ -857,8 +834,8 @@ class LoginForm(Form):
     """
     name = 'login'
 
-    username = String.using(label=N_('Name')).validated_by(Present())
-    password = String.using(label=N_('Password')).validated_by(Present())
+    username = String.using(label=N_('Name'), optional=True).validated_by(Present())
+    password = String.using(label=N_('Password'), optional=True).validated_by(Present())
     openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
 
     submit = String.using(default=N_('Log in'), optional=True)
@@ -871,11 +848,22 @@ def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'Login' # XXX
 
-    if request.method == 'GET':
-        # user is valid
-        if flaskg.user.valid:
-            return redirect(url_for('frontend.show_root'))
+    # multistage return
+    if flaskg._login_multistage_name == 'openid':
+            return flaskg._login_multistage(None)
 
+    # get the form contents
+    form = LoginForm.from_flat(request.form)
+    valid = form.validate()
+    if valid:
+        # we have a logged-in, valid user
+        return redirect(url_for('frontend.show_root'))
+
+    # flash the error messages (if any)
+    for msg in flaskg._login_messages:
+            flash(msg, "error")
+
+    if request.method == 'GET':
         form = LoginForm.from_defaults()
         for authmethod in app.cfg.auth:
             hint = authmethod.login_hint()
@@ -891,26 +879,13 @@ def login():
                                form=form,
                               )
     if request.method == 'POST':
-        # this is an openid html response
-        if flaskg._login_multistage_name == 'openid':
-            return flaskg._login_multistage(None)
-
-        for msg in flaskg._login_messages:
-            flash(msg, "error")
-        # get the form contents
-        form = LoginForm.from_flat(request.form)
-        valid = form.validate()
-        if valid:
-            # we have a logged-in, valid user
-            return redirect(url_for('frontend.show_root'))
-        else:
-            # if no valid user, show form again (with hints)
-            return render_template('login.html',
-                                   item_name=item_name,
-                                   login_inputs=app.cfg.auth_login_inputs,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+        # if no valid user, show form again (with hints)
+        return render_template('login.html',
+                               item_name=item_name,
+                               login_inputs=app.cfg.auth_login_inputs,
+                               gen=make_generator(),
+                               form=form,
+                              )
 
 
 @frontend.route('/+logout')

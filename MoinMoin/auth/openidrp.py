@@ -1,7 +1,7 @@
 """
     MoinMoin - OpenID authentication
 
-    This code handles login requests for openid multistage authnetication.
+    This code handles login requests for openid multistage authentication.
     To work properly python-openid needs to be at least 2.2.4-1.
 
     @copyright: 2010 MoinMoin:Nichita Utiu
@@ -13,12 +13,12 @@ logging = log.getLogger(__name__)
 
 from openid.store.memstore import MemoryStore
 from openid.consumer import consumer
+from openid.yadis.discover import DiscoveryFailure
+from openid.fetchers import HTTPFetchingError
 
 from flask import session, request, url_for
 from MoinMoin.auth import BaseAuth, get_multistage_continuation_url
 from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, MultistageRedirectLogin
-from openid.yadis.discover import DiscoveryFailure
-from openid.fetchers import HTTPFetchingError
 from MoinMoin import _, N_
 from MoinMoin import user
 
@@ -37,17 +37,17 @@ class OpenIDAuth(BaseAuth):
         """
         Handles the first stage continuation.
         """
-        # the consumer object with the storage in the memory
+        # the consumer object with an in-memory storage
         oid_consumer = consumer.Consumer(session, MemoryStore())
 
         # a dict containing the parsed query string
         query = {}
         for key in request.values.keys():
             query[key] = request.values.get(key)
-        # the current url(w/o query string)
+        # the current url (w/o query string)
         url = get_multistage_continuation_url(self.name, {'oidstage': '1'})
 
-        # we get the info about the authentification
+        # we get the info about the authentication
         oid_info = oid_consumer.complete(query, url)
         # the identity we've retrieved from the response
         if oid_info.status == consumer.FAILURE:
@@ -58,11 +58,11 @@ class OpenIDAuth(BaseAuth):
             error_message = _('OpenID Error')
             return CancelLogin(error_message)
         elif oid_info.status == consumer.CANCEL:
-            logging.debug("OpenID verification canceled.")
+            logging.debug("OpenID verification cancelled.")
 
-            # verification was canceled
+            # verification was cancelled
             # return error
-            return CancelLogin(_('OpenID verification canceled.'))
+            return CancelLogin(_('OpenID verification cancelled.'))
         elif oid_info.status == consumer.SUCCESS:
             logging.debug('OpenID success. id: %s' % oid_info.identity_url)
 
@@ -110,8 +110,7 @@ class OpenIDAuth(BaseAuth):
         if not openid:
             return ContinueLogin(userobj)
 
-        # we make a consumer object with a store
-        # the store uses the memory
+        # we make a consumer object with an in-memory storage
         oid_consumer = consumer.Consumer(session, MemoryStore())
 
         # we catch any possible openid-related exceptions
@@ -121,9 +120,6 @@ class OpenIDAuth(BaseAuth):
             return ContinueLogin(None, _('Failed to resolve OpenID.'))
         except DiscoveryFailure:
             return ContinueLogin(None, _('OpenID discovery failure, not a valid OpenID.'))
-        # raise unhandled exceptions
-        except:
-            raise
         else:
             # we got no response from the service
             if oid_response is None:
@@ -137,8 +133,8 @@ class OpenIDAuth(BaseAuth):
             if oid_response.shouldSendRedirect():
                 redirect_url = oid_response.redirectURL(site_root, return_to)
                 return MultistageRedirectLogin(redirect_url)
-            # send a form
             else:
+                # send a form
                 form_html = oid_response.formMarkup(site_root, return_to, form_tag_attrs={'id': 'openid_message'})
                 # create a callable multistage object
                 # XXX
