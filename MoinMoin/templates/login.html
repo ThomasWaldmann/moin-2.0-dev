@@ -14,7 +14,7 @@
     {{ forms.render_field(gen, form['password'], 'password') }}
     {% endif %}
     {% if 'openid' in login_inputs %}
-    {{ _('Login with your OpenID:') }}
+    {{ _('Or login with your OpenID:') }}
     {{ forms.render_field(gen, form['openid'], 'text') }}
     {% endif %}
     {{ gen.input(form['submit'], type='submit') }}
