@@ -135,7 +135,7 @@ class OpenIDAuth(BaseAuth):
                 return MultistageRedirectLogin(redirect_url)
             else:
                 # send a form
-                form_html = oid_response.formMarkup(site_root, return_to, form_tag_attrs={'id': 'openid_message'})
+                form_html = oid_response.htmlMarkup(site_root, return_to, form_tag_attrs={'id': 'openid_message'})
                 # create a callable multistage object
                 # XXX
                 form_function = lambda form: form_html
