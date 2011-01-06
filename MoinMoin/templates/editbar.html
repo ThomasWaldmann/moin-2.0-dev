@@ -77,10 +77,10 @@
     {%- endif %}
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="moin-actionsmenu" id="moin-actionsmenu-form" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
+            <form class="moin-actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
                 <div>
                     <label>{{ _('More Actions:') }}</label>
-                    <select name="endpoint" id="moin-actionsmenu-select">
+                    <select name="endpoint" class="moin-actionsmenu-select">
                         {% for title, disabled, endpoint in theme_supp.actions_menu_options(item_name) %}
                             <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}

@@ -10,15 +10,11 @@
     <form action="{{ url_for('frontend.destroy_item', item_name=item.name, rev=rev_no) }}" method="POST" enctype="multipart/form-data">
 {% endif %}
     <dl>
-        <dt>
-            <label for="comment">{{ _("Comment") }}</label>
-        </dt>
-        <dd>
-            <input type="text" name="comment" size="80" maxlength="200" value="" />
-        </dd>
+        <dt><label for="comment">{{ _("Comment") }}</label></dt>
+        <dd><input type="text" id="comment" name="comment" size="80" maxlength="200" value="" /></dd>
     </dl>
-        <input class="button" type="submit" name="button_ok" value="{{ _('DESTROY') }}" />
-        <input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
+    <input class="button" type="submit" name="button_ok" value="{{ _('DESTROY') }}" />
+    <input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
 </form>
 </div>
 {% endblock %}

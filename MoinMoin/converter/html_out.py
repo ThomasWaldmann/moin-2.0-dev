@@ -590,7 +590,7 @@ class ConverterPage(Converter):
                 maxlevel = max(h[1] for h in headings)
                 headtogglelink = html.a(attrib={
                                          html.class_: 'showhide',
-                                         html.href_: 'javascript:void()',
+                                         html.href_: '#',
                                          html.onclick_: "$('.table-of-contents ol').toggle()",
                                      },
                                      children=[('[+]'), ])
@@ -626,7 +626,7 @@ class ConverterPage(Converter):
                         stack.pop()
                         stack_push(html.li({html.id_: 'li%s' % id}))
                     togglelink = html.a(attrib={
-                                         html.href_: "javascript:void()",
+                                         html.href_: "#",
                                          html.onclick_: "$('#li%s ol').toggle()" % id,
                                          html.class_: 'showhide',
                                      },
