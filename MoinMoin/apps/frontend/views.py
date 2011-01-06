@@ -641,18 +641,11 @@ def register():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
-    if request.method == 'GET':
-        form = RegistrationForm.from_defaults()
-        TextCha(form).amend_form()
+    form = RegistrationForm.from_defaults()
+    TextCha(form).amend_form()
 
-        return render_template('register.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
     if request.method == 'POST':
-        form = RegistrationForm.from_flat(request.form)
-        TextCha(form).amend_form()
+        form.set_flat(request.form)
 
         valid = form.validate()
         if valid:
@@ -665,12 +658,11 @@ def register():
             else:
                 flash(_('Account created, please log in now.'), "info")
             return redirect(url_for('frontend.show_root'))
-        else:
-            return render_template('register.html',
-                                   item_name=item_name,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+    return render_template('register.html',
+                           item_name=item_name,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 
 class ValidLostPassword(Validator):
@@ -706,15 +698,10 @@ def lostpass():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
-    if request.method == 'GET':
-        form = PasswordLostForm.from_defaults()
-        return render_template('lostpass.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
+    form = PasswordLostForm.from_defaults()
+
     if request.method == 'POST':
-        form = PasswordLostForm.from_flat(request.form)
+        form.set_flat(request.form)
         valid = form.validate()
         if valid:
             u = None
@@ -730,12 +717,11 @@ def lostpass():
                     flash(msg, "error")
             flash(_("If this account exists, you will be notified."), "info")
             return redirect(url_for('frontend.show_root'))
-        else:
-            return render_template('lostpass.html',
-                                   item_name=item_name,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+    return render_template('lostpass.html',
+                           item_name=item_name,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 class ValidPasswordRecovery(Validator):
     """Validator for a valid password recovery form
@@ -775,16 +761,11 @@ def recoverpass():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
+    form = PasswordRecoveryForm.from_defaults()
     if request.method == 'GET':
-        form = PasswordRecoveryForm.from_defaults()
         form.update(request.values)
-        return render_template('recoverpass.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
-    if request.method == 'POST':
-        form = PasswordRecoveryForm.from_flat(request.form)
+    elif request.method == 'POST':
+        form.set_flat(request.form)
         valid = form.validate()
         if valid:
             u = user.User(user.getUserId(form['username'].value))
@@ -793,12 +774,11 @@ def recoverpass():
             else:
                 flash(_('Your token is invalid!'), "error")
             return redirect(url_for('frontend.show_root'))
-        else:
-            return render_template('recoverpass.html',
-                                   item_name=item_name,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+    return render_template('recoverpass.html',
+                           item_name=item_name,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 
 class ValidLogin(Validator):
@@ -834,22 +814,16 @@ class LoginForm(Form):
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'Login' # XXX
+    form = LoginForm.from_defaults()
     if request.method == 'GET':
         for authmethod in app.cfg.auth:
             hint = authmethod.login_hint()
             if hint:
                 flash(hint, "info")
-        form = LoginForm.from_defaults()
-        return render_template('login.html',
-                               item_name=item_name,
-                               login_inputs=app.cfg.auth_login_inputs,
-                               gen=make_generator(),
-                               form=form,
-                              )
     if request.method == 'POST':
         for msg in flaskg._login_messages:
             flash(msg, "error")
-        form = LoginForm.from_flat(request.form)
+        form.set_flat(request.form)
         valid = form.validate()
         if valid:
             # we have a logged-in, valid user
@@ -858,14 +832,12 @@ def login():
             session['user.auth_method'] = userobj.auth_method
             session['user.auth_attribs'] = userobj.auth_attribs
             return redirect(url_for('frontend.show_root'))
-        else:
-            # if no valid user, show form again (with hints)
-            return render_template('login.html',
-                                   item_name=item_name,
-                                   login_inputs=app.cfg.auth_login_inputs,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+    return render_template('login.html',
+                           item_name=item_name,
+                           login_inputs=app.cfg.auth_login_inputs,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 
 @frontend.route('/+logout')
@@ -983,15 +955,8 @@ def usersettings(part):
                                part='main',
                                item_name=item_name,
                               )
-    if request.method == 'GET':
-        form = FormClass.from_object(flaskg.user)
-        form['submit'].set('Save') # XXX why does from_object() kill submit value?
-        return render_template('usersettings.html',
-                               item_name=item_name,
-                               part=part,
-                               gen=make_generator(),
-                               form=form,
-                              )
+    form = FormClass.from_object(flaskg.user)
+    form['submit'].set('Save') # XXX why does from_object() kill submit value?
     if request.method == 'POST':
         form = FormClass.from_flat(request.form)
         valid = form.validate()
@@ -1004,13 +969,12 @@ def usersettings(part):
             if part == 'password':
                 flash(_("Your password has been changed."), "info")
             return redirect(url_for('frontend.usersettings'))
-        else:
-            return render_template('usersettings.html',
-                                   item_name=item_name,
-                                   part=part,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+    return render_template('usersettings.html',
+                           item_name=item_name,
+                           part=part,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 
 @frontend.route('/+bookmark')
