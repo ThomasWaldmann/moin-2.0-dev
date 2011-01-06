@@ -591,7 +591,8 @@ class ConverterPage(Converter):
                 headtogglelink = html.a(attrib={
                                          html.class_: 'showhide',
                                          html.href_: '#',
-                                         html.onclick_: "$('.table-of-contents ol').toggle()",
+                                         html.onclick_:
+                                            "$('.table-of-contents ol').toggle();return false;",
                                      },
                                      children=[('[+]'), ])
                 elem_h = html.div(attrib={html.class_: 'table-of-contents-heading'},
@@ -627,7 +628,8 @@ class ConverterPage(Converter):
                         stack_push(html.li({html.id_: 'li%s' % id}))
                     togglelink = html.a(attrib={
                                          html.href_: "#",
-                                         html.onclick_: "$('#li%s ol').toggle()" % id,
+                                         html.onclick_: 
+                                            "$('#li%s ol').toggle();return false;" % id,
                                          html.class_: 'showhide',
                                      },
                                      children=["[+]", ])
