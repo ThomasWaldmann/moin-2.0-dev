@@ -28,16 +28,16 @@
               title="{{ _('No older revision') }}">←</span>
         {% else %}
         <a class="moin-diff-nav-link moin-diff-prev-link moin-diff-old-rev"
-           href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1older, rev2=revno2older) }}"
+           href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1older, rev2=revno2older)|e }}"
            title="{{ _('Use older revision') }}">←</a>
         {% endif %}
-        {{ _('Revision %(revno)d as of %(date_time)s', revno=revno, date_time=date_time|datetimeformat) }}
+        {{ _('Revision %(revno)d as of %(date_time)s', revno=revno, date_time=date_time|datetimeformat)|e }}
         {% if max_reached %}
         <span class="moin-diff-no-nav-link moin-diff-next-link moin-diff-old-rev"
               title="{{ _('No newer revision') }}">→</span>
         {% else %}
         <a class="moin-diff-nav-link moin-diff-next-link moin-diff-old-rev"
-           href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1newer, rev2=revno2newer) }}"
+           href="{{ url_for('frontend.diff', item_name=item_name, rev1=revno1newer, rev2=revno2newer)|e }}"
            title="{{ _('Use newer revision') }}">→</a>
         {% endif %}
     </div>
