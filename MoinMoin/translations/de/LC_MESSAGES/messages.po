@@ -623,7 +623,7 @@ msgstr "Ältere Revision verwenden"
 #: MoinMoin/templates/diff_text.html:34
 #, python-format
 msgid "Revision %(revno)d as of %(date_time)s"
-msgstr "Revision %(revno)d vom %"
+msgstr "Revision %(revno)d vom %(date_time)s"
 
 #: MoinMoin/templates/diff_text.html:37
 msgid "No newer revision"
