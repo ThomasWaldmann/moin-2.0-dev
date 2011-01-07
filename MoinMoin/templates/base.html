@@ -25,9 +25,8 @@
 
     {% block head_title %}
     <title>
-    {%- if title -%}{{ title }}{% else %}{{ item_name }}{%- endif %} -
+    {%- if title -%}{{ title|e }}{% else %}{{ item_name|e }}{%- endif %} -
     {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %} {{ cfg.sitename|e }}{%- endif -%}
-    {#  HHH  #}
     </title>
     {% endblock %}
 
