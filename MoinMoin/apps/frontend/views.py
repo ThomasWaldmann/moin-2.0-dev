@@ -42,6 +42,8 @@ from MoinMoin.signalling import item_displayed, item_modified
 
 @frontend.route('/+dispatch', methods=['GET', ])
 def dispatch():
+    # XXX raises KeyError when called without endpoint parameter
+    # XXX raises werkzeug.routing.BuildError when called with invalid endpoint parameter
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
     return redirect(url_for(endpoint, **args))
@@ -657,7 +659,7 @@ def register():
                 flash(msg, "error")
             else:
                 flash(_('Account created, please log in now.'), "info")
-            return redirect(url_for('frontend.show_root'))
+                return redirect(url_for('frontend.show_root'))
     return render_template('register.html',
                            item_name=item_name,
                            gen=make_generator(),
@@ -949,31 +951,27 @@ def usersettings(part):
         options=UserSettingsOptionsForm,
     )
     FormClass = dispatch.get(part)
-    if FormClass is None:
-        # 'main' part or some invalid part
-        return render_template('usersettings.html',
-                               part='main',
-                               item_name=item_name,
-                              )
-    form = FormClass.from_object(flaskg.user)
-    form['submit'].set('Save') # XXX why does from_object() kill submit value?
-    if request.method == 'POST':
-        form = FormClass.from_flat(request.form)
-        valid = form.validate()
-        if valid:
-            if part == 'password':
-                flaskg.user.enc_password = user.encodePassword(form['password1'].value)
-            else:
-                form.update_object(flaskg.user)
-            flaskg.user.save()
-            if part == 'password':
-                flash(_("Your password has been changed."), "info")
-            return redirect(url_for('frontend.usersettings'))
+    if FormClass:
+        form = FormClass.from_object(flaskg.user)
+        form['submit'].set('Save') # XXX why does from_object() kill submit value?
+        if request.method == 'POST':
+            form = FormClass.from_flat(request.form)
+            valid = form.validate()
+            if valid:
+                if part == 'password':
+                    flaskg.user.enc_password = user.encodePassword(form['password1'].value)
+                else:
+                    form.update_object(flaskg.user)
+                flaskg.user.save()
+                if part == 'password':
+                    flash(_("Your password has been changed."), "info")
+                return redirect(url_for('frontend.usersettings'))
     return render_template('usersettings.html',
                            item_name=item_name,
-                           part=part,
-                           gen=make_generator(),
-                           form=form,
+                           # FormClass is None on main part
+                           part=part if FormClass else 'main',
+                           gen=make_generator() if FormClass else None,
+                           form=form if FormClass else None,
                           )
 
 
