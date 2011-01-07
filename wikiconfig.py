@@ -49,8 +49,6 @@ class Config(DefaultConfig):
     interwiki_map = InterWikiMap.from_file(os.path.join(wikiconfig_dir, 'contrib', 'interwiki', 'intermap.txt')).iwmap
 
     sitename = u'My MoinMoin'
-    logo = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
-    # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #item_root = u'Home' # change to some better value
 

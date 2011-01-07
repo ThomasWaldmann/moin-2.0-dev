@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 
 {% import "snippets.html" as snippets with context %}
+{% set logo = snippets.logo() %}
+{% set before_header = snippets.before_header() %}
+{% set after_header = snippets.after_header() %}
+{% set before_footer = snippets.before_footer() %}
+{% set after_footer = snippets.after_footer() %}
 {% set license_info = snippets.license_info() %}
 {% set creditlogos = snippets.creditlogos() %}
 {% set credits = snippets.credits() %}
 
+
 {% block layout %}
 
-{{ theme_supp.emit_custom_html(cfg.html_before_header) }}
-{#  HHH  #}
+{{ before_header }}
 
 <div id="moin-header">
 {% block header %}
@@ -23,10 +28,9 @@
         </div>
     </form>
 
-    {% if cfg.logo %}
+    {% if logo %}
     <div id="moin-logo">
-        <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
-    {#  HHH  #}
+        <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}">{{ logo }}</a>
     </div>
     {% endif %}
 
@@ -115,8 +119,7 @@
 {% endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_after_header) }}
-{#  HHH  #}
+{{ after_header }}
 
 <div id="moin-page" lang="{{ theme_supp.content_lang }}" dir="{{ theme_supp.content_dir }}">
     {% block item -%}
@@ -129,8 +132,7 @@
     {%- endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_before_footer) }}
-{#  HHH  #}
+{{ before_footer }}
 
 <div id="moin-footer">
 {% block footer %}
@@ -142,6 +144,6 @@
 {% endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
-{#  HHH  #}
+{{ after_footer }}
+
 {% endblock %}

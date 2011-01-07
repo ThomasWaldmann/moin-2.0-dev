@@ -1,4 +1,6 @@
 <!DOCTYPE html>{# this is html5, xmlish variant #}
+{%- import "snippets.html" as snippets with context %}
+{%- set user_head = snippets.user_head() %}
 <html>
 <head>
 {% block head %}
@@ -17,7 +19,7 @@
     {% endblock %}
 
     {% block head_misc %}
-    {{ cfg.html_head }}
+    {{ user_head }}
     {%- if html_head -%}
         {{ html_head }}
     {%- endif %}
