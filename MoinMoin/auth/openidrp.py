@@ -2,7 +2,6 @@
     MoinMoin - OpenID authentication
 
     This code handles login requests for openid multistage authentication.
-    To work properly python-openid needs to be at least 2.2.4-1.
 
     @copyright: 2010 MoinMoin:Nichita Utiu
     @license: GNU GPL, see COPYING for details.
@@ -31,6 +30,8 @@ class OpenIDAuth(BaseAuth):
         self.login_inputs = ['openid']
         # logout is possible
         self.logout_possible = True
+        # the store
+        self.store = MemoryStore()
         BaseAuth.__init__(self)
 
     def _handleContinuationVerify(self):
@@ -38,7 +39,7 @@ class OpenIDAuth(BaseAuth):
         Handles the first stage continuation.
         """
         # the consumer object with an in-memory storage
-        oid_consumer = consumer.Consumer(session, MemoryStore())
+        oid_consumer = consumer.Consumer(session, self.store)
 
         # a dict containing the parsed query string
         query = {}
@@ -111,7 +112,7 @@ class OpenIDAuth(BaseAuth):
             return ContinueLogin(userobj)
 
         # we make a consumer object with an in-memory storage
-        oid_consumer = consumer.Consumer(session, MemoryStore())
+        oid_consumer = consumer.Consumer(session, self.store)
 
         # we catch any possible openid-related exceptions
         try:
@@ -137,7 +138,6 @@ class OpenIDAuth(BaseAuth):
                 # send a form
                 form_html = oid_response.htmlMarkup(site_root, return_to, form_tag_attrs={'id': 'openid_message'})
                 # create a callable multistage object
-                # XXX
                 form_function = lambda form: form_html
                 # returns a MultistageFormLogin
                 return MultistageFormLogin(form_function)
