@@ -16,6 +16,7 @@ from openid.yadis.discover import DiscoveryFailure
 from openid.fetchers import HTTPFetchingError
 
 from flask import session, request, url_for
+from flask import current_app as app
 from MoinMoin.auth import BaseAuth, get_multistage_continuation_url
 from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, MultistageRedirectLogin
 from MoinMoin import _, N_
@@ -67,20 +68,33 @@ class OpenIDAuth(BaseAuth):
         elif oid_info.status == consumer.SUCCESS:
             logging.debug('OpenID success. id: %s' % oid_info.identity_url)
 
-            # we have successfully authenticated our openid
-            # we get the user with this openid associated to him
-            user_obj = user.get_by_openid(oid_info.identity_url)
+            # we get the provider's url
+            # and the list of trusted providers
+            trusted = app.cfg.auth_oid_trusted
+            server = oid_info.endpoint.server_url
 
-            # if the user actually exists
-            if user_obj:
-                # we get the authenticated user object
-                # success!
-                user_obj.auth_method = self.name
-                return ContinueLogin(user_obj)
-            # there is no user with this openid
-            else:
-                # show an appropriate message
-                return ContinueLogin(None, _('There is no user with this OpenID.'))
+            if server in trusted or trusted == []:
+            # the provider is trusted or all providers are trusted
+
+                # we have successfully authenticated our openid
+                # we get the user with this openid associated to him
+                user_obj = user.get_by_openid(oid_info.identity_url)
+
+                # if the user actually exists
+                if user_obj:
+                    # we get the authenticated user object
+                    # success!
+                    user_obj.auth_method = self.name
+                    return ContinueLogin(user_obj)
+
+                # there is no user with this openid
+                else:
+                    # show an appropriate message
+                    return ContinueLogin(None, _('There is no user with this OpenID.'))
+
+            # not trusted
+            return ContinueLogin(None, _('This OpenID provider is not trusted.'))
+
         else:
             logging.debug("OpenID failure")
             # the auth failed miserably
