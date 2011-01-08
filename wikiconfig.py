@@ -49,6 +49,7 @@ class Config(DefaultConfig):
     interwiki_map = InterWikiMap.from_file(os.path.join(wikiconfig_dir, 'contrib', 'interwiki', 'intermap.txt')).iwmap
 
     sitename = u'My MoinMoin'
+    # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #item_root = u'Home' # change to some better value
 
