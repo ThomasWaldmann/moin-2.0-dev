@@ -23,6 +23,8 @@ from flaskext.themes import get_themes_list
 from flatland import Form, String, Integer, Boolean, Enum
 from flatland.validation import Validator, Present, IsEmail, ValueBetween, URLValidator, Converted
 
+from jinja2 import Markup
+
 import pytz
 from babel import Locale
 
@@ -126,7 +128,7 @@ def show_item(item_name, rev):
                               mimetype=item.mimetype,
                               first_rev_no=first_rev,
                               last_rev_no=last_rev,
-                              data_rendered=item._render_data(),
+                              data_rendered=Markup(item._render_data()),
                               show_navigation=(rev>=0),
                              )
     return Response(content, status)
