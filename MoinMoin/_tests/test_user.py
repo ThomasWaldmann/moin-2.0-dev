@@ -159,6 +159,29 @@ class TestLoginWithPassword(object):
         theuser = user.User(name=name, password='12345')
         assert theuser.valid
 
+    def test_regression_user_password_started_with_sha(self):
+        # This is regression test for bug in function 'user.create_user'.
+        #
+        # This function does not encode passwords which start with '{SHA}'
+        # It treats them as already encoded SHA hashes.
+        #
+        # If user during registration specifies password starting with '{SHA}'
+        # this password will not get encoded and user object will get saved with empty enc_password
+        # field.
+        #
+        # Such situation leads to "KeyError: 'enc_password'" during
+        # user authentication.
+
+        # Any Password begins with the {SHA} symbols led to
+        # "KeyError: 'enc_password'" error during user authentication.
+        user_name = u'moin'
+        user_password = u'{SHA}LKM56'
+        user.create_user(user_name, user_password, u'moin@moinmo.in')
+
+        # Try to "login"
+        theuser = user.User(name=user_name, password=user_password)
+        assert theuser.valid
+
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
         pagename = u'HelpMiscellaneous'
