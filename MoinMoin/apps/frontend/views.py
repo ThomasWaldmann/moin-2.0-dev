@@ -179,7 +179,7 @@ def show_item_meta(item_name, rev):
                            mimetype=item.mimetype,
                            first_rev_no=first_rev,
                            last_rev_no=last_rev,
-                           meta_rendered=item._render_meta(),
+                           meta_rendered=Markup(item._render_meta()),
                            show_navigation=(rev>=0),
                           )
 
