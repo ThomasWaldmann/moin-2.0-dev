@@ -1,11 +1,40 @@
 {# Use the template_dirs configuration option to override this template #}
 
-{% macro license_info() %}{% endmacro %}
+{# Logo in the header #}
+{% macro logo() -%}
+<img src="{{ url_for('static', filename='common/moinmoin.png') }}" id="moin-img-logo" alt="MoinMoin Logo">
+{%- endmacro %}
 
+{# Additional HTML tags inside <head> #}
+{% macro user_head() -%}
+{%- endmacro %}
+
+{# Additional HTML before #moin-header #}
+{% macro before_header() -%}
+{%- endmacro %}
+
+{# Additional HTML after #moin-header #}
+{% macro after_header() -%}
+{%- endmacro %}
+
+{# Additional HTML before #moin-footer #}
+{% macro before_footer() -%}
+{%- endmacro %}
+
+{# Additional HTML after #moin-footer #}
+{% macro after_footer() -%}
+{%- endmacro %}
+
+{# License information in the footer #}
+{% macro license_info() -%}
+{%- endmacro %}
+
+{# Helper macro to create image links #}
 {% macro creditlogo(link, logo, alt, title) %}
-<a href="{{ link|e }}" title="{{ title|e }}"><img src="{{ logo|e }}" alt="{{ alt|e }}" /></a>
+<a href="{{ link }}" title="{{ title }}"><img src="{{ logo }}" alt="{{ alt }}" /></a>
 {% endmacro %}
 
+{# Image links in the footer #}
 {% macro creditlogos(start='<ul id="moin-creditlogos"><li>'|safe, end='</li></ul>'|safe, sep='</li><li>'|safe) %}
 {{ start }}
 {{ creditlogo('http://moinmo.in/', url_for('static', filename='common/logos/moinmoin_powered.png'),
@@ -16,10 +45,12 @@
 {{ end }}
 {% endmacro %}
 
+{# Helper macro to generate text links #}
 {% macro credit(link, text, title) -%}
-<a href="{{ link|e }}" title="{{ title|e }}">{{ text|e }}</a>
+<a href="{{ link }}" title="{{ title }}">{{ text }}</a>
 {%- endmacro %}
 
+{# Text links in the footer #}
 {% macro credits(start='<p id="moin-credits">'|safe, end='</p>'|safe, sep='<span>&bull;</span>'|safe) %}
 {{ start }}
 {{ credit('http://moinmo.in/', 'MoinMoin Powered', 'This site uses the MoinMoin Wiki software.') }}
