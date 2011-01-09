@@ -178,7 +178,7 @@ class MercurialBackend(Backend):
 
         for ctx in self._iter_changelog(reverse=reverse):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
-            revno, oldid, oldname, timestamp = meta['rev'], meta['id'], meta['name'], ctx.date()[0]
+            revno, oldid, oldname, timestamp = meta['rev'], meta['id'], meta['name'], long(ctx.date()[0])
             try:
                 for (id, name) in renamed_items[oldid]:
                     # consider you have backend merged from two instances,
@@ -432,7 +432,7 @@ class MercurialBackend(Backend):
 
     def _get_revision_timestamp(self, revision):
         """Return given Revision timestamp"""
-        return self._get_filectx(revision).date()[0]
+        return long(self._get_filectx(revision).date()[0])
 
     def _get_revision_size(self, revision):
         """Return size of given Revision in bytes."""
