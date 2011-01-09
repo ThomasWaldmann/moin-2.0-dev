@@ -438,7 +438,10 @@ def _backrefs(items, item_name):
     refs_here = []
     for item in items:
         current_item = item.name
-        current_revision = item.get_revision(-1)
+        try:
+            current_revision = item.get_revision(-1)
+        except NoSuchRevisionError:
+            continue
         links = current_revision.get(ITEMLINKS, [])
         transclusions = current_revision.get(ITEMTRANSCLUSIONS, [])
 
@@ -500,7 +503,10 @@ def _wanteds(items):
     for item in items:
         current_item = item.name
         all_items.add(current_item)
-        current_rev = item.get_revision(-1)
+        try:
+            current_rev = item.get_revision(-1)
+        except NoSuchRevisionError:
+            continue
         # converting to sets so we can get the union
         outgoing_links = current_rev.get(ITEMLINKS, [])
         outgoing_transclusions = current_rev.get(ITEMTRANSCLUSIONS, [])
@@ -539,12 +545,18 @@ def _orphans(items):
     linked_items = set()
     transcluded_items = set()
     all_items = set()
+    norev_items = set()
     for item in items:
         all_items.add(item.name)
-        current_rev = item.get_revision(-1)
-        linked_items.update(current_rev.get(ITEMLINKS, []))
-        transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
-    orphans = all_items - linked_items - transcluded_items
+        try:
+            current_rev = item.get_revision(-1)
+        except NoSuchRevisionError:
+            norev_items.add(item.name)
+        else:
+            linked_items.update(current_rev.get(ITEMLINKS, []))
+            transcluded_items.update(current_rev.get(ITEMTRANSCLUSIONS, []))
+    orphans = all_items - linked_items - transcluded_items - norev_items
+    logging.info("_orphans: Ignored %d item(s) that have no revisions" % len(norev_items))
     return list(orphans)
 
 
