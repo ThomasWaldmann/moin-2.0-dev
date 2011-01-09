@@ -1,4 +1,6 @@
 <!DOCTYPE html>{# this is html5, xmlish variant #}
+{%- import "snippets.html" as snippets with context %}
+{%- set user_head = snippets.user_head() %}
 <html>
 <head>
 {% block head %}
@@ -12,12 +14,12 @@
             <meta name="edit_on_doubleclick" content="1" />
     {%- endif %}
     {% for name, content in theme_supp.meta_items -%}
-        <meta name="{{ name|e }}" content="{{ content|e }}" />
+        <meta name="{{ name }}" content="{{ content }}" />
     {% endfor %}
     {% endblock %}
 
     {% block head_misc %}
-    {{ cfg.html_head }}
+    {{ user_head }}
     {%- if html_head -%}
         {{ html_head }}
     {%- endif %}
@@ -26,29 +28,28 @@
     {% block head_title %}
     <title>
     {%- if title -%}{{ title }}{% else %}{{ item_name }}{%- endif %} -
-    {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %} {{ cfg.sitename|e }}{%- endif -%}
-    {#  HHH  #}
+    {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle }}{% else %} {{ cfg.sitename }}{%- endif -%}
     </title>
     {% endblock %}
 
     {% block head_links %}
     <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}" />
-    <link rel="archives" href="{{ url_for('frontend.history', item_name=item_name)|e }}" />
+    <link rel="archives" href="{{ url_for('frontend.history', item_name=item_name) }}" />
     {% set parent_item = theme_supp.parent_item(item_name) %}
     {%- if parent_item -%}
-        <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item)|e }}" />
+        <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item) }}" />
     {%- endif %}
     {% for media, name in theme_supp.stylesheets -%}
-        <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name)|e }}" />
+        <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name) }}" />
     {% endfor %}
     {% for media, url, title, alternate in cfg.stylesheets -%}
-        <link media="{{ media }}" href="{{ url|e }}"
-        {%- if title %} title="{{ title|e }}" {% endif -%}
+        <link media="{{ media }}" href="{{ url }}"
+        {%- if title %} title="{{ title }}" {% endif -%}
         rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
         />
     {%- endfor %}
     {% if user.valid and user.css_url -%}
-        <link media="all" rel="stylesheet" title="{{ user.name|e }}'s stylesheet" href="{{ user.css_url|e }}" />
+        <link media="all" rel="stylesheet" title="{{ user.name }}'s stylesheet" href="{{ user.css_url }}" />
     {%- endif %}
     {% endblock %}
 
@@ -57,7 +58,7 @@
         <script src="{{ url_for('.static', filename='common/js/%s.js' % src) }}"></script>
     {% endfor %}    
     {% for type, src in cfg.external_scripts -%}
-        <script type="{{ type }}" src="{{ src|e }}"></script>
+        <script type="{{ type }}" src="{{ src }}"></script>
     {% endfor %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
