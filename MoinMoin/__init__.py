@@ -33,12 +33,6 @@ from werkzeug import ImmutableDict
 
 from jinja2 import ChoiceLoader, FileSystemLoader
 
-class MoinFlask(Flask):
-    # TODO: at all places where we insert html into output, use the Markup
-    # class of flask/jinja so we can switch autoescape on in the end.
-    select_jinja_autoescape = False
-
-
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -72,7 +66,7 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     @param **kwargs: if you give additional key/values here, they'll get patched
                      into the moin configuration class (before it instance is created)
     """
-    app = MoinFlask('MoinMoin')
+    app = Flask('MoinMoin')
     if flask_config_file:
         app.config.from_pyfile(flask_config_file)
     else:

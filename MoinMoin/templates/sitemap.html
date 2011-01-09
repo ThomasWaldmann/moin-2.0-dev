@@ -8,7 +8,7 @@
         </ul>
     {% else %}
         <li>
-        <a href="{{ url_for('frontend.sitemap', item_name=entry)|e }}">{{ entry|e }}</a>
+        <a href="{{ url_for('frontend.sitemap', item_name=entry) }}">{{ entry }}</a>
         </li>
     {% endif %}
 {% endfor %}

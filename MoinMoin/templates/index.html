@@ -5,7 +5,7 @@
     {% if index %}
         <ul>
         {% for fullname, relname, mimetype in index %}
-            <li><a href="{{ url_for('show_item', item_name=fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a></li>
+            <li><a href="{{ url_for('show_item', item_name=fullname) }}">{{ relname }} ({{ mimetype }})</a></li>
         {% endfor %}
         </ul>
     {% endif %}

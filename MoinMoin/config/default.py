@@ -218,10 +218,7 @@ file. It should match the actual charset of the configuration file.
             'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
-            'superusers', 'textchas_disabled_group', 'supplementation_item_names',
-            'logo', 'html_pagetitle',
-            'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
-            'html_head',
+            'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
         )
 
         for name in decode_names:
@@ -415,7 +412,6 @@ options_no_group_name = {
     ('sitename', u'Untitled Wiki',
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
-    ('logo', None, "Text (html-escaped) or html fragment (html5, xml variant) shown as logo. [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`) [Unicode]"),
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode]'),
@@ -441,11 +437,6 @@ options_no_group_name = {
 
     ('trail_size', 5,
      "Number of items in the trail of recently visited items"),
-
-    ('html_before_header', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag. [Unicode]"),
-    ('html_after_header', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag). [Unicode]"),
-    ('html_before_footer', '', "Custom HTML markup sent ''before'' the system footer. [Unicode]"),
-    ('html_after_footer', '', "Custom HTML markup sent ''after'' the system footer. [Unicode]"),
 
     ('edit_bar', ['Show', 'Meta', 'Modify', 'Comments', 'Download', 'History', 'Subscribe', 'Quicklink', 'Index', 'Supplementation', 'ActionsMenu'],
      'list of edit bar entries'),
@@ -536,8 +527,6 @@ options_no_group_name = {
     ('bang_meta', True, 'if True, enable {{{!NoWikiName}}} markup'),
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
-
-    ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes. [Unicode]"),
 
     ('timezone_default', 'UTC', "Default time zone."),
     ('locale_default', 'en_US', "Default locale for user interface and content."),

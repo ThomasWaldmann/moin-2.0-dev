@@ -137,6 +137,7 @@ from werkzeug import redirect, abort, url_quote, url_quote_plus
 from flask import url_for, session, request
 from flask import flaskg
 from flask import current_app as app
+from jinja2 import Markup
 
 from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
@@ -248,8 +249,7 @@ class MoinAuth(BaseAuth):
                 register_url=url_for('frontend.register'))
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>',
                  recover_url=url_for('frontend.lostpass'))
-        #HHH
-        return msg
+        return Markup(msg)
 
 
 class GivenAuth(BaseAuth):

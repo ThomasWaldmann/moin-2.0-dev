@@ -67,12 +67,11 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
             return _("Password not acceptable: %(msg)s", msg=escape(pw_error))
 
     # Encode password
-    if password and not password.startswith('{SHA}'):
-        try:
-            theuser.enc_password = encodePassword(password)
-        except UnicodeError, err:
-            # Should never happen
-            return "Can't encode password: %s" % escape(str(err))
+    try:
+        theuser.enc_password = encodePassword(password)
+    except UnicodeError, err:
+        # Should never happen
+        return "Can't encode password: %s" % escape(str(err))
 
     # try to get the email, for new users it is required
     theuser.email = email
