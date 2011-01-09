@@ -7,12 +7,12 @@
 <table>
     {% for gname, mimetypes in mimetype_groups %}
     <tr>
-        <td class="green">{{ gname|e }}</td>
+        <td class="green">{{ gname }}</td>
     </tr>
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mname)|e }}">{{ mlabel|e }}</a> -
+            <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mname) }}">{{ mlabel }}</a> -
         {% endfor %}
         </td>
     </tr>

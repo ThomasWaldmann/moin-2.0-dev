@@ -5,12 +5,12 @@
 {% if part == 'main' %}
 <h1>{{ _("Settings") }}</h1>
 <ul>
-    <li><a href="{{ url_for('frontend.usersettings', part='personal')|e }}">{{ _("Personal Settings") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='password')|e }}">{{ _("Change password") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='notification')|e }}">{{ _("Notification Settings") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='ui')|e }}">{{ _("Wiki Appearance Settings") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='navigation')|e }}">{{ _("Navigation Settings") }}</a></li>
-    <li><a href="{{ url_for('frontend.usersettings', part='options')|e }}">{{ _("Options") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='personal') }}">{{ _("Personal Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='password') }}">{{ _("Change password") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='notification') }}">{{ _("Notification Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='ui') }}">{{ _("Wiki Appearance Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='navigation') }}">{{ _("Navigation Settings") }}</a></li>
+    <li><a href="{{ url_for('frontend.usersettings', part='options') }}">{{ _("Options") }}</a></li>
 </ul>
 
 {% elif part == 'personal' %}
