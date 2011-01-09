@@ -15,7 +15,7 @@ padding: 2px 20px 20px;
 box-shadow: 1px 1px 33px -11px inset;
 /* support for firefox 3.5/3.6 and safari */
 -moz-box-shadow: 1px 1px 33px -11px inset;
--webkit-box-shadow: 1px 1px 33px -11px inset;
+-webkit-box-shadow: inset 1px 1px 33px -11px black;
 }
 
 /* links */
@@ -89,6 +89,7 @@ a.download { font-size: 120%; letter-spacing: 0.05em; font-weight: bold; backgro
 
 /* moin-page moin-footer */
 #moin-footer { clear: both; margin: 0 0; }
+#moin-footer hr { margin: 0; background-color: #ccc; }
 #moin-pageinfo,
 #moin-wikilicense,
 #moin-credits,
