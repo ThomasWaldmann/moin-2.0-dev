@@ -12,8 +12,7 @@
 
 {% import "editbar.html" as editbar with context %}
 
-{% block header %}
-    {{ super() }}
+{% block header_editbar %}
     {{ editbar }}
 {% endblock %}
 
@@ -62,9 +61,8 @@
 
 {% block footer_hr %}{% endblock %}
 
-{% block footer %}
+{% block footer_editbar %}
     {{ editbar }}
-    {{ super() }}
 {% endblock %}
 
 {% block footer_meta %}
