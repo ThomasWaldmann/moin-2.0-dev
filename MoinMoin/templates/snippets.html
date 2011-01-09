@@ -31,7 +31,7 @@
 
 {# Helper macro to create image links #}
 {% macro creditlogo(link, logo, alt, title) %}
-<a href="{{ link|e }}" title="{{ title|e }}"><img src="{{ logo|e }}" alt="{{ alt|e }}" /></a>
+<a href="{{ link }}" title="{{ title }}"><img src="{{ logo }}" alt="{{ alt }}" /></a>
 {% endmacro %}
 
 {# Image links in the footer #}
@@ -47,7 +47,7 @@
 
 {# Helper macro to generate text links #}
 {% macro credit(link, text, title) -%}
-<a href="{{ link|e }}" title="{{ title|e }}">{{ text|e }}</a>
+<a href="{{ link }}" title="{{ title }}">{{ text }}</a>
 {%- endmacro %}
 
 {# Text links in the footer #}
