@@ -241,17 +241,10 @@ def setup_user():
     userobj = auth.setup_from_session()
 
     # then handle login/logout forms
-    form = request.values
-
+    form = request.values.to_dict()
     if 'login_submit' in form:
         # this is a real form, submitted by POST
-        params = {
-            'username': form.get('login_username'),
-            'password': form.get('login_password'),
-            'attended': True,
-            'stage': form.get('stage')
-        }
-        userobj = auth.handle_login(userobj, **params)
+        userobj = auth.handle_login(userobj, **form)
     elif 'logout_submit' in form:
         # currently just a GET link
         userobj = auth.handle_logout(userobj)
@@ -261,7 +254,11 @@ def setup_user():
     # if we still have no user obj, create a dummy:
     if not userobj:
         userobj = user.User(auth_method='invalid')
-
+    # if we have a valid user we store it in the session
+    if userobj.valid:
+        session['user.id'] = userobj.id
+        session['user.auth_method'] = userobj.auth_method
+        session['user.auth_attribs'] = userobj.auth_attribs
     return userobj
 
 

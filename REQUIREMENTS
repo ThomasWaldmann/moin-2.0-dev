@@ -48,7 +48,7 @@ ldap_login auth: python-ldap >=2.0.0pre06
 
 mysql_group auth: MySQLdb python module
 
-openidrp auth: openid python module
+openidrp auth: openid python >= 2.2.4-1
 
 
 Bundled 3rd party code

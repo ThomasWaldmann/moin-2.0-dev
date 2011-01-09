@@ -42,8 +42,6 @@ from MoinMoin.signalling import item_displayed, item_modified
 
 @frontend.route('/+dispatch', methods=['GET', ])
 def dispatch():
-    # XXX raises KeyError when called without endpoint parameter
-    # XXX raises werkzeug.routing.BuildError when called with invalid endpoint parameter
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
     return redirect(url_for(endpoint, **args))
@@ -140,7 +138,6 @@ def redirect_show_item(item_name):
 @frontend.route('/+dom/<int:rev>/<itemname:item_name>')
 @frontend.route('/+dom/<itemname:item_name>', defaults=dict(rev=-1))
 def show_dom(item_name, rev):
-    converters = request.values.get('converters', 'smiley,link').split(',')
     try:
         item = Item.create(item_name, rev_no=rev)
     except AccessDeniedError:
@@ -150,7 +147,7 @@ def show_dom(item_name, rev):
     else:
         status = 200
     content = render_template('dom.xml',
-                              data_xml=item._render_data_xml(converters),
+                              data_xml=item._render_data_xml(),
                              )
     return Response(content, status, mimetype='text/xml')
 
@@ -574,7 +571,6 @@ def subscribe_item(item_name):
     cfg = app.cfg
     msg = None
     if not u.valid:
-        # TODO There are no actions any more
         msg = _("You must login to use this action: %(action)s.", action="subscribe/unsubscribe"), "error"
     elif not u.may.read(item_name):
         msg = _("You are not allowed to subscribe to an item you may not read."), "error"
@@ -604,7 +600,8 @@ class ValidRegistration(Validator):
     def validate(self, element, state):
         if not (element['username'].valid and
                 element['password1'].valid and element['password2'].valid and
-                element['email'].valid and element['textcha'].valid):
+                element['email'].valid and element['textcha'].valid and
+                element['openid'].valid):
             return False
         if element['password1'].value != element['password2'].value:
             return self.note_error(element, state, 'passwords_mismatch_msg')
@@ -619,6 +616,7 @@ class RegistrationForm(TextChaizedForm):
     password1 = String.using(label=N_('Password')).validated_by(Present())
     password2 = String.using(label=N_('Password')).validated_by(Present())
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
     submit = String.using(default=N_('Register'), optional=True)
 
     validators = [ValidRegistration()]
@@ -643,28 +641,37 @@ def register():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
-    form = RegistrationForm.from_defaults()
-    TextCha(form).amend_form()
+    if request.method == 'GET':
+        form = RegistrationForm.from_defaults()
+        TextCha(form).amend_form()
 
+        return render_template('register.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
     if request.method == 'POST':
-        form.set_flat(request.form)
+        form = RegistrationForm.from_flat(request.form)
+        TextCha(form).amend_form()
 
         valid = form.validate()
         if valid:
             msg = user.create_user(username=form['username'].value,
                                    password=form['password1'].value,
                                    email=form['email'].value,
+                                   openid=form['openid'].value,
                                   )
             if msg:
                 flash(msg, "error")
             else:
                 flash(_('Account created, please log in now.'), "info")
-                return redirect(url_for('frontend.show_root'))
-    return render_template('register.html',
-                           item_name=item_name,
-                           gen=make_generator(),
-                           form=form,
-                          )
+            return redirect(url_for('frontend.show_root'))
+        else:
+            return render_template('register.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 class ValidLostPassword(Validator):
@@ -700,10 +707,15 @@ def lostpass():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
-    form = PasswordLostForm.from_defaults()
-
+    if request.method == 'GET':
+        form = PasswordLostForm.from_defaults()
+        return render_template('lostpass.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
     if request.method == 'POST':
-        form.set_flat(request.form)
+        form = PasswordLostForm.from_flat(request.form)
         valid = form.validate()
         if valid:
             u = None
@@ -719,11 +731,12 @@ def lostpass():
                     flash(msg, "error")
             flash(_("If this account exists, you will be notified."), "info")
             return redirect(url_for('frontend.show_root'))
-    return render_template('lostpass.html',
-                           item_name=item_name,
-                           gen=make_generator(),
-                           form=form,
-                          )
+        else:
+            return render_template('lostpass.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 class ValidPasswordRecovery(Validator):
     """Validator for a valid password recovery form
@@ -763,11 +776,16 @@ def recoverpass():
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
 
-    form = PasswordRecoveryForm.from_defaults()
     if request.method == 'GET':
+        form = PasswordRecoveryForm.from_defaults()
         form.update(request.values)
-    elif request.method == 'POST':
-        form.set_flat(request.form)
+        return render_template('recoverpass.html',
+                               item_name=item_name,
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = PasswordRecoveryForm.from_flat(request.form)
         valid = form.validate()
         if valid:
             u = user.User(user.getUserId(form['username'].value))
@@ -776,37 +794,50 @@ def recoverpass():
             else:
                 flash(_('Your token is invalid!'), "error")
             return redirect(url_for('frontend.show_root'))
-    return render_template('recoverpass.html',
-                           item_name=item_name,
-                           gen=make_generator(),
-                           form=form,
-                          )
+        else:
+            return render_template('recoverpass.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 class ValidLogin(Validator):
-    """Validator for a valid login
-
-    If username is wrong or password is wrong, we do not tell exactly what was
-    wrong, to prevent username phishing attacks.
     """
-    fail_msg = N_('Either your username or password was invalid.')
+    Login validator
+    """
+    moin_fail_msg = N_('Either your username or password was invalid.')
+    openid_fail_msg = N_('Failed to authenticate with this OpenID.')
 
     def validate(self, element, state):
-        if not (element['username'].valid and element['password'].valid):
+        # get the result from the other validators
+        moin_valid = element['username'].valid and element['password'].valid
+        openid_valid = element['openid'].valid
+
+        # none of them was valid
+        if not (openid_valid or moin_valid):
             return False
-        # the real login happens at another place. if it worked, we have a valid user
+        # got our user!
         if flaskg.user.valid:
             return True
+        # no valid user -> show appropriate message
         else:
-            return self.note_error(element, state, 'fail_msg')
+            if not openid_valid:
+                return self.note_error(element, state, 'openid_fail_msg')
+            elif not moin_valid:
+                return self.note_error(element, state, 'moin_fail_msg')
 
 
 class LoginForm(Form):
-    """a simple login form"""
+    """
+    Login form
+    """
     name = 'login'
 
-    username = String.using(label=N_('Name')).validated_by(Present())
-    password = String.using(label=N_('Password')).validated_by(Present())
+    username = String.using(label=N_('Name'), optional=True).validated_by(Present())
+    password = String.using(label=N_('Password'), optional=True).validated_by(Present())
+    openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
+
     submit = String.using(default=N_('Log in'), optional=True)
 
     validators = [ValidLogin()]
@@ -816,30 +847,45 @@ class LoginForm(Form):
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'Login' # XXX
-    form = LoginForm.from_defaults()
+
+    # multistage return
+    if flaskg._login_multistage_name == 'openid':
+            return flaskg._login_multistage(None)
+
+    # get the form contents
+    form = LoginForm.from_flat(request.form)
+    valid = form.validate()
+    if valid:
+        # we have a logged-in, valid user
+        return redirect(url_for('frontend.show_root'))
+
+    # flash the error messages (if any)
+    for msg in flaskg._login_messages:
+            flash(msg, "error")
+
     if request.method == 'GET':
+        form = LoginForm.from_defaults()
         for authmethod in app.cfg.auth:
             hint = authmethod.login_hint()
             if hint:
                 flash(hint, "info")
+
+        # initialise form
+        form.set_default()
+        return render_template('login.html',
+                               item_name=item_name,
+                               login_inputs=app.cfg.auth_login_inputs,
+                               gen=make_generator(),
+                               form=form,
+                              )
     if request.method == 'POST':
-        for msg in flaskg._login_messages:
-            flash(msg, "error")
-        form.set_flat(request.form)
-        valid = form.validate()
-        if valid:
-            # we have a logged-in, valid user
-            userobj = flaskg.user
-            session['user.id'] = userobj.id
-            session['user.auth_method'] = userobj.auth_method
-            session['user.auth_attribs'] = userobj.auth_attribs
-            return redirect(url_for('frontend.show_root'))
-    return render_template('login.html',
-                           item_name=item_name,
-                           login_inputs=app.cfg.auth_login_inputs,
-                           gen=make_generator(),
-                           form=form,
-                          )
+        # if no valid user, show form again (with hints)
+        return render_template('login.html',
+                               item_name=item_name,
+                               login_inputs=app.cfg.auth_login_inputs,
+                               gen=make_generator(),
+                               form=form,
+                              )
 
 
 @frontend.route('/+logout')
@@ -922,6 +968,7 @@ def usersettings(part):
         name = 'usersettings_personal' # "name" is duplicate
         name = String.using(label=N_('Name')).validated_by(Present())
         aliasname = String.using(label=N_('Alias-Name'), optional=True)
+        openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
         timezones_keys = pytz.common_timezones
         timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
@@ -951,28 +998,40 @@ def usersettings(part):
         options=UserSettingsOptionsForm,
     )
     FormClass = dispatch.get(part)
-    if FormClass:
+    if FormClass is None:
+        # 'main' part or some invalid part
+        return render_template('usersettings.html',
+                               part='main',
+                               item_name=item_name,
+                              )
+    if request.method == 'GET':
         form = FormClass.from_object(flaskg.user)
         form['submit'].set('Save') # XXX why does from_object() kill submit value?
-        if request.method == 'POST':
-            form = FormClass.from_flat(request.form)
-            valid = form.validate()
-            if valid:
-                if part == 'password':
-                    flaskg.user.enc_password = user.encodePassword(form['password1'].value)
-                else:
-                    form.update_object(flaskg.user)
-                flaskg.user.save()
-                if part == 'password':
-                    flash(_("Your password has been changed."), "info")
-                return redirect(url_for('frontend.usersettings'))
-    return render_template('usersettings.html',
-                           item_name=item_name,
-                           # FormClass is None on main part
-                           part=part if FormClass else 'main',
-                           gen=make_generator() if FormClass else None,
-                           form=form if FormClass else None,
-                          )
+        return render_template('usersettings.html',
+                               item_name=item_name,
+                               part=part,
+                               gen=make_generator(),
+                               form=form,
+                              )
+    if request.method == 'POST':
+        form = FormClass.from_flat(request.form)
+        valid = form.validate()
+        if valid:
+            if part == 'password':
+                flaskg.user.enc_password = user.encodePassword(form['password1'].value)
+            else:
+                form.update_object(flaskg.user)
+            flaskg.user.save()
+            if part == 'password':
+                flash(_("Your password has been changed."), "info")
+            return redirect(url_for('frontend.usersettings'))
+        else:
+            return render_template('usersettings.html',
+                                   item_name=item_name,
+                                   part=part,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
 
 
 @frontend.route('/+bookmark')
