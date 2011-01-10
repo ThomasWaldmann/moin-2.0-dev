@@ -852,7 +852,8 @@ class LoginForm(Form):
     password = String.using(label=N_('Password'), optional=True).validated_by(Present())
     openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
 
-    submit = String.using(default=N_('Log in'), optional=True)
+    # the submit hidden field
+    submit = String.using(optional=True)
 
     validators = [ValidLogin()]
 
