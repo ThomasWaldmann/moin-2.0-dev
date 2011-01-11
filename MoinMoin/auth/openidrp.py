@@ -151,8 +151,7 @@ class OpenIDAuth(BaseAuth):
             else:
                 # send a form
                 form_html = oid_response.htmlMarkup(site_root, return_to, form_tag_attrs={'id': 'openid_message'})
-                # create a callable multistage object
-                form_function = lambda form: form_html
+
                 # returns a MultistageFormLogin
-                return MultistageFormLogin(form_function)
+                return MultistageFormLogin(form_html)
 
