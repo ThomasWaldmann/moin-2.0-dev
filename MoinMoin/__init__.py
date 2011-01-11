@@ -66,7 +66,10 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     @param **kwargs: if you give additional key/values here, they'll get patched
                      into the moin configuration class (before it instance is created)
     """
+    clock = Clock()
+    clock.start('create_app total')
     app = Flask('MoinMoin')
+    clock.start('create_app load config')
     if flask_config_file:
         app.config.from_pyfile(flask_config_file)
     else:
@@ -86,6 +89,8 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
         # reuse the secret configured for flask (which is required for sessions)
         Config.secrets = app.config.get('SECRET_KEY')
     app.cfg = Config()
+    clock.stop('create_app load config')
+    clock.start('create_app register')
     # register converters
     from werkzeug.routing import PathConverter
     app.url_map.converters['itemname'] = PathConverter
@@ -101,17 +106,29 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     # register before/after request functions
     app.before_request(before)
     app.after_request(after)
+    clock.stop('create_app register')
+    clock.start('create_app flask-cache')
     cache = Cache()
     cache.init_app(app)
     app.cache = cache
+    clock.stop('create_app flask-cache')
     # init storage
+    clock.start('create_app init backends')
     app.unprotected_storage, app.storage = init_backends(app)
+    clock.stop('create_app init backends')
+    clock.start('create_app index rebuild')
     app.unprotected_storage.index_rebuild() # XXX run this from a script
+    clock.stop('create_app index rebuild')
+    clock.start('create_app load/save xml')
     import_export_xml(app)
+    clock.stop('create_app load/save xml')
+    clock.start('create_app flask-babel')
     babel = Babel(app)
     babel.localeselector(get_locale)
     babel.timezoneselector(get_timezone)
+    clock.stop('create_app flask-babel')
     # configure templates
+    clock.start('create_app flask-themes')
     setup_themes(app)
     if app.cfg.template_dirs:
         app.jinja_env.loader = ChoiceLoader([
@@ -119,6 +136,9 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
             app.jinja_env.loader,
         ])
     app.error_handlers[403] = themed_error
+    clock.stop('create_app flask-themes')
+    clock.stop('create_app total')
+    del clock
     return app
 
 
