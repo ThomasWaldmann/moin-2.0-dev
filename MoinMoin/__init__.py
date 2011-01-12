@@ -94,18 +94,23 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     # register converters
     from werkzeug.routing import PathConverter
     app.url_map.converters['itemname'] = PathConverter
-    # register modules
+    # register modules, before/after request functions
     from MoinMoin.apps.frontend import frontend
+    frontend.before_request(before_wiki)
+    frontend.after_request(after_wiki)
     app.register_module(frontend)
     from MoinMoin.apps.admin import admin
+    admin.before_request(before_wiki)
+    admin.after_request(after_wiki)
     app.register_module(admin, url_prefix='/+admin')
     from MoinMoin.apps.feed import feed
+    feed.before_request(before_wiki)
+    feed.after_request(after_wiki)
     app.register_module(feed, url_prefix='/+feed')
     from MoinMoin.apps.misc import misc
+    misc.before_request(before_wiki)
+    misc.after_request(after_wiki)
     app.register_module(misc, url_prefix='/+misc')
-    # register before/after request functions
-    app.before_request(before)
-    app.after_request(after)
     clock.stop('create_app register')
     clock.start('create_app flask-cache')
     cache = Cache()
@@ -277,10 +282,9 @@ def setup_user():
     return userobj
 
 
-def before():
+def before_wiki():
     """
-    Wraps an incoming WSGI request in a Context object and initializes
-    several important attributes.
+    Setup environment for wiki requests, start timers.
     """
     flaskg.clock = Clock()
     flaskg.clock.start('total')
@@ -306,7 +310,10 @@ def before():
     # if return value is not None, it is the final response
 
 
-def after(response):
+def after_wiki(response):
+    """
+    Stop timers.
+    """
     flaskg.clock.stop('total')
     del flaskg.clock
     return response
