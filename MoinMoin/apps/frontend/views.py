@@ -862,7 +862,7 @@ def login():
 
     # multistage return
     if flaskg._login_multistage_name == 'openid':
-            return Response(flaskg._login_multistage, mimetype='text/html')
+            return flaskg._login_multistage
 
     # get the form contents
     form = LoginForm.from_flat(request.form)
