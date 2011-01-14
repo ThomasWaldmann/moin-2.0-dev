@@ -78,7 +78,8 @@ class OpenIDAuth(BaseAuth):
 
                 # we have successfully authenticated our openid
                 # we get the user with this openid associated to him
-                user_obj = user.get_by_openid(oid_info.identity_url)
+                identity = oid_info.identity_url
+                user_obj = user.get_by_openid(identity)
 
                 # if the user actually exists
                 if user_obj:
@@ -89,8 +90,8 @@ class OpenIDAuth(BaseAuth):
 
                 # there is no user with this openid
                 else:
-                    # show an appropriate message
-                    return ContinueLogin(None, _('There is no user with this OpenID.'))
+                    # redirect the user to registration
+                    return MultistageRedirectLogin(url_for('frontend.register', openid=identity))
 
             # not trusted
             return ContinueLogin(None, _('This OpenID provider is not trusted.'))
