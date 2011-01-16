@@ -34,7 +34,7 @@ class OpenIDAuth(BaseAuth):
         # the store
         self.store = MemoryStore()
 
-        self._trusted_providers=trusted_providers
+        self._trusted_providers = list(trusted_providers)
         BaseAuth.__init__(self)
 
     def _handleContinuationVerify(self):
