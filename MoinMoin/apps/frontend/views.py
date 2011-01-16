@@ -614,8 +614,7 @@ class ValidRegistration(Validator):
     def validate(self, element, state):
         if not (element['username'].valid and
                 element['password1'].valid and element['password2'].valid and
-                element['email'].valid and element['textcha'].valid and
-                element['openid'].valid):
+                element['email'].valid and element['textcha'].valid):
             return False
         if element['password1'].value != element['password2'].value:
             return self.note_error(element, state, 'passwords_mismatch_msg')
@@ -630,7 +629,6 @@ class RegistrationForm(TextChaizedForm):
     password1 = String.using(label=N_('Password')).validated_by(Present())
     password2 = String.using(label=N_('Password')).validated_by(Present())
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
     submit = String.using(default=N_('Register'), optional=True)
 
     validators = [ValidRegistration()]
@@ -673,7 +671,6 @@ def register():
             msg = user.create_user(username=form['username'].value,
                                    password=form['password1'].value,
                                    email=form['email'].value,
-                                   openid=form['openid'].value,
                                   )
             if msg:
                 flash(msg, "error")
@@ -852,7 +849,8 @@ class LoginForm(Form):
     password = String.using(label=N_('Password'), optional=True).validated_by(Present())
     openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
 
-    submit = String.using(default=N_('Log in'), optional=True)
+    # the submit hidden field
+    submit = String.using(optional=True)
 
     validators = [ValidLogin()]
 
@@ -864,7 +862,7 @@ def login():
 
     # multistage return
     if flaskg._login_multistage_name == 'openid':
-            return flaskg._login_multistage(None)
+            return Response(flaskg._login_multistage, mimetype='text/html')
 
     # get the form contents
     form = LoginForm.from_flat(request.form)
@@ -982,7 +980,6 @@ def usersettings(part):
         name = 'usersettings_personal' # "name" is duplicate
         name = String.using(label=N_('Name')).validated_by(Present())
         aliasname = String.using(label=N_('Alias-Name'), optional=True)
-        openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
         timezones_keys = pytz.common_timezones
         timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
