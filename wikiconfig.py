@@ -48,6 +48,10 @@ class Config(DefaultConfig):
     # Load the interwiki map from intermap.txt:
     interwiki_map = InterWikiMap.from_file(os.path.join(wikiconfig_dir, 'contrib', 'interwiki', 'intermap.txt')).iwmap
 
+    from MoinMoin.auth.openidrp import OpenIDAuth
+    from MoinMoin.auth import MoinAuth
+    auth = [OpenIDAuth(), MoinAuth()]
+
     sitename = u'My MoinMoin'
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
