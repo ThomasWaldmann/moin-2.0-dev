@@ -24,7 +24,7 @@ from MoinMoin import user
 
 
 class OpenIDAuth(BaseAuth):
-    def __init__(self):
+    def __init__(self, trusted_providers=[]):
         # the name
         self.name = 'openid'
         # we only need openid
@@ -33,6 +33,8 @@ class OpenIDAuth(BaseAuth):
         self.logout_possible = True
         # the store
         self.store = MemoryStore()
+
+        self._trusted_providers=trusted_providers
         BaseAuth.__init__(self)
 
     def _handleContinuationVerify(self):
@@ -70,7 +72,7 @@ class OpenIDAuth(BaseAuth):
 
             # we get the provider's url
             # and the list of trusted providers
-            trusted = app.cfg.auth_oid_trusted
+            trusted = self._trusted_providers
             server = oid_info.endpoint.server_url
 
             if server in trusted or trusted == []:

@@ -377,8 +377,6 @@ options_no_group_name = {
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
-    ('auth_oid_trusted', DefaultExpression('[]'),
-     "List of trusted openid providers, empty if all are trusted."),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes."""),
     # use sha512 as soon as we require python2.5 because sha1 is weak:
     ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),

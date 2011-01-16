@@ -25,8 +25,9 @@
     #auth = [OpenIDAuth()]
 
     # By default OpenID authentication accepts all openid providers. If you
-    # like you can set what openid services to allow by adding their urls to
-    # auth_oid_trusted, if left empty moin will allow all providers.
+    # like you can set what openid services to allow by adding their urls to the
+    # trusted_providers keyword of OpenID auth.
+    # If left empty moin will allow all providers.
     # eg. To allow only google profile openids:
-    #auth_oid_trusted = ['https://www.google.com/accounts/o8/ud?source=profiles']
+    #auth = [OpenIDAuth(trusted_providers=['https://www.google.com/accounts/o8/ud?source=profiles'])]
 
