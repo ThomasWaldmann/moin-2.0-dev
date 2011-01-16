@@ -30,6 +30,7 @@ from flaskext.cache import Cache
 from flaskext.themes import setup_themes
 
 from werkzeug import ImmutableDict
+from werkzeug.exceptions import HTTPException
 
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -289,24 +290,30 @@ def before_wiki():
     flaskg.clock = Clock()
     flaskg.clock.start('total')
     flaskg.clock.start('init')
+    try:
+        set_umask() # do it once per request because maybe some server
+                    # software sets own umask
 
-    set_umask() # do it once per request because maybe some server
-                # software sets own umask
+        flaskg.unprotected_storage = app.unprotected_storage
 
-    flaskg.unprotected_storage = app.unprotected_storage
-    flaskg.user = setup_user()
+        try:
+            flaskg.user = setup_user()
+        except HTTPException, e:
+            # this makes stuff like abort(redirect(...)) work
+            return app.handle_http_exception(e)
 
-    flaskg.dicts = app.cfg.dicts()
-    flaskg.groups = app.cfg.groups()
+        flaskg.dicts = app.cfg.dicts()
+        flaskg.groups = app.cfg.groups()
 
-    flaskg.content_lang = app.cfg.language_default
-    flaskg.current_lang = app.cfg.language_default
+        flaskg.content_lang = app.cfg.language_default
+        flaskg.current_lang = app.cfg.language_default
 
-    flaskg.storage = app.storage
+        flaskg.storage = app.storage
 
-    setup_jinja_env()
+        setup_jinja_env()
+    finally:
+        flaskg.clock.stop('init')
 
-    flaskg.clock.stop('init')
     # if return value is not None, it is the final response
 
 
