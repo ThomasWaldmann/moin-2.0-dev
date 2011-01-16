@@ -29,7 +29,7 @@ import sys
 
 import py
 
-from MoinMoin import create_app_ext, before
+from MoinMoin import create_app_ext, before_wiki
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
@@ -75,7 +75,7 @@ def init_test_app(given_config):
                          **more_config)
     ctx = app.test_request_context('/')
     ctx.push()
-    before()
+    before_wiki()
     return app, ctx
 
 
