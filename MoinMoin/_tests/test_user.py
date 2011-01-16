@@ -176,7 +176,7 @@ class TestLoginWithPassword(object):
         # "KeyError: 'enc_password'" error during user authentication.
         user_name = u'moin'
         user_password = u'{SHA}LKM56'
-        user.create_user(user_name, user_password, u'moin@moinmo.in')
+        user.create_user(user_name, user_password, u'moin@moinmo.in', '')
 
         # Try to "login"
         theuser = user.User(name=user_name, password=user_password)
