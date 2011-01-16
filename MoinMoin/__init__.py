@@ -323,7 +323,11 @@ def after_wiki(response):
     Stop timers.
     """
     logging.debug("running after_wiki")
-    flaskg.clock.stop('total')
-    del flaskg.clock
+    try:
+        flaskg.clock.stop('total')
+        del flaskg.clock
+    except AttributeError:
+        # can happen if after_wiki() is called twice, e.g. by unit tests.
+        pass
     return response
 
