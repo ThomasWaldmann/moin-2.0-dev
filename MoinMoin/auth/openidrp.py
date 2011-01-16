@@ -75,7 +75,7 @@ class OpenIDAuth(BaseAuth):
             trusted = self._trusted_providers
             server = oid_info.endpoint.server_url
 
-            if server in trusted or trusted == []:
+            if server in trusted or len(trusted) == 0:
             # the provider is trusted or all providers are trusted
 
                 # we have successfully authenticated our openid
