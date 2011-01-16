@@ -287,6 +287,7 @@ def before_wiki():
     """
     Setup environment for wiki requests, start timers.
     """
+    logging.debug("running before_wiki")
     flaskg.clock = Clock()
     flaskg.clock.start('total')
     flaskg.clock.start('init')
@@ -321,6 +322,7 @@ def after_wiki(response):
     """
     Stop timers.
     """
+    logging.debug("running after_wiki")
     flaskg.clock.stop('total')
     del flaskg.clock
     return response
