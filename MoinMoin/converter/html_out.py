@@ -628,7 +628,7 @@ class ConverterPage(Converter):
                         stack_push(html.li({html.id_: 'li%s' % id}))
                     togglelink = html.a(attrib={
                                          html.href_: "#",
-                                         html.onclick_: 
+                                         html.onclick_:
                                             "$('#li%s ol').toggle();return false;" % id,
                                          html.class_: 'showhide',
                                      },
