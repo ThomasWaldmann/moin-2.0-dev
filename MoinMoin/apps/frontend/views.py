@@ -634,6 +634,23 @@ class RegistrationForm(TextChaizedForm):
     validators = [ValidRegistration()]
 
 
+class OpenIDForm(TextChaizedForm):
+    """
+    OpenID registration form, inherited from the simple registration form.
+    """
+    name = 'openid'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password1 = String.using(label=N_('Password')).validated_by(Present())
+    password2 = String.using(label=N_('Password')).validated_by(Present())
+
+    # require email only if there is no user with the name given
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=N_('OpenID')).validated_by(Present())
+    submit = String.using(optional=True)
+
+    validators = [ValidRegistration()]
+
 def _using_moin_auth():
     """Check if MoinAuth is being used for authentication.
 
@@ -646,22 +663,85 @@ def _using_moin_auth():
     return False
 
 
+def _using_openid_auth():
+    """Check if OpenIDAuth is being used for authentication.
+
+    Only then users can register with openid or change their password via openid.
+    """
+    from MoinMoin.auth.openidrp import OpenIDAuth
+    for auth in app.cfg.auth:
+        if isinstance(auth, OpenIDAuth):
+            return True
+    return False
+
+
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     item_name = 'Register' # XXX
+    # is openid_submit in the form?
+    isOpenID = ('openid_submit' in request.values or
+               'openid_submit' in request.form)
 
+    if isOpenID:
+        # this is an openid continuation
+        if not _using_openid_auth():
+            return Response('No OpenIDAuth in auth list', 403)
+
+        if request.method == 'GET':
+            oid_form = OpenIDForm.from_defaults()
+            # we got an openid from the multistage redirect
+            oid = request.values.get('openid_openid')
+            if oid:
+                oid_form['openid'] = oid
+
+            TextCha(oid_form).amend_form()
+            return render_template('openid_register.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=oid_form,
+                                  )
+
+        if request.method == 'POST':
+            oid_form = OpenIDForm.from_flat(request.form)
+            TextCha(oid_form).amend_form()
+
+            valid = oid_form.validate()
+            if valid:
+                    msg = user.create_user(username=oid_form['username'].value,
+                                           password=oid_form['password1'].value,
+                                           email=oid_form['email'].value,
+                                           openid=oid_form['openid'].value,
+                                          )
+                    if msg:
+                        flash(msg, "error")
+                        return render_template('openid_register.html',
+                                               item_name=item_name,
+                                               gen=make_generator(),
+                                               form=oid_form,
+                                              )
+                    else:
+                        flash(_('Account created, please log in now.'), "info")
+                    return redirect(url_for('frontend.show_root'))
+            else:
+                    return render_template('openid_register.html',
+                           item_name=item_name,
+                           gen=make_generator(),
+                           form=oid_form,
+                          )
+
+    # not openid registration and no MoinAuth
     if not _using_moin_auth():
         return Response('No MoinAuth in auth list', 403)
-
     if request.method == 'GET':
-        form = RegistrationForm.from_defaults()
-        TextCha(form).amend_form()
+            form = RegistrationForm.from_defaults()
+            TextCha(form).amend_form()
 
-        return render_template('register.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
+            return render_template('register.html',
+                                   item_name=item_name,
+                                   gen=make_generator(),
+                                   form=form,
+                                  )
+
     if request.method == 'POST':
         form = RegistrationForm.from_flat(request.form)
         TextCha(form).amend_form()
@@ -674,6 +754,11 @@ def register():
                                   )
             if msg:
                 flash(msg, "error")
+                return render_template('register.html',
+                                       item_name=item_name,
+                                       gen=make_generator(),
+                                       form=oid_form,
+                                      )
             else:
                 flash(_('Account created, please log in now.'), "info")
             return redirect(url_for('frontend.show_root'))
