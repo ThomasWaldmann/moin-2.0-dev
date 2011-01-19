@@ -93,7 +93,12 @@ class OpenIDAuth(BaseAuth):
                 # there is no user with this openid
                 else:
                     # redirect the user to registration
-                    return MultistageRedirectLogin(url_for('frontend.register', openid=identity))
+                    return MultistageRedirectLogin(url_for('frontend.register',
+                                                           _external=True,
+                                                           openid_openid=identity,
+                                                           openid_submit='1'
+                                                          ))
+
 
             # not trusted
             return ContinueLogin(None, _('This OpenID provider is not trusted.'))
