@@ -43,7 +43,7 @@ from MoinMoin.util import random_string
 from MoinMoin.util.interwiki import getInterwikiHome
 
 
-def create_user(username, password, email, openid):
+def create_user(username, password, email, openid=None):
     """ create a user """
     # Create user profile
     theuser = User(auth_method="new-user")
