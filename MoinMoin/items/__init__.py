@@ -699,12 +699,11 @@ There is no help, you're doomed!
         # TODO: handle content_disposition is not None
         # Important: empty filename keeps flask from trying to autodetect filename,
         # as this would not work for us, because our file's are not necessarily fs files.
-        return send_file(file=file_to_send, filename='',
+        return send_file(file=file_to_send,
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
                          cache_timeout=10, # wiki data can change rapidly
-                         add_etags=True, etag=hash,
-                         conditional=True)
+                         add_etags=True, etag=hash, conditional=True)
 
 
 class RenderableBinary(Binary):
@@ -1189,12 +1188,11 @@ class DocBook(MarkupItem):
         file_to_send.seek(0)
         # Important: empty filename keeps flask from trying to autodetect filename,
         # as this would not work for us, because our file's are not necessarily fs files.
-        return send_file(file=file_to_send, filename='',
+        return send_file(file=file_to_send,
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=None,
                          cache_timeout=10, # wiki data can change rapidly
-                         add_etags=False, etag=None,
-                         conditional=True)
+                         add_etags=False, etag=None, conditional=True)
 
 
 class TWikiDraw(TarMixin, Image):
