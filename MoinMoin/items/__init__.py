@@ -41,13 +41,14 @@ except ImportError:
 from flask import current_app as app
 from flask import flaskg
 
-from flask import request, url_for, send_file, Response, abort, escape
+from flask import request, url_for, Response, abort, escape
 from werkzeug import is_resource_modified
 from jinja2 import Markup
 
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin import wikiutil, config, user
+from MoinMoin.util.send_file import send_file
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
