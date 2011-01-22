@@ -239,7 +239,7 @@ def highlight_item(item_name, rev):
         from array import array
         out = array('u')
         doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
-        content = out.tounicode()
+        content = Markup(out.tounicode())
     elif isinstance(item, NonExistent):
         return redirect(url_for('frontend.show_item', item_name=item_name))
     else:
