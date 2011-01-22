@@ -86,8 +86,7 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
 
     # Openid should be unique
     theuser.openid = openid
-    if theuser.openid and app.cfg.user_openid_unique:
-        if get_by_openid(theuser.openid):
+    if theuser.openid and get_by_openid(theuser.openid):
             return _('This OpenID already belongs to somebody else.')
 
     # save data
