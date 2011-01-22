@@ -4,6 +4,11 @@
         <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" rel="nofollow"> {{ _('Show') }}</a>
         </li>
     {%- endif %}
+    {% if 'Highlight' in cfg.edit_bar and 'highlight' not in cfg.actions_excluded -%}
+        <li>
+        <a href="{{ url_for('frontend.highlight_item', item_name=item_name) }}" rel="nofollow"> {{ _('Highlight') }}</a>
+        </li>
+    {%- endif %}
     {% if 'Meta' in cfg.edit_bar and 'meta' not in cfg.actions_excluded -%}
         <li>
         <a href="{{ url_for('frontend.show_item_meta', item_name=item_name) }}" rel="nofollow"> {{ _('Meta') }}</a>
