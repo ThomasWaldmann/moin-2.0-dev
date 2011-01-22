@@ -11,6 +11,7 @@
 import re
 import codecs
 import mimetypes
+from itertools import repeat
 
 from werkzeug._internal import _proxy_repr, _missing, _empty_stream
 
@@ -106,6 +107,11 @@ class ImmutableDictMixin(object):
 
     :private:
     """
+    @classmethod
+    def fromkeys(cls, keys, value=None):
+        instance = super(cls, cls).__new__(cls)
+        instance.__init__(zip(keys, repeat(value)))
+        return instance
 
     def __reduce_ex__(self, protocol):
         return type(self), (dict(self),)
@@ -442,7 +448,7 @@ class MultiDict(TypeConversionDict):
         return list(self.iteritems(multi))
 
     def lists(self):
-        """Return a list of ``(key, value)`` pairs, where values is the list of
+        """Return a list of ``(key, values)`` pairs, where values is the list of
         all values associated with the key.
 
         :return: a :class:`list`
@@ -478,10 +484,7 @@ class MultiDict(TypeConversionDict):
                 yield key, values[0]
 
     def iterlists(self):
-        """Return a list of all values associated with a key.
-
-        :return: a class:`list`
-        """
+        """Like :meth:`items` but returns an iterator."""
         for key, values in dict.iteritems(self):
             yield key, list(values)
 
@@ -491,9 +494,8 @@ class MultiDict(TypeConversionDict):
             yield values[0]
 
     def iterlistvalues(self):
-        """like :meth:`listvalues` but returns an iterator."""
-        for values in dict.itervalues(self):
-            yield list(values)
+        """Like :meth:`listvalues` but returns an iterator."""
+        return dict.itervalues(self)
 
     def copy(self):
         """Return a shallow copy of this object."""
@@ -778,8 +780,6 @@ class OrderedMultiDict(MultiDict):
 
 
 def _options_header_vkw(value, kw):
-    if not kw:
-        return value
     return dump_options_header(value, dict((k.replace('_', '-'), v)
                                             for k, v in kw.items()))
 
@@ -1045,7 +1045,9 @@ class Headers(object):
         .. versionadded:: 0.4.1
             keyword arguments were added for :mod:`wsgiref` compatibility.
         """
-        self._list.append((_key, _options_header_vkw(_value, kw)))
+        if kw:
+            _value = _options_header_vkw(_value, kw)
+        self._list.append((_key, _value))
 
     def add_header(self, _key, _value, **_kw):
         """Add a new header tuple to the list.
@@ -1074,8 +1076,11 @@ class Headers(object):
         :param key: The key to be inserted.
         :param value: The value to be inserted.
         """
+        if kw:
+            _value = _options_header_vkw(_value, kw)
+        if not self._list:
+            return self.add(_key, _value)
         lc_key = _key.lower()
-        _value = _options_header_vkw(_value, kw)
         for idx, (old_key, old_value) in enumerate(self._list):
             if old_key.lower() == lc_key:
                 # replace first ocurrence
@@ -1106,7 +1111,7 @@ class Headers(object):
         else:
             self.set(key, value)
 
-    def to_list(self, charset='utf-8'):
+    def to_list(self, charset='iso-8859-1'):
         """Convert the headers into a list and converts the unicode header
         items to the specified charset.
 
@@ -1127,7 +1132,7 @@ class Headers(object):
     def __copy__(self):
         return self.copy()
 
-    def __str__(self, charset='utf-8'):
+    def __str__(self, charset='iso-8859-1'):
         """Returns formatted headers suitable for HTTP transmission."""
         strs = []
         for key, value in self.to_list(charset):
@@ -1229,7 +1234,7 @@ class CombinedMultiDict(ImmutableMultiDictMixin, MultiDict):
     instances as sequence and it will combine the return values of all wrapped
     dicts:
 
-    >>> from werkzeug import MultiDict, CombinedMultiDict
+    >>> from werkzeug.datastructures import CombinedMultiDict, MultiDict
     >>> post = MultiDict([('foo', 'bar')])
     >>> get = MultiDict([('blub', 'blah')])
     >>> combined = CombinedMultiDict([get, post])
@@ -1586,7 +1591,7 @@ class Accept(ImmutableList):
             for client_item, quality in self:
                 if quality <= best_quality:
                     break
-                if self._value_matches(client_item, server_item):
+                if self._value_matches(server_item, client_item):
                     best_quality = quality
                     result = server_item
         return result
@@ -2011,7 +2016,10 @@ class ETags(object):
         return self.is_weak(etag) or self.contains(etag)
 
     def contains(self, etag):
-        """Check if an etag is part of the set ignoring weak tags."""
+        """Check if an etag is part of the set ignoring weak tags.
+        It is also possible to use the ``in`` operator.
+
+        """
         if self.star_tag:
             return True
         return etag in self._strong
@@ -2303,7 +2311,7 @@ class FileStorage(object):
         """Close the underlying file if possible."""
         try:
             self.stream.close()
-        except:
+        except Exception:
             pass
 
     def __nonzero__(self):

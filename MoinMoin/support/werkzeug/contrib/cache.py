@@ -286,8 +286,14 @@ class MemcachedCache(BaseCache):
                 try:
                     import memcache
                     is_cmemcache = False
+                    is_pylibmc = False
                 except ImportError:
-                    raise RuntimeError('no memcache module found')
+                    try:
+                        import pylibmc as memcache
+                        is_cmemcache = False
+                        is_pylibmc = True
+                    except ImportError:
+                        raise RuntimeError('no memcache module found')
 
             # cmemcache has a bug that debuglog is not defined for the
             # client.  Whenever pickle fails you get a weird AttributeError.
@@ -295,10 +301,13 @@ class MemcachedCache(BaseCache):
                 client = memcache.Client(map(str, servers))
                 try:
                     client.debuglog = lambda *a: None
-                except:
+                except Exception:
                     pass
             else:
-                client = memcache.Client(servers, False, HIGHEST_PROTOCOL)
+                if is_pylibmc:
+                    client = memcache.Client(servers, False)
+                else:
+                    client = memcache.Client(servers, False, HIGHEST_PROTOCOL)
         else:
             client = servers
 
@@ -319,7 +328,7 @@ class MemcachedCache(BaseCache):
     def get_dict(self, *keys):
         key_mapping = {}
         have_encoded_keys = False
-        for idx, key in enumerate(keys):
+        for key in keys:
             if isinstance(key, unicode):
                 encoded_key = key.encode('utf-8')
                 have_encoded_keys = True
@@ -478,7 +487,7 @@ class FileSystemCache(BaseCache):
                     finally:
                         if f is not None:
                             f.close()
-                except:
+                except Exception:
                     pass
                 if remove:
                     try:
@@ -507,7 +516,7 @@ class FileSystemCache(BaseCache):
             finally:
                 f.close()
             os.remove(filename)
-        except:
+        except Exception:
             return None
 
     def add(self, key, value, timeout=None):
