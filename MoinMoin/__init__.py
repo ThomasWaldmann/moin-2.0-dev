@@ -112,6 +112,8 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     misc.before_request(before_wiki)
     misc.after_request(after_wiki)
     app.register_module(misc, url_prefix='/+misc')
+    from MoinMoin.apps.serve import serve
+    app.register_module(serve, url_prefix='/+serve')
     clock.stop('create_app register')
     clock.start('create_app flask-cache')
     cache = Cache()

@@ -49,6 +49,16 @@ class Config(DefaultConfig):
     interwiki_map = InterWikiMap.from_file(os.path.join(wikiconfig_dir, 'contrib', 'interwiki', 'intermap.txt')).iwmap
 
     sitename = u'My MoinMoin'
+
+    # for now we load some 3rd party stuff from the place within moin where it is currently located,
+    # but soon we'll get rid of this stuff:
+    serve_files = dict(
+        ckeditor = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'ckeditor'),
+        twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDraw'),
+        anywikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'anywikidraw'),
+        svgedit = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'svg-edit'),
+    )
+
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #item_root = u'Home' # change to some better value

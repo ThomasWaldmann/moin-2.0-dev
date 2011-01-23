@@ -429,6 +429,12 @@ options_no_group_name = {
       Usage: [('text/javascript', 'http://moinmo.in/static/script.js')]
       """),
 
+    ('serve_files', {},
+     """
+     Dictionary of name: filesystem_path for static file resources to serve
+     from the filesystem as url .../+serve/<name>/...
+     """),
+
     ('supplementation_item_names', [u'Discussion', ],
      "List of names of the supplementation (sub)items [Unicode]"),
 
