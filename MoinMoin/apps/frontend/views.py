@@ -1040,6 +1040,7 @@ def usersettings(part):
         name = 'usersettings_personal' # "name" is duplicate
         name = String.using(label=N_('Name')).validated_by(Present())
         aliasname = String.using(label=N_('Alias-Name'), optional=True)
+        openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
         timezones_keys = pytz.common_timezones
         timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
@@ -1088,21 +1089,41 @@ def usersettings(part):
         form = FormClass.from_flat(request.form)
         valid = form.validate()
         if valid:
+            # successfully modified everything
+            success = True
             if part == 'password':
                 flaskg.user.enc_password = user.encodePassword(form['password1'].value)
-            else:
-                form.update_object(flaskg.user)
-            flaskg.user.save()
-            if part == 'password':
                 flash(_("Your password has been changed."), "info")
-            return redirect(url_for('frontend.usersettings'))
-        else:
-            return render_template('usersettings.html',
-                                   item_name=item_name,
-                                   part=part,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+            else:
+                if part == 'personal':
+                    if form['openid'].value != flaskg.user.openid and user.get_by_openid(form['openid'].value):
+                        # duplicate openid
+                        flash(_("This openid is already in use."), "error")
+                        success = False
+                    if form['name'].value != flaskg.user.name and user.getUserId(form['name'].value):
+                        # duplicate name
+                        flash(_("This username is already in use."), "error")
+                        success = False
+                if part == 'notification':
+                    if (form['email'].value != flaskg.user.email and
+                        user.get_by_email_address(form['email'].value) and app.cfg.user_email_unique):
+                        # duplicate email
+                        flash(_('This email is already in use'), 'error')
+                        success = False
+                if success:
+                    form.update_object(flaskg.user)
+                    flaskg.user.save()
+                    return redirect(url_for('frontend.usersettings'))
+                else:
+                    # reset to valid values
+                    form = FormClass.from_object(flaskg.user)
+
+        return render_template('usersettings.html',
+                               item_name=item_name,
+                               part=part,
+                               gen=make_generator(),
+                               form=form,
+                              )
 
 
 @frontend.route('/+bookmark')
