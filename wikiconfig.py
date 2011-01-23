@@ -17,18 +17,18 @@ class Config(DefaultConfig):
     # wikiconfig.py
     # wiki/
     #      data/
-    #      syspages.xml
-    # If that's not true, feel free to just set instance_dir to the real path
-    # where data/ and syspages.xml is located:
-    # instance_dir = '/where/ever/your/instance/is'
+    # contrib/
+    #      xml/
+    #          preloaded_items.xml
+    # If that's not true, feel free to adjust the pathes.
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
     data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
     # This puts the contents from the specified xml file (a serialized backend) into your
     # backend(s). You can remove this after the first request to your wiki or
     # from the beginning if you don't want to use this feature at all.
-    load_xml = os.path.join(instance_dir, 'preloaded_items.xml')
-    #save_xml = os.path.join(instance_dir, 'saved_items.xml')
+    load_xml = os.path.join(wikiconfig_dir, 'contrib', 'xml', 'preloaded_items.xml')
+    #save_xml = os.path.join(wikiconfig_dir, 'contrib', 'xml', 'saved_items.xml')
 
     # This provides a simple default setup for your backend configuration.
     # 'fs:' indicates that you want to use the filesystem backend. You can also use
