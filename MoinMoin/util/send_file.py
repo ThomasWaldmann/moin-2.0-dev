@@ -35,7 +35,7 @@ def send_file(filename=None, file=None,
 
     A file can be either a filesystem file or a file-like object (this code
     is careful about not assuming that every file is a filesystem file).
-    
+
     This will use the most efficient method available, configured and possible
     (for filesystem files some more optimizations may be possible that for
     file-like objects not having a filesystem filename).
@@ -45,7 +45,7 @@ def send_file(filename=None, file=None,
     however requires support of the underlying webserver for `X-Sendfile`.
 
     send_file will try to guess some stuff for you if you do not provide them:
-    
+
     * mimetype (based on filename / attachment_filename)
     * mtime (based on filesystem file's metadata)
     * etag (based on filename, mtime, filesystem file size)
