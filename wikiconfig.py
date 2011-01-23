@@ -55,7 +55,7 @@ class Config(DefaultConfig):
     serve_files = dict(
         ckeditor = '/usr/share/javascript/ckeditor', # debian/ubuntu ckeditor location
         jquery = '/usr/share/javascript/jquery', # debian/ubuntu jquery location
-        twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDraw'),
+        twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDrawPlugin'),
         anywikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'anywikidraw'),
         svgedit = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'svg-edit'),
     )
