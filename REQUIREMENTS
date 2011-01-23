@@ -31,60 +31,33 @@ For dependency information of python libs, please see setup.py.
 If you use easy_install or pip, this is usually automatically dealt with.
 
 
-Bundled 3rd party code
-======================
+Used 3rd party code
+===================
 
-Below are some notes about the software we bundle and ship with MoinMoin.
-If you are a Linux distributor and you want to rip out this stuff and
-replace it with packages, this is for you!
-
-We list the shipped version and also the minimum required version.
-The shipped version will work best with moin as usually has some more bug
-fixes than the minimum required version.
-We do not test with the minimum required version, but we try to keep this
-file updated and correct to our best knowledge.
-
-In case you find bugs in this requirements specification, please let us know!
-
-Thanks to all 3rd party software authors!
-
-A) stuff used elsewhere on the filesystem (not included)
-
-ckeditor
-========
-tested: 3.3.1
-required: 3.0(?)
-
-
-B) stuff below MoinMoin/static/
+This code is used by moin, but NOT included and NOT installed automatically.
+If you are a Linux distributor you may want to package this software
+separately and adapt wikiconfig.py (or the defaults in
+MoinMoin/config/default.py).
 
 TWikiDrawPlugin
-===============
-shipped: Using a modified TWikiDrawPlugin see README in contrib/TWikiDrawPlugin 
-required: see shipped
-
-
-anywikidraw
-===========
-shipped: 0.14
-required: 0.14
-
+---------------
+Modified version, available at
+http://static.moinmo.in/files/packages/TWikiDrawPlugin-moin.tar.gz
 
 svg-edit
-========
-shipped: Version 2.5 slightly modified
-required see shipped
+--------
+2.5 slightly modified, available at
+http://static.moinmo.in/files/packages/svg-edit.tar.gz
 
+ckeditor
+--------
+3.3.1 works, use dist package or download at homepage.
 
-svgweb
-======
-shipped: 2010-04-09 dracolisk release
-required: ?
-
+anywikidraw
+-----------
+0.14 works, use dist package or download at homepage.
 
 JQuery
-======
-shipped: 1.4.2
-required: 1.4(?)
-
+------
+1.4.2 works, use dist package or download at homepage.
 
