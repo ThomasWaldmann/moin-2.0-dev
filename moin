@@ -57,7 +57,7 @@ if moin_code:
     sys.path.insert(0, moin_code)
 
 
-from MoinMoin import create_app
+from MoinMoin.app import create_app
 from flaskext.script import Manager, Server
 
 manager = Manager(create_app)

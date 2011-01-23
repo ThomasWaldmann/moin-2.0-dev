@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.version import Version
+from MoinMoin.util.version import Version
 
 
 class TestVersion(object):
@@ -54,4 +54,4 @@ class TestVersion(object):
         assert Version(1, 2, 4) > (1, 2, 3)
 
 
-coverage_modules = ['MoinMoin.version']
+coverage_modules = ['MoinMoin.util.version']

@@ -29,7 +29,7 @@ import sys
 
 import py
 
-from MoinMoin import create_app_ext, before_wiki, after_wiki
+from MoinMoin.app import create_app_ext, before_wiki, after_wiki
 from MoinMoin._tests import maketestwiki, wikiconfig
 from MoinMoin.storage.backends import create_simple_mapping
 
