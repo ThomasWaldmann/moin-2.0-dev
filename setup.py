@@ -105,6 +105,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
                         # it can be compiled successfully
         'ldap': ["python-ldap>=2.0.0"], # used by ldap auth
         'openid': ["python-openid>=2.2.4"], # used by openid rp auth
+        'hg': ["mercurial"], # used by mercurial backend
     },
     entry_points = dict(
         console_scripts = ['moin = MoinMoin.cmdline:main'], # TODO
