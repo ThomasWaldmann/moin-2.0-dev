@@ -614,8 +614,7 @@ class ValidRegistration(Validator):
     def validate(self, element, state):
         if not (element['username'].valid and
                 element['password1'].valid and element['password2'].valid and
-                element['email'].valid and element['textcha'].valid and
-                element['openid'].valid):
+                element['email'].valid and element['textcha'].valid):
             return False
         if element['password1'].value != element['password2'].value:
             return self.note_error(element, state, 'passwords_mismatch_msg')
@@ -630,11 +629,26 @@ class RegistrationForm(TextChaizedForm):
     password1 = String.using(label=N_('Password')).validated_by(Present())
     password2 = String.using(label=N_('Password')).validated_by(Present())
     email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
     submit = String.using(default=N_('Register'), optional=True)
 
     validators = [ValidRegistration()]
 
+
+class OpenIDForm(TextChaizedForm):
+    """
+    OpenID registration form, inherited from the simple registration form.
+    """
+    name = 'openid'
+
+    username = String.using(label=N_('Name')).validated_by(Present())
+    password1 = String.using(label=N_('Password')).validated_by(Present())
+    password2 = String.using(label=N_('Password')).validated_by(Present())
+
+    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=N_('OpenID')).validated_by(Present())
+    submit = String.using(optional=True)
+
+    validators = [ValidRegistration()]
 
 def _using_moin_auth():
     """Check if MoinAuth is being used for authentication.
@@ -648,44 +662,87 @@ def _using_moin_auth():
     return False
 
 
+def _using_openid_auth():
+    """Check if OpenIDAuth is being used for authentication.
+
+    Only then users can register with openid or change their password via openid.
+    """
+    from MoinMoin.auth.openidrp import OpenIDAuth
+    for auth in app.cfg.auth:
+        if isinstance(auth, OpenIDAuth):
+            return True
+    return False
+
+
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     item_name = 'Register' # XXX
+    # is openid_submit in the form?
+    isOpenID = ('openid_submit' in request.values or
+               'openid_submit' in request.form)
 
-    if not _using_moin_auth():
-        return Response('No MoinAuth in auth list', 403)
+    if isOpenID:
+        # this is an openid continuation
+        if not _using_openid_auth():
+            return Response('No OpenIDAuth in auth list', 403)
 
-    if request.method == 'GET':
-        form = RegistrationForm.from_defaults()
-        TextCha(form).amend_form()
+        template = 'openid_register.html'
+        if request.method == 'GET':
+            form = OpenIDForm.from_defaults()
+            # we got an openid from the multistage redirect
+            oid = request.values.get('openid_openid')
+            if oid:
+                form['openid'] = oid
+            TextCha(form).amend_form()
 
-        return render_template('register.html',
-                               item_name=item_name,
-                               gen=make_generator(),
-                               form=form,
-                              )
-    if request.method == 'POST':
-        form = RegistrationForm.from_flat(request.form)
-        TextCha(form).amend_form()
+        elif request.method == 'POST':
+            form = OpenIDForm.from_flat(request.form)
+            TextCha(form).amend_form()
 
-        valid = form.validate()
-        if valid:
-            msg = user.create_user(username=form['username'].value,
-                                   password=form['password1'].value,
-                                   email=form['email'].value,
-                                   openid=form['openid'].value,
-                                  )
-            if msg:
-                flash(msg, "error")
-            else:
-                flash(_('Account created, please log in now.'), "info")
-            return redirect(url_for('frontend.show_root'))
-        else:
-            return render_template('register.html',
-                                   item_name=item_name,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+            valid = form.validate()
+            if valid:
+                    msg = user.create_user(username=form['username'].value,
+                                           password=form['password1'].value,
+                                           email=form['email'].value,
+                                           openid=form['openid'].value,
+                                          )
+                    if msg:
+                        flash(msg, "error")
+                    else:
+                        flash(_('Account created, please log in now.'), "info")
+                        return redirect(url_for('frontend.show_root'))
+
+    else:
+        # not openid registration and no MoinAuth
+        if not _using_moin_auth():
+            return Response('No MoinAuth in auth list', 403)
+
+        template = 'register.html'
+        if request.method == 'GET':
+                form = RegistrationForm.from_defaults()
+                TextCha(form).amend_form()
+
+        elif request.method == 'POST':
+            form = RegistrationForm.from_flat(request.form)
+            TextCha(form).amend_form()
+
+            valid = form.validate()
+            if valid:
+                msg = user.create_user(username=form['username'].value,
+                                       password=form['password1'].value,
+                                       email=form['email'].value,
+                                      )
+                if msg:
+                    flash(msg, "error")
+                else:
+                    flash(_('Account created, please log in now.'), "info")
+                    return redirect(url_for('frontend.show_root'))
+
+    return render_template(template,
+                           item_name=item_name,
+                           gen=make_generator(),
+                           form=form,
+                          )
 
 
 class ValidLostPassword(Validator):
@@ -852,7 +909,8 @@ class LoginForm(Form):
     password = String.using(label=N_('Password'), optional=True).validated_by(Present())
     openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
 
-    submit = String.using(default=N_('Log in'), optional=True)
+    # the submit hidden field
+    submit = String.using(optional=True)
 
     validators = [ValidLogin()]
 
@@ -864,7 +922,7 @@ def login():
 
     # multistage return
     if flaskg._login_multistage_name == 'openid':
-            return flaskg._login_multistage(None)
+            return Response(flaskg._login_multistage, mimetype='text/html')
 
     # get the form contents
     form = LoginForm.from_flat(request.form)
@@ -1031,21 +1089,41 @@ def usersettings(part):
         form = FormClass.from_flat(request.form)
         valid = form.validate()
         if valid:
+            # successfully modified everything
+            success = True
             if part == 'password':
                 flaskg.user.enc_password = user.encodePassword(form['password1'].value)
-            else:
-                form.update_object(flaskg.user)
-            flaskg.user.save()
-            if part == 'password':
                 flash(_("Your password has been changed."), "info")
-            return redirect(url_for('frontend.usersettings'))
-        else:
-            return render_template('usersettings.html',
-                                   item_name=item_name,
-                                   part=part,
-                                   gen=make_generator(),
-                                   form=form,
-                                  )
+            else:
+                if part == 'personal':
+                    if form['openid'].value != flaskg.user.openid and user.get_by_openid(form['openid'].value):
+                        # duplicate openid
+                        flash(_("This openid is already in use."), "error")
+                        success = False
+                    if form['name'].value != flaskg.user.name and user.getUserId(form['name'].value):
+                        # duplicate name
+                        flash(_("This username is already in use."), "error")
+                        success = False
+                if part == 'notification':
+                    if (form['email'].value != flaskg.user.email and
+                        user.get_by_email_address(form['email'].value) and app.cfg.user_email_unique):
+                        # duplicate email
+                        flash(_('This email is already in use'), 'error')
+                        success = False
+                if success:
+                    form.update_object(flaskg.user)
+                    flaskg.user.save()
+                    return redirect(url_for('frontend.usersettings'))
+                else:
+                    # reset to valid values
+                    form = FormClass.from_object(flaskg.user)
+
+        return render_template('usersettings.html',
+                               item_name=item_name,
+                               part=part,
+                               gen=make_generator(),
+                               form=form,
+                              )
 
 
 @frontend.route('/+bookmark')
