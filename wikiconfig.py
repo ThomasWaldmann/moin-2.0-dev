@@ -56,7 +56,7 @@ class Config(DefaultConfig):
         ckeditor = '/usr/share/javascript/ckeditor', # debian/ubuntu ckeditor location
         jquery = '/usr/share/javascript/jquery', # debian/ubuntu jquery location
         twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDrawPlugin'),
-        anywikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'anywikidraw'),
+        anywikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'anywikidraw', 'lib'),
         svgedit = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'svg-edit'),
     )
 
