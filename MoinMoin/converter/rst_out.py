@@ -18,7 +18,7 @@ from emeraldtree import ElementTree as ET
 
 import re
 
-from MoinMoin.support.werkzeug.utils import unescape
+from werkzeug.utils import unescape
 
 
 class Cell(object):
