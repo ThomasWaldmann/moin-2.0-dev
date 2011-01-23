@@ -55,8 +55,10 @@ class Config(DefaultConfig):
     serve_files = dict(
         ckeditor = '/usr/share/javascript/ckeditor', # debian/ubuntu ckeditor location
         jquery = '/usr/share/javascript/jquery', # debian/ubuntu jquery location
-        anywikidraw = os.path.join(wikiconfig_dir, 'env', 'AnyWikiDraw', 'anywikidraw', 'moinmoin'), # 0.14 works
-        twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDrawPlugin'),
+        # Download at http://sourceforge.net/projects/anywikidraw/ - 0.14 works
+        anywikidraw = os.path.join(wikiconfig_dir, 'env', 'AnyWikiDraw', 'anywikidraw', 'moinmoin'),
+        # Download at http://static.moinmo.in/files/packages/TWikiDrawPlugin-moin.tar.gz:
+        twikidraw = os.path.join(wikiconfig_dir, 'env', 'TWikiDrawPlugin'),
         svgedit = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'svg-edit'),
     )
 
