@@ -1,43 +1,31 @@
-# MoinMoin - Distutils distribution files
-#
-# Copyright (c) 2001, 2002 by Juergen Hermann <jh@web.de>
-# All rights reserved, see COPYING for details.
+include README REQUIREMENTS
+include moin wikiconfig.py
+include Makefile
+include babel babel.cfg
 
-# additional files not known by setup.py
-include README MANIFEST.in setup.cfg moin.spec
-include wikiconfig.py
-
-# documentation and licenses
 recursive-include docs *
 
-# include stuff for translators
 recursive-include   MoinMoin/translations *
 
-# include html templates
+recursive-include   MoinMoin/static *
 recursive-include   MoinMoin/templates *
-recursive-include   MoinMoin/themes/modernized *
+
 recursive-include   MoinMoin/apps/admin/templates *
 recursive-include   MoinMoin/apps/misc/templates *
 
-# include static htdocs
-recursive-include   MoinMoin/static *
+recursive-include   MoinMoin/themes/modernized *
 
-# include non-py stuff from werkzeug
-recursive-include   MoinMoin/support/werkzeug/debug *
-
-# contrib stuff
-recursive-include   contrib *
-
-# tests stuff
 recursive-include   tests *
 global-include */_tests/*
 
-# "wiki" directory
+recursive-include   contrib *
+
 recursive-include   wiki *
 
-# omit revision control, python bytecode
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude *.orig
 global-exclude *.rej
+
+prune docs/_build
 
