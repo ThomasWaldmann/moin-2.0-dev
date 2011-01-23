@@ -1,0 +1,7 @@
+#!/bin/bash
+# create a virtual environment in directory env/
+virtualenv --no-site-packages env
+source env/bin/activate
+# "install" moin2 from repo to the env
+pip install -e .
+
