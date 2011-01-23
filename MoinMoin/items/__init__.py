@@ -1231,13 +1231,13 @@ class TWikiDraw(TarMixin, Image):
         Fills params into the template for initialzing of the the java applet.
         The applet is called for doing modifications.
         """
-        return render_template("modify_twikidraw.html",
+        return Markup(render_template("modify_twikidraw.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
-                              )
+                              ))
 
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
@@ -1301,14 +1301,14 @@ class AnyWikiDraw(TarMixin, Image):
         The applet is called for doing modifications.
         """
         drawing_exists = 'drawing.svg' in self.list_members()
-        return render_template("modify_anywikidraw.html",
+        return Markup(render_template("modify_anywikidraw.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
                                drawing_exists=drawing_exists,
-                              )
+                              ))
 
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
@@ -1362,13 +1362,13 @@ class SvgDraw(TarMixin, Image):
         """
         Fills params into the template for initializing of the applet.
         """
-        return render_template("modify_svg-edit.html",
+        return Markup(render_template("modify_svg-edit.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
-                              )
+                              ))
 
     def _render_data(self):
         # TODO: this could be a converter -> dom, then transcluding this kind
