@@ -95,9 +95,9 @@ class Script:
         _start_time = time.clock()
 
         import optparse
-        from MoinMoin import version
+        from MoinMoin import project, version
 
-        rev = "%s %s" % (version.project, str(version.version))
+        rev = "%s %s" % (project, str(version))
         sys.argv[0] = cmd
 
         self.parser = optparse.OptionParser(

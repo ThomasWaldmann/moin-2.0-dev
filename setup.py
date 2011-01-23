@@ -17,8 +17,7 @@ Links
 
 import sys, os
 
-# from MoinMoin.version import version
-version = "2.0.0alpha"
+from MoinMoin import version
 
 from setuptools import setup, find_packages
 

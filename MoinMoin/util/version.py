@@ -1,14 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: ascii -*-
 """
-    MoinMoin - Version Information
+    MoinMoin - dealing with version numbers
 
-    @copyright: 2000-2006 Juergen Hermann <jh@web.de>,
-                2003-2010 MoinMoin:ThomasWaldmann
+    @copyright: 2011 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-project = "MoinMoin"
+# see MoinMoin/_tests/test_version.py for examples how to use this:
 
 import re
 
@@ -64,12 +62,4 @@ class Version(tuple):
         if self.additional:
             version_str += "-%s" % self.additional
         return version_str
-
-
-# see MoinMoin/_tests/test_version.py for examples how to use this:
-version = Version(2, 0, 0, 'alpha')
-
-
-if __name__ == '__main__':
-    print project, str(version)
 
