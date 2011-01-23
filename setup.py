@@ -75,24 +75,27 @@ Topic :: Text Processing :: Markup""".splitlines(),
     zip_safe=False,
     install_requires=[
         'blinker>=1.1',
+        'docutils>=0.6',
         'Flask>=0.6',
         'Flask-Babel>=0.6',
-        'Flask-Cache',
+        'Flask-Cache>=0.3.2',
         'Flask-Script>=0.3',
         'Flask-Themes>=0.1',
-        'emeraldtree',
+        'emeraldtree>=0.9.0',
         'flatland==dev', # repo checkout at revision 269:6c5d262d7eff works
         'Jinja2>=2.5',
         'parsedatetime>=0.8.6',
         'pygments>=1.1.1',
         'sqlalchemy>=0.5.6',
         'Werkzeug>=0.6.2', # XXX minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0
-        #'xappy>=0.5',
+        #'xappy>=0.5', # not used (yet?)
     ],
     # optional features and their list of requirements
     extras_require = {
-        'reST': ["docutils"],
-        'PIL': ["PIL"],
+        #'featurename': ["req1", "req2", ],
+        'PIL': ["PIL"], # PIL is a binary dependency and some features of it
+                        # require special libs/header to be installed before
+                        # it can be compiled successfully
     },
     entry_points = dict(
         console_scripts = ['moin = MoinMoin.cmdline:main'], # TODO
