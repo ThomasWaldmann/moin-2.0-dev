@@ -54,6 +54,7 @@ class Config(DefaultConfig):
     # but soon we'll get rid of this stuff:
     serve_files = dict(
         ckeditor = '/usr/share/javascript/ckeditor', # debian/ubuntu ckeditor location
+        jquery = '/usr/share/javascript/jquery', # debian/ubuntu jquery location
         twikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'TWikiDraw'),
         anywikidraw = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'anywikidraw'),
         svgedit = os.path.join(wikiconfig_dir, 'MoinMoin', 'static', 'applets', 'svg-edit'),
