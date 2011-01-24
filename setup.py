@@ -19,6 +19,11 @@ import sys, os
 
 from MoinMoin import version
 
+if sys.hexversion < 0x2060000:
+    # we require 2.6.x or 2.7.x, python 3.x does not work yet.
+    sys.stderr.write("%s %s requires Python 2.6 or greater.\n" % (project, str(version)))
+    sys.exit(1)
+
 from setuptools import setup, find_packages
 
 
@@ -74,28 +79,33 @@ Topic :: Text Processing :: Markup""".splitlines(),
                  },
     zip_safe=False,
     install_requires=[
-        'blinker>=1.1',
-        'docutils>=0.6',
-        'Flask>=0.6',
-        'Flask-Babel>=0.6',
-        'Flask-Cache>=0.3.2',
-        'Flask-Script>=0.3',
-        'Flask-Themes>=0.1',
-        'emeraldtree>=0.9.0',
+        'blinker>=1.1', # event signalling (e.g. for change notification trigger)
+        'docutils>=0.6', # reST markup processing
+        'Flask>=0.6', # micro framework
+        'Flask-Babel>=0.6', # i18n support
+        'Flask-Cache>=0.3.2', # caching support
+        'Flask-Script>=0.3', # scripting support
+        'Flask-Themes>=0.1', # theme support
+        'emeraldtree>=0.9.0', # xml processing
         'flatland==dev', # repo checkout at revision 269:6c5d262d7eff works
-        'Jinja2>=2.5',
-        'parsedatetime>=0.8.6',
-        'pygments>=1.1.1',
-        'sqlalchemy>=0.5.6',
-        'Werkzeug>=0.6.2', # XXX minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0
-        #'xappy>=0.5', # not used (yet?)
+        'Jinja2>=2.5', # template engine
+        'parsedatetime>=0.8.6', # parsing dates and times
+        'pygments>=1.1.1', # src code / text file highlighting
+        'sqlalchemy>=0.5.6', # metadata index and other stuff
+        'Werkzeug>=0.6.2', # wsgi toolkit
+                           # XXX minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0
+        #'xappy>=0.5', # xapian python OO interface, not used (yet?)
     ],
     # optional features and their list of requirements
     extras_require = {
         #'featurename': ["req1", "req2", ],
-        'PIL': ["PIL"], # PIL is a binary dependency and some features of it
+        'pil': ["PIL"], # used by image get for scaling/rotating/etc.
+                        # PIL is a binary dependency and some features of it
                         # require special libs/header to be installed before
                         # it can be compiled successfully
+        'ldap': ["python-ldap>=2.0.0"], # used by ldap auth
+        'openid': ["python-openid>=2.2.4"], # used by openid rp auth
+        'hg': ["mercurial"], # used by mercurial backend
     },
     entry_points = dict(
         console_scripts = ['moin = MoinMoin.cmdline:main'], # TODO
