@@ -93,9 +93,9 @@ Allow: /
 
 @frontend.route('/favicon.ico')
 def favicon():
-    # although we tell that favicon.ico is at /static/favicon.ico,
+    # although we tell that favicon.ico is at /static/logos/favicon.ico,
     # some browsers still request it from /favicon.ico...
-    return app.send_static_file('favicon.ico')
+    return app.send_static_file('logos/favicon.ico')
 
 
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
