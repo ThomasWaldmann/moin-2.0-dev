@@ -110,6 +110,21 @@ Topic :: Text Processing :: Markup""".splitlines(),
     entry_points = dict(
         console_scripts = ['moin = MoinMoin.cmdline:main'], # TODO
     ),
+
+    # stuff for babel:
+    message_extractors = {
+        '': [
+            ('MoinMoin/templates/**.html', 'jinja2', None),
+            ('MoinMoin/apps/**/templates/**.html', 'jinja2', None),
+            ('MoinMoin/support/**', 'ignore', None),
+            ('MoinMoin/**/_tests/**', 'ignore', None),
+            ('MoinMoin/script/old/**', 'ignore', None),
+            ('MoinMoin/filter/EXIF.py', 'ignore', None),
+            ('MoinMoin/static/**', 'ignore', None),
+            ('MoinMoin/**.py', 'python', None),
+        ],
+    },
+
 )
 
 if __name__ == '__main__':
