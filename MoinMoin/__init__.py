@@ -10,13 +10,10 @@ MoinMoin - a wiki engine in Python.
 import os
 import sys
 
-from MoinMoin import log
-logging = log.getLogger(__name__)
-
 project = "MoinMoin"
 
 if sys.hexversion < 0x2060000:
-    logging.warning("%s requires Python 2.6 or greater." % project)
+    sys.exit("%s requires Python 2.6 or greater.\n" % project)
 
 
 # XXX temporary sys.path hack for convenience:
