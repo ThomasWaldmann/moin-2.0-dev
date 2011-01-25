@@ -4,4 +4,6 @@ virtualenv --no-site-packages env
 source env/bin/activate
 # "install" moin2 from repo to the env
 pip install -e .
+# compile the translations
+make mo
 
