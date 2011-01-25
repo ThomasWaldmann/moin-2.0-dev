@@ -44,8 +44,8 @@ Getting Support for and Contributing to MoinMoin
    devel/support
    devel/translate
 
-Developping of MoinMoin
-=======================
+Developing of MoinMoin
+======================
 
 .. toctree::
    :maxdepth: 2
