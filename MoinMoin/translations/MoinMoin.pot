@@ -1,14 +1,14 @@
-# Translations template for PROJECT.
-# Copyright (C) 2011 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
+# Translations template for moin.
+# Copyright (C) 2011 Moin Core Team, see http://moinmo.in/MoinCoreTeamGroup
+# This file is distributed under the same license as the moin project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2011-01-25 21:30+0100\n"
+"Project-Id-Version: moin 2.0.0-alpha\n"
+"Report-Msgid-Bugs-To: English <moin-user@lists.sourceforge.net>\n"
+"POT-Creation-Date: 2011-01-25 23:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
