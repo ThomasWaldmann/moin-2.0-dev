@@ -12,17 +12,8 @@ dist: clean-devwiki
 	-rm MANIFEST
 	python setup.py sdist
 
-user-docs:
-	wget -U MoinMoin/Makefile -O docs/INSTALL.html.in "http://master19.moinmo.in/InstallDocs?action=print"
-	sed \
-		-e 's#href="/#href="http://master19.moinmo.in/#g' \
-		-e 's#http://master19.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
-		-e 's#http://static.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
-        docs/INSTALL.html.in >docs/INSTALL.html
-	-rm docs/INSTALL.html.in
-
-dev-docs:
-	@epydoc --parse-only -o ../html-2.0 --name=MoinMoin --url=http://moinmo.in/ MoinMoin
+docs:
+	make -C docs html
 
 interwiki:
 	wget -U MoinMoin/Makefile -O contrib/interwiki/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
@@ -51,6 +42,6 @@ clean-orig:
 clean-rej:
 	find . -name "*.rej" -exec rm -rf "{}" \; 
 
-.PHONY: all dist user-docs dev-docs interwiki check-tabs pylint \
+.PHONY: all dist docs interwiki check-tabs pylint \
 	clean clean-devwiki clean-pyc clean-orig clean-rej
 
