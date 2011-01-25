@@ -17,7 +17,7 @@ language doesn't exist yet`_.
 
 2. Go to the top directory and execute
    ::
-     ./babel update <locale>
+     python setup.py update_catalog -l <locale>
    
    where locale is the short language descriptor of your desired
    language. It should be the name of a folder in MoinMoin/translations.
@@ -60,7 +60,8 @@ language doesn't exist yet`_.
 
 4. Save the messages.po file and execute
    ::
-     ./babel compile
+     python setup.py compile_catalog -l <locale>
+
 
 Guidelines for translators
 ``````````````````````````
@@ -81,9 +82,9 @@ the developers, but ...
   1 translation and it needs to be German because that is what many
   moin developers can maintain themselves.
 
-1. Run babel:
+1. Initialize a new catalog:
    ::
-     ./babel init <locale>
+     python setup.py init_catalog -l <locale>
    
 2. Adjust the ``MoinMoin/translations/<locale>/LC_MESSAGES/messages.po`` .
 
@@ -138,7 +139,7 @@ string replacement.
 
 If you made changes to any gettext string, please update the .pot file
 using::
-  ./babel extract
+  python setup.py extract_messages
 
 Because this sometimes creates large diffs, just because of a slight
 change in line numbers, you can of course use this command sparingly.
