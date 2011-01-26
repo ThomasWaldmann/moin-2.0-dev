@@ -220,7 +220,7 @@ msgstr "Die Passwörter stimmen nicht überein."
 #: MoinMoin/apps/frontend/views.py:983
 #: MoinMoin/templates/global_history.html:16 MoinMoin/templates/history.html:10
 msgid "Name"
-msgstr "Benutzername"
+msgstr "Name"
 
 #: MoinMoin/apps/frontend/views.py:630 MoinMoin/apps/frontend/views.py:631
 #: MoinMoin/apps/frontend/views.py:852
@@ -773,7 +773,7 @@ msgstr "Herunterladen"
 
 #: MoinMoin/templates/editbar.html:33
 msgid "History"
-msgstr "Versionsgeschichte"
+msgstr "Historie"
 
 #: MoinMoin/templates/editbar.html:41
 msgid "Remove Link"
