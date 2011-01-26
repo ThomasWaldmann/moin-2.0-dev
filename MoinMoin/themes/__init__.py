@@ -96,18 +96,6 @@ class ThemeSupport(object):
             return item_lang_default
         return item_en
 
-    def emit_custom_html(self, html):
-        """
-        Generate custom HTML code in `html`
-        @param html: a string or a callable object, in which case
-                 it is called and its return value is used
-        @rtype: string
-        @return: string with html
-        """
-        if html and callable(html):
-            html = html()
-        return html
-
     def location_breadcrumbs(self, item_name):
         """
         Assemble the location using breadcrumbs (was: title)
