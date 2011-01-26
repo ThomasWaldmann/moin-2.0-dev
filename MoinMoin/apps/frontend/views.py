@@ -420,7 +420,8 @@ def backrefs(item_name):
     """
     refs_here = _backrefs(flaskg.storage.iteritems(), item_name)
     return render_template('item_link_list.html',
-                           item_name=u'Refers Here',
+                           item_name=item_name,
+                           headline=_(u'Refers Here'),
                            item_names=refs_here
                           )
 
@@ -484,8 +485,10 @@ def wanted_items():
         items they are linked or transcluded to helps show what items still need
         to be written and shows whether there are any broken links. """
     wanteds = _wanteds(flaskg.storage.iteritems())
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('wanteds.html',
-                           item_name=u'Wanted Items',
+                           headline=_(u'Wanted Items'),
+                           item_name=item_name,
                            wanteds=wanteds)
 
 
@@ -529,8 +532,10 @@ def orphaned_items():
         by any other items, that makes
         them sometimes not discoverable. """
     orphan = _orphans(flaskg.storage.iteritems())
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     return render_template('item_link_list.html',
-                           item_name=u'Orphaned Items',
+                           item_name=item_name,
+                           headline=_(u'Orphaned Items'),
                            item_names=orphan)
 
 
@@ -1407,6 +1412,7 @@ def global_tags():
     show a list or tag cloud of all tags in this wiki
     """
     counts_tags_names = flaskg.storage.all_tags()
+    item_name = request.values.get('item_name', '') # actions menu puts it into qs
     if counts_tags_names:
         # sort by tag name
         counts_tags_names = sorted(counts_tags_names, key=lambda e: e[1])
@@ -1428,7 +1434,7 @@ def global_tags():
         tags = []
     return render_template("global_tags.html",
                            headline=_("All tags in this wiki"),
-                           item_name='',
+                           item_name=item_name,
                            tags=tags)
 
 
