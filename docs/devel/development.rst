@@ -55,3 +55,52 @@ moin2 is a WSGI application and uses:
    add some nice gfx
 
 
+How MoinMoin works
+------------------
+This is just a very high level overview about how moin works, if you'ld like
+to know more details, you'll have to read more docs and the code.
+
+First, the moin Flask application is created (see `MoinMoin.app.create_app`) -
+this will:
+
+* load the configuration (app.cfg)
+* register some Modules that handle different parts of the functionality
+
+  - MoinMoin.apps.frontend - most stuff a normal user uses
+  - MoinMoin.apps.admin - some stuff for admins
+  - MoinMoin.apps.feed - feeds (e.g. atom)
+  - MoinMoin.apps.serve - serving some configurable static 3rd party stuff
+* register before/after request handlers
+* initialize the cache (app.cache)
+* initialize the storage (app.storage)
+* initialize the translation system
+* initialize theme support
+
+This app is then given to a WSGI compatible server somehow and will be called
+by the server for each request for it.
+
+Let's look at how it shows a wiki item:
+
+* the Flask app receives a GET request for /WikiItem
+* Flask's routing rules determine that this request should be served by
+  `MoinMoin.apps.frontend.show_item`.
+* Flask calls the before request handler of this module, which:
+
+  - sets up the user as flaskg.user (anon user or logged in user)
+  - initializes dicts/groups as flaskg.dicts, flaskg.groups
+  - initializes jinja2 environment (templating)
+* Flask then calls the handler function `MoinMoin.apps.frontend.show_item`,
+  which
+
+  - creates an in-memory Item
+
+    + by fetching the item of name "WikiItem" from storage
+    + it looks at the mimetype of this item (stored in metadata)
+    + it creates an appropriately typed Item instance (depending on the mimetype)
+  - calls Item._render_data() to determine how the rendered item looks like
+    as HTML
+  - renders the `show_item.html` template (and gives it the rendered item html)
+  - returns the result to Flask
+* Flask calls the after request handler which does some cleanup
+* Flask returns an appropriate response to the server
+
