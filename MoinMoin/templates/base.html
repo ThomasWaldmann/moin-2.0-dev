@@ -55,9 +55,8 @@
 
     {% block head_scripts %}
     <script src="{{ url_for('serve.files', name='jquery', filename='jquery.min.js') }}"></script>
-    {% for src in ['svg', 'common'] -%}
-        <script src="{{ url_for('.static', filename='js/%s.js' % src) }}"></script>
-    {% endfor %}    
+    <script src="{{ url_for('serve.files', name='svgweb', filename='svg.js') }}"></script>
+    <script src="{{ url_for('.static', filename='js/common.js') }}"></script>
     {% for type, src in cfg.external_scripts -%}
         <script type="{{ type }}" src="{{ src }}"></script>
     {% endfor %}
