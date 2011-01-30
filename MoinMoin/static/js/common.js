@@ -870,7 +870,9 @@ function moinFirefoxWordBreak() {
         }
     }
 }
-jQuery(moinFirefoxWordBreak);
+// TODO BUG disable the word break - it also breaks the links in the
+// (item) Name column on the global history view!
+//jQuery(moinFirefoxWordBreak);
 
 /* For the overlays on transcluded objects */
 function removeURLPrefixes(url) {
