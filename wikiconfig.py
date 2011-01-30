@@ -53,15 +53,12 @@ class Config(DefaultConfig):
     # for now we load some 3rd party stuff from the place within moin where it is currently located,
     # but soon we'll get rid of this stuff:
     serve_files = dict(
-        ckeditor = '/usr/share/javascript/ckeditor', # debian/ubuntu ckeditor location
-        jquery = '/usr/share/javascript/jquery', # debian/ubuntu jquery location
-        # Download from http://code.google.com/p/svgweb/
+        # see "quickinstall" script about how to get those files there
+        ckeditor = os.path.join(wikiconfig_dir, 'env', 'ckeditor'),
+        jquery = os.path.join(wikiconfig_dir, 'env', 'jquery'),
         svgweb = os.path.join(wikiconfig_dir, 'env', 'svgweb', 'src'),
-        # Download at http://sourceforge.net/projects/anywikidraw/ - 0.14 works
         anywikidraw = os.path.join(wikiconfig_dir, 'env', 'AnyWikiDraw', 'anywikidraw', 'moinmoin'),
-        # Download at http://static.moinmo.in/files/packages/TWikiDrawPlugin-moin.tar.gz
         twikidraw = os.path.join(wikiconfig_dir, 'env', 'TWikiDrawPlugin'),
-        # Download at http://static.moinmo.in/files/packages/svg-edit.tar.gz
         svgedit = os.path.join(wikiconfig_dir, 'env', 'svg-edit'),
     )
 
