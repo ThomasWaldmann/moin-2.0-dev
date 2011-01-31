@@ -36,7 +36,7 @@ class TestSerializeRev(object):
                     '<revision revno="0">'
                     '<meta>'
                     '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
-                    '<entry key="sha1"><bytes>0</bytes>\n</entry>\n'
+                    '<entry key="sha1"><str>763675d6a1d8d0a3a28deca62bb68abd8baf86f3</str>\n</entry>\n'
                     '<entry key="m1"><str>m1</str>\n</entry>\n'
                     '<entry key="name"><str>foo1</str>\n</entry>\n'
                     '<entry key="uuid"><str>foo1</str>\n</entry>\n'
@@ -65,7 +65,7 @@ class TestSerializeItem(object):
                     '<revision revno="0">'
                     '<meta>'
                     '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
-                    '<entry key="sha1"><bytes>0</bytes>\n</entry>\n'
+                    '<entry key="sha1"><str>033c4846b506a4a48e32cdf54515c91d3499adb3</str>\n</entry>\n'
                     '<entry key="m1"><str>m1r0</str>\n</entry>\n'
                     '<entry key="name"><str>foo2</str>\n</entry>\n'
                     '<entry key="uuid"><str>foo2</str>\n</entry>\n'
@@ -75,7 +75,7 @@ class TestSerializeItem(object):
                     '<revision revno="1">'
                     '<meta>'
                     '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
-                    '<entry key="sha1"><bytes>0</bytes>\n</entry>\n'
+                    '<entry key="sha1"><str>f91d8fc20a5de853e62105cc1ee0bf47fd7ded0f</str>\n</entry>\n'
                     '<entry key="m1"><str>m1r1</str>\n</entry>\n'
                     '<entry key="name"><str>foo2</str>\n</entry>\n'
                     '<entry key="uuid"><str>foo2</str>\n</entry>\n'
@@ -83,8 +83,6 @@ class TestSerializeItem(object):
                     '<data coding="base64"><chunk>YmF6Mg==</chunk>\n</data>\n'
                     '</revision>\n'
                     '</item>\n')
-        print "expected:\n%s" % expected
-        print "got:\n%s" % xml
         assert expected == xml
 
 class TestSerializeBackend(object):

@@ -380,8 +380,6 @@ options_no_group_name = {
     ('auth_oid_trusted', DefaultExpression('[]'),
      "List of trusted openid providers, empty if all are trusted."),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes."""),
-    # use sha512 as soon as we require python2.5 because sha1 is weak:
-    ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('SecurityPolicy',
      None,
      "Class object hook for implementing security restrictions or relaxations"),
