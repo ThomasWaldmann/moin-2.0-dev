@@ -21,8 +21,6 @@ import zipfile
 import tempfile
 from StringIO import StringIO
 
-import hashlib
-
 try:
     import PIL
     from PIL import Image as PILImage
@@ -51,6 +49,7 @@ from MoinMoin import wikiutil, config, user
 from MoinMoin.util.send_file import send_file
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
+from MoinMoin.storage import HASH_ALGORITHM
 
 COLS = 80
 ROWS_DATA = 20
@@ -194,7 +193,7 @@ class Item(object):
         Return the internal representation of a document using a DOM Tree
         """
         flaskg.clock.start('conv_in_dom')
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         hash_hexdigest = self.rev.get(hash_name)
         if hash_hexdigest:
             cid = wikiutil.cache_key(usage="internal_representation",
@@ -305,13 +304,12 @@ class Item(object):
 
     def meta_filter(self, meta):
         """ kill metadata entries that we set automatically when saving """
-        hash_name = app.cfg.hash_algorithm
         kill_keys = [# shall not get copied from old rev to new rev
                      SYSITEM_VERSION,
                      NAME_OLD,
                      # are automatically implanted when saving
                      NAME,
-                     hash_name,
+                     HASH_ALGORITHM,
                      EDIT_LOG_COMMENT,
                      EDIT_LOG_ACTION,
                      EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID,
@@ -337,21 +335,16 @@ class Item(object):
     data = property(fget=get_data)
 
     def _write_stream(self, content, new_rev, bufsize=8192):
-        hash_name = app.cfg.hash_algorithm
-        hash = hashlib.new(hash_name)
         if hasattr(content, "read"):
             while True:
                 buf = content.read(bufsize)
-                hash.update(buf)
                 if not buf:
                     break
                 new_rev.write(buf)
         elif isinstance(content, str):
             new_rev.write(content)
-            hash.update(content)
         else:
             raise StorageError("unsupported content object: %r" % content)
-        return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
         """
@@ -449,8 +442,7 @@ class Item(object):
             newrev[NAME_OLD] = oldname
         newrev[NAME] = name
 
-        hash_name, hash_hexdigest = self._write_stream(data, newrev)
-        newrev[hash_name] = hash_hexdigest
+        self._write_stream(data, newrev)
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
@@ -651,7 +643,7 @@ There is no help, you're doomed!
     revert_template = 'revert.html'
 
     def _render_data_diff(self, oldrev, newrev):
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         if oldrev[hash_name] == newrev[hash_name]:
             return _("The items have the same data hash code (that means they very likely have the same data).")
         else:
@@ -665,7 +657,7 @@ There is no help, you're doomed!
                  mimetype=request.values.get('mimetype'))
 
     def do_get(self):
-        hash = self.rev.get(app.cfg.hash_algorithm)
+        hash = self.rev.get(HASH_ALGORITHM)
         if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
         else:
@@ -929,7 +921,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             transpose = 1
         if width or height or transpose != 1:
             # resize requested, XXX check ACL behaviour! XXX
-            hash_name = app.cfg.hash_algorithm
+            hash_name = HASH_ALGORITHM
             hash_hexdigest = self.rev[hash_name]
             cid = wikiutil.cache_key(usage="ImageTransform",
                                      hash_name=hash_name,
@@ -957,7 +949,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
         return Markup('<img src="%s" />' % escape(url))
 
     def _render_data_diff_raw(self, oldrev, newrev):
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         cid = wikiutil.cache_key(usage="ImageDiff",
                                  hash_name=hash_name,
                                  hash_old=oldrev[hash_name],

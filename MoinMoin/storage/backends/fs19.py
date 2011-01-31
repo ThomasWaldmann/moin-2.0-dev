@@ -40,7 +40,8 @@ from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, REVERTED_TO, \
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
 from MoinMoin.storage.backends._flatutils import split_body
 
-HASH = 'sha1'
+from MoinMoin.storage import HASH_ALGORITHM
+
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
@@ -786,8 +787,7 @@ def _decode_dict(line):
     return dict(items)
 
 def hash_hexdigest(content, bufsize=4096):
-    hash_name = HASH
-    hash = hashlib.new(hash_name)
+    hash = hashlib.new(HASH_ALGORITHM)
     if hasattr(content, "read"):
         while True:
             buf = content.read(bufsize)
@@ -798,5 +798,5 @@ def hash_hexdigest(content, bufsize=4096):
         hash.update(content)
     else:
         raise ValueError("unsupported content object: %r" % content)
-    return hash_name, unicode(hash.hexdigest())
+    return HASH_ALGORITHM, unicode(hash.hexdigest())
 

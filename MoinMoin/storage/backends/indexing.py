@@ -30,7 +30,6 @@ from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            TAGS
-HASH_ALGORITHM = 'sha1'
 
 
 class IndexingBackendMixin(object):
@@ -161,8 +160,6 @@ class IndexingRevisionMixin(object):
             self[UUID] = uuid
         if MIMETYPE not in self:
             self[MIMETYPE] = 'application/octet-stream'
-        if HASH_ALGORITHM not in self:
-            self[HASH_ALGORITHM] = '0' # XXX
         metas = self
         logging.debug("item %r revno %d update index:" % (name, revno))
         for k, v in metas.items():

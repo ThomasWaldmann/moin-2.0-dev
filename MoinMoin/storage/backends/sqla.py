@@ -591,9 +591,10 @@ class SQLARevision(NewRevision, Base):
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
 
-    def __init__(self, item, revno, timestamp=None):
+    def __init__(self, item, revno, *args, **kw):
+        super(SQLARevision, self).__init__(item, revno, *args, **kw)
         self._revno = revno
-        self._timestamp = timestamp
+        self._timestamp = kw.get('timestamp')
         self.setup(item._backend)
         self._item = item
 
