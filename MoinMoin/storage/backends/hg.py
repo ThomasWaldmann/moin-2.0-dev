@@ -55,7 +55,7 @@ try:
 except ImportError:
     from MoinMoin.support import pycdb as cdb
 
-from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_COMMENT
+from MoinMoin.items import USERID, COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisionError,
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,
@@ -335,8 +335,8 @@ class MercurialBackend(Backend):
             meta.update(self._encode_metadata(revision, WIKI_METADATA_PREFIX))
 
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
-            user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
-            msg = revision.get(EDIT_LOG_COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")
+            user = revision.get(USERID, DEFAULT_USER).encode("utf-8")
+            msg = revision.get(COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")
 
             self._commit_files([item._id], message=msg, user=user, extra=meta, date=date)
             self._append_revision(item, revision)

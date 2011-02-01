@@ -27,8 +27,6 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            TAGS
 
 

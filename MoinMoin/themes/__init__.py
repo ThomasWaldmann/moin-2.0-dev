@@ -346,9 +346,9 @@ class ThemeSupport(object):
 
 
 def get_editor_info(rev, external=False):
-    from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    addr = rev.get(EDIT_LOG_ADDR)
-    hostname = rev.get(EDIT_LOG_HOSTNAME)
+    from MoinMoin.items import USERID, ADDR, HOSTNAME
+    addr = rev.get(ADDR)
+    hostname = rev.get(HOSTNAME)
     text = _('anonymous')  # link text
     title = ''  # link title
     css = 'editor'  # link/span css class
@@ -366,7 +366,7 @@ def get_editor_info(rev, external=False):
             title = '[%s]' % (addr, )
             css = 'editor ip'
 
-    userid = rev.get(EDIT_LOG_USERID)
+    userid = rev.get(USERID)
     if userid:
         u = user.User(userid)
         name = u.name

@@ -83,14 +83,12 @@ ITEMLINKS = "itemlinks"
 ITEMTRANSCLUSIONS = "itemtransclusions"
 TAGS = "tags"
 
-EDIT_LOG_ACTION = "edit_log_action"
-EDIT_LOG_ADDR = "edit_log_addr"
-EDIT_LOG_HOSTNAME = "edit_log_hostname"
-EDIT_LOG_USERID = "edit_log_userid"
-EDIT_LOG_EXTRA = "edit_log_extra"
-EDIT_LOG_COMMENT = "edit_log_comment"
-
-EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
+ACTION = "edit_log_action"
+ADDR = "edit_log_addr"
+HOSTNAME = "edit_log_hostname"
+USERID = "edit_log_userid"
+EXTRA = "edit_log_extra"
+COMMENT = "edit_log_comment"
 
 
 class DummyRev(dict):
@@ -310,9 +308,9 @@ class Item(object):
                      # are automatically implanted when saving
                      NAME,
                      HASH_ALGORITHM,
-                     EDIT_LOG_COMMENT,
-                     EDIT_LOG_ACTION,
-                     EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID,
+                     COMMENT,
+                     ACTION,
+                     ADDR, HOSTNAME, USERID,
                     ]
         for key in kill_keys:
             meta.pop(key, None)
@@ -446,15 +444,15 @@ class Item(object):
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
-        comment = unicode(comment or meta.get(EDIT_LOG_COMMENT, ''))
+        comment = unicode(comment or meta.get(COMMENT, ''))
         if comment:
-            newrev[EDIT_LOG_COMMENT] = comment
+            newrev[COMMENT] = comment
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
         assert mimetype is not None
         newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
-        newrev[EDIT_LOG_ACTION] = unicode(action)
+        newrev[ACTION] = unicode(action)
         self.before_revision_commit(newrev, data)
         storage_item.commit()
         # XXX Event ?
@@ -470,10 +468,10 @@ class Item(object):
         """
         remote_addr = request.remote_addr
         if remote_addr:
-            newrev[EDIT_LOG_ADDR] = unicode(remote_addr)
-            newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
+            newrev[ADDR] = unicode(remote_addr)
+            newrev[HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
         if flaskg.user.valid:
-            newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
+            newrev[USERID] = unicode(flaskg.user.id)
 
     def search_items(self, term=None):
         """ search items matching the term or,
