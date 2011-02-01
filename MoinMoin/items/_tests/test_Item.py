@@ -12,9 +12,7 @@ from flask import flaskg
 
 from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, \
-                           MIMETYPE, \
-                           EDIT_LOG_ADDR, EDIT_LOG_COMMENT, \
-                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
+                           MIMETYPE, ADDR, COMMENT, HOSTNAME, USERID, ACTION
 
 class TestItem(object):
     def testNonExistent(self):
@@ -48,7 +46,7 @@ class TestItem(object):
         item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
-        assert saved_meta[EDIT_LOG_COMMENT] == comment
+        assert saved_meta[COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 0
 
@@ -60,7 +58,7 @@ class TestItem(object):
         item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
-        assert saved_meta[EDIT_LOG_COMMENT] == comment
+        assert saved_meta[COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 1
 
@@ -72,7 +70,7 @@ class TestItem(object):
         item = Item.create(name)
         saved_meta, saved_data = dict(item.meta), item.data
         assert saved_meta[MIMETYPE] == mimetype
-        assert saved_meta[EDIT_LOG_COMMENT] == comment
+        assert saved_meta[COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 2
 

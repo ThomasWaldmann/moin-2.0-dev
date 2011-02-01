@@ -25,9 +25,7 @@ logging = log.getLogger(__name__)
 from MoinMoin.apps.feed import feed
 
 from MoinMoin import wikiutil
-from MoinMoin.items import NAME, ACL, MIMETYPE, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT
+from MoinMoin.items import NAME, ACL, MIMETYPE, ACTION, ADDR, HOSTNAME, USERID, COMMENT
 from MoinMoin.themes import get_editor_info
 from MoinMoin.items import Item
 
@@ -66,7 +64,7 @@ def atom(item_name):
                 content = _(u'MoinMoin feels unhappy.')
                 content_type = 'text'
             feed.add(title=name, title_type='text',
-                     summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
+                     summary=rev.get(COMMENT, ''), summary_type='text',
                      content=content, content_type=content_type,
                      author=get_editor_info(rev, external=True),
                      url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
