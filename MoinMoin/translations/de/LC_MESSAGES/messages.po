@@ -805,7 +805,7 @@ msgstr "Los!"
 
 #: MoinMoin/templates/global_history.html:10 MoinMoin/themes/__init__.py:339
 msgid "Global History"
-msgstr "Globale Versionsgeschichte"
+msgstr "Globale Historie"
 
 #: MoinMoin/templates/global_history.html:14 MoinMoin/templates/history.html:12
 msgid "Timestamp"
@@ -839,7 +839,7 @@ msgstr "Syntax-Hervorhebung für das Item: %(name)s"
 #: MoinMoin/templates/history.html:5
 #, python-format
 msgid "History of '%(item_name)s'"
-msgstr "Versionsgeschichte von '%(item_name)s'"
+msgstr "Historie von '%(item_name)s'"
 
 #: MoinMoin/templates/history.html:13
 msgid "Size"
