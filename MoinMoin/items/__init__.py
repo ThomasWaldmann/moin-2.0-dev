@@ -83,12 +83,12 @@ ITEMLINKS = "itemlinks"
 ITEMTRANSCLUSIONS = "itemtransclusions"
 TAGS = "tags"
 
-ACTION = "edit_log_action"
-ADDR = "edit_log_addr"
-HOSTNAME = "edit_log_hostname"
-USERID = "edit_log_userid"
-EXTRA = "edit_log_extra"
-COMMENT = "edit_log_comment"
+ACTION = "action"
+ADDRESS = "address"
+HOSTNAME = "hostname"
+USERID = "userid"
+EXTRA = "extra"
+COMMENT = "comment"
 
 
 class DummyRev(dict):
@@ -310,7 +310,7 @@ class Item(object):
                      HASH_ALGORITHM,
                      COMMENT,
                      ACTION,
-                     ADDR, HOSTNAME, USERID,
+                     ADDRESS, HOSTNAME, USERID,
                     ]
         for key in kill_keys:
             meta.pop(key, None)
@@ -468,7 +468,7 @@ class Item(object):
         """
         remote_addr = request.remote_addr
         if remote_addr:
-            newrev[ADDR] = unicode(remote_addr)
+            newrev[ADDRESS] = unicode(remote_addr)
             newrev[HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
         if flaskg.user.valid:
             newrev[USERID] = unicode(flaskg.user.id)

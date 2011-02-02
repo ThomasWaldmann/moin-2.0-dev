@@ -25,7 +25,7 @@ logging = log.getLogger(__name__)
 from MoinMoin.apps.feed import feed
 
 from MoinMoin import wikiutil
-from MoinMoin.items import NAME, ACL, MIMETYPE, ACTION, ADDR, HOSTNAME, USERID, COMMENT
+from MoinMoin.items import NAME, ACL, MIMETYPE, ACTION, ADDRESS, HOSTNAME, USERID, COMMENT
 from MoinMoin.themes import get_editor_info
 from MoinMoin.items import Item
 

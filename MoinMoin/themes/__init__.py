@@ -346,8 +346,8 @@ class ThemeSupport(object):
 
 
 def get_editor_info(rev, external=False):
-    from MoinMoin.items import USERID, ADDR, HOSTNAME
-    addr = rev.get(ADDR)
+    from MoinMoin.items import USERID, ADDRESS, HOSTNAME
+    addr = rev.get(ADDRESS)
     hostname = rev.get(HOSTNAME)
     text = _('anonymous')  # link text
     title = ''  # link title
