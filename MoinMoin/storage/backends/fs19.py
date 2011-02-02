@@ -530,10 +530,12 @@ class EditLog(LogFile):
                 if extra:
                     result[NAME_OLD] = extra
                 del result[EXTRA]
+                result[ACTION] = 'RENAME'
             elif action == 'SAVE/REVERT':
                 if extra:
                     result[REVERTED_TO] = int(extra)
                 del result[EXTRA]
+                result[ACTION] = 'REVERT'
         userid = result[USERID]
         if userid:
             result[USERID] = self.idx.user_uuid(old_id=userid, refcount=True)
