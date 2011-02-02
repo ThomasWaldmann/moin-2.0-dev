@@ -12,7 +12,7 @@ from flask import flaskg
 
 from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, \
-                           MIMETYPE, ADDR, COMMENT, HOSTNAME, USERID, ACTION
+                           MIMETYPE, ADDRESS, COMMENT, HOSTNAME, USERID, ACTION
 
 class TestItem(object):
     def testNonExistent(self):

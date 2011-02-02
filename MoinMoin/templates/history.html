@@ -31,7 +31,7 @@
                 </td>
                 <td class="moin-wordbreak">{{ utils.editor_info(rev) }}</td>
                 <td class="moin-wordbreak">{{ rev.mimetype }}</td>
-                <td class="moin-wordbreak">{{ rev.edit_log_comment }}</td>
+                <td class="moin-wordbreak">{{ rev.comment }}</td>
                 <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno) }}">{{ _('show') }}</a></td>
                 <td><a href="{{ url_for('frontend.show_item_meta', item_name=rev.item.name, rev=rev.revno) }}">{{ _('meta') }}</a></td>
                 <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno) }}">{{ _('download') }}</a></td>

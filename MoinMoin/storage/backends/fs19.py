@@ -33,7 +33,7 @@ logging = log.getLogger(__name__)
 from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, REVERTED_TO, \
-                           ACTION, ADDR, HOSTNAME, USERID, EXTRA, COMMENT, \
+                           ACTION, ADDRESS, HOSTNAME, USERID, EXTRA, COMMENT, \
                            IS_SYSITEM, SYSITEM_VERSION, \
                            TAGS
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
@@ -514,7 +514,7 @@ class EditLog(LogFile):
         """ Parse edit-log line into fields """
         fields = line.strip().split(u'\t')
         fields = (fields + [u''] * self._NUM_FIELDS)[:self._NUM_FIELDS]
-        keys = (MTIME, '__rev', ACTION, NAME, ADDR, HOSTNAME, USERID, EXTRA, COMMENT)
+        keys = (MTIME, '__rev', ACTION, NAME, ADDRESS, HOSTNAME, USERID, EXTRA, COMMENT)
         result = dict(zip(keys, fields))
         # do some conversions/cleanups/fallbacks:
         result[MTIME] = int(result[MTIME] or 0) / 1000000 # convert usecs to secs

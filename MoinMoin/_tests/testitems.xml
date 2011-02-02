@@ -1,5 +1,5 @@
 <backend><item name="HelpOnLinking"><meta></meta>
-<revision revno="0"><meta><entry key="edit_log_hostname"><str>0.0.0.0</str>
+<revision revno="0"><meta><entry key="hostname"><str>0.0.0.0</str>
 </entry>
 <entry key="#"><tuple><str>Please edit system and help pages ONLY in the master wiki!</str>
 <str>For more information, please see MoinMoin:MoinDev/Translation.</str>
@@ -9,15 +9,15 @@
 </entry>
 <entry key="sha1"><str>c9b17c6d4d6ea0b59a040dde48c8cb0286ba9822</str>
 </entry>
-<entry key="edit_log_userid"><str></str>
+<entry key="userid"><str></str>
 </entry>
 <entry key="name"><str>HelpOnLinking</str>
 </entry>
 <entry key="language"><str>en</str>
 </entry>
-<entry key="edit_log_comment"><str></str>
+<entry key="comment"><str></str>
 </entry>
-<entry key="edit_log_addr"><str>0.0.0.0</str>
+<entry key="address"><str>0.0.0.0</str>
 </entry>
 <entry key="acl"><str>-All:write Default</str>
 </entry>
@@ -25,9 +25,9 @@
 </entry>
 <entry key="mimetype"><str>text/x.moin.wiki</str>
 </entry>
-<entry key="edit_log_action"><str>SAVE</str>
+<entry key="action"><str>SAVE</str>
 </entry>
-<entry key="edit_log_extra"><str></str>
+<entry key="extra"><str></str>
 </entry>
 <entry key="is_syspage"><bool>True</bool>
 </entry>
@@ -39,7 +39,7 @@
 </revision>
 </item>
 <item name="FrontPage"><meta></meta>
-<revision revno="0"><meta><entry key="edit_log_hostname"><str>0.0.0.0</str>
+<revision revno="0"><meta><entry key="hostname"><str>0.0.0.0</str>
 </entry>
 <entry key="#"><tuple><str>Please edit system and help pages ONLY in the master wiki!</str>
 <str>For more information, please see MoinMoin:MoinDev/Translation.</str>
@@ -48,15 +48,15 @@
 </entry>
 <entry key="sha1"><str>836e7743aa94de00274aef973ac24d4e2cd4f69b</str>
 </entry>
-<entry key="edit_log_userid"><str></str>
+<entry key="userid"><str></str>
 </entry>
 <entry key="name"><str>FrontPage</str>
 </entry>
 <entry key="language"><str>en</str>
 </entry>
-<entry key="edit_log_comment"><str></str>
+<entry key="comment"><str></str>
 </entry>
-<entry key="edit_log_addr"><str>0.0.0.0</str>
+<entry key="address"><str>0.0.0.0</str>
 </entry>
 <entry key="syspage_version"><int>1</int>
 </entry>
@@ -64,9 +64,9 @@
 </entry>
 <entry key="pragma"><str>section-numbers off</str>
 </entry>
-<entry key="edit_log_action"><str>SAVE</str>
+<entry key="action"><str>SAVE</str>
 </entry>
-<entry key="edit_log_extra"><str></str>
+<entry key="extra"><str></str>
 </entry>
 <entry key="is_syspage"><bool>True</bool>
 </entry>
@@ -76,7 +76,7 @@
 </revision>
 </item>
 <item name="HelpOnMoinWikiSyntax"><meta></meta>
-<revision revno="0"><meta><entry key="edit_log_hostname"><str>0.0.0.0</str>
+<revision revno="0"><meta><entry key="hostname"><str>0.0.0.0</str>
 </entry>
 <entry key="#"><tuple><str>Please edit system and help pages ONLY in the master wiki!</str>
 <str>For more information, please see MoinMoin:MoinDev/Translation.</str>
@@ -87,15 +87,15 @@
 </entry>
 <entry key="sha1"><str>3f61c5a99ce682ca6f4630a6f41af0d5c0784366</str>
 </entry>
-<entry key="edit_log_userid"><str></str>
+<entry key="userid"><str></str>
 </entry>
 <entry key="name"><str>HelpOnMoinWikiSyntax</str>
 </entry>
 <entry key="language"><str>en</str>
 </entry>
-<entry key="edit_log_comment"><str></str>
+<entry key="comment"><str></str>
 </entry>
-<entry key="edit_log_addr"><str>0.0.0.0</str>
+<entry key="address"><str>0.0.0.0</str>
 </entry>
 <entry key="acl"><str>-All:write Default</str>
 </entry>
@@ -103,9 +103,9 @@
 </entry>
 <entry key="mimetype"><str>text/x.moin.wiki</str>
 </entry>
-<entry key="edit_log_action"><str>SAVE</str>
+<entry key="action"><str>SAVE</str>
 </entry>
-<entry key="edit_log_extra"><str></str>
+<entry key="extra"><str></str>
 </entry>
 <entry key="is_syspage"><bool>True</bool>
 </entry>
