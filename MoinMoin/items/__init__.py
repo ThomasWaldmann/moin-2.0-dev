@@ -352,7 +352,7 @@ class Item(object):
         flaskg.storage.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', comment=comment)
+        self._save(current_rev, current_rev, name=name, action='COPY', comment=comment)
 
     def _rename(self, name, comment, action):
         self.rev.item.rename(name)
@@ -362,7 +362,7 @@ class Item(object):
         """
         rename this item to item <name>
         """
-        return self._rename(name, comment, action='SAVE/RENAME')
+        return self._rename(name, comment, action='RENAME')
 
     def delete(self, comment=u''):
         """
@@ -372,12 +372,12 @@ class Item(object):
         now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
-        return self._rename(trashname, comment, action='SAVE/DELETE')
+        return self._rename(trashname, comment, action='TRASH')
 
     def revert(self):
         # called from revert UI/POST
         comment = request.form.get('comment')
-        self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
+        self._save(self.meta, self.data, action='REVERT', comment=comment)
 
     def destroy(self, comment=u'', destroy_item=False):
         # called from destroy UI/POST
