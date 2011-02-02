@@ -79,7 +79,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
                  },
     zip_safe=False,
     dependency_links = [
-        'https://github.com/mitsuhiko/werkzeug/tarball/master#egg=werkzeug-0.7dev',
+        'https://github.com/mitsuhiko/werkzeug/tarball/master#egg=Werkzeug-0.7dev',
     ],
     install_requires=[
         'blinker>=1.1', # event signalling (e.g. for change notification trigger)
@@ -95,7 +95,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'parsedatetime>=0.8.6', # parsing dates and times
         'pygments>=1.1.1', # src code / text file highlighting
         'sqlalchemy>=0.5.6', # metadata index and other stuff
-        'werkzeug>=0.7dev', # wsgi toolkit, minimum rev 0.7dev 2010/12
+        'Werkzeug>=0.7dev', # wsgi toolkit, minimum rev 0.7dev 2010/12
         #'xappy>=0.5', # xapian python OO interface, not used (yet?)
     ],
     # optional features and their list of requirements
