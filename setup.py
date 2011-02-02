@@ -78,6 +78,9 @@ Topic :: Text Processing :: Markup""".splitlines(),
                   'MoinMoin.apps.misc.templates': ['*.html', '*.txt', ],
                  },
     zip_safe=False,
+    dependency_links = [
+        'https://github.com/mitsuhiko/werkzeug/tarball/master#egg=werkzeug-0.7dev',
+    ],
     install_requires=[
         'blinker>=1.1', # event signalling (e.g. for change notification trigger)
         'docutils>=0.6', # reST markup processing
@@ -92,8 +95,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'parsedatetime>=0.8.6', # parsing dates and times
         'pygments>=1.1.1', # src code / text file highlighting
         'sqlalchemy>=0.5.6', # metadata index and other stuff
-        'Werkzeug>=0.6.2', # wsgi toolkit
-                           # XXX minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0
+        'werkzeug>=0.7dev', # wsgi toolkit, minimum rev 0.7dev 2010/12
         #'xappy>=0.5', # xapian python OO interface, not used (yet?)
     ],
     # optional features and their list of requirements
