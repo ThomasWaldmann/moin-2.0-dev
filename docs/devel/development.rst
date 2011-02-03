@@ -56,10 +56,12 @@ moin2 is a WSGI application and uses:
 
 
 How MoinMoin works
-------------------
+==================
 This is just a very high level overview about how moin works, if you'ld like
 to know more details, you'll have to read more docs and the code.
 
+WSGI application creation
+-------------------------
 First, the moin Flask application is created (see `MoinMoin.app.create_app`) -
 this will:
 
@@ -79,6 +81,8 @@ this will:
 This app is then given to a WSGI compatible server somehow and will be called
 by the server for each request for it.
 
+Request processing
+------------------
 Let's look at how it shows a wiki item:
 
 * the Flask app receives a GET request for /WikiItem
@@ -103,4 +107,61 @@ Let's look at how it shows a wiki item:
   - returns the result to Flask
 * Flask calls the after request handler which does some cleanup
 * Flask returns an appropriate response to the server
+
+Storage
+-------
+Moin supports different storage backends (like storing directly into files /
+directories, using Mercurial DVCS, using a SQL database, etc. - see
+`MoinMoin.storage.backends`).
+
+All these backends conform to same storage API definition (see
+`MoinMoin.storage`), which is used by the higher levels (no matter what
+backend is used).
+
+There is also some related code in the storage package for:
+* processing ACLs (access control lists, protecting that items get accessed
+  by users that are not allowed to)
+* router (a fstab like mechanism, so one can mount multiple backends at
+  different places in the namespace)
+* indexing (putting important metadata into a index database, so finding,
+  selecting items is speedier)
+
+DOM based transformations
+-------------------------
+But how does moin know how the HTML rendering of some item looks like?
+
+Each Item has some mimetype (stored in metadata) - the input mimetype.
+We also know what we want as output - the output mimetype.
+
+Moin uses converters to transform the input data into the output data in
+multiple steps and has a registry that knows all converters and their supported
+input and output mimetypes.
+
+For example, if the mimetype is `text/x-moin-wiki`, it'll find that the input
+converter handling this is the one defined in `converter.moinwiki_in`. It then
+feeds the data of this item into this converter. The converter parses this
+input and creates a in-memory `dom tree` representation from it.
+
+This dom tree is then transformed through multiple dom-to-dom converters for
+e.g.:
+* link processing
+* include processing
+* smileys
+* macros
+
+Finally, the dom-tree will reach the output converter, which will transform it
+into the desired output format, e.g. `text/html`.
+
+This is just one example of a supported transformation, there are quite a lot
+of converters in `MoinMoin.converter` supporting different input formats,
+dom-dom transformations and output formats.
+
+Templates and Themes
+--------------------
+Moin uses jinja2 as templating engine and Flask-Themes as a flask extension to
+support multiple themes (each themes has static data, like css, and templates).
+
+When rendering a template, the template is expanded within an environment of
+values it can use. Additionally to this (general) environment, parameters can
+be also given directly to the render call.
 
