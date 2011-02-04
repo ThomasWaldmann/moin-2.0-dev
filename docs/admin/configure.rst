@@ -13,6 +13,39 @@ and only do small careful changes, then trying it, then doing next change.
 If you're not used to Python syntax, backup your last working config so you
 can revert to it in case you make some hard to find typo or other error.
 
+Python powered
+==============
+
+At first, you might wonder why we use Python code for configuration. It is
+simply because it is powerful and we can make use of that power there.
+
+One of Python's powerful features is class inheritance: you can inherit most
+settings from a DefaultConfig class (which is defined in the moin code) and
+just override the settings you want different from the defaults.
+
+So, a typical wikiconfig.py works like this::
+
+ from MoinMoin.config.default import DefaultConfig
+
+ class Config(DefaultConfig):
+     # a comment
+     sometext = u'your value'
+     somelist = [1, 2, 3]
+
+Let's go through this line-by-line:
+
+1. this gets the DefaultConfig class from the moin code
+2. an empty line, for better readability
+3. now we define a new class `Config` that inherits most stuff from
+   `DefaultConfig`
+4. with a `#` character you can write a comment into your config. This line (as
+   well as all other following lines with Config settings) is indented by 4
+   blanks, because Python defines blocks by indentation.
+5. define a Config attribute called `sometext` with value u'your value' -
+   the `u'...'` means that this is a unicode string.
+6. define a Config attribute called `somelist` with value [1, 2, 3] - this is
+   a list with the numbers 1, 2 and 3 as list elements.
+
 
 Authentication
 ==============
@@ -107,8 +140,9 @@ OK for the builtin server (will just show on the console) or for e.g. Apache2
 (will be put into error.log).
 
 Logging is very configurable and flexible due to the use of the `logging`
-module of the Python standard library. The configuration file format is
-described there:
+module of the Python standard library.
+
+The configuration file format is described there:
 
 http://www.python.org/doc/lib/logging-config-fileformat.html
 
@@ -122,4 +156,7 @@ from your adaptor script (e.g. moin.wsgi)::
 
 You have to fix that path to use a logging configuration matching your
 needs.
+
+Please note that the logging configuration has to be a separate file (don't
+try this in your wiki configuration file)!
 
