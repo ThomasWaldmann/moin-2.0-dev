@@ -56,12 +56,12 @@ python setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 rm -rf $RPM_BUILD_ROOT
 
 #%files -f INSTALLED_FILES   # Wrong: Installed files contains directories also
-# This lets rpmbuild complain about Files listet twice.
+# This lets rpmbuild complain about Files listed twice.
 # A Good explanation is here: "http://www.wideopen.com/archives/rpm-list/2001-February/msg00081.html
 %files
 %defattr(-,root,root)
 /usr
-%doc  README docs/CHANGES docs/INSTALL.html docs/UPDATE.html docs/licenses/COPYING
+%doc README.txt docs/licenses/COPYING
 
 %changelog
 * Sun Jun 21 2010 Thomas Waldmann
