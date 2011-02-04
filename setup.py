@@ -1,19 +1,4 @@
 #!/usr/bin/env python
-"""
-MoinMoin
---------
-
-MoinMoin is an easy to use, full-featured and extensible wiki software
-package written in Python. It can fulfill a wide range of roles, such as
-a personal notes organizer deployed on a laptop or home web server,
-a company knowledge base deployed on an intranet, or an Internet server
-open to individuals sharing the same interests, goals or projects.
-
-Links
-`````
-
-* `wiki <http://moinmo.in/>`_
-"""
 
 import sys, os
 
@@ -24,6 +9,8 @@ if sys.hexversion < 0x2060000:
     sys.stderr.write("%s %s requires Python 2.6 or greater.\n" % (project, str(version)))
     sys.exit(1)
 
+long_description = open('README.txt').read()
+
 from setuptools import setup, find_packages
 
 
@@ -31,13 +18,13 @@ setup_args = dict(
     name="moin",
     version=str(version),
     description="MoinMoin is an easy to use, full-featured and extensible wiki software package",
+    long_description=long_description,
     author="Juergen Hermann et al.",
     author_email="moin-user@lists.sourceforge.net",
     # maintainer(_email) not active because distutils/register can't handle author and maintainer at once
     download_url='http://static.moinmo.in/files/moin-%s.tar.gz' % (version, ),
     url="http://moinmo.in/",
     license="GNU GPL",
-    long_description=__doc__,
     keywords="wiki web",
     platforms="any",
     classifiers="""\
