@@ -28,6 +28,7 @@ Administrating MoinMoin
 .. toctree::
    :maxdepth: 2
 
+   admin/requirements
    admin/install
    admin/serve
    admin/configure
