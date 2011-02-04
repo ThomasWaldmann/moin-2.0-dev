@@ -1,7 +1,6 @@
 include README
 include moin wikiconfig.py
 include Makefile
-include babel babel.cfg
 
 recursive-include docs *
 
