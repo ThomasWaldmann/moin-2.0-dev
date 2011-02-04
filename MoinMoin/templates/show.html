@@ -3,17 +3,16 @@
 
 {% block head_links %}
     {{ super() }}
-    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
+    <link rel="alternate" title="{{ item_name }} changes" href="{{ url_for('feed.atom', item_name=item_name) }}" type="application/atom+xml" />
     {# universal edit button support #}
     {%- if user.may.write(item_name) and 'modify' not in cfg.actions_excluded -%}
-    <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
+    <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name) }}" />
     {%- endif %}
 {% endblock %}
 
 {% import "editbar.html" as editbar with context %}
 
-{% block header %}
-    {{ super() }}
+{% block header_editbar %}
     {{ editbar }}
 {% endblock %}
 
@@ -21,7 +20,7 @@
     <ul id="moin-rev-navigation">
         <li class="moin-rev-navigation-older">
         {% if rev.revno > 0 -%}
-            <a href="{{ url_for(view, rev=rev.revno-1, item_name=item_name)|e }}">&lt;-- {{ _('older') }}</a>
+            <a href="{{ url_for(view, rev=rev.revno-1, item_name=item_name) }}">&lt;-- {{ _('older') }}</a>
         {%- else -%}
             <span class="moin-disabled">{{ _('no older revision') }}</span>
         {%- endif %}
@@ -29,7 +28,7 @@
         <li class="moin-rev-navigation-current">rev {{ rev.revno }}</li>
         <li class="moin-rev-navigation-newer">
             {% if rev.revno < last_rev_no -%}
-                <a href="{{ url_for(view, rev=rev.revno+1, item_name=item_name)|e }}">{{ _('newer') }} --&gt;</a>
+                <a href="{{ url_for(view, rev=rev.revno+1, item_name=item_name) }}">{{ _('newer') }} --&gt;</a>
             {%- else -%}
                 <span class="moin-disabled">{{ _('no newer revision') }}</span>
             {%- endif %}
@@ -45,7 +44,7 @@
     {% endif %}
     
     {% if not rev %}
-    This item exists, but not this revision.
+    {{ _("This item exists, but it has no revisions.") }}
     {% else %}
     {% block headline %}
     {# <h1>{{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1> #}
@@ -60,23 +59,23 @@
     {% endif %}
 {% endblock %}
 
-{% block item %}
-    {{ super() }}
-    {% if rev %}
-    <div id="moin-pagebottom">
-        <p id="moin-pageinfo" class="moin-info" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
-            {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ item_name }}
-            (<a href="{{ url_for('frontend.show_item', rev=rev.revno, item_name=item_name)|e }}">rev {{rev.revno}}</a>)
-            {{ _("last edit:") }} {{ utils.editor_info(rev) }} {{ rev.timestamp|datetimeformat }}
-        </p>
-    </div>
-    {% endif %}
-{% endblock %}
-
 {% block footer_hr %}{% endblock %}
 
-{% block footer %}
+{% block footer_editbar %}
     {{ editbar }}
-    {{ super() }}
+{% endblock %}
+
+{% block footer_meta %}
+    {% if rev %}
+    <p id="moin-pageinfo" lang="{{ theme_supp.ui_lang }}" dir="{{ theme_supp.ui_dir }}">
+        {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}{{ item_name }} (rev {{rev.revno}}),
+        {{ _("modified") }} {{ rev.timestamp|datetimeformat }}
+        {{ _("by") }} {{ utils.editor_info(rev) }}{% if rev.tags %},
+        {{ _("tagged") }}
+        {% for tag in rev.tags -%}
+        <a href="{{ url_for('frontend.tagged_items', tag=tag) }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    {%- endif -%}.
+    </p>
+    {% endif %}
 {% endblock %}

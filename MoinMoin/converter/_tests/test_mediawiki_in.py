@@ -70,7 +70,7 @@ no point
 ;item 2
 : definition 2-1
 : definition 2-2
-""", ""),
+""", u'please add the correct expected value here'),
             (u";aaa : bbb", u"<page><body><list><list-item><list-item-label>aaa </list-item-label><list-item-body><p> bbb</p></list-item-body></list-item></list></body></page>"),
             (u""": Single indent
 :: Double indent
@@ -83,7 +83,7 @@ no point
 # three
 #; three item one
 #: three def one
-""", "")
+""", u'please add the correct expected value here'),
         ]
         for i in data:
             yield (self.do, ) + i

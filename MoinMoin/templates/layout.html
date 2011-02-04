@@ -1,25 +1,36 @@
 {% extends "base.html" %}
 
+{% import "snippets.html" as snippets with context %}
+{% set logo = snippets.logo() %}
+{% set before_header = snippets.before_header() %}
+{% set after_header = snippets.after_header() %}
+{% set before_footer = snippets.before_footer() %}
+{% set after_footer = snippets.after_footer() %}
+{% set license_info = snippets.license_info() %}
+{% set creditlogos = snippets.creditlogos() %}
+{% set credits = snippets.credits() %}
+
+
 {% block layout %}
 
-{{ theme_supp.emit_custom_html(cfg.html_before_header) }}
+{{ before_header }}
 
 <div id="moin-header">
 {% block header %}
-    <form id="moin-searchform" method="get" action="{{ url_for('frontend.search')|e }}">
+    <form id="moin-searchform" method="get" action="{{ url_for('frontend.search') }}">
         <div>
             <input type="hidden" name="do" value="fullsearch" />
             <input type="hidden" name="context" value="180" />
             <label for="moin-searchinput">{{ _('Search') }}</label>
-            <input id="moin-searchinput" type="text" name="value" value="{{ request.values.get('value', '')|e }}" size="20" />
+            <input id="moin-searchinput" type="text" name="value" value="{{ request.values.get('value', '') }}" size="20" />
             <input id="moin-titlesearch" name="titlesearch" type="submit" value="{{ _('Titles') }}" />
             <input id="moin-fullsearch" name="fullsearch" type="submit" value="{{ _('Text') }}" />
         </div>
     </form>
 
-    {% if cfg.logo %}
+    {% if logo %}
     <div id="moin-logo">
-        <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}">{{ cfg.logo }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root)) }}">{{ logo }}</a>
     </div>
     {% endif %}
 
@@ -27,22 +38,22 @@
         {% if user.valid -%}
             {% if user.name -%}
                 {% set wiki_href, aliasname, title, exists = theme_supp.userhome() %}
-                <a href="{{ wiki_href|e }}" {% if not exists %}class="moin-nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
+                <a href="{{ wiki_href }}" {% if not exists %}class="moin-nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
                     {{ aliasname }}
                 </a>
                 <span class="sep"> | </span>
                 {% if 'usersettings' not in cfg.actions_excluded -%}
-                    <a href="{{ url_for('frontend.usersettings')|e }}" class="moin-usersettings" rel="nofollow">{{ _('Settings') }}</a>
+                    <a href="{{ url_for('frontend.usersettings') }}" class="moin-usersettings" rel="nofollow">{{ _('Settings') }}</a>
                     <span class="sep"> | </span>
                 {%- endif %}
             {%- endif %}
             {% if user.auth_method in cfg.auth_can_logout %}
-                <a href="{{ url_for('frontend.logout', logout_submit=1)|e }}" class="moin-logout" rel="nofollow">
+                <a href="{{ url_for('frontend.logout', logout_submit=1) }}" class="moin-logout" rel="nofollow">
                     {{ _('Logout') }}
                 </a>
             {% endif %}
         {% else %}
-            <a href="{{ theme_supp.login_url()|e }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
+            <a href="{{ theme_supp.login_url() }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
         {%- endif %}
     </div>
 
@@ -50,7 +61,7 @@
     <div id="moin-locationline">
         {% if cfg.show_interwiki -%}
         <span id="moin-interwiki">
-            <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root))|e }}" rel="nofollow">
+            <a href="{{ url_for('frontend.show_item', item_name=theme_supp.translated_item_name(cfg.item_root)) }}" rel="nofollow">
                 {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
             </a>
             <span class="sep">: </span>
@@ -59,7 +70,7 @@
         <span id="moin-pagelocation">
             <span class="moin-pagepath">
                 {% for segment_name, segment_path, exists in theme_supp.location_breadcrumbs(item_name) -%}
-                    <a href="{{ url_for('frontend.show_item', item_name=segment_path)|e }}" {% if not exists %}class="moin-nonexistent"{% endif %}>
+                    <a href="{{ url_for('frontend.show_item', item_name=segment_path) }}" {% if not exists %}class="moin-nonexistent"{% endif %}>
                         {{ segment_name|shorten_item_name }}
                     </a>
                     {% if not loop.last -%}<span class="sep">/</span>{%- endif %}
@@ -72,7 +83,7 @@
     {% if trail_items %}
         <div id="moin-pagetrail">
         {% for wiki_name, item_name, item_href, exists, err in trail_items %}
-            <a href="{{ url_for('frontend.show_item', item_name=item_href)|e }}"
+            <a href="{{ url_for('frontend.show_item', item_name=item_href) }}"{{ " " }}
             {%- if wiki_name -%}
                 title="{{ wiki_name }}"
                 class="{% if err %}moin-badinterwiki{% else %}interwiki{% endif %}"
@@ -91,7 +102,7 @@
         <ul id="moin-navibar">
         {% for cls, url, text, title in navibar_items %}
             <li class="{{ cls }}">
-                <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
+                <a href="{{ url }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
             </li>
         {% endfor %}
         </ul>
@@ -101,14 +112,16 @@
         <hr style="display:none;" />
     </div>
 
+    {% block header_editbar %}{% endblock %}
+
     {% for category, msg in get_flashed_messages(with_categories=true) %}
-        <p class="moin-flash-{{ category }}">{{ msg }}</p>
+        <p class="moin-flash moin-flash-{{ category }}">{{ msg }}</p>
     {% endfor %}
 
 {% endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_after_header) }}
+{{ after_header }}
 
 <div id="moin-page" lang="{{ theme_supp.content_lang }}" dir="{{ theme_supp.content_dir }}">
     {% block item -%}
@@ -121,28 +134,19 @@
     {%- endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_before_footer) }}
+{{ before_footer }}
 
 <div id="moin-footer">
 {% block footer %}
+    {% block footer_editbar %}{% endblock %}
     {% block footer_hr %}<hr/>{% endblock %}
-    <ul id="moin-credits">
-        {% for credit in cfg.credits -%}
-            <li> {{ credit }} </li>
-        {% endfor %}
-    </ul>
+    {{ creditlogos }}
+    {% block footer_meta %}{% endblock %}
+    {% if license_info %}<p id="moin-wikilicense">{{ license_info }}</p>{% endif %}
+    {{ credits }}
 {% endblock %}
 </div>
 
-{{ theme_supp.emit_custom_html(cfg.html_after_footer) }}
-{%- set null = clock.stop('render_template') -%}
-{%- set null = clock.stop('total') -%}
-{%- set timing_information = clock.dump() -%}
-{% if cfg.show_timings -%}
-    <ul id="moin-timings">
-    {% for timing in timing_information -%}
-        <li> {{ timing }}</li>
-    {%- endfor %}
-    </ul>
-{%- endif -%}
+{{ after_footer }}
+
 {% endblock %}

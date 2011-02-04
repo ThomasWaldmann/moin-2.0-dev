@@ -27,10 +27,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            TAGS
-HASH_ALGORITHM = 'sha1'
 
 
 class IndexingBackendMixin(object):
@@ -53,6 +50,13 @@ class IndexingBackendMixin(object):
             # we currently create the item, the revision and yield it to stay
             # compatible with storage api definition, but this could be changed to
             # just return the data we get from the index (without accessing backend)
+            # TODO: A problem exists at item = self.get_item(name).
+            # In the history_size_after_rename test in test_backends.py,
+            # an item was created with the name "first" and then renamed to "second."
+            # When it runs through this history function and runs item = self.get_item("first"),
+            # it can't find it because it was already renamed to "second."
+            # Some suggested solutions are: using some neverchanging uuid to identify some specific item
+            # or continuing to use the name, but tracking name changes within the item's history.
             rev_datetime, name, rev_no, rev_metas = result
             try:
                 item = self.get_item(name)
@@ -154,8 +158,6 @@ class IndexingRevisionMixin(object):
             self[UUID] = uuid
         if MIMETYPE not in self:
             self[MIMETYPE] = 'application/octet-stream'
-        if HASH_ALGORITHM not in self:
-            self[HASH_ALGORITHM] = '0' # XXX
         metas = self
         logging.debug("item %r revno %d update index:" % (name, revno))
         for k, v in metas.items():

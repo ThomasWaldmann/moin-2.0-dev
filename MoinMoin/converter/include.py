@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MoinMoin - Include handling
 
@@ -24,6 +25,7 @@ from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xinclude, xlink
 
+from MoinMoin.converter.html_out import wrap_object_with_overlay
 class XPointer(list):
     """
     Simple XPointer parser
@@ -230,6 +232,11 @@ class Converter(object):
                     page_doc = page.internal_representation()
                     # page_doc.tag = self.tag_div # XXX why did we have this?
                     self.recurse(page_doc, page_href)
+                    # Wrap the page with the overlay, but only if it's a "page", or "a".
+                    # The href needs to be an absolute URI, without the prefix "wiki://"
+                    if page_doc.tag.endswith("page") or page_doc.tag.endswith("a"):
+                        page_doc = wrap_object_with_overlay(page_doc, href=unicode(page_href.path))
+
                     included_elements.append(page_doc)
 
                 if len(included_elements) > 1:

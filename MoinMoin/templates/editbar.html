@@ -1,18 +1,23 @@
 <ul class="moin-editbar">
     {% if 'Show' in cfg.edit_bar and 'show' not in cfg.actions_excluded -%}
         <li>
-        <a href="{{ url_for('frontend.show_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Show') }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" rel="nofollow"> {{ _('Show') }}</a>
+        </li>
+    {%- endif %}
+    {% if 'Highlight' in cfg.edit_bar and 'highlight' not in cfg.actions_excluded -%}
+        <li>
+        <a href="{{ url_for('frontend.highlight_item', item_name=item_name) }}" rel="nofollow"> {{ _('Highlight') }}</a>
         </li>
     {%- endif %}
     {% if 'Meta' in cfg.edit_bar and 'meta' not in cfg.actions_excluded -%}
         <li>
-        <a href="{{ url_for('frontend.show_item_meta', item_name=item_name)|e }}" rel="nofollow"> {{ _('Meta') }}</a>
+        <a href="{{ url_for('frontend.show_item_meta', item_name=item_name) }}" rel="nofollow"> {{ _('Meta') }}</a>
         </li>
     {%- endif %}
     {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
         {% if user.may.write(item_name) %}
-            <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+            <a href="{{ url_for('frontend.modify_item', item_name=item_name) }}" rel="nofollow"> {{ _('Modify') }}</a>
         {% else %}
             {{ _('Immutable Item')}}
         {% endif %}
@@ -20,18 +25,18 @@
     {%- endif %}
     {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded -%}
         <li>
-            <a href="{{ url_for('frontend.get_item', item_name=item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
+            <a href="{{ url_for('frontend.get_item', item_name=item_name) }}" rel="nofollow">{{ _('Download') }}</a>
         </li>
     {%- endif %}
     {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded -%}
         <li>
-            <a href="{{ url_for('frontend.history', item_name=item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
+            <a href="{{ url_for('frontend.history', item_name=item_name) }}" rel="nofollow">{{ _('History') }}</a>
         </li>
     {%- endif %}
     {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
        and user.valid -%}
         <li>
-            <a class="nbquicklink" href="{{ url_for('frontend.quicklink_item', item_name=item_name)|e }}" rel="nofollow">
+            <a class="nbquicklink" href="{{ url_for('frontend.quicklink_item', item_name=item_name) }}" rel="nofollow">
             {% if user.isQuickLinkedTo([item_name]) -%}
                 {{ _('Remove Link') }}
             {% else -%}
@@ -43,7 +48,7 @@
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
        and user.valid and cfg.mail_enabled -%}
         <li>
-            <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name)|e }}" rel="nofollow">
+            <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name) }}" rel="nofollow">
             {% if user.isSubscribedTo([item_name]) %}
                     {{ _('Unsubscribe') }}
             {% else %}
@@ -59,7 +64,7 @@
     {%- endif %}
     {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded -%}
         <li>
-            <a class="nbindex" href="{{ url_for('frontend.index', item_name=item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
+            <a class="nbindex" href="{{ url_for('frontend.index', item_name=item_name) }}" rel="nofollow">{{ _('Index') }}</a>
         </li>
     {%- endif %}
     {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded -%}
@@ -69,7 +74,7 @@
                 {% set supp_name = '%s/%s' % (item_name, sub_item_name) -%}
                 {% if storage.has_item(supp_name) or user.may.write(supp_name) %}
                     <li>
-                        <a class="nbsupplementation" href="{{ url_for('frontend.show_item', item_name=supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
+                        <a class="nbsupplementation" href="{{ url_for('frontend.show_item', item_name=supp_name) }}" rel="nofollow">{{ _(sub_item_name) }}</a>
                     </li>
                 {%- endif %}
             {%- endif %}
@@ -77,10 +82,10 @@
     {%- endif %}
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="moin-actionsmenu" id="moin-actionsmenu-form" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
+            <form class="moin-actionsmenu" method="GET" action="{{ url_for('frontend.dispatch') }}">
                 <div>
                     <label>{{ _('More Actions:') }}</label>
-                    <select name="endpoint" id="moin-actionsmenu-select">
+                    <select name="endpoint" class="moin-actionsmenu-select">
                         {% for title, disabled, endpoint in theme_supp.actions_menu_options(item_name) %}
                             <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}

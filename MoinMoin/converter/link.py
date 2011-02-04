@@ -15,41 +15,89 @@ from werkzeug import url_decode, url_encode
 
 from MoinMoin.util.interwiki import resolve_interwiki, join_wiki
 from MoinMoin.util.iri import Iri, IriPath
-from MoinMoin.util.mime import type_moin_document
-from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.util.mime import Type, type_moin_document
+from MoinMoin.util.tree import html, moin_page, xlink, xinclude
+from MoinMoin.wikiutil import AbsItemName
 
 class ConverterBase(object):
     _tag_xlink_href = xlink.href
+    _tag_xinclude_href = xinclude.href
 
-    def handle_wiki(self, elem, link):
+    def handle_wiki_links(self, elem, link):
         pass
 
-    def handle_wikilocal(self, elem, link, page_name):
+    def handle_wikilocal_links(self, elem, link, page_name):
+        pass
+
+    def handle_wiki_transclusions(self, elem, link):
+        pass
+
+    def handle_wikilocal_transclusions(self, elem, link, page_name):
         pass
 
     def __init__(self, url_root=None):
         self.url_root = url_root
 
-    def __call__(self, elem, page=None,
-            __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
-        new_page_href = elem.get(__tag_page_href)
+    def __call__(self, *args, **kw):
+        """
+        Calls the self.traverse_tree method
+        """
+        # avoids recursion for this method
+        # because it is also called in subclasses
+        return self.traverse_tree(*args, **kw)
+
+    def traverse_tree(self, elem, page=None,
+            __tag_page_href=moin_page.page_href, __tag_link=_tag_xlink_href,
+            __tag_include=_tag_xinclude_href):
+        """
+        Traverses the tree and handles each element appropriately
+        """
+        new_page_href=elem.get(__tag_page_href)
         if new_page_href:
             page = Iri(new_page_href)
 
-        href = elem.get(__tag_href)
-        if href:
-            href = Iri(href)
-            if href.scheme == 'wiki.local':
-                self.handle_wikilocal(elem, href, page)
-            elif href.scheme == 'wiki':
-                self.handle_wiki(elem, href)
+        xlink_href = elem.get(__tag_link)
+        xinclude_href = elem.get(__tag_include)
+        if xlink_href:
+            xlink_href = Iri(xlink_href)
+            if xlink_href.scheme == 'wiki.local':
+                self.handle_wikilocal_links(elem, xlink_href, page)
+            elif xlink_href.scheme == 'wiki':
+                self.handle_wiki_links(elem, xlink_href)
             else:
-                elem.set(html.class_, 'moin-' + href.scheme)
+                elem.set(html.class_, 'moin-' + xlink_href.scheme)
+
+        elif xinclude_href:
+            xinclude_href = Iri(xinclude_href)
+            if xinclude_href.scheme == 'wiki.local':
+                self.handle_wikilocal_transclusions(elem, xinclude_href, page)
+            elif xinclude_href.scheme == 'wiki':
+                self.handle_wiki_transclusions(elem, xinclude_href)
 
         for child in elem.iter_elements():
-            self(child, page)
+            self.traverse_tree(child, page)
 
         return elem
+
+    def absolute_path(self, path, current_page_path):
+        """
+        Converts a relative iri path into an absolute one
+
+        @param path: the relative path to be converted
+        @type path: Iri.path
+        @param current_page_path: the path of the page where the link is
+        @type current_page_path: Iri.path
+        @return: the absolute equivalent of the relative path
+        @rtype: Iri.path
+        """
+        quoted_path = path.quoted
+        # starts from 1 because 0 is always / for the current page
+        quoted_current_page_path = current_page_path[1:].quoted
+
+        abs_path = AbsItemName(quoted_current_page_path, quoted_path)
+        abs_path = Iri(abs_path).path
+        return abs_path
+
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
@@ -85,8 +133,7 @@ class ConverterExternOutput(ConverterBase):
             query = None
         return do, query
 
-    # TODO: Deduplicate code
-    def handle_wiki(self, elem, input):
+    def handle_wiki_links(self, elem, input):
         do, query = self._get_do(input.query)
         link = Iri(query=query, fragment=input.fragment)
 
@@ -117,21 +164,13 @@ class ConverterExternOutput(ConverterBase):
 
         elem.set(self._tag_xlink_href, base + link)
 
-    def handle_wikilocal(self, elem, input, page):
+    def handle_wikilocal_links(self, elem, input, page):
         do, query = self._get_do(input.query)
         link = Iri(query=query, fragment=input.fragment)
 
         if input.path:
             path = input.path
-
-            if path[0] == '':
-                # /subitem
-                tmp = page.path[1:]
-                tmp.extend(path[1:])
-                path = tmp
-            elif path[0] == '..':
-                # ../sisteritem
-                path = page.path[1:] + path[1:]
+            path = self.absolute_path(path, page.path)
 
             if not flaskg.storage.has_item(unicode(path)):
                 elem.set(html.class_, 'moin-nonexistent')
@@ -146,33 +185,58 @@ class ConverterExternOutput(ConverterBase):
 
         elem.set(self._tag_xlink_href, output)
 
-class ConverterItemLinks(ConverterBase):
+class ConverterItemRefs(ConverterBase):
     """
-    determine all links to other wiki items in this document
+    determine all links and transclusions to other wiki items in this document
     """
     @classmethod
-    def _factory(cls, input, output, links=None, url_root=None, **kw):
-        if links == 'itemlinks':
+    def _factory(cls, input, output, items=None, url_root=None, **kw):
+        if items == 'refs':
             return cls(url_root=url_root)
 
     def __init__(self, **kw):
-        super(ConverterItemLinks, self).__init__(**kw)
+        super(ConverterItemRefs, self).__init__(**kw)
         self.links = set()
+        self.transclusions = set()
 
-    def handle_wikilocal(self, elem, input, page):
-        if not input.path or ':' in input.path:
+    def __call__(self, *args, **kw):
+        """
+        Refreshes the sets for links and transclusions and proxies to ConverterBase.__call__
+        """
+        # refreshes the sets so that we don't append to already full sets
+        # in the handle methods
+        self.links = set()
+        self.transclusions = set()
+
+        super(ConverterItemRefs, self).__call__(*args, **kw)
+
+    def handle_wikilocal_links(self, elem, input, page):
+        """
+        Adds the link item from the input param to self.links
+        @param elem: the element of the link
+        @param input: the iri of the link
+        @param page: the iri of the page where the link is
+        """
+        path = input.path
+        if not path or ':' in path:
             return
 
-        path = input.path
-
-        if path[0] == '':
-            p = page.path[1:]
-            p.extend(path[1:])
-            path = p
-        elif path[0] == '..':
-            path = page.path[1:] + path[1:]
-
+        path = self.absolute_path(path, page.path)
         self.links.add(unicode(path))
+
+    def handle_wikilocal_transclusions(self, elem, input, page):
+        """
+        Adds the transclusion item from input argument to self.transclusions
+        @param elem: the element of the transclusion
+        @param input: the iri of the transclusion
+        @param page: the iri of the page where the transclusion is
+        """
+        path = input.path
+        if not path or ':' in path:
+            return
+
+        path = self.absolute_path(path, page.path)
+        self.transclusions.add(unicode(path))
 
     def get_links(self):
         """
@@ -180,8 +244,14 @@ class ConverterItemLinks(ConverterBase):
         """
         return list(self.links)
 
+    def get_transclusions(self):
+        """
+        Return a list of unicode transclusion item names.
+        """
+        return list(self.transclusions)
+
 
 from . import default_registry
-from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(ConverterExternOutput._factory, type_moin_document, type_moin_document)
-default_registry.register(ConverterItemLinks._factory, type_moin_document, type_moin_document)
+default_registry.register(ConverterItemRefs._factory, type_moin_document, type_moin_document)
+

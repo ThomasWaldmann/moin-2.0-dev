@@ -22,6 +22,13 @@ import copy
 import hashlib
 import hmac
 
+import md5crypt
+
+try:
+    import crypt
+except ImportError:
+    crypt = None
+
 from babel import parse_locale
 
 from flask import current_app as app
@@ -36,7 +43,7 @@ from MoinMoin.util import random_string
 from MoinMoin.util.interwiki import getInterwikiHome
 
 
-def create_user(username, password, email):
+def create_user(username, password, email, openid):
     """ create a user """
     # Create user profile
     theuser = User(auth_method="new-user")
@@ -60,12 +67,11 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
             return _("Password not acceptable: %(msg)s", msg=escape(pw_error))
 
     # Encode password
-    if password and not password.startswith('{SHA}'):
-        try:
-            theuser.enc_password = encodePassword(password)
-        except UnicodeError, err:
-            # Should never happen
-            return "Can't encode password: %s" % escape(str(err))
+    try:
+        theuser.enc_password = encodePassword(password)
+    except UnicodeError, err:
+        # Should never happen
+        return "Can't encode password: %s" % escape(str(err))
 
     # try to get the email, for new users it is required
     theuser.email = email
@@ -77,6 +83,12 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
     if theuser.email and app.cfg.user_email_unique:
         if get_by_email_address(theuser.email):
             return _("This email already belongs to somebody else.")
+
+    # Openid should be unique
+    theuser.openid = openid
+    if theuser.openid and app.cfg.user_openid_unique:
+        if get_by_openid(theuser.openid):
+            return _('This OpenID already belongs to somebody else.')
 
     # save data
     theuser.save()
@@ -116,6 +128,18 @@ def get_by_email_address(email_address):
     if len(users) > 0:
         return users[0]
 
+def get_by_openid(openid):
+    """
+    Searches for a user using an openid identifier.
+
+    @param openid: the openid to filter with
+    @type openid: unicode
+    @return: the user whose openid is this one
+    @rtype: user object or None
+    """
+    users = get_by_filter('openid', openid)
+    if len(users) > 0:
+        return users[0]
 
 def getUserId(searchName):
     """ Get the user ID for a specific user NAME.
@@ -161,18 +185,17 @@ def encodePassword(pwd, salt=None):
     @param pwd: the cleartext password, (unicode)
     @param salt: the salt for the password (string)
     @rtype: string
-    @return: the password in apache htpasswd compatible SHA-encoding,
-        or None
+    @return: the password in SHA256-encoding
     """
     pwd = pwd.encode('utf-8')
 
     if salt is None:
-        salt = random_string(20)
+        salt = random_string(32)
     assert isinstance(salt, str)
-    hash = hashlib.new('sha1', pwd)
+    hash = hashlib.new('sha256', pwd)
     hash.update(salt)
 
-    return '{SSHA}' + base64.encodestring(hash.digest() + salt).rstrip()
+    return '{SSHA256}' + base64.encodestring(hash.digest() + salt).rstrip()
 
 
 def normalizeName(name):
@@ -392,20 +415,56 @@ class User(object):
         # require non empty password
         if not password:
             return False, False
+        # encode password
+        pw_utf8 = password.encode('utf-8')
 
-        if epwd[:5] == '{SHA}':
-            enc = '{SHA}' + base64.encodestring(hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
-            if epwd == enc:
-                data['enc_password'] = encodePassword(password) # upgrade to SSHA
-                return True, True
-            return False, False
+        # Check and/or upgrade passwords from earlier MoinMoin versions and
+        # passwords imported from other wiki systems.
+        for method in ['{SSHA256}', '{SSHA}', '{SHA}', '{APR1}', '{MD5}', '{DES}']:
+            if epwd.startswith(method):
+                d = epwd[len(method):]
 
-        if epwd[:6] == '{SSHA}':
-            data = base64.decodestring(epwd[6:])
-            salt = data[20:]
-            hash = hashlib.new('sha1', password.encode('utf-8'))
-            hash.update(salt)
-            return hash.digest() == data[:20], False
+                if method == '{SSHA256}':
+                    pw_hash = base64.decodestring(d)
+                    # pw_hash is of the form "<hash><salt>"
+                    salt = pw_hash[32:]
+                    hash = hashlib.new('sha256', pw_utf8)
+                    hash.update(salt)
+                    enc = base64.encodestring(hash.digest() + salt).rstrip()
+                elif method == '{SSHA}':
+                    pw_hash = base64.decodestring(d)
+                    # pw_hash is of the form "<hash><salt>"
+                    salt = pw_hash[20:]
+                    hash = hashlib.new('sha1', pw_utf8)
+                    hash.update(salt)
+                    enc = base64.encodestring(hash.digest() + salt).rstrip()
+                elif method == '{SHA}':
+                    hash = hashlib.new('sha1', pw_utf8)
+                    enc = base64.encodestring(hash.digest()).rstrip()
+                elif method == '{APR1}':
+                    # d is of the form "$apr1$<salt>$<hash>"
+                    salt = d.split('$')[2]
+                    enc = md5crypt.apache_md5_crypt(pw_utf8, salt.encode('ascii'))
+                elif method == '{MD5}':
+                    # d is of the form "$1$<salt>$<hash>"
+                    salt = d.split('$')[2]
+                    enc = md5crypt.unix_md5_crypt(pw_utf8, salt.encode('ascii'))
+                elif method == '{DES}':
+                    if crypt is None:
+                        return False, False
+                    # d is 2 characters salt + 11 characters hash
+                    salt = d[:2]
+                    enc = crypt.crypt(pw_utf8, salt.encode('ascii'))
+
+                if epwd == method + enc:
+                    # SSHA256 current password hash
+                    if method == '{SSHA256}':
+                        return True, False
+                    else:
+                        # stored password hashed with old hash method
+                        data['enc_password'] = encodePassword(password) # upgrade to SSHA256
+                        return True, True
+                return False, False
 
         # No encoded password match, this must be wrong password
         return False, False
@@ -813,6 +872,8 @@ Somebody has requested to email you a password recovery link.
 Please use the link below to change your password to a known value:
 
 %(link)s
+
+If you didn't forget your password, please ignore this email.
 
 """, link=url_for('frontend.recoverpass',
                         username=self.name, token=token, _external=True))

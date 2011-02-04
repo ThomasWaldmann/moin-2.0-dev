@@ -46,9 +46,9 @@ class TestConverter(object):
             (u'[[MoinMoin]]',
                 '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
             (u'{{http://moinmo.in/}}',
-                '<page><body><p><object xlink:href="http://moinmo.in/" /></p></body></page>'),
+                '<page><body><p><object xlink:href="http://moinmo.in/">http://moinmo.in/</object></p></body></page>'),
             (u'{{http://moinmo.in/|MoinMoin}}',
-                '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>'),
+                '<page><body><p><object xlink:href="http://moinmo.in/">MoinMoin</object></p></body></page>'),
             (u'----',
                 '<page><body><separator /></body></page>'),
         ]

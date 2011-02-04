@@ -43,8 +43,8 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 PICKLEPROTOCOL = 1
 
 MAX_NAME_LEN = 500
-HASH_ALGORITHM = 'sha1'
-HASH_HEX_LEN = 40 # sha1 = 160 bit
+from MoinMoin.storage import HASH_ALGORITHM
+
 UUID_LEN = len(make_uuid().hex)
 
 

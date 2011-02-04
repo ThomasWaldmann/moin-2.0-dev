@@ -20,8 +20,6 @@ import tarfile
 import zipfile
 import tempfile
 from StringIO import StringIO
-import json
-import hashlib
 
 try:
     import PIL
@@ -33,17 +31,25 @@ except ImportError:
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from flask import current_app as app
 from flask import flaskg
 
-from flask import request, url_for, send_file, Response, abort, escape
+from flask import request, url_for, Response, abort, escape
 from werkzeug import is_resource_modified
+from jinja2 import Markup
 
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin import wikiutil, config, user
+from MoinMoin.util.send_file import send_file
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
+from MoinMoin.storage import HASH_ALGORITHM
 
 COLS = 80
 ROWS_DATA = 20
@@ -74,16 +80,15 @@ MIMETYPE = "mimetype"
 SIZE = "size"
 LANGUAGE = "language"
 ITEMLINKS = "itemlinks"
+ITEMTRANSCLUSIONS = "itemtransclusions"
 TAGS = "tags"
 
-EDIT_LOG_ACTION = "edit_log_action"
-EDIT_LOG_ADDR = "edit_log_addr"
-EDIT_LOG_HOSTNAME = "edit_log_hostname"
-EDIT_LOG_USERID = "edit_log_userid"
-EDIT_LOG_EXTRA = "edit_log_extra"
-EDIT_LOG_COMMENT = "edit_log_comment"
-
-EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
+ACTION = "action"
+ADDRESS = "address"
+HOSTNAME = "hostname"
+USERID = "userid"
+EXTRA = "extra"
+COMMENT = "comment"
 
 
 class DummyRev(dict):
@@ -181,12 +186,12 @@ class Item(object):
     def feed_input_conv(self):
         return self.name
 
-    def internal_representation(self):
+    def internal_representation(self, converters=['smiley', 'link']):
         """
         Return the internal representation of a document using a DOM Tree
         """
         flaskg.clock.start('conv_in_dom')
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         hash_hexdigest = self.rev.get(hash_name)
         if hash_hexdigest:
             cid = wikiutil.cache_key(usage="internal_representation",
@@ -221,8 +226,11 @@ class Item(object):
             # as not every doc will have that element (e.g. for images, we just get
             # moin_page.object, for a tar item, we get a moin_page.table):
             doc.set(moin_page.page_href, unicode(links))
-            doc = smiley_conv(doc)
-            doc = link_conv(doc)
+            for conv in converters:
+                if conv == 'smiley':
+                    doc = smiley_conv(doc)
+                elif conv == 'link':
+                    doc = link_conv(doc)
             if cid:
                 app.cache.set(cid, doc)
         flaskg.clock.stop('conv_in_dom')
@@ -263,9 +271,9 @@ class Item(object):
         flaskg.clock.stop('conv_serialize')
         return out
 
-    def _render_data_xml(self):
+    def _render_data_xml(self, converters):
         from MoinMoin.util.tree import moin_page, xlink, html
-        doc = self.internal_representation()
+        doc = self.internal_representation(converters)
 
         from array import array
         out = array('u')
@@ -294,16 +302,15 @@ class Item(object):
 
     def meta_filter(self, meta):
         """ kill metadata entries that we set automatically when saving """
-        hash_name = app.cfg.hash_algorithm
         kill_keys = [# shall not get copied from old rev to new rev
                      SYSITEM_VERSION,
                      NAME_OLD,
                      # are automatically implanted when saving
                      NAME,
-                     hash_name,
-                     EDIT_LOG_COMMENT,
-                     EDIT_LOG_ACTION,
-                     EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID,
+                     HASH_ALGORITHM,
+                     COMMENT,
+                     ACTION,
+                     ADDRESS, HOSTNAME, USERID,
                     ]
         for key in kill_keys:
             meta.pop(key, None)
@@ -326,21 +333,16 @@ class Item(object):
     data = property(fget=get_data)
 
     def _write_stream(self, content, new_rev, bufsize=8192):
-        hash_name = app.cfg.hash_algorithm
-        hash = hashlib.new(hash_name)
         if hasattr(content, "read"):
             while True:
                 buf = content.read(bufsize)
-                hash.update(buf)
                 if not buf:
                     break
                 new_rev.write(buf)
         elif isinstance(content, str):
             new_rev.write(content)
-            hash.update(content)
         else:
             raise StorageError("unsupported content object: %r" % content)
-        return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
         """
@@ -350,7 +352,7 @@ class Item(object):
         flaskg.storage.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', comment=comment)
+        self._save(current_rev, current_rev, name=name, action='COPY', comment=comment)
 
     def _rename(self, name, comment, action):
         self.rev.item.rename(name)
@@ -360,7 +362,7 @@ class Item(object):
         """
         rename this item to item <name>
         """
-        return self._rename(name, comment, action='SAVE/RENAME')
+        return self._rename(name, comment, action='RENAME')
 
     def delete(self, comment=u''):
         """
@@ -370,12 +372,12 @@ class Item(object):
         now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
-        return self._rename(trashname, comment, action='SAVE/DELETE')
+        return self._rename(trashname, comment, action='TRASH')
 
     def revert(self):
         # called from revert UI/POST
         comment = request.form.get('comment')
-        self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
+        self._save(self.meta, self.data, action='REVERT', comment=comment)
 
     def destroy(self, comment=u'', destroy_item=False):
         # called from destroy UI/POST
@@ -438,20 +440,19 @@ class Item(object):
             newrev[NAME_OLD] = oldname
         newrev[NAME] = name
 
-        hash_name, hash_hexdigest = self._write_stream(data, newrev)
-        newrev[hash_name] = hash_hexdigest
+        self._write_stream(data, newrev)
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
-        comment = unicode(comment or meta.get(EDIT_LOG_COMMENT, ''))
+        comment = unicode(comment or meta.get(COMMENT, ''))
         if comment:
-            newrev[EDIT_LOG_COMMENT] = comment
+            newrev[COMMENT] = comment
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
         assert mimetype is not None
         newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
-        newrev[EDIT_LOG_ACTION] = unicode(action)
+        newrev[ACTION] = unicode(action)
         self.before_revision_commit(newrev, data)
         storage_item.commit()
         # XXX Event ?
@@ -467,10 +468,10 @@ class Item(object):
         """
         remote_addr = request.remote_addr
         if remote_addr:
-            newrev[EDIT_LOG_ADDR] = unicode(remote_addr)
-            newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
+            newrev[ADDRESS] = unicode(remote_addr)
+            newrev[HOSTNAME] = unicode(wikiutil.get_hostname(remote_addr))
         if flaskg.user.valid:
-            newrev[EDIT_LOG_USERID] = unicode(flaskg.user.id)
+            newrev[USERID] = unicode(flaskg.user.id)
 
     def search_items(self, term=None):
         """ search items matching the term or,
@@ -640,20 +641,21 @@ There is no help, you're doomed!
     revert_template = 'revert.html'
 
     def _render_data_diff(self, oldrev, newrev):
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         if oldrev[hash_name] == newrev[hash_name]:
-            return "The items have the same data hash code (that means they very likely have the same data)."
+            return _("The items have the same data hash code (that means they very likely have the same data).")
         else:
-            return "The items have different data."
+            return _("The items have different data.")
 
     _render_data_diff_text = _render_data_diff
     _render_data_diff_raw = _render_data_diff
 
     def _convert(self):
-        return "Impossible to convert the data to the mimetype : %s" % request.values.get('mimetype')
+        return _("Impossible to convert the data to the mimetype: %(mimetype)s",
+                 mimetype=request.values.get('mimetype'))
 
     def do_get(self):
-        hash = self.rev.get(app.cfg.hash_algorithm)
+        hash = self.rev.get(HASH_ALGORITHM)
         if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
         else:
@@ -687,12 +689,11 @@ There is no help, you're doomed!
         # TODO: handle content_disposition is not None
         # Important: empty filename keeps flask from trying to autodetect filename,
         # as this would not work for us, because our file's are not necessarily fs files.
-        return send_file(file=file_to_send, filename='',
+        return send_file(file=file_to_send,
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
                          cache_timeout=10, # wiki data can change rapidly
-                         add_etags=True, etag=hash,
-                         conditional=True)
+                         add_etags=True, etag=hash, conditional=True)
 
 
 class RenderableBinary(Binary):
@@ -759,7 +760,7 @@ class TarMixin(object):
         tf_members = set(tf.getnames())
         tf.close()
         if tf_members - expected_members:
-            msg = "found unexpected members in container item %r" % (self.name, )
+            msg = "found unexpected members in container item %r" % self.name
             logging.error(msg)
             os.remove(temp_fname)
             raise StorageError(msg)
@@ -918,7 +919,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             transpose = 1
         if width or height or transpose != 1:
             # resize requested, XXX check ACL behaviour! XXX
-            hash_name = app.cfg.hash_algorithm
+            hash_name = HASH_ALGORITHM
             hash_hexdigest = self.rev[hash_name]
             cid = wikiutil.cache_key(usage="ImageTransform",
                                      hash_name=hash_name,
@@ -943,10 +944,10 @@ class TransformableBitmapImage(RenderableBitmapImage):
             # no PIL, we can't do anything, we just call the base class method
             return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
         url = url_for('frontend.diffraw', item_name=self.name, rev1=oldrev.revno, rev2=newrev.revno)
-        return '<img src="%s" />' % escape(url)
+        return Markup('<img src="%s" />' % escape(url))
 
     def _render_data_diff_raw(self, oldrev, newrev):
-        hash_name = app.cfg.hash_algorithm
+        hash_name = HASH_ALGORITHM
         cid = wikiutil.cache_key(usage="ImageDiff",
                                  hash_name=hash_name,
                                  hash_old=oldrev[hash_name],
@@ -1016,14 +1017,15 @@ class Text(Binary):
         new_text = self.data_storage_to_internal(newrev.read())
         storage_item = flaskg.storage.get_item(self.name)
         revs = storage_item.list_revisions()
-        return render_template('diff_text.html',
-                               item_name=self.name,
-                               oldrev=oldrev,
-                               newrev=newrev,
-                               min_revno=revs[0],
-                               max_revno=revs[-1],
-                               diffs=diff(old_text, new_text),
-                              )
+        diffs = [(d[0], Markup(d[1]), d[2], Markup(d[3])) for d in diff(old_text, new_text)]
+        return Markup(render_template('diff_text.html',
+                                      item_name=self.name,
+                                      oldrev=oldrev,
+                                      newrev=newrev,
+                                      min_revno=revs[0],
+                                      max_revno=revs[-1],
+                                      diffs=diffs,
+                                     ))
 
     def _render_data_diff_text(self, oldrev, newrev):
         from MoinMoin.util import diff_text
@@ -1053,10 +1055,13 @@ class Text(Binary):
 
 
 class MarkupItem(Text):
-    """ some kind of item with markup (and internal links) """
+    """
+    some kind of item with markup
+    (internal links and transcluded items)
+    """
     def before_revision_commit(self, newrev, data):
         """
-        add ITEMLINKS metadata
+        add ITEMLINKS and ITEMTRANSCLUSIONS metadata
         """
         super(MarkupItem, self).before_revision_commit(newrev, data)
 
@@ -1066,16 +1071,17 @@ class MarkupItem(Text):
         from MoinMoin.util.tree import moin_page
 
         input_conv = reg.get(Type(self.mimetype), type_moin_document)
-        itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='itemlinks', url_root=Iri(request.url_root))
+        item_conv = reg.get(type_moin_document, type_moin_document,
+                items='refs', url_root=Iri(request.url_root))
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
         doc = input_conv(self.data_storage_to_internal(data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
-        doc = itemlinks_conv(doc)
-        newrev[ITEMLINKS] = itemlinks_conv.get_links()
+        doc = item_conv(doc)
 
+        newrev[ITEMLINKS] = item_conv.get_links()
+        newrev[ITEMTRANSCLUSIONS] = item_conv.get_transclusions()
 
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
@@ -1172,12 +1178,11 @@ class DocBook(MarkupItem):
         file_to_send.seek(0)
         # Important: empty filename keeps flask from trying to autodetect filename,
         # as this would not work for us, because our file's are not necessarily fs files.
-        return send_file(file=file_to_send, filename='',
+        return send_file(file=file_to_send,
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=None,
                          cache_timeout=10, # wiki data can change rapidly
-                         add_etags=False, etag=None,
-                         conditional=True)
+                         add_etags=False, etag=None, conditional=True)
 
 
 class TWikiDraw(TarMixin, Image):
@@ -1247,10 +1252,9 @@ class TWikiDraw(TarMixin, Image):
             image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
             title = _('Clickable drawing: %(filename)s', filename=item_name)
 
-            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
+            return Markup(image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid))
         else:
-            return '<img src="%s" alt="%s" />' % (png_url, title)
-
+            return Markup('<img src="%s" alt="%s" />' % (png_url, title))
 
 class AnyWikiDraw(TarMixin, Image):
     """
@@ -1320,10 +1324,9 @@ class AnyWikiDraw(TarMixin, Image):
             # unxml, because 4.01 concrete will not validate />
             image_map = image_map.replace(u'/>', u'>')
             title = _('Clickable drawing: %(filename)s', filename=self.name)
-            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
+            return Markup(image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid))
         else:
-            return '<img src="%s" alt="%s" />' % (png_url, title)
-
+            return Markup('<img src="%s" alt="%s" />' % (png_url, title))
 
 class SvgDraw(TarMixin, Image):
     """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
@@ -1363,5 +1366,4 @@ class SvgDraw(TarMixin, Image):
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, member='drawing.svg')
         png_url = url_for('frontend.get_item', item_name=item_name, member='drawing.png')
-        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
-
+        return Markup('<img src="%s" alt="%s" />' % (png_url, drawing_url))

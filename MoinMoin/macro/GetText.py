@@ -18,6 +18,7 @@ from MoinMoin.macro._base import MacroInlineBase
 class Macro(MacroInlineBase):
     """ Return a translation of args, or args as is """
     def macro(self, content, args, page_url, alt):
-        translation = _(' '.join(args.positional))
+        translation = ' '.join(args.positional)
+        translation = _(translation)
         return translation
 

@@ -9,6 +9,7 @@ Convert a non-existent item to the DOM Tree.
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import _
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import moin_page, xlink
 
@@ -25,7 +26,7 @@ class Converter(object):
         attrib = {
             xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=modify'),
         }
-        return moin_page.a(attrib=attrib, children=["%s does not exist. Create it?" % item_name])
+        return moin_page.a(attrib=attrib, children=[_("%(item_name)s does not exist. Create it?", item_name=item_name)])
 
 
 from . import default_registry

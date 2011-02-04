@@ -36,8 +36,9 @@ def get_current_theme():
 
 def render_template(template, **context):
     flaskg.clock.start('render_template')
-    return render_theme_template(get_current_theme(), template, **context)
-
+    output = render_theme_template(get_current_theme(), template, **context)
+    flaskg.clock.stop('render_template')
+    return output
 
 def themed_error(e):
     item_name = request.view_args.get('item_name', u'')
@@ -94,18 +95,6 @@ class ThemeSupport(object):
         if self.storage.has_item(item_lang_default):
             return item_lang_default
         return item_en
-
-    def emit_custom_html(self, html):
-        """
-        Generate custom HTML code in `html`
-        @param html: a string or a callable object, in which case
-                 it is called and its return value is used
-        @rtype: string
-        @return: string with html
-        """
-        if html and callable(html):
-            html = html()
-        return html
 
     def location_breadcrumbs(self, item_name):
         """
@@ -338,9 +327,11 @@ class ThemeSupport(object):
             (_('Global History'), 'global_history', 'frontend.global_history', False, ),
             (_('Global Items Index'), 'global_index', 'frontend.global_index', False, ),
             (_('Global Tags Index'), 'global_tags', 'frontend.global_tags', False, ),
+            (_('Wanted Items'), 'wanted_items', 'frontend.wanted_items', False, ),
+            (_('Orphaned Items'), 'orphaned_items', 'frontend.orphaned_items', False, ),
             # Translation may need longer or shorter separator:
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
-            (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
+            (_('What refers here?'), 'backrefs', 'frontend.backrefs', False, ),
             (_('Local Site Map'), 'sitemap', 'frontend.sitemap', False, ),
             (_('Items with similar names'), 'similar_names', 'frontend.similar_names', False, ),
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
@@ -355,9 +346,9 @@ class ThemeSupport(object):
 
 
 def get_editor_info(rev, external=False):
-    from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    addr = rev.get(EDIT_LOG_ADDR)
-    hostname = rev.get(EDIT_LOG_HOSTNAME)
+    from MoinMoin.items import USERID, ADDRESS, HOSTNAME
+    addr = rev.get(ADDRESS)
+    hostname = rev.get(HOSTNAME)
     text = _('anonymous')  # link text
     title = ''  # link title
     css = 'editor'  # link/span css class
@@ -375,7 +366,7 @@ def get_editor_info(rev, external=False):
             title = '[%s]' % (addr, )
             css = 'editor ip'
 
-    userid = rev.get(EDIT_LOG_USERID)
+    userid = rev.get(USERID)
     if userid:
         u = user.User(userid)
         name = u.name

@@ -1,5 +1,7 @@
 .*\.py[co]$
 ^dist/
+^env/
+^moin.egg-info/
 ^MoinMoin/_tests/wiki/data/cache/
 ^wiki/data/cache/
 ^wiki/data/content/
