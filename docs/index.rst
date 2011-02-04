@@ -29,6 +29,7 @@ Administrating MoinMoin
    :maxdepth: 2
 
    admin/install
+   admin/serve
    admin/configure
    admin/changes
    admin/upgrade
