@@ -1,17 +1,23 @@
 MoinMoin - a wiki engine in Python
 ==================================
 
+MoinMoin is an easy to use, full-featured and extensible wiki software
+package written in Python. It can fulfill a wide range of roles, such as
+a personal notes organizer deployed on a laptop or home web server,
+a company knowledge base deployed on an intranet, or an Internet server
+open to individuals sharing the same interests, goals or projects.
+
+
 Copyright (c) 2000-2006 by Juergen Hermann <jh@web.de>
 Copyright (c) 2006-2011 The MoinMoin development team, see
                         http://moinmo.in/MoinCoreTeamGroup
 
-All rights reserved, see docs/licenses/COPYING for details.
+All rights reserved, MoinMoin is licensed under the GNU GPL v2 or later,
+see docs/licenses/COPYING for details.
 
 
 Documentation and Support
 =========================
-
-Online:
 
 Project homepage is at http://moinmo.in/ - there are also links to support
 resources and informations about MoinMoin development status and plans.
@@ -26,11 +32,6 @@ If you have trouble with apache (or other webserver) configuration, please
 try reading the web server's documentation. Same thing applies for any other
 3rd party software usually used with moin, but not written by the MoinMoin
 developers.
-
-Local:
-
-See docs/CHANGES                 for a version history. READ THIS!
-See docs/REQUIREMENTS            for a list of requirements.
 
 
 ACKNOWLEDGEMENTS
