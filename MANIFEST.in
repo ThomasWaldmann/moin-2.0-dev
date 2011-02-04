@@ -1,4 +1,4 @@
-include README REQUIREMENTS
+include README
 include moin wikiconfig.py
 include Makefile
 include babel babel.cfg
