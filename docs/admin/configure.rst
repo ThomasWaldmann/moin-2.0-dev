@@ -97,3 +97,29 @@ feel free to DISABLE the checker by::
 
    describe more moin configuration
 
+
+=====================
+Logging configuration
+=====================
+
+By default, logging is configured to emit output on `stderr`. This will work
+OK for the builtin server (will just show on the console) or for e.g. Apache2
+(will be put into error.log).
+
+Logging is very configurable and flexible due to the use of the `logging`
+module of the Python standard library. The configuration file format is
+described there:
+
+http://www.python.org/doc/lib/logging-config-fileformat.html
+
+There are also some logging configurations in the `examples/` directory.
+
+Logging configuration needs to be done very early, usually it will be done
+from your adaptor script (e.g. moin.wsgi)::
+
+    from MoinMoin import log
+    log.load_config('wiki/config/logging/logfile')
+
+You have to fix that path to use a logging configuration matching your
+needs.
+
