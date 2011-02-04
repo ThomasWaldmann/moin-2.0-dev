@@ -15,9 +15,6 @@ dist: clean-devwiki
 docs:
 	make -C docs html
 
-mo:
-	python setup.py compile_catalog --statistics
-
 interwiki:
 	wget -U MoinMoin/Makefile -O contrib/interwiki/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
 	chmod 664 contrib/interwiki/intermap.txt
@@ -45,6 +42,6 @@ clean-orig:
 clean-rej:
 	find . -name "*.rej" -exec rm -rf "{}" \; 
 
-.PHONY: all dist docs mo interwiki check-tabs pylint \
+.PHONY: all dist docs interwiki check-tabs pylint \
 	clean clean-devwiki clean-pyc clean-orig clean-rej
 

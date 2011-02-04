@@ -6,7 +6,7 @@ source env/bin/activate
 # required python packages from pypi.
 pip install -e .
 # compile the translations
-make mo
+python setup.py compile_catalog --statistics
 
 # get some 3rd party stuff and unpack them into env/, where the default
 # wikiconfig.py expects them. should be replaced by packaging.
