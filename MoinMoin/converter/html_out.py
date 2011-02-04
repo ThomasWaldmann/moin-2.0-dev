@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MoinMoin - HTML output converter
 
@@ -14,8 +15,44 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import _, N_
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink, xml
+from MoinMoin.util.tree import html, moin_page, xlink, xml, Name
 
+
+def remove_overlay_prefixes(url):
+    """
+    Returns url without the prefixes, like +get or +modify
+
+    TODO: Find a way to limit the removal to internal links only
+    This could remove +get or +modify for external links,
+        when they shouldn't really be removed.
+    """
+    return unicode(url).replace("+get/", "").replace("+modify/", "")
+
+
+def wrap_object_with_overlay(elem, href):
+    """
+    Given both an element and either an href or text, wraps an object with the appropriate div,
+    and attaches the overlay element.
+    """
+    txt = u"→"
+
+    href = remove_overlay_prefixes(href)
+
+    child = html.a(attrib={
+        html.href: href
+    }, children=(txt, ))
+
+    overlay = html.div(attrib={
+        html.class_: "object-overlay"
+    }, children=(child, ))
+
+    owrapper = html.div(attrib={
+        html.class_: "object-overlay-wrapper"
+    }, children=(overlay, ))
+
+    return html.div(attrib={
+        html.class_: "page-object"
+    }, children=(elem, owrapper))
 
 class ElementException(RuntimeError):
     pass
@@ -296,7 +333,23 @@ class Converter(object):
                                 break
 
         return ret
-
+    def eval_object_type(self, mimetype, href):
+        """
+        Returns the type of an object.
+        Return value is an str, one of the following:
+            image, video, audio, object
+        """
+        if Type('image/').issupertype(mimetype) and not Type('image/svg+xml').issupertype(mimetype):
+            # Firefox fails completely to show svg in img tags (displays: nothing).
+            # Firefox displays them with on object tag (but sometimes displays scrollbars without need).
+            return "img"
+        elif Type('video/').issupertype(mimetype):
+            return "video"
+        elif Type('audio/').issupertype(mimetype):
+            return "audio"
+        else:
+            # Nothing else worked...try using <object>
+            return "object"
     def visit_moinpage_object(self, elem):
         href = elem.get(xlink.href, None)
         if self.base_url:
@@ -305,33 +358,37 @@ class Converter(object):
             if isinstance(href, unicode): # XXX sometimes we get Iri, sometimes unicode - bug?
                 h = href
             else: # Iri
-                h = href.path[-1]
+                h = href.path[-1] # XXX BUG Iri doesn't have a path if we access the root page (eg. http://google.de doesn't have a path)
         attrib = {}
         mimetype = Type(_type=elem.get(moin_page.type_, 'application/x-nonexistent'))
-        if Type('image/').issupertype(mimetype) and not Type('image/svg+xml').issupertype(mimetype):
-            # Firefox fails completely to show svg in img tags (displays: nothing).
-            # Firefox display them with on object tag (but sometimes displays scrollbars without need).
-            if href is not None:
-                attrib[html.src] = href
+        # Get the object type
+        obj_type = self.eval_object_type(mimetype, href)
+
+        # The attribute source attribute for img,video, and audio is the same (src)
+        # <object>'s attribute is 'data'
+        attr = html.src if obj_type != "object" else html.data
+
+        # The return element
+        new_elem = None
+
+        if href is not None:
+            # Set the attribute of the returned element appropriately
+            attrib[attr] = href
+
+        if obj_type == "img":
+            # Images have alt text
             alt = ''.join(str(e) for e in elem) # XXX handle non-text e
             if alt:
                 attrib[html.alt] = alt
-            return self.new(html.img, attrib)
-        elif Type('video/').issupertype(mimetype):
-            if href is not None:
-                attrib[html.src] = href
-            attrib[html.controls] = 'controls'
-            return self.new_copy(html.video, elem, attrib)
-        elif Type('audio/').issupertype(mimetype):
-            if href is not None:
-                attrib[html.src] = href
-            attrib[html.controls] = 'controls'
-            return self.new_copy(html.audio, elem, attrib)
+            new_elem = self.new(html.img, attrib)
+
         else:
-            # we feel lucky and try object element:
-            if href is not None:
-                attrib[html.data] = href
-            return self.new_copy(html.object, elem, attrib)
+            if obj_type != "object":
+                # Non-objects have the "controls" attribute
+                attrib[html.controls] = 'controls'
+            new_elem = self.new_copy(getattr(html, obj_type), elem, attrib)
+
+        return wrap_object_with_overlay(new_elem, href=href)
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(html.p, elem)
@@ -473,6 +530,10 @@ class SpecialPage(object):
         self._footnotes.append(elem)
 
     def add_heading(self, elem, level, id=None):
+        elem.append(html.a(attrib={
+            html.href: "#%s" % id,
+            html.class_: "permalink",
+        }, children=(u"¶", )))
         self._headings.append((elem, level, id))
 
     def add_toc(self, elem, maxlevel):
@@ -529,38 +590,57 @@ class ConverterPage(Converter):
                     footnotes_div.append(elem)
 
             for elem, headings in special.tocs():
-                attrib_h = {html.class_: 'moin-table-of-contents-heading'}
-                elem_h = html.p(
-                        attrib=attrib_h, children=[_('Contents')])
+                headings = list(headings)
+                maxlevel = max(h[1] for h in headings)
+                headtogglelink = html.a(attrib={
+                                         html.class_: 'moin-showhide',
+                                         html.href_: '#',
+                                         html.onclick_:
+                                            "$('.moin-table-of-contents ol').toggle();return false;",
+                                     },
+                                     children=[('[+]'), ])
+                elem_h = html.div(attrib={html.class_: 'moin-table-of-contents-heading'},
+                                  children=[_('Contents'), headtogglelink])
                 elem.append(elem_h)
-
                 stack = [elem]
+
                 def stack_push(elem):
                     stack[-1].append(elem)
                     stack.append(elem)
+
                 def stack_top_append(elem):
                     stack[-1].append(elem)
 
                 last_level = 0
+                old_toggle = ""
                 for elem, level, id in headings:
                     need_item = last_level >= level
+                    # Ignore the last character in the text so permalink icon doesn't show in TOC
+                    text = ''.join(elem.itertext())[:-1]
                     while last_level > level:
                         stack.pop()
                         stack.pop()
                         last_level -= 1
                     while last_level < level:
+                        if maxlevel != 1:
+                            stack_top_append(old_toggle)
                         stack_push(html.ol())
-                        stack_push(html.li())
+                        stack_push(html.li({html.id_: 'li%s' % id}))
                         last_level += 1
                     if need_item:
                         stack.pop()
-                        stack_push(html.li())
-
-                    attrib = {html.href: '#' + id}
-                    text = ''.join(elem.itertext())
-                    elem_a = html.a(attrib, children=[text])
+                        stack_push(html.li({html.id_: 'li%s' % id}))
+                    togglelink = html.a(attrib={
+                                         html.href_: "#",
+                                         html.onclick_:
+                                            "$('#li%s ol').toggle();return false;" % id,
+                                         html.class_: 'showhide',
+                                     },
+                                     children=["[+]", ])
+                    elem_a = html.a(attrib={html.href: '#' + id},
+                                    children=[text, ])
                     stack_top_append(elem_a)
-
+                    old_toggle = togglelink
         return ret
 
     def visit(self, elem,

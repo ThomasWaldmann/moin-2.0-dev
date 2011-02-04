@@ -2,15 +2,19 @@
 """
     MoinMoin - interwiki support code
 
-    @copyright: 2010 MoinMoin:ThomasWaldmann
+    @copyright: 2010 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:MicheleOrru
     @license: GNU GPL, see COPYING for details.
 """
+from __future__ import with_statement
 
 from werkzeug import url_quote
 
 from flask import current_app as app
 from flask import request
 from flask import flaskg
+
+import os.path
 
 from MoinMoin import config
 
@@ -89,4 +93,54 @@ def getInterwikiHome(username):
     if homewiki == app.cfg.interwikiname:
         homewiki = u'Self'
     return homewiki, username
+
+
+class InterWikiMap(object):
+    """
+    Parse a valid interwiki map file/string, transforming into a simple python dict
+    object.
+    Provides a set of utilities for parsing and checking a interwiki maps.
+    """
+
+    SKIP = '#'
+
+    def __init__(self, s):
+        """
+        Check for 's' to be a valid interwiki map string,
+        then  parses it and stores to a dict.
+        """
+        self.iwmap = dict()
+
+        for line in s.splitlines():
+            if self.SKIP in line:
+                line = line.split(self.SKIP, 1)[0]
+            # remove trailing spaces (if any)
+            line = line.rstrip()
+            if not line:
+                continue
+
+            try:
+                name, url = line.split(None, 1)
+                self.iwmap[name] = url
+            except ValueError:
+                raise ValueError('malformed interwiki map string: {0}'.format(
+                                 line))
+
+    @staticmethod
+    def from_string(ustring):
+        """
+        Load and parse a valid interwiki map "unicode" object.
+        """
+        return InterWikiMap(ustring)
+
+    @staticmethod
+    def from_file(filename):
+        """
+        Load and parse a valid interwiki map file.
+        """
+        filename = os.path.expanduser(filename)
+        with open(filename) as f:
+            parser = InterWikiMap(f.read())
+
+        return parser
 

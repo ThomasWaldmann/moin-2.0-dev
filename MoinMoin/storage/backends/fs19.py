@@ -33,15 +33,15 @@ logging = log.getLogger(__name__)
 from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, UUID, NAME, NAME_OLD, REVERTED_TO, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           ACTION, ADDRESS, HOSTNAME, USERID, EXTRA, COMMENT, \
                            IS_SYSITEM, SYSITEM_VERSION, \
                            TAGS
 from MoinMoin.storage.backends._fsutils import quoteWikinameFS, unquoteWikiname
 from MoinMoin.storage.backends._flatutils import split_body
 
-HASH = 'sha1'
-EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
+from MoinMoin.storage import HASH_ALGORITHM
+
+MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -269,7 +269,7 @@ class FSPageBackend(Backend):
         return rev._fs_data_file.seek(position, mode)
 
     def _get_revision_timestamp(self, rev):
-        return rev._fs_meta[EDIT_LOG_MTIME]
+        return rev._fs_meta[MTIME]
 
     def _get_revision_size(self, rev):
         return rev._fs_meta['__size']
@@ -337,7 +337,7 @@ class FsPageRevision(StoredRevision):
                 raise NoSuchRevisionError('deleted_mode wants killing/ignoring')
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             # we prepare some values for the case we don't find a better value in edit-log:
-            meta = {EDIT_LOG_MTIME: -1, # fake, will get 0 in the end
+            meta = {MTIME: -1, # fake, will get 0 in the end
                     NAME: item.name, # will get overwritten with name from edit-log
                                      # if we have an entry there
                    }
@@ -346,19 +346,19 @@ class FsPageRevision(StoredRevision):
                 # if this page revision is deleted, we have no on-page metadata.
                 # but some metadata is required, thus we have to copy it from the
                 # (non-deleted) revision revno-1:
-                for key in [ACL, NAME, MIMETYPE, EDIT_LOG_MTIME, ]:
+                for key in [ACL, NAME, MIMETYPE, MTIME, ]:
                     if key in previous_meta:
                         meta[key] = previous_meta[key]
             except NoSuchRevisionError:
                 pass # should not happen
-            meta[EDIT_LOG_MTIME] += 1 # it is now either 0 or prev rev mtime + 1
+            meta[MTIME] += 1 # it is now either 0 or prev rev mtime + 1
             data = u''
             try:
                 editlog_data = editlog.find_rev(revno)
             except KeyError:
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
-                        EDIT_LOG_ACTION: u'SAVE/DELETE',
+                        ACTION: u'SAVE/DELETE',
                     }
                 else:
                     raise NoSuchRevisionError('Item %r has no revision %d (not even a deleted one)!' %
@@ -370,8 +370,8 @@ class FsPageRevision(StoredRevision):
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
                         NAME: item.name,
-                        EDIT_LOG_MTIME: os.path.getmtime(revpath),
-                        EDIT_LOG_ACTION: u'SAVE',
+                        MTIME: os.path.getmtime(revpath),
+                        ACTION: u'SAVE',
                     }
             meta, data = split_body(content)
         meta.update(editlog_data)
@@ -481,8 +481,8 @@ class FsAttachmentRevision(StoredRevision):
             editlog_data = editlog.find_attach(item._fs_attachname)
         except KeyError:
             editlog_data = { # make something up
-                EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: u'SAVE',
+                MTIME: os.path.getmtime(attpath),
+                ACTION: u'SAVE',
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
@@ -514,30 +514,31 @@ class EditLog(LogFile):
         """ Parse edit-log line into fields """
         fields = line.strip().split(u'\t')
         fields = (fields + [u''] * self._NUM_FIELDS)[:self._NUM_FIELDS]
-        keys = (EDIT_LOG_MTIME, '__rev', EDIT_LOG_ACTION, NAME, EDIT_LOG_ADDR,
-                EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT)
+        keys = (MTIME, '__rev', ACTION, NAME, ADDRESS, HOSTNAME, USERID, EXTRA, COMMENT)
         result = dict(zip(keys, fields))
         # do some conversions/cleanups/fallbacks:
-        result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
+        result[MTIME] = int(result[MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
         result[NAME] = unquoteWikiname(result[NAME])
-        action = result[EDIT_LOG_ACTION]
-        extra = result[EDIT_LOG_EXTRA]
+        action = result[ACTION]
+        extra = result[EXTRA]
         if extra:
             if action.startswith('ATT'):
                 result[NAME] += u'/' + extra # append filename to pagename
-                # keep EDIT_LOG_EXTRA for find_attach
+                # keep EXTRA for find_attach
             elif action == 'SAVE/RENAME':
                 if extra:
                     result[NAME_OLD] = extra
-                del result[EDIT_LOG_EXTRA]
+                del result[EXTRA]
+                result[ACTION] = 'RENAME'
             elif action == 'SAVE/REVERT':
                 if extra:
                     result[REVERTED_TO] = int(extra)
-                del result[EDIT_LOG_EXTRA]
-        userid = result[EDIT_LOG_USERID]
+                del result[EXTRA]
+                result[ACTION] = 'REVERT'
+        userid = result[USERID]
         if userid:
-            result[EDIT_LOG_USERID] = self.idx.user_uuid(old_id=userid, refcount=True)
+            result[USERID] = self.idx.user_uuid(old_id=userid, refcount=True)
         return result
 
     def find_rev(self, revno):
@@ -549,23 +550,23 @@ class EditLog(LogFile):
             raise KeyError
         del meta['__rev']
         meta = dict([(k, v) for k, v in meta.items() if v]) # remove keys with empty values
-        if meta.get(EDIT_LOG_ACTION) == u'SAVENEW':
+        if meta.get(ACTION) == u'SAVENEW':
             # replace SAVENEW with just SAVE
-            meta[EDIT_LOG_ACTION] = u'SAVE'
+            meta[ACTION] = u'SAVE'
         return meta
 
     def find_attach(self, attachname):
         """ Find metadata for some attachment name in the edit-log. """
         for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
-                meta[EDIT_LOG_ACTION] == 'ATTNEW' and
-                meta[EDIT_LOG_EXTRA] == attachname):
+                meta[ACTION] == 'ATTNEW' and
+                meta[EXTRA] == attachname):
                 break
         else:
             raise KeyError
         del meta['__rev']
-        del meta[EDIT_LOG_EXTRA] #  we have full name in NAME
-        meta[EDIT_LOG_ACTION] = u'SAVE'
+        del meta[EXTRA] #  we have full name in NAME
+        meta[ACTION] = u'SAVE'
         meta = dict([(k, v) for k, v in meta.items() if v]) # remove keys with empty values
         return meta
 
@@ -786,8 +787,7 @@ def _decode_dict(line):
     return dict(items)
 
 def hash_hexdigest(content, bufsize=4096):
-    hash_name = HASH
-    hash = hashlib.new(hash_name)
+    hash = hashlib.new(HASH_ALGORITHM)
     if hasattr(content, "read"):
         while True:
             buf = content.read(bufsize)
@@ -798,5 +798,5 @@ def hash_hexdigest(content, bufsize=4096):
         hash.update(content)
     else:
         raise ValueError("unsupported content object: %r" % content)
-    return hash_name, unicode(hash.hexdigest())
+    return HASH_ALGORITHM, unicode(hash.hexdigest())
 

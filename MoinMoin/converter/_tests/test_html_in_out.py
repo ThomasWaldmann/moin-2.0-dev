@@ -123,15 +123,15 @@ class TestConverter(Base):
     def test_span_html_element(self):
         data = [
             ('<html><p><abbr>Text</abbr></p></html>',
-             '/div/p[abbr="Text"]'),
+             '/div/p/span[@class="html-abbr"][text()="Text"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             '/div/p/span[@class="element-acronym"][text()="Text"]'),
+             '/div/p/span[@class="html-acronym"][text()="Text"]'),
             ('<html><p><address>Text</address></p></html>',
-             '/div/p[address="Text"]'),
+             '/div/p/span[@class="html-address"][text()="Text"]'),
             ('<html><p><dfn>Text</dfn></p></html>',
-             '/div/p[dfn="Text"]'),
+             '/div/p/span[@class="html-dfn"][text()="Text"]'),
             ('<html><p><kbd>Text</kbd></p></html>',
-             '/div/p[kbd="Text"]'),
+             '/div/p/span[@class="html-kbd"][text()="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -192,7 +192,7 @@ class TestConverter(Base):
             #('<html><div><img src="uri:test" /></div></html>',
             #  '/page/body/div/object/@xlink:href="uri:test"'),
             ('<html><div><object data="href"></object></div></html>',
-              '/div/div/object[@data="href"]'),
+              '/div/div/div/object[@data="href"]'),
         ]
         for i in data:
             yield (self.do, ) + i

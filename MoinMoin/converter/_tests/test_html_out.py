@@ -151,9 +151,9 @@ class TestConverter(Base):
             ('<page><body><p><span text-decoration="line-through">stroke</span></p></body></page>',
                 '/div/p[del="stroke"]'),
             ('<page><body><p><span font-size="85%">small</span></p></body></page>',
-                '/div/p/span[@class="small"][text()="small"]'),
+                '/div/p/span[@class="moin-small"][text()="small"]'),
             ('<page><body><p><span font-size="120%">big</span></p></body></page>',
-                '/div/p/span[@class="big"][text()="big"]'),
+                '/div/p/span[@class="moin-big"][text()="big"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -167,13 +167,13 @@ class TestConverter(Base):
             ('<page><body><list><list-item><list-item-label>Label</list-item-label><list-item-body>Item</list-item-body></list-item></list></body></page>',
                 '/div/dl[dt="Label"][dd="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="upper-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@class="upperalpha_list"][li="Item"]'),
+                '/div/ol[@class="moin-upperalpha-list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="lower-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@class="loweralpha_list"][li="Item"]'),
+                '/div/ol[@class="moin-loweralpha-list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="upper-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@class="upperroman_list"][li="Item"]'),
+                '/div/ol[@class="moin-upperroman-list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="lower-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@class="lowerroman_list"][li="Item"]'),
+                '/div/ol[@class="moin-lowerroman-list"][li="Item"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -246,6 +246,7 @@ class TestConverterPage(Base):
         for i in data:
             yield (self.do, ) + i
 
+    @py.test.mark.xfail
     def test_unknown(self):
         page = ET.XML("<page:unknown %s/>" % self.input_namespaces)
         py.test.raises(ElementException, self.conv.__call__, page)

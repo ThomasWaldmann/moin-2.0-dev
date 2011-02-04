@@ -1,10 +1,7 @@
 Python requirements
 ===================
 
-Please use Python >= 2.6, we recommend 2.6.x.
-
-Python 2.4 and 2.5 is not supported by moin 2.0 (use moin 1.9.x if you can't
-upgrade Python).
+MoinMoin requires Python >= 2.6, we recommend using 2.6.x.
 
 Python 3.x won't work for MoinMoin for now.
 
@@ -17,10 +14,9 @@ Python build options:
 Servers
 =======
 You can use anything that speaks WSGI to moin:
- * the "standalone" wikiserver.py we bundle with moin (recommended for
-   desktop wikis, testing, debugging, development, adhoc-wikis)
- * apache with mod_wsgi (recommended for bigger/busier wikis), do not use
-   mod_wsgi v2.3 (it has known problems), about any other version is fine.
+ * the builtin "moin" server (recommended for desktop wikis, testing,
+   debugging, development, adhoc-wikis)
+ * apache with mod_wsgi (recommended for bigger/busier wikis)
  * other WSGI-compatible servers
  * For cgi, fastcgi, scgi, ajp, ... you can use the "flup" middleware:
    http://trac.saddi.com/flup
@@ -31,188 +27,37 @@ You can use anything that speaks WSGI to moin:
 Requirements needed for some moin features
 ==========================================
 
-GUI editor: python-xml (pyxml) - more precisely, this stuff is needed by the
-            html to wiki markup converter invoked when the gui editor posts
-            html on save. Status for python 2.5.x unknown.
-
-Xapian indexed search: xapian libs + python bindings >= 1.0.6
-
-Indexing filters for xapian search:
- * antiword (for indexing of MS Word documents)
- * xls2csv (for indexing of MS Excel documents, from catdoc package)
- * catppt (for indexing of MS Powerpoint documents, from catdoc package)
- * catdoc (for indexing of RTF documents, from catdoc package)
- * pdftotext (for indexing of PDFs, from xpdf-utils or poppler-utils)
-
-ldap_login auth: python-ldap >=2.0.0pre06
-
-mysql_group auth: MySQLdb python module
-
-openidrp auth: openid python module
+For dependency information of python libs, please see setup.py.
+If you use easy_install or pip, this is usually automatically dealt with.
 
 
-Bundled 3rd party code
-======================
+Used 3rd party code
+===================
 
-Below are some notes about the software we bundle and ship with MoinMoin.
-If you are a Linux distributor and you want to rip out this stuff and
-replace it with packages, this is for you!
-
-We list the shipped version and also the minimum required version.
-The shipped version will work best with moin as usually has some more bug
-fixes than the minimum required version.
-We do not test with the minimum required version, but we try to keep this
-file updated and correct to our best knowledge.
-
-In case you find bugs in this requirements specification, please let us know!
-
-Thanks to all 3rd party software authors!
-
-
-A) Stuff below MoinMoin/support/:
-
-pygments (highlighting for all sorts of source code and other text files)
-=========================================================================
-shipped: 1.3.1
-minimum: 1.1.1 will work, maybe even older versions
-
-
-parsedatetime (parse date/time strings)
-=======================================
-shipped: 0.8.7
-minimum: 0.8.7(?)
-
-
-flask (micro framework)
-=======================
-shipped: 0.6
-minimum: 0.6
-Note:
-send_file needs moin custom patches, see changesets 25de9bb78a9f
-and 58eb8f978188
-
-
-flask-babel
-===========
-shipped: 0.7
-minimum: 0.7(?)
-Note:
-flask-babel requires speaklater for lazy_gettext
-
-
-flask-script
-============
-shipped: 0.3
-minimum: 0.3(?)
-Note:
-flask-script requires argparse, which we added also.
-
-
-flask-themes
-============
-shipped: 0.1
-minimum: 0.1(?)
-
-
-werkzeug (WSGI toolkit)
-=======================
-shipped: 0.7pre
-minimum: 0.7pre (minimum rev http://dev.pocoo.org/hg/werkzeug-main/rev/657223ad99d0 )
-
-
-jinja2
-======
-shipped: 2.5.2
-minimum: 2.5
-
-
-xappy (High-Level Python library for Xapian)
-============================================
-shipped: 0.5
-minimum: 0.5
-
-
-sqlalchemy
-==========
-shipped: 0.5.8
-minimum: 0.5.6
-
-
-babel
-=====
-shipped: 0.9.5 + patch
-minimum: 0.9.5(?)
-Note:
-0.9.5 needs patch from moin/2.0-dev changeset de6a753a8363 to remove its usage of pkg_resources (setuptools)
-
-
-speaklater
-==========
-shipped: 1.2
-minimum: 1.1(?)
-
-
-pytz
-====
-shipped: 2010h
-minimum: 2010h(?)
-
-
-flatland
-========
-shipped: repo checkout at revision 269:6c5d262d7eff
-minimum: repo checkout at revision 269:6c5d262d7eff(?)
-
-
-blinker
-=======
-shipped: 1.1
-minimum: 1.1(?)
-
-
-Replacements for Python stdlib modules
-======================================
-
-argparse
-========
-Not a replacement, but we took it from py 2.7 (which includes argparse) and
-added it for compatibility with py 2.6 (which doesn't include argparse).
-
-
-B) stuff below MoinMoin/web/static/htdocs/
-
-ckeditor
-========
-shipped: 3.3.1
-required: 3.0(?)
-
+This code is used by moin, but NOT included and NOT installed automatically.
+If you are a Linux distributor you may want to package this software
+separately and adapt wikiconfig.py (or the defaults in
+MoinMoin/config/default.py).
 
 TWikiDrawPlugin
-===============
-shipped: Using a modified TWikiDrawPlugin see README in contrib/TWikiDrawPlugin 
-required: see shipped
-
-
-anywikidraw
-===========
-shipped: 0.14
-required: 0.14
-
-
-JQuery
-======
-shipped: 1.4.2
-required: 1.4(?)
-
-
-svgweb
-======
-shipped: 2010-04-09 dracolisk release
-required: ?
-
+---------------
+Modified version, available at
+http://static.moinmo.in/files/packages/TWikiDrawPlugin-moin.tar.gz
 
 svg-edit
-========
-shipped: Version 2.5 slightly modified
-required see shipped
+--------
+2.5 slightly modified, available at
+http://static.moinmo.in/files/packages/svg-edit.tar.gz
+
+ckeditor
+--------
+3.3.1 works, use dist package or download at homepage.
+
+anywikidraw
+-----------
+0.14 works, use dist package or download at homepage.
+
+JQuery
+------
+1.4.2 works, use dist package or download at homepage.
 

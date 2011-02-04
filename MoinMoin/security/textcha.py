@@ -12,7 +12,6 @@
 
     TODO:
     * roundtrip the question in some other way:
-     * use safe encoding / encryption for the q
      * make sure a q/a pair in the POST is for the q in the GET before
     * make some nice CSS
     * make similar changes to GUI editor
@@ -33,18 +32,34 @@ from flask import flaskg
 
 from werkzeug import escape
 
+import hashlib
+import hmac
+
+from time import time
+
+from flatland import Form, String
+from flatland.validation import Validator
+
+from MoinMoin import N_
+
+SHA1_LEN = 40 # length of hexdigest
+TIMESTAMP_LEN = 10 # length of timestamp
 
 class TextCha(object):
     """ Text CAPTCHA support """
 
-    def __init__(self, question=None):
+    def __init__(self, form):
         """ Initialize the TextCha.
 
-            @param question: see _init_qa()
+            @param form: flatland form to use; must subclass TextChaizedForm
         """
         self.user_info = flaskg.user.valid and flaskg.user.name or request.remote_addr
         self.textchas = self._get_textchas()
-        self._init_qa(question)
+        if self.textchas:
+            self.secret = app.cfg.secrets["security/textcha"]
+            self.expiry_time = app.cfg.textchas_expiry_time
+        self.init_qa(form['textcha_question'].value)
+        self.form = form
 
     def _get_textchas(self):
         """ get textchas from the wiki config for the user's language (or default_language or en) """
@@ -53,7 +68,9 @@ class TextCha(object):
         user = flaskg.user
         disabled_group = cfg.textchas_disabled_group
         textchas = cfg.textchas
-        use_textchas = disabled_group and user.name and user.name in groups.get(disabled_group, [])
+
+        use_textchas = not (disabled_group and user.name and user.name in groups.get(disabled_group, []))
+
         if textchas and use_textchas:
             locales = [user.locale, cfg.locale_default, 'en', ]
             for locale in locales:
@@ -62,7 +79,10 @@ class TextCha(object):
                     logging.debug(u"TextCha: using locale = '%s'" % locale)
                     return textchas[locale]
 
-    def _init_qa(self, question=None):
+    def _compute_signature(self, question, timestamp):
+        return hmac.new(self.secret, "%s%d" % (question, timestamp), digestmod=hashlib.sha1).hexdigest()
+
+    def init_qa(self, question=None):
         """ Initialize the question / answer.
 
          @param question: If given, the given question will be used.
@@ -71,20 +91,42 @@ class TextCha(object):
         if self.is_enabled():
             if question is None:
                 self.question = random.choice(self.textchas.keys())
+                self.timestamp = time()
+                self.signature = self._compute_signature(self.question, self.timestamp)
             else:
-                self.question = question
+                # the signature is the last SHA1_LEN bytes of the question
+                self.signature = question[-SHA1_LEN:]
+
+                # operate on the remainder
+                question = question[:-SHA1_LEN]
+
+                try:
+                    # the timestamp is the next TIMESTAMP_LEN bytes
+                    self.timestamp = int(question[-TIMESTAMP_LEN:])
+                except ValueError:
+                    self.question = None
+                else:
+                    if self.timestamp + self.expiry_time < time():
+                        self.question = None
+                    else:
+                        # there is a space between the timestamp and the question, so take away 1
+                        self.question = question[:-TIMESTAMP_LEN - 1]
+
+                        if self._compute_signature(self.question, self.timestamp) != self.signature:
+                            self.question = None
+
             try:
                 self.answer_regex = self.textchas[self.question]
                 self.answer_re = re.compile(self.answer_regex, re.U|re.I)
             except KeyError:
                 # this question does not exist, thus there is no answer
-                self.answer_regex = ur"[Never match for cheaters]"
+                self.answer_regex = ur"[Invalid question]"
                 self.answer_re = None
-                logging.warning(u"TextCha: Non-existing question '%s'. User '%s' trying to cheat?" % (
+                logging.warning(u"TextCha: Non-existing question '%s' for %s. May be invalid or user may be trying to cheat." % (
                                 self.question, self.user_info))
             except re.error:
                 logging.error(u"TextCha: Invalid regex in answer for question '%s'" % self.question)
-                self._init_qa()
+                self.init_qa()
 
     def is_enabled(self):
         """ check if textchas are enabled.
@@ -102,65 +144,40 @@ class TextCha(object):
         """
         return not not self.textchas # we don't want to return the dict
 
-    def check_answer(self, given_answer):
-        """ check if the given answer to the question is correct """
-        if self.is_enabled():
-            if self.answer_re is not None:
-                success = self.answer_re.match(given_answer.strip()) is not None
-            else:
-                # someone trying to cheat!?
-                success = False
-            success_status = success and u"success" or u"failure"
-            logging.info(u"TextCha: %s (u='%s', a='%s', re='%s', q='%s')" % (
-                             success_status,
-                             self.user_info,
-                             given_answer,
-                             self.answer_regex,
-                             self.question,
-                             ))
-            return success
-        else:
-            return True
+    def amend_form(self):
+        """ Amend the form by doing the following:
 
-    def _make_form_values(self, question, given_answer):
-        question_form = escape(question, True)
-        given_answer_form = escape(given_answer, True)
-        return question_form, given_answer_form
-
-    def _extract_form_values(self, form=None):
-        if form is None:
-            form = request.form
-        question = form.get('textcha-question')
-        given_answer = form.get('textcha-answer', u'')
-        return question, given_answer
-
-    def render(self, form=None):
-        """ Checks if textchas are enabled and returns HTML for one,
-            or an empty string if they are not enabled.
-
-            @return: unicode result html
+            * set the question if textcha is enabled, or
+            * make the fields optional if it isn't.
         """
         if self.is_enabled():
-            question, given_answer = self._extract_form_values(form)
-            if question is None:
-                question = self.question
-            question_form, given_answer_form = self._make_form_values(question, given_answer)
-            result = u"""
-<div id="textcha">
-<span id="textcha-question">%s</span>
-<input type="hidden" name="textcha-question" value="%s">
-<input id="textcha-answer" type="text" name="textcha-answer" value="%s" size="20" maxlength="80">
-</div>
-""" % (escape(question), question_form, given_answer_form)
+            if self.question:
+                self.form['textcha_question'].set("%s %d%s" % (self.question, self.timestamp, self.signature))
         else:
-            result = u''
-        return result
+            self.form['textcha_question'].optional = True
+            self.form['textcha'].optional = True
 
-    def check_answer_from_form(self, form=None):
-        if self.is_enabled():
-            question, given_answer = self._extract_form_values(form)
-            self._init_qa(question)
-            return self.check_answer(given_answer)
-        else:
-            return True
+class TextChaValid(Validator):
+    """Validator for TextChas
+    """
+    textcha_incorrect_msg = N_('The entered TextCha was incorrect.')
+    textcha_invalid_msg = N_('The TextCha question is invalid or has expired. Please try again.')
 
+    def validate(self, element, state):
+        textcha = TextCha(element.parent)
+
+        if textcha.is_enabled():
+            if textcha.answer_re is None:
+                textcha.init_qa()
+                textcha.amend_form()
+                element.set("")
+                return self.note_error(element, state, 'textcha_invalid_msg')
+            if textcha.answer_re.match(element.value.strip()) is None:
+                return self.note_error(element, state, 'textcha_incorrect_msg')
+
+        return True
+
+class TextChaizedForm(Form):
+    """a form providing TextCha support"""
+    textcha_question = String
+    textcha = String.using(label=N_('TextCha')).validated_by(TextChaValid())

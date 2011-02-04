@@ -99,7 +99,6 @@ def diff(old, new):
 
         leftpane = '<br>'.join([indent(x) for x in leftresult.splitlines()])
         rightpane = '<br>'.join([indent(x) for x in rightresult.splitlines()])
-
         result.append((llineno, leftpane, rlineno, rightpane))
 
         lastmatch = (match[0] + match[2], match[1] + match[2])

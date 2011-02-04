@@ -2,11 +2,18 @@
 """
     MoinMoin - MoinMoin.util.interwiki Tests
 
-    @copyright: 2010 MoinMoin:ThomasWaldmann
+    @copyright: 2010 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:MicheleOrru
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.util.interwiki import resolve_interwiki, split_interwiki, join_wiki
+from __future__ import with_statement
+import py
+import tempfile
+import os.path
+import shutil
+
+from MoinMoin.util.interwiki import resolve_interwiki, split_interwiki, join_wiki, InterWikiMap
 from MoinMoin._tests import wikiconfig
 
 
@@ -38,6 +45,82 @@ class TestInterWiki(object):
         assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
         result = resolve_interwiki('Self', 'SomePage')
         assert result == ('Self', u'/', 'SomePage', False)
+
+
+class TestInterWikiMapBackend(object):
+    """
+    tests for interwiki map
+    """
+
+    def test_load_file(self):
+        """
+        Test that InterWikiMap.from_file correctly loads file objects.
+        """
+        tmpdir = tempfile.mkdtemp()
+
+        # test an invalid file
+        with py.test.raises(IOError):
+            InterWikiMap.from_file(os.path.join(tmpdir, 'void'))
+
+        # test a consistent valid file
+        testfile = os.path.join(tmpdir, 'foo.iwm')
+        with open(testfile, 'w') as f:
+            f.write('foo bar\n'
+                    'baz spam\n'
+                    'ham end end # this is really the end.')
+        testiwm = InterWikiMap.from_file(testfile)
+        assert testiwm.iwmap == dict(foo='bar', baz='spam', ham='end end')
+
+        # test a malformed file
+        testfile = os.path.join(tmpdir, 'bar.iwm')
+        with open(testfile, 'w') as f:
+            f.write('# This is a malformed interwiki file\n'
+                    'fails # ever')
+        with py.test.raises(ValueError):
+            InterWikiMap.from_file(testfile)
+
+        # finally destroy everything
+        shutil.rmtree(tmpdir)
+
+    def test_load_string(self):
+        """
+        Test that InterWikiMap.from_unicode correctly loads unicode objects.
+        """
+        # test for void wiki maps
+        assert InterWikiMap.from_string(u'').iwmap == dict()
+        assert InterWikiMap.from_string(u'#spam\r\n').iwmap == dict()
+        # test for comments
+        s = ('# foo bar\n'
+             '#spamham\r\n'
+             '#       space     space\n'
+             'foo bar\r\n'
+             'ham spam # this is a valid description')
+        assert InterWikiMap.from_string(s).iwmap == dict(foo='bar',
+                                                                  ham='spam')
+        # test for valid strings
+        s = ('link1 http://link1.com/\r\n'
+             'link2 http://link2.in/\r\n')
+        assert (InterWikiMap.from_string(s).iwmap ==
+                dict(link1='http://link1.com/',
+                     link2='http://link2.in/'))
+        # test invalid strings
+        with py.test.raises(ValueError):
+            InterWikiMap.from_string(u'foobarbaz')
+
+
+    def test_real_interwiki_map(self):
+        """
+        Test a 'real' interwiki file.
+        """
+        abspath = __file__.rsplit('MoinMoin')[0]
+        testfile = os.path.join(abspath, 'contrib', 'interwiki', 'intermap.txt')
+        testiwm = InterWikiMap.from_file(testfile)
+
+        assert 'MoinSrc' in testiwm.iwmap
+        assert testiwm.iwmap['MoinMaster'] == 'http://master.moinmo.in/'
+        assert 'PythonInfo' in testiwm.iwmap
+        assert 'this' not in testiwm.iwmap
+        assert testiwm.iwmap['MoinCVS'] == 'http://hg.moinmo.in/moin/2.0-dev?f=-1;file='
 
 
 coverage_modules = ['MoinMoin.util.interwiki']

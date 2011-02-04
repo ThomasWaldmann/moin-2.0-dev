@@ -18,15 +18,14 @@ from flask import current_app as app
 
 from werkzeug.contrib.atom import AtomFeed
 
+from MoinMoin import _, N_
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.apps.feed import feed
 
 from MoinMoin import wikiutil
-from MoinMoin.items import NAME, ACL, MIMETYPE, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_COMMENT
+from MoinMoin.items import NAME, ACL, MIMETYPE, ACTION, ADDRESS, HOSTNAME, USERID, COMMENT
 from MoinMoin.themes import get_editor_info
 from MoinMoin.items import Item
 
@@ -56,17 +55,16 @@ def atom(item_name):
                     previous_rev = item.get_revision(previous_revno)
                     content = hl_item._render_data_diff_text(previous_rev, this_rev)
                     content = '<div><pre>%s</pre></div>' % content
-                    content_type = 'xhtml'
                 else:
                     # full html rendering for new items
                     content = hl_item._render_data()
-                    content_type = 'xhtml'
+                content_type = 'xhtml'
             except Exception, e:
                 logging.exception("content rendering crashed")
-                content = u'MoinMoin feels unhappy.'
+                content = _(u'MoinMoin feels unhappy.')
                 content_type = 'text'
             feed.add(title=name, title_type='text',
-                     summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
+                     summary=rev.get(COMMENT, ''), summary_type='text',
                      content=content, content_type=content_type,
                      author=get_editor_info(rev, external=True),
                      url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),

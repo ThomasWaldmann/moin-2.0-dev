@@ -16,7 +16,7 @@ from emeraldtree import ElementTree as ET
 
 from re import findall
 
-from MoinMoin.support.werkzeug.utils import unescape
+from werkzeug.utils import unescape
 
 
 class Moinwiki(object):

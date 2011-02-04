@@ -20,3 +20,13 @@
     # rather low security requirements, feel free to DISABLE the checker by:
     #password_checker = None # None means "don't do any password strength checks"
 
+    # To add the OpenId authentication one must add it to the auth list.
+    #from MoinMoin.auth.openidrp import OpenIDAuth
+    #auth = [OpenIDAuth()]
+
+    # By default OpenID authentication accepts all openid providers. If you
+    # like you can set what openid services to allow by adding their urls to
+    # auth_oid_trusted, if left empty moin will allow all providers.
+    # eg. To allow only google profile openids:
+    #auth_oid_trusted = ['https://www.google.com/accounts/o8/ud?source=profiles']
+

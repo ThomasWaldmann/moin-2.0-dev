@@ -41,3 +41,17 @@ Helpers for using flatland with jinja2 to create html forms.
   </dd>
 {% endmacro %}
 
+{% macro render_textcha(gen, form) %}
+    {% if form.textcha_question.value %}
+    <dt>
+        {{ gen.label(form.textcha, class="required") }}
+    </dt>
+    <dd>
+        {# The value of -51 below is the sum of signature length, timestamp and a space (see security/textcha.py) #}
+        {{ form.textcha_question.value[:-51] }}
+        {{ gen.input(form.textcha_question, class=f_class, type='hidden') }}<br />
+        {{ gen.input(form.textcha, class="required") }}
+        {{ render_errors(form.textcha) }}
+    </dd>
+    {% endif %}
+{% endmacro %}

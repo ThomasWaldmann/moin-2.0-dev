@@ -1,6 +1,6 @@
 {% extends theme("layout.html") %}
 {% block content %}
-<h1>Modifying {{ item_name }}</h1>
+<h1>{{ _("Modifying %(item_name)s", item_name=item_name) }}</h1>
 <div class="moin-form">
 <form action="" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="action" value="modify" />
@@ -9,14 +9,14 @@
 {% block data_editor %}{% endblock %}
     <dl>
         <dt>
-            <label for="data_file">Upload file:</label>
+            <label for="data_file">{{ _("Upload file:") }}</label>
          </dt>
          <dd>
             <input type="file" id="data_file" name="data_file" />
         </dd>
     </dl>
 <pre>{{ help }}</pre>
-<textarea name="meta_text" lang="en" dir="ltr" rows="{{ rows_meta }}" cols="{{ cols }}">{{ meta_text|e }}</textarea>
+<textarea name="meta_text" lang="en" dir="ltr" rows="{{ rows_meta }}" cols="{{ cols }}">{{ meta_text }}</textarea>
 </form>
 </div>
 {% endblock %}

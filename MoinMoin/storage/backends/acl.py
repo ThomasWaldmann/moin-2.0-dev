@@ -469,7 +469,7 @@ class AclWrapperRevision(object, DictMixin):
               changing ACLs) is only one case of a more generic problem:
               Access (read,write,change) to some metadata must be checked.
               ACL - changing needs ADMIN priviledge
-              EDIT_LOG_* - writing them should be from system only
+              userid, ip, hostname, etc. - writing them should be from system only
               content hash - writing it should be from system only
               For the metadata editing offered to the wiki user on the UI,
               we should only offer metadata for which the wiki user has change

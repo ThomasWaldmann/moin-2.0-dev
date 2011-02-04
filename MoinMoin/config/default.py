@@ -80,9 +80,9 @@ class ConfigFunctionality(object):
         self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
 
         if not isinstance(self.superusers, list):
-            msg = """The superusers setting in your wiki configuration is not a list
-                     (e.g. ['Sample User', 'AnotherUser']).
-                     Please change it in your wiki configuration and try again."""
+            msg = """The superusers setting in your wiki configuration is not
+                    a list (e.g. ['Sample User', 'AnotherUser']).  Please change
+                    it in your wiki configuration and try again."""
             raise error.ConfigurationError(msg)
 
         self._loadPluginModule()
@@ -144,6 +144,8 @@ class ConfigFunctionality(object):
             raise error.ConfigurationError("No secret configured! You need to set secrets = 'somelongsecretstring' in your wiki config.")
 
         secret_key_names = ['wikiutil/tickets', ]
+        if self.textchas:
+            secret_key_names.append('security/textcha')
 
         secret_min_length = 10
         if isinstance(self.secrets, str):
@@ -216,10 +218,7 @@ file. It should match the actual charset of the configuration file.
             'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
-            'superusers', 'textchas_disabled_group', 'supplementation_item_names',
-            'logo', 'credits', 'html_pagetitle',
-            'html_before_header', 'html_after_header', 'html_before_footer', 'html_after_footer',
-            'html_head',
+            'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
         )
 
         for name in decode_names:
@@ -336,7 +335,7 @@ def _default_password_checker(cfg, username, password):
     password_lower = password.lower()
     if username in password or password in username or \
        username_lower in password_lower or password_lower in username_lower:
-        return _("Password is too easy (password contains name or name contains password).")
+        return _("Password is too easy to guess (password contains name or name contains password).")
 
     keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
                  ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
@@ -345,7 +344,7 @@ def _default_password_checker(cfg, username, password):
         rev_kbd = kbd[::-1]
         if password in kbd or password in rev_kbd or \
            password_lower in kbd or password_lower in rev_kbd:
-            return _("Password is too easy (keyboard sequence).")
+            return _("Password is too easy to guess (keyboard sequence).")
     return None
 
 
@@ -378,9 +377,9 @@ options_no_group_name = {
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'given', ], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
+    ('auth_oid_trusted', DefaultExpression('[]'),
+     "List of trusted openid providers, empty if all are trusted."),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes."""),
-    # use sha512 as soon as we require python2.5 because sha1 is weak:
-    ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('SecurityPolicy',
      None,
      "Class object hook for implementing security restrictions or relaxations"),
@@ -401,6 +400,8 @@ options_no_group_name = {
      "Spam protection setup using site-specific questions/answers, see HelpOnSpam."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked !TextCha questions. [Unicode]"),
+    ('textchas_expiry_time', 600,
+     "Time [s] for a !TextCha to expire."),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
@@ -409,7 +410,6 @@ options_no_group_name = {
     ('sitename', u'Untitled Wiki',
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
-    ('logo', None, "Text (html-escaped) or html fragment (html5, xml variant) shown as logo. [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`) [Unicode]"),
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode]'),
@@ -427,6 +427,12 @@ options_no_group_name = {
       Usage: [('text/javascript', 'http://moinmo.in/static/script.js')]
       """),
 
+    ('serve_files', {},
+     """
+     Dictionary of name: filesystem_path for static file resources to serve
+     from the filesystem as url .../+serve/<name>/...
+     """),
+
     ('supplementation_item_names', [u'Discussion', ],
      "List of names of the supplementation (sub)items [Unicode]"),
 
@@ -436,12 +442,7 @@ options_no_group_name = {
     ('trail_size', 5,
      "Number of items in the trail of recently visited items"),
 
-    ('html_before_header', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag. [Unicode]"),
-    ('html_after_header', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag). [Unicode]"),
-    ('html_before_footer', '', "Custom HTML markup sent ''before'' the system footer. [Unicode]"),
-    ('html_after_footer', '', "Custom HTML markup sent ''after'' the system footer. [Unicode]"),
-
-    ('edit_bar', ['Show', 'Meta', 'Modify', 'Comments', 'Download', 'History', 'Subscribe', 'Quicklink', 'Index', 'Supplementation', 'ActionsMenu'],
+    ('edit_bar', ['Show', 'Highlight', 'Meta', 'Modify', 'Comments', 'Download', 'History', 'Subscribe', 'Quicklink', 'Index', 'Supplementation', 'ActionsMenu'],
      'list of edit bar entries'),
     ('history_count', (100, 200), "number of revisions shown for info/history action (default_count_shown, max_count_shown)"),
 
@@ -453,17 +454,9 @@ options_no_group_name = {
      "if True, show user names in the revision history and on Recent``Changes. Set to False to hide them."),
     ('show_section_numbers', False,
      'show section numbers in headings by default'),
-    ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
-    ('credits',
-     [
-       '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
-       '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
-       '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
-       '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 5</a>',
-     ],
-     'list of html5 (xmlish) fragments [Unicode], e.g. logos or strings for crediting.'),
+    ('template_dirs', [], "list of directories with templates that will override theme and base templates."),
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
@@ -482,6 +475,8 @@ options_no_group_name = {
     ('namespace_mapping', None,
     "This needs to point to a (correctly ordered!) list of tuples, each tuple containing: Namespace identifier, backend, acl protection to be applied to that backend. " + \
     "E.g.: [('/', FSBackend('wiki/data'), dict(default='All:read,write,create')), ]. Please see HelpOnStorageConfiguration for further reference."),
+    ('index_rebuild', True,
+     'rebuild item index from scratch (you may set this to False to speedup startup once you have an index)'),
     ('load_xml', None,
      'If this points to an xml file, the file is loaded into the storage backend(s) upon first request.'),
     ('save_xml', None,
@@ -538,8 +533,6 @@ options_no_group_name = {
     ('bang_meta', True, 'if True, enable {{{!NoWikiName}}} markup'),
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
-
-    ('html_head', '', "Additional <HEAD> tags, see HelpOnThemes. [Unicode]"),
 
     ('timezone_default', 'UTC', "Default time zone."),
     ('locale_default', 'en_US', "Default locale for user interface and content."),
@@ -648,6 +641,9 @@ options = {
     'user': ('Users / User settings', None, (
       ('email_unique', True,
        "if True, check email addresses for uniqueness and don't accept duplicates."),
+
+      ('openid_unique', True,
+       "if True, check openids for uniqueness and don't accept duplicates."),
 
       ('homewiki', u'Self',
        "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),

@@ -5,6 +5,7 @@ import sys, os
 
 from MoinMoin.config.default import DefaultConfig
 from MoinMoin.storage.backends import create_simple_mapping
+from MoinMoin.util.interwiki import InterWikiMap
 
 
 class Config(DefaultConfig):
@@ -16,18 +17,18 @@ class Config(DefaultConfig):
     # wikiconfig.py
     # wiki/
     #      data/
-    #      syspages.xml
-    # If that's not true, feel free to just set instance_dir to the real path
-    # where data/ and syspages.xml is located:
-    # instance_dir = '/where/ever/your/instance/is'
+    # contrib/
+    #      xml/
+    #          preloaded_items.xml
+    # If that's not true, feel free to adjust the pathes.
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
     data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
     # This puts the contents from the specified xml file (a serialized backend) into your
     # backend(s). You can remove this after the first request to your wiki or
     # from the beginning if you don't want to use this feature at all.
-    load_xml = os.path.join(instance_dir, 'preloaded_items.xml')
-    #save_xml = os.path.join(instance_dir, 'saved_items.xml')
+    load_xml = os.path.join(wikiconfig_dir, 'contrib', 'xml', 'preloaded_items.xml')
+    #save_xml = os.path.join(wikiconfig_dir, 'contrib', 'xml', 'saved_items.xml')
 
     # This provides a simple default setup for your backend configuration.
     # 'fs:' indicates that you want to use the filesystem backend. You can also use
@@ -44,8 +45,23 @@ class Config(DefaultConfig):
                                              after=u'', ),
                             )
 
+    # Load the interwiki map from intermap.txt:
+    interwiki_map = InterWikiMap.from_file(os.path.join(wikiconfig_dir, 'contrib', 'interwiki', 'intermap.txt')).iwmap
+
     sitename = u'My MoinMoin'
-    logo = u'<img src="/static/common/moinmoin.png" id="moin-img-logo" alt="MoinMoin Logo">'
+
+    # for now we load some 3rd party stuff from the place within moin where it is currently located,
+    # but soon we'll get rid of this stuff:
+    serve_files = dict(
+        # see "quickinstall" script about how to get those files there
+        ckeditor = os.path.join(wikiconfig_dir, 'env', 'ckeditor'),
+        jquery = os.path.join(wikiconfig_dir, 'env', 'jquery'),
+        svgweb = os.path.join(wikiconfig_dir, 'env', 'svgweb', 'src'),
+        anywikidraw = os.path.join(wikiconfig_dir, 'env', 'AnyWikiDraw', 'anywikidraw', 'moinmoin'),
+        twikidraw = os.path.join(wikiconfig_dir, 'env', 'TWikiDrawPlugin'),
+        svgedit = os.path.join(wikiconfig_dir, 'env', 'svg-edit'),
+    )
+
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
     #item_root = u'Home' # change to some better value

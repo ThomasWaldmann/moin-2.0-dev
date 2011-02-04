@@ -26,18 +26,18 @@ output_re = re.compile(r'\s+xmlns="[^"]+"')
 test_data = {
     'normal': (
         '<page><body><p>bla bla :-) bla bla</p></body></page>',
-        '/page/body/p/span[@class="moin-smile"]'),
+        '/page/body/p/span[@class="moin-text-icon moin-smile"]'),
     'in code': (
         '<page><body><code>bla bla :-) bla bla</code></body></page>',
         '/page/body[code="bla bla :-) bla bla"]'),
     '2 at once': (
         '<page><body><p>:-) :-(</p></body></page>',
         '/page/body/p'
-            '[span[1][@class="moin-smile"]]'
-            '[span[2][@class="moin-sad"]]'),
+            '[span[1][@class="moin-text-icon moin-smile"]]'
+            '[span[2][@class="moin-text-icon moin-sad"]]'),
     'strong': (
         '<page><body><p><strong>:-)</strong></p></body></page>',
-        '/page/body/p/strong/span[@class="moin-smile"]'),
+        '/page/body/p/strong/span[@class="moin-text-icon moin-smile"]'),
     # Test to check we do not have bug with newline in the string
     'ok with newlines': (
         '<page><body><p>1\n2\n3\n4</p></body></page>',

@@ -137,6 +137,7 @@ from werkzeug import redirect, abort, url_quote, url_quote_plus
 from flask import url_for, session, request
 from flask import flaskg
 from flask import current_app as app
+from jinja2 import Markup
 
 from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
@@ -154,7 +155,9 @@ def get_multistage_continuation_url(auth_name, extra_fields={}):
     """
     # logically, this belongs to request, but semantically it should
     # live in auth so people do auth.get_multistage_continuation_url()
-    url = url_for('frontend.login', login='1', stage=auth_name, **extra_fields)
+
+    # the url should be absolute so we use _external
+    url = url_for('frontend.login', login_submit='1', stage=auth_name, _external=True, **extra_fields)
     logging.debug("multistage_continuation_url: %s" % url)
     return url
 
@@ -246,7 +249,7 @@ class MoinAuth(BaseAuth):
                 register_url=url_for('frontend.register'))
         msg += _('<a href="%(recover_url)s">Forgot your password?</a>',
                  recover_url=url_for('frontend.lostpass'))
-        return msg
+        return Markup(msg)
 
 
 class GivenAuth(BaseAuth):
@@ -352,19 +355,24 @@ class GivenAuth(BaseAuth):
             return user_obj, True
 
 
-def handle_login(userobj=None, username=None, password=None,
-                 attended=True, stage=None):
+def handle_login(userobj, **kw):
     """
     Process a 'login' request by going through the configured authentication
     methods in turn. The passable keyword arguments are explained in more
     detail at the top of this file.
     """
-    params = {
-        'username': username,
-        'password': password,
-        'attended': attended,
-        'multistage': (stage and True) or None
-    }
+
+    stage = kw.get('stage')
+    params = {'username': kw.get('login_username'),
+              'password': kw.get('login_password'),
+              'openid': kw.get('login_openid'),
+              'multistage': (stage and True) or None,
+              'attended': True
+             }
+    # add the other parameters from the form
+    for param in kw.keys():
+        params[param] = kw.get(param)
+
     for authmethod in app.cfg.auth:
         if stage and authmethod.name != stage:
             continue

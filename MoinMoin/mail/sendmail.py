@@ -173,8 +173,8 @@ def sendmail(to, subject, text, mail_from=None):
             logging.exception("sendmail failed with an exception.")
             return (0, _("Mail not sent"))
 
-    logging.debug("Mail sent OK")
-    return (1, _("Mail sent OK"))
+    logging.debug("Mail sent successfully")
+    return (1, _("Mail sent successfully"))
 
 def encodeSpamSafeEmail(email_address, obfuscation_text=''):
     """ Encodes a standard email address to an obfuscated address

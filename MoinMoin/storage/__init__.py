@@ -51,6 +51,13 @@ from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    BackendError, NoSuchItemError, \
                                    RevisionAlreadyExistsError, ItemAlreadyExistsError
 
+# we need a specific hash algorithm to store hashes of revision data into meta
+# data. meta[HASH_ALGORITHM] = hash(rev_data, HASH_ALGORITHM)
+# some backends may use this also for other purposes.
+HASH_ALGORITHM = 'sha1'
+
+import hashlib
+
 
 class Backend(object):
     """
@@ -731,8 +738,10 @@ class Item(object, DictMixin):
         """
         @see: Backend._commit_item.__doc__
         """
-        assert self._uncommitted_revision is not None
-        self._backend._commit_item(self._uncommitted_revision)
+        rev = self._uncommitted_revision
+        assert rev is not None
+        rev[HASH_ALGORITHM] = unicode(rev._rev_hash.hexdigest())
+        self._backend._commit_item(rev)
         self._uncommitted_revision = None
 
     def rollback(self):
@@ -926,6 +935,7 @@ class NewRevision(Revision):
         Revision.__init__(self, item, revno, None)
         self._metadata = {}
         self._size = 0
+        self._rev_hash = hashlib.new(HASH_ALGORITHM)
 
     def _get_ts(self):
         return self._timestamp
@@ -971,6 +981,7 @@ class NewRevision(Revision):
         @see: Backend._write_revision_data.__doc__
         """
         self._size += len(data)
+        self._rev_hash.update(data)
         self._backend._write_revision_data(self, data)
 
 

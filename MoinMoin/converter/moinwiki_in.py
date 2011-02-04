@@ -511,7 +511,7 @@ class Converter(ConverterMacro):
                 list_type = 'ordered', 'lower-roman'
             elif list_bullet == u'*':
                 list_type = 'unordered', None
-                
+
         element_use = None
         while len(stack) > 1:
             cur = stack.top()

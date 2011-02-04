@@ -1,18 +1,18 @@
 {% extends theme("layout.html") %}
 {% block content %}
-<h1>Create new item?</h1>
+<h1>{{ _("Create new item?") }}</h1>
 <p>
-This item does not exist (yet), but you can try creating it now. Please select the type of the item you want to create.
+{{ _("This item does not exist (yet), but you can try creating it now. Please select the type of the item you want to create.") }}
 </p>
 <table>
     {% for gname, mimetypes in mimetype_groups %}
     <tr>
-        <td class="green">{{ gname|e }}</td>
+        <td class="green">{{ gname }}</td>
     </tr>
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mname)|e }}">{{ mlabel|e }}</a> -
+            <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mname) }}">{{ mlabel }}</a> -
         {% endfor %}
         </td>
     </tr>
