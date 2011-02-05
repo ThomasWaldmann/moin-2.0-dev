@@ -84,6 +84,8 @@ class TestConverter(object):
 
     def test_heading(self):
         data = [
+            (u'=Not_a_Heading=', # this is for better moin 1.x compatibility
+                '<page><body><p>=Not_a_Heading=</p></body></page>'),
             (u'= Heading 1 =',
                 '<page><body><h outline-level="1">Heading 1</h></body></page>'),
             (u'== Heading 2 ==',
