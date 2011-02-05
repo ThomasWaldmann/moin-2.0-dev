@@ -41,13 +41,13 @@
                 <a href="{{ wiki_href }}" {% if not exists %}class="moin-nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
                     {{ aliasname }}
                 </a>
-                <span class="sep"> | </span>
                 {% if 'usersettings' not in cfg.actions_excluded -%}
-                    <a href="{{ url_for('frontend.usersettings') }}" class="moin-usersettings" rel="nofollow">{{ _('Settings') }}</a>
                     <span class="sep"> | </span>
+                    <a href="{{ url_for('frontend.usersettings') }}" class="moin-usersettings" rel="nofollow">{{ _('Settings') }}</a>
                 {%- endif %}
             {%- endif %}
             {% if user.auth_method in cfg.auth_can_logout %}
+                <span class="sep"> | </span>
                 <a href="{{ url_for('frontend.logout', logout_submit=1) }}" class="moin-logout" rel="nofollow">
                     {{ _('Logout') }}
                 </a>
