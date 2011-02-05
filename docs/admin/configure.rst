@@ -67,7 +67,6 @@ profile and if both match, the user is authenticated::
     from MoinMoin.auth import MoinAuth
     auth = [MoinAuth()]  # this is the default!
 
-
 HTTPAuthMoin
 ------------
 With HTTPAuthMoin moin does http basic auth all by itself (without help of
@@ -81,6 +80,13 @@ http header. Browsers then usually show some login dialogue to the user,
 asking for username and password. Both then gets transmitted to moin and it
 is compared against the password hash stored in the user's profile.
 
+GivenAuth
+---------
+With GivenAuth moin relies on the webserver doing the authentication and giving
+the result to moin (usually via environment variable REMOTE_USER)::
+
+    from MoinMoin.auth import GivenAuth
+    auth = [GivenAuth(autocreate=True)]
 
 OpenID
 ------
@@ -101,18 +107,44 @@ empty, moin will allow all providers::
 To be able to log in with OpenID, the user needs to have his OpenID stored
 in his user profile.
 
+Transmission security
+=====================
+Credentials
+-----------
+Some of the authentication methods described above will transmit credentials
+(like usernames and password) in unencrypted form:
 
-GivenAuth
----------
-With GivenAuth moin relies on the webserver doing the authentication and giving
-the result to moin (usually via environment variable REMOTE_USER)::
+* MoinAuth: when the login form contents are transmitted to moin, they contain
+  username and password in cleartext.
+* HTTPAuthMoin: your browser will transfer username and password in a encoded
+  (but NOT encrypted) form with EVERY request (it uses http basic auth).
+* GivenAuth: please check the potential security issues of the authentication
+  method used by your web server. For http basic auth please see HTTPAuthMoin.
+* OpenID: please check yourself.
 
-    from MoinMoin.auth import GivenAuth
-    auth = [GivenAuth(autocreate=True)]
+Contents
+--------
+http transmits everything in cleartext (not encrypted).
+
+Encryption
+----------
+Transmitting unencrypted credentials or contents is a serious issue in many
+scenarios.
+
+We recommend you make sure connections are encrypted, like with https or VPN
+or an ssh tunnel.
+
+For public wikis with very low security / privacy needs, it might not be needed
+to encrypt their content transmissions, but there is still an issue for the
+credential transmissions.
+
+When using unencrypted connections, wiki users are advised to make sure they
+use unique credentials (== not reusing passwords that are also used for other
+stuff).
 
 
-Passwords
-=========
+Password security
+=================
 As you might know, many users are bad at choosing reasonable passwords and some
 are tempted to use passwords like 123456 everywhere.
 
