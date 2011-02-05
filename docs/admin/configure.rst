@@ -292,7 +292,8 @@ module of the Python standard library.
 
 The configuration file format is described there:
 
-http://www.python.org/doc/lib/logging-config-fileformat.html
+http://www.python.org/doc/current/library/logging.html#configuring-logging
+
 
 There are also some logging configurations in the `examples/` directory.
 
