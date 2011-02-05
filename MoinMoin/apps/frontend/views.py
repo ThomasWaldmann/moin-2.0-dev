@@ -31,7 +31,7 @@ from babel import Locale
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS, ITEMTRANSCLUSIONS
@@ -614,7 +614,7 @@ def subscribe_item(item_name):
 class ValidRegistration(Validator):
     """Validator for a valid registration form
     """
-    passwords_mismatch_msg = N_('The passwords do not match.')
+    passwords_mismatch_msg = L_('The passwords do not match.')
 
     def validate(self, element, state):
         if not (element['username'].valid and
@@ -630,11 +630,11 @@ class RegistrationForm(TextChaizedForm):
     """a simple user registration form"""
     name = 'register'
 
-    username = String.using(label=N_('Name')).validated_by(Present())
-    password1 = String.using(label=N_('Password')).validated_by(Present())
-    password2 = String.using(label=N_('Password')).validated_by(Present())
-    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    submit = String.using(default=N_('Register'), optional=True)
+    username = String.using(label=L_('Name')).validated_by(Present())
+    password1 = String.using(label=L_('Password')).validated_by(Present())
+    password2 = String.using(label=L_('Password')).validated_by(Present())
+    email = String.using(label=L_('E-Mail')).validated_by(IsEmail())
+    submit = String.using(default=L_('Register'), optional=True)
 
     validators = [ValidRegistration()]
 
@@ -645,12 +645,12 @@ class OpenIDForm(TextChaizedForm):
     """
     name = 'openid'
 
-    username = String.using(label=N_('Name')).validated_by(Present())
-    password1 = String.using(label=N_('Password')).validated_by(Present())
-    password2 = String.using(label=N_('Password')).validated_by(Present())
+    username = String.using(label=L_('Name')).validated_by(Present())
+    password1 = String.using(label=L_('Password')).validated_by(Present())
+    password2 = String.using(label=L_('Password')).validated_by(Present())
 
-    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    openid = String.using(label=N_('OpenID')).validated_by(Present())
+    email = String.using(label=L_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=L_('OpenID')).validated_by(Present())
     submit = String.using(optional=True)
 
     validators = [ValidRegistration()]
@@ -752,7 +752,7 @@ def register():
 class ValidLostPassword(Validator):
     """Validator for a valid lost password form
     """
-    name_or_email_needed_msg = N_('Your user name or your email address is needed.')
+    name_or_email_needed_msg = L_('Your user name or your email address is needed.')
 
     def validate(self, element, state):
         if not(element['username'].valid and element['username'].value
@@ -767,9 +767,9 @@ class PasswordLostForm(Form):
     """a simple password lost form"""
     name = 'lostpass'
 
-    username = String.using(label=N_('Name'), optional=True)
-    email = String.using(label=N_('E-Mail'), optional=True).validated_by(IsEmail())
-    submit = String.using(default=N_('Recover password'), optional=True)
+    username = String.using(label=L_('Name'), optional=True)
+    email = String.using(label=L_('E-Mail'), optional=True).validated_by(IsEmail())
+    submit = String.using(default=L_('Recover password'), optional=True)
 
     validators = [ValidLostPassword()]
 
@@ -816,8 +816,8 @@ def lostpass():
 class ValidPasswordRecovery(Validator):
     """Validator for a valid password recovery form
     """
-    passwords_mismatch_msg = N_('The passwords do not match.')
-    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
+    passwords_mismatch_msg = L_('The passwords do not match.')
+    password_encoding_problem_msg = L_('New password is unacceptable, encoding trouble.')
 
     def validate(self, element, state):
         if element['password1'].value != element['password2'].value:
@@ -834,11 +834,11 @@ class PasswordRecoveryForm(Form):
     """a simple password recovery form"""
     name = 'recoverpass'
 
-    username = String.using(label=N_('Name')).validated_by(Present())
-    token = String.using(label=N_('Recovery token')).validated_by(Present())
-    password1 = String.using(label=N_('New password')).validated_by(Present())
-    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
-    submit = String.using(default=N_('Change password'), optional=True)
+    username = String.using(label=L_('Name')).validated_by(Present())
+    token = String.using(label=L_('Recovery token')).validated_by(Present())
+    password1 = String.using(label=L_('New password')).validated_by(Present())
+    password2 = String.using(label=L_('New password (repeat)')).validated_by(Present())
+    submit = String.using(default=L_('Change password'), optional=True)
 
     validators = [ValidPasswordRecovery()]
 
@@ -881,8 +881,8 @@ class ValidLogin(Validator):
     """
     Login validator
     """
-    moin_fail_msg = N_('Either your username or password was invalid.')
-    openid_fail_msg = N_('Failed to authenticate with this OpenID.')
+    moin_fail_msg = L_('Either your username or password was invalid.')
+    openid_fail_msg = L_('Failed to authenticate with this OpenID.')
 
     def validate(self, element, state):
         # get the result from the other validators
@@ -909,9 +909,9 @@ class LoginForm(Form):
     """
     name = 'login'
 
-    username = String.using(label=N_('Name'), optional=True).validated_by(Present())
-    password = String.using(label=N_('Password'), optional=True).validated_by(Present())
-    openid = String.using(label=N_('OpenID'), optional=True).validated_by(Present(), URLValidator())
+    username = String.using(label=L_('Name'), optional=True).validated_by(Present())
+    password = String.using(label=L_('Password'), optional=True).validated_by(Present())
+    openid = String.using(label=L_('OpenID'), optional=True).validated_by(Present(), URLValidator())
 
     # the submit hidden field
     submit = String.using(optional=True)
@@ -976,9 +976,9 @@ def logout():
 class ValidChangePass(Validator):
     """Validator for a valid password change
     """
-    passwords_mismatch_msg = N_('The passwords do not match.')
-    current_password_wrong_msg = N_('The current password was wrong.')
-    password_encoding_problem_msg = N_('New password is unacceptable, encoding trouble.')
+    passwords_mismatch_msg = L_('The passwords do not match.')
+    current_password_wrong_msg = L_('The current password was wrong.')
+    password_encoding_problem_msg = L_('New password is unacceptable, encoding trouble.')
 
     def validate(self, element, state):
         if not (element['password_current'].valid and element['password1'].valid and element['password2'].valid):
@@ -999,23 +999,23 @@ class ValidChangePass(Validator):
 
 class UserSettingsPasswordForm(Form):
     name = 'usersettings_password'
-    password_current = String.using(label=N_('Current Password')).validated_by(Present())
-    password1 = String.using(label=N_('New password')).validated_by(Present())
-    password2 = String.using(label=N_('New password (repeat)')).validated_by(Present())
-    submit = String.using(default=N_('Change password'), optional=True)
+    password_current = String.using(label=L_('Current Password')).validated_by(Present())
+    password1 = String.using(label=L_('New password')).validated_by(Present())
+    password2 = String.using(label=L_('New password (repeat)')).validated_by(Present())
+    submit = String.using(default=L_('Change password'), optional=True)
     validators = [ValidChangePass()]
 
 
 class UserSettingsNotificationForm(Form):
     name = 'usersettings_notification'
-    email = String.using(label=N_('E-Mail')).validated_by(IsEmail())
-    submit = String.using(default=N_('Save'), optional=True)
+    email = String.using(label=L_('E-Mail')).validated_by(IsEmail())
+    submit = String.using(default=L_('Save'), optional=True)
 
 
 class UserSettingsNavigationForm(Form):
     name = 'usersettings_navigation'
     # TODO: find a good way to handle quicklinks here
-    submit = String.using(default=N_('Save'), optional=True)
+    submit = String.using(default=L_('Save'), optional=True)
 
 
 class UserSettingsOptionsForm(Form):
@@ -1026,11 +1026,11 @@ class UserSettingsOptionsForm(Form):
     # builtin defaults (for some True, for some others False). Makes
     # edit_on_doubleclick malfunctioning (because its default is True).
     name = 'usersettings_options'
-    mailto_author = Boolean.using(label=N_('Publish my email (not my wiki homepage) in author info'), optional=True)
-    edit_on_doubleclick = Boolean.using(label=N_('Open editor on double click'), optional=True)
-    show_comments = Boolean.using(label=N_('Show comment sections'), optional=True)
-    disabled = Boolean.using(label=N_('Disable this account forever'), optional=True)
-    submit = String.using(default=N_('Save'), optional=True)
+    mailto_author = Boolean.using(label=L_('Publish my email (not my wiki homepage) in author info'), optional=True)
+    edit_on_doubleclick = Boolean.using(label=L_('Open editor on double click'), optional=True)
+    show_comments = Boolean.using(label=L_('Show comment sections'), optional=True)
+    disabled = Boolean.using(label=L_('Disable this account forever'), optional=True)
+    submit = String.using(default=L_('Save'), optional=True)
 
 
 @frontend.route('/+usersettings', defaults=dict(part='main'), methods=['GET'])
@@ -1042,28 +1042,28 @@ def usersettings(part):
     # these forms can't be global because we need app object, which is only available within a request:
     class UserSettingsPersonalForm(Form):
         name = 'usersettings_personal' # "name" is duplicate
-        name = String.using(label=N_('Name')).validated_by(Present())
-        aliasname = String.using(label=N_('Alias-Name'), optional=True)
-        openid = String.using(label=N_('OpenID'), optional=True).validated_by(URLValidator())
+        name = String.using(label=L_('Name')).validated_by(Present())
+        aliasname = String.using(label=L_('Alias-Name'), optional=True)
+        openid = String.using(label=L_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
         timezones_keys = pytz.common_timezones
-        timezone = Enum.using(label=N_('Timezone')).valued(*timezones_keys)
+        timezone = Enum.using(label=L_('Timezone')).valued(*timezones_keys)
         supported_locales = [Locale('en')] + app.babel_instance.list_translations()
         locales_available = sorted([(str(l), l.display_name) for l in supported_locales],
                                    key=lambda x: x[1])
         locales_keys = [l[0] for l in locales_available]
-        locale = Enum.using(label=N_('Locale')).with_properties(labels=dict(locales_available)).valued(*locales_keys)
-        submit = String.using(default=N_('Save'), optional=True)
+        locale = Enum.using(label=L_('Locale')).with_properties(labels=dict(locales_available)).valued(*locales_keys)
+        submit = String.using(default=L_('Save'), optional=True)
 
     class UserSettingsUIForm(Form):
         name = 'usersettings_ui'
         themes_available = sorted([(t.identifier, t.name) for t in get_themes_list()],
                                   key=lambda x: x[1])
         themes_keys = [t[0] for t in themes_available]
-        theme_name = Enum.using(label=N_('Theme name')).with_properties(labels=dict(themes_available)).valued(*themes_keys)
-        css_url = String.using(label=N_('User CSS URL'), optional=True).validated_by(URLValidator())
-        edit_rows = Integer.using(label=N_('Editor size')).validated_by(Converted())
-        submit = String.using(default=N_('Save'), optional=True)
+        theme_name = Enum.using(label=L_('Theme name')).with_properties(labels=dict(themes_available)).valued(*themes_keys)
+        css_url = String.using(label=L_('User CSS URL'), optional=True).validated_by(URLValidator())
+        edit_rows = Integer.using(label=L_('Editor size')).validated_by(Converted())
+        submit = String.using(default=L_('Save'), optional=True)
 
     dispatch = dict(
         personal=UserSettingsPersonalForm,

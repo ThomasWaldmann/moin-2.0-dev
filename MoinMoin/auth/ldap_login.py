@@ -26,8 +26,8 @@ except ImportError, err:
     logging.error("You need to have python-ldap installed (%s)." % str(err))
     raise
 
-from MoinMoin import _, N_
 from MoinMoin import user
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.auth import BaseAuth, CancelLogin, ContinueLogin
 
 

@@ -12,7 +12,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.macro._base import MacroInlineBase
 
 class Macro(MacroInlineBase):

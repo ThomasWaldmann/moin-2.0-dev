@@ -139,8 +139,8 @@ from flask import flaskg
 from flask import current_app as app
 from jinja2 import Markup
 
-from MoinMoin import _, N_
 from MoinMoin import user, wikiutil
+from MoinMoin.i18n import _, L_, N_
 
 
 def get_multistage_continuation_url(auth_name, extra_fields={}):

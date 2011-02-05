@@ -13,7 +13,7 @@
 
 import pygments.lexers
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.util.tree import moin_page
 from MoinMoin.macro._base import MacroBlockBase
 from MoinMoin.converter._table import TableMixin

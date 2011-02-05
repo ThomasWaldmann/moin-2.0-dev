@@ -14,7 +14,7 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.search.builtin import BaseSearch, MoinSearch, BaseIndex
 from MoinMoin.search.Xapian.indexing import XapianIndex
 

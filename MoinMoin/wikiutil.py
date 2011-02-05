@@ -23,8 +23,8 @@ from flask import current_app as app
 from flask import flaskg
 from flask import request
 
-from MoinMoin import _, N_
 from MoinMoin import config
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 

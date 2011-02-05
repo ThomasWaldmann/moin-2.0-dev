@@ -2,21 +2,25 @@
 """
 MoinMoin - i18n (internationalization) and l10n (localization) support
 
+To use this, please use exactly this line (no less, no more):
+
+from MoinMoin.i18n import _, L_, N_
+
+_ == gettext
+N_ == ngettext
+L_ == lazy_gettext
+
 @copyright: 2011 MoinMoin:ThomasWaldmann
 @license: GNU GPL, see COPYING for details.
 """
 
 from flask import current_app, request, flaskg
 
-from flaskext.babel import Babel
-from flaskext.babel import gettext as _
-from flaskext.babel import lazy_gettext as N_
+from flaskext.babel import Babel, gettext, ngettext, lazy_gettext
 
-# XXX hack: we patch _ and N_ into MoinMoin module, because it is imported
-# from there rather often. Refactor this later.
-import MoinMoin
-MoinMoin._ = _
-MoinMoin.N_ = N_
+_ = gettext
+N_ = ngettext
+L_ = lazy_gettext
 
 from MoinMoin import log
 logging = log.getLogger(__name__)

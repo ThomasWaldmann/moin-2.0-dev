@@ -19,8 +19,8 @@ from flask import session, request, url_for
 from flask import current_app as app
 from MoinMoin.auth import BaseAuth, get_multistage_continuation_url
 from MoinMoin.auth import ContinueLogin, CancelLogin, MultistageFormLogin, MultistageRedirectLogin
-from MoinMoin import _, N_
 from MoinMoin import user
+from MoinMoin.i18n import _, L_, N_
 
 
 class OpenIDAuth(BaseAuth):

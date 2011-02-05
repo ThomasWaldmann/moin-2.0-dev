@@ -14,8 +14,8 @@ import StringIO, time
 
 from flask import current_app as app
 
-from MoinMoin import _, N_
 from MoinMoin import wikiutil
+from MoinMoin.i18n import _, L_, N_
 
 ############################################################################
 ### Results

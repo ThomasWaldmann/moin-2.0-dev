@@ -19,7 +19,7 @@ from flaskext.themes import get_theme, render_theme_template
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin import wikiutil, user
 from MoinMoin.util.interwiki import split_interwiki, resolve_interwiki, join_wiki, getInterwikiHome
 
@@ -43,8 +43,8 @@ def render_template(template, **context):
 def themed_error(e):
     item_name = request.view_args.get('item_name', u'')
     if e.code == 403:
-        title = N_('Access denied')
-        description = N_('You are not allowed to access this resource.')
+        title = L_('Access denied')
+        description = L_('You are not allowed to access this resource.')
     else:
         # if we have no special code, we just return the HTTPException instance
         return e

@@ -15,8 +15,8 @@ logging = log.getLogger(__name__)
 
 from flask import current_app as app
 
-from MoinMoin import _, N_
 from MoinMoin import config
+from MoinMoin.i18n import _, L_, N_
 
 _transdict = {"AT": "@", "DOT": ".", "DASH": "-"}
 

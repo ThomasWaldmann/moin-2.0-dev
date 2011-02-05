@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import _
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.error import CompositeError
 
 
@@ -40,7 +40,7 @@ class AccessDeniedError(AccessError):
         if None in (username, priv, item):
             message = _("Permission denied!")
         else:
-            username = username or N_("You")
+            username = username or L_("You")
             message = _("%(username)s may not %(priv)s '%(item)s'.",
                         username=username, priv=_(priv), item=item)
             # XXX add _('...') for all privs elsewhere for extraction
