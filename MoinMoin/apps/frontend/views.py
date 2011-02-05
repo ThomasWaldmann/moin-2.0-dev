@@ -683,8 +683,7 @@ def _using_openid_auth():
 def register():
     item_name = 'Register' # XXX
     # is openid_submit in the form?
-    isOpenID = ('openid_submit' in request.values or
-               'openid_submit' in request.form)
+    isOpenID = 'openid_submit' in request.values
 
     if isOpenID:
         # this is an openid continuation
@@ -724,8 +723,8 @@ def register():
 
         template = 'register.html'
         if request.method == 'GET':
-                form = RegistrationForm.from_defaults()
-                TextCha(form).amend_form()
+            form = RegistrationForm.from_defaults()
+            TextCha(form).amend_form()
 
         elif request.method == 'POST':
             form = RegistrationForm.from_flat(request.form)
