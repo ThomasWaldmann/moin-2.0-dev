@@ -19,16 +19,6 @@ from MoinMoin.util import monkeypatch
 from flask import Flask, request, url_for, flash, session, flaskg
 from flask import current_app as app
 
-from flaskext.babel import Babel
-from flaskext.babel import gettext as _
-from flaskext.babel import lazy_gettext as N_
-
-# XXX hack: we patch _ and N_ into MoinMoin module, because it is imported
-# from there rather often. Refactor this later.
-import MoinMoin
-MoinMoin._ = _
-MoinMoin.N_ = N_
-
 from flaskext.cache import Cache
 from flaskext.themes import setup_themes
 
@@ -39,6 +29,9 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
+
+from MoinMoin.i18n import i18n_init
+from MoinMoin import _, N_
 
 from MoinMoin.themes import setup_jinja_env, themed_error
 
@@ -132,9 +125,7 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     import_export_xml(app)
     clock.stop('create_app load/save xml')
     clock.start('create_app flask-babel')
-    babel = Babel(app)
-    babel.localeselector(get_locale)
-    babel.timezoneselector(get_timezone)
+    i18n_init(app)
     clock.stop('create_app flask-babel')
     # configure templates
     clock.start('create_app flask-themes')
@@ -149,30 +140,6 @@ def create_app_ext(flask_config_file=None, flask_config_dict=None,
     clock.stop('create_app total')
     del clock
     return app
-
-
-def get_locale():
-    locale = None
-    # this might be called at a time when flaskg.user is not setup yet:
-    u = getattr(flaskg, 'user', None)
-    if u and u.locale is not None:
-        # locale is given in user profile, use it
-        locale = u.locale
-    else:
-        # try to guess the language from the user accept
-        # header the browser transmits. The best match wins.
-        supported_languages = ['de', 'fr', 'en'] # XXX
-        locale = request.accept_languages.best_match(supported_languages)
-    if not locale:
-        locale = app.cfg.locale_default
-    return locale
-
-
-def get_timezone():
-    # this might be called at a time when flaskg.user is not setup yet:
-    u = getattr(flaskg, 'user', None)
-    if u and u.timezone is not None:
-        return u.timezone
 
 
 from MoinMoin.util.clock import Clock
