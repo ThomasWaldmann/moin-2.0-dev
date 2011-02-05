@@ -23,8 +23,8 @@ from flask import current_app as app
 
 from flask import flaskg
 
-from MoinMoin import _, N_
 from MoinMoin import user
+from MoinMoin.i18n import _, L_, N_
 
 
 class Permissions(object):

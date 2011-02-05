@@ -34,8 +34,8 @@ from babel import parse_locale
 from flask import current_app as app
 from flask import flaskg, session, request, url_for
 
-from MoinMoin import _, N_
 from MoinMoin import config, wikiutil
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.util import random_string
 from MoinMoin.util.interwiki import getInterwikiHome
 

@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details
 """
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.config import default as defaultconfig
 from MoinMoin.macro._base import MacroBlockBase
 from MoinMoin.util.tree import moin_page

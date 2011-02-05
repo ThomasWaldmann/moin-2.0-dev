@@ -13,8 +13,8 @@ from __future__ import absolute_import
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin import _, N_
 from MoinMoin import wikiutil
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.util.tree import html, moin_page, xlink, xml, Name
 
 

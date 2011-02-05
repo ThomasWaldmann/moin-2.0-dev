@@ -43,7 +43,7 @@ from flask import request, url_for, Response, abort, escape
 from werkzeug import is_resource_modified
 from jinja2 import Markup
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.themes import render_template
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util.send_file import send_file

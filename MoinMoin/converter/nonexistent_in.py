@@ -9,7 +9,7 @@ Convert a non-existent item to the DOM Tree.
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin import _
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import moin_page, xlink
 

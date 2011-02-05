@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import _
+from MoinMoin.i18n import _, L_, N_
 
 
 class BracketError(Exception):

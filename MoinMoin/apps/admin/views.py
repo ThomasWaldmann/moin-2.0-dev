@@ -15,7 +15,7 @@ from flask import request, url_for, flash, redirect
 from flask import current_app as app
 from flask import flaskg
 
-from MoinMoin import _, N_
+from MoinMoin.i18n import _, L_, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.admin import admin
 from MoinMoin import user
