@@ -15,8 +15,6 @@ from flask import request, url_for, flash, redirect
 from flask import current_app as app
 from flask import flaskg
 
-from werkzeug import escape
-
 from MoinMoin import _, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.admin import admin
@@ -77,9 +75,9 @@ def userprofile(user_name):
         if ok:
             setattr(u, key, val)
             theuser.save()
-            flash('%s.%s: %s -> %s' % tuple([escape(s) for s in [user_name, key, unicode(oldval), unicode(val)]]), "info")
+            flash('%s.%s: %s -> %s' % (user_name, key, unicode(oldval), unicode(val), ), "info")
         else:
-            flash('modifying %s.%s failed' % tuple([escape(s) for s in [user_name, key]]), "error")
+            flash('modifying %s.%s failed' % (user_name, key, ), "error")
     return redirect(url_for('admin.userbrowser'))
 
 

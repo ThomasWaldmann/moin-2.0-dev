@@ -30,8 +30,6 @@ from flask import current_app as app
 from flask import request
 from flask import flaskg
 
-from werkzeug import escape
-
 import hashlib
 import hmac
 
