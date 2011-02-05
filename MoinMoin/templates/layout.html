@@ -53,7 +53,10 @@
                 </a>
             {% endif %}
         {% else %}
-            <a href="{{ theme_supp.login_url() }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
+            {% set login_url = theme_supp.login_url() %}
+            {% if login_url %}
+                <a href="{{ login_url }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
+            {% endif %}
         {%- endif %}
     </div>
 

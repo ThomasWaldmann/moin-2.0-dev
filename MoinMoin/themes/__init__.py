@@ -297,10 +297,10 @@ class ThemeSupport(object):
         """
         Return URL usable for user login
 
-        @rtype: unicode
+        @rtype: unicode (or None, if no login url is supported)
         @return: url for user login
         """
-        url = ''
+        url = None
         if self.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
         if self.cfg.auth_have_login:
