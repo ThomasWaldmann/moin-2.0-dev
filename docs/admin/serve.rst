@@ -15,12 +15,14 @@ It is not made for serving bigger loads, but it is easy to use.
 
 To start moin using the builtin web server, just run "moin".
 
-If you'ld like to see all subcommands and options of the moin command, use:
-$ ./moin help
-$ ./moin moin --help
+If you'ld like to see all subcommands and options of the moin command, use: ::
 
-Example:
-$ ./moin moin --config /srv/wiki/wikiconfig.py --host 1.2.3.4 --port 7777
+ $ ./moin help
+ $ ./moin moin --help
+
+**Example**: ::
+
+ $ ./moin moin --config /srv/wiki/wikiconfig.py --host 1.2.3.4 --port 7777
 
 Use an absolute path for the wikiconfig.py!
 
