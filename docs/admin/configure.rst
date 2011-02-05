@@ -80,6 +80,9 @@ http header. Browsers then usually show some login dialogue to the user,
 asking for username and password. Both then gets transmitted to moin and it
 is compared against the password hash stored in the user's profile.
 
+Note: when HTTPAuthMoin is used, the browser will show that login dialogue, so
+users must login to use the wiki.
+
 GivenAuth
 ---------
 With GivenAuth moin relies on the webserver doing the authentication and giving
@@ -87,6 +90,15 @@ the result to moin (usually via environment variable REMOTE_USER)::
 
     from MoinMoin.auth import GivenAuth
     auth = [GivenAuth(autocreate=True)]
+
+Using this has some pros and cons:
+
+* you can use lots of authentication extensions available for your web server
+* but the only information moin will get (via REMOTE_USER) is the authenticated
+  user's name, nothing else. So, e.g. for LDAP/AD, you won't get additional
+  stuff stored in the LDAP directory.
+* all the stuff you won't get (but you need) will need to be manually stored
+  and updated in the user's profile (e.g. the user's email address, etc.)
 
 OpenID
 ------
@@ -190,6 +202,26 @@ and backup domain controller)::
 
     auth = [ldap_authenticator1, ldap_authenticator2, ]
 
+AuthLog
+-------
+AuthLog is no real authenticator in the sense that it authenticates (logs in) or
+deauthenticates (logs out) users, it is just passively logging informations for
+authentication debugging::
+
+    from MoinMoin.auth import MoinAuth
+    from MoinMoin.auth.log import AuthLog
+    auth = [MoinAuth(), AuthLog(), ]
+
+Example logging output::
+
+ 2011-02-05 16:35:00,229 INFO MoinMoin.auth.log:22 login: user_obj=<MoinMoin.user.User at 0x90a0f0c name:u'ThomasWaldmann' valid:1> kw={'username': u'ThomasWaldmann', 'openid': None, 'attended': True, 'multistage': None, 'login_password': u'secret', 'login_username': u'ThomasWaldmann', 'password': u'secret', 'login_submit': u''}
+ 2011-02-05 16:35:04,716 INFO MoinMoin.auth.log:22 session: user_obj=<MoinMoin.user.User at 0x90a0f6c name:u'ThomasWaldmann' valid:1> kw={}
+ 2011-02-05 16:35:06,294 INFO MoinMoin.auth.log:22 logout: user_obj=<MoinMoin.user.User at 0x92b5d4c name:u'ThomasWaldmann' valid:False> kw={}
+ 2011-02-05 16:35:06,328 INFO MoinMoin.auth.log:22 session: user_obj=None kw={}
+
+Note: there are sensitive informations like usernames and passwords in this
+log output. Make sure you only use this for testing and delete the logs when
+done.
 
 Transmission security
 =====================
