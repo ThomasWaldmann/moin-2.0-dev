@@ -82,7 +82,8 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'parsedatetime>=0.8.6', # parsing dates and times
         'pygments>=1.1.1', # src code / text file highlighting
         'sqlalchemy>=0.5.6', # metadata index and other stuff
-        'Werkzeug==0.7dev', # wsgi toolkit, minimum rev 0.7dev 2010/12
+        #'Werkzeug==0.7dev', # wsgi toolkit, minimum rev 0.7dev 2010/12
+        'Werkzeug==0.6.2', # try to live with this for now, as ==dev or ==0.7dev makes troubles
         #'xappy>=0.5', # xapian python OO interface, not used (yet?)
     ],
     # optional features and their list of requirements
