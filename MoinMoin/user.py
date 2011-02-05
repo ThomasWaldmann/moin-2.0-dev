@@ -9,7 +9,7 @@
     some specific user (name, password, email, bookmark, trail, settings, ...).
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2003-2010 MoinMoin:ThomasWaldmann,
+                2003-2011 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:JohannesBerg,
                 2007 MoinMoin:HeinrichWendel,
                 2008 MoinMoin:ChristopherDenter,
@@ -17,7 +17,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, codecs, base64
+import time, base64
 import copy
 import hashlib
 import hmac
@@ -32,10 +32,7 @@ except ImportError:
 from babel import parse_locale
 
 from flask import current_app as app
-
 from flask import flaskg, session, request, url_for
-
-from werkzeug import escape
 
 from MoinMoin import _, N_
 from MoinMoin import config, wikiutil
@@ -54,7 +51,7 @@ def create_user(username, password, email, openid=None):
     if not isValidName(theuser.name):
         return _("""Invalid user name '%(name)s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""", name=escape(theuser.name))
+space between words. Group page name is not allowed.""", name=theuser.name)
 
     # Name required to be unique. Check if name belong to another user.
     if getUserId(theuser.name):
@@ -64,14 +61,14 @@ space between words. Group page name is not allowed.""", name=escape(theuser.nam
     if pw_checker:
         pw_error = pw_checker(theuser.name, password)
         if pw_error:
-            return _("Password not acceptable: %(msg)s", msg=escape(pw_error))
+            return _("Password not acceptable: %(msg)s", msg=pw_error)
 
     # Encode password
     try:
         theuser.enc_password = encodePassword(password)
     except UnicodeError, err:
         # Should never happen
-        return "Can't encode password: %s" % escape(str(err))
+        return "Can't encode password: %(msg)s" % dict(msg=str(err))
 
     # try to get the email, for new users it is required
     theuser.email = email
