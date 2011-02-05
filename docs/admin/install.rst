@@ -7,7 +7,7 @@ Downloading
 For moin2, there is currently no packaged download available, you have to get
 it from the repository:
 
-Alternative 1 (using Mercurial DVCS): ::
+Alternative 1 (using Mercurial DVCS)::
 
  $ hg clone http://hg.moinmo.in/moin/2.0-dev moin2
 

@@ -119,6 +119,7 @@ All these backends conform to same storage API definition (see
 backend is used).
 
 There is also some related code in the storage package for:
+
 * processing ACLs (access control lists, protecting that items get accessed
   by users that are not allowed to)
 * router (a fstab like mechanism, so one can mount multiple backends at
@@ -144,6 +145,7 @@ input and creates a in-memory `dom tree` representation from it.
 
 This dom tree is then transformed through multiple dom-to-dom converters for
 e.g.:
+
 * link processing
 * include processing
 * smileys
