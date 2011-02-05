@@ -199,9 +199,9 @@ class Converter(ConverterMacro):
             ^
             \s*
             (?P<head_head> =+ )
-            \s*
+            \s+  # for better moin 1.x compatibility, we require 1+ blank(s)
             (?P<head_text> .*? )
-            \s*
+            \s+  # for better moin 1.x compatibility, ...
             (?P=head_head)
             \s*
             $
