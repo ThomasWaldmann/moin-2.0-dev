@@ -21,8 +21,3 @@
     #unzip_attachments_space = 200.0 * 1000 ** 2
     #unzip_attachments_count = 101 # 1 zip file + 100 files contained in it
 
-    # Link spam protection for public wikis (default is disabled!):
-    # TextChas (see HelpOnTextChas, strongly recommended!):
-    #textchas = None # a data structure with site-specific questions/answers
-    #textchas_disabled_group = None # e.g. u'NoTextChasGroup' if you are a member of this group, you don't get textchas
-
