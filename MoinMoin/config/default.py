@@ -143,7 +143,7 @@ class ConfigFunctionality(object):
         if self.secrets is None:  # admin did not setup a real secret
             raise error.ConfigurationError("No secret configured! You need to set secrets = 'somelongsecretstring' in your wiki config.")
 
-        secret_key_names = ['wikiutil/tickets', ]
+        secret_key_names = ['security/ticket', ]
         if self.textchas:
             secret_key_names.append('security/textcha')
 

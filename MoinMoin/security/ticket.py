@@ -40,7 +40,7 @@ def createTicket(tm=None, **kw):
             value = str(value)
         hmac_data.append(value)
 
-    h = hmac.new(app.cfg.secrets['wikiutil/tickets'],
+    h = hmac.new(app.cfg.secrets['security/ticket'],
                  ''.join(hmac_data), digestmod=hashlib.sha1)
     return "%s.%s" % (tm, h.hexdigest())
 
