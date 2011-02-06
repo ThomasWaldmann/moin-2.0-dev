@@ -467,6 +467,76 @@ CompositeDicts to use both ConfigDicts and WikiDicts::
                               WikiDicts(request))
 
 
+Storage
+=======
+MoinMoin supports storage backends for different ways of storing wiki items.
+
+Setup of storage is rather complex and layered, involving:
+
+* a router middleware that dispatches parts of the namespace to the respective
+  backend
+* ACL checking middlewares that make sure nobody accesses something he is not
+  authorized to access
+* Indexing mixin that indexes some data automatically on commit, so items can
+  be selected / retrieved faster.
+* storage backends that really store wiki items somewhere
+
+create_simple_mapping
+---------------------
+This is a helper function to make storage setup easier - it helps you to
+create a simple setup that uses 3 storage backends internally for the content,
+trash and userprofiles parts of the namespace.
+
+E.g. when given: `"fs2:/srv/mywiki/%(nsname)s"` as backend_uri pattern, it'll
+set up:
+
++----------------+-----------------------------+
+| Namespace part | Filesystem path for storage |
++----------------+-----------------------------+
+| /              | /srv/mywiki/content/        |
++----------------+-----------------------------+
+| /Trash/        | /srv/mywiki/trash/          |
++----------------+-----------------------------+
+| /UserProfiles/ | /srv/mywiki/userprofiles/   |
++----------------+-----------------------------+
+
+fs2 backend
+-----------
+Features:
+
+* stores into the filesystem
+* store metadata and data into separate files/directories
+* uses content-hash addressing for data files
+  - this automatically de-duplicates files with same content
+
+Configuration::
+
+    from MoinMoin.storage.backends import create_simple_mapping
+
+    data_dir = '/srv/mywiki/data'
+    namespace_mapping, router_index_uri = create_simple_mapping(
+        backend_uri='fs2:%s/%%(nsname)s' % data_dir,
+        content_acl=dict(before=u'WikiAdmin:read,write,create,destroy',
+                         default=u'All:read,write,create',
+                         after=u'', ),
+        user_profile_acl=dict(before=u'WikiAdmin:read,write,create,destroy',
+                              default=u'',
+                              after=u'', ),
+    )
+
+
+fs19 backend
+------------
+Features:
+
+* reads moin 1.9 files from the filesystem
+* read-only, provided for data migration from moin 1.9.x
+
+.. todo:
+
+   add more backends / more configuration examples
+
+
 Mail configuration
 ==================
 
