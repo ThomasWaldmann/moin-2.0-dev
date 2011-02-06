@@ -634,6 +634,7 @@ class RegistrationForm(TextChaizedForm):
     password1 = String.using(label=L_('Password')).validated_by(Present())
     password2 = String.using(label=L_('Password')).validated_by(Present())
     email = String.using(label=L_('E-Mail')).validated_by(IsEmail())
+    openid = String.using(label=L_('OpenID'), optional=True).validated_by(URLValidator())
     submit = String.using(default=L_('Register'), optional=True)
 
     validators = [ValidRegistration()]
@@ -650,7 +651,7 @@ class OpenIDForm(TextChaizedForm):
     password2 = String.using(label=L_('Password')).validated_by(Present())
 
     email = String.using(label=L_('E-Mail')).validated_by(IsEmail())
-    openid = String.using(label=L_('OpenID')).validated_by(Present())
+    openid = String.using(label=L_('OpenID')).validated_by(URLValidator())
     submit = String.using(optional=True)
 
     validators = [ValidRegistration()]
@@ -735,6 +736,7 @@ def register():
                 msg = user.create_user(username=form['username'].value,
                                        password=form['password1'].value,
                                        email=form['email'].value,
+                                       openid=form['openid'].value,
                                       )
                 if msg:
                     flash(msg, "error")
