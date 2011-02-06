@@ -318,6 +318,60 @@ Password storage
 Moin never stores passwords in cleartext, but always as cryptographic hash
 with random salt (currently ssha256 is the default).
 
+Anti-Spam
+=========
+TextChas
+--------
+
+A TextCHA is a pure text alternative to ''CAPTCHAs''. MoinMoin uses it to
+prevent wiki spamming and it has proven to be very effective.
+
+Features:
+
+* when registering a user or saving an item, ask a random question
+* match the given answer against a regular expression
+* q and a can be configured in the wiki config
+* multi language support: a user gets a textcha in his language or in
+  language_default or in English (depending on availability of questions and
+  answers for the language)
+
+TextCha Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+Tips for configuration:
+
+* have 1 word / 1 number answers
+* ask questions that normal users of your site are likely to be able to answer
+* do not ask too hard questions
+* do not ask "computable" questions, like "1+1" or "2*3"
+* do not ask too common questions
+* do not share your questions with other sites / copy questions from other
+  sites (or spammers might try to adapt to this) 
+* you should at least give textchas for 'en' (or for your language_default, if
+  that is not 'en') as this will be used as fallback if MoinMoin does not find
+  a textcha in the user's language
+
+In your wiki config, do something like this::
+
+    textchas_disabled_group = u"TrustedEditorGroup" # members of this don't get textchas
+    textchas = {
+        'en': { # silly english example textchas (do not use them!)
+                u"Enter the first 9 digits of Pi.": ur"3\.14159265",
+                u"What is the opposite of 'day'?": ur"(night|nite)",
+                # ...
+        },
+        'de': { # some german textchas
+                u"Gib die ersten 9 Stellen von Pi ein.": ur"3\.14159265",
+                u"Was ist das Gegenteil von 'Tag'?": ur"nacht",
+                # ...
+        },
+        # you can add more languages if you like
+    }
+
+
+Note that TrustedEditorGroup from above example can have groups as members.
+
+
 Secrets
 =======
 Moin uses secrets (just use a long random strings, don't reuse any of your
