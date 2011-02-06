@@ -283,6 +283,25 @@ Password storage
 Moin never stores passwords in cleartext, but always as cryptographic hash
 with random salt (currently ssha256 is the default).
 
+Secrets
+=======
+Moin uses secrets (just use a long random strings, don't reuse any of your
+passwords) to encrypt or cryptographically sign some stuff like:
+
+* textchas
+* tickets
+
+Don't use the strings shown below, they are NOT secret as they are part of the
+moin documentation - make up your own secrets::
+
+    secrets = {
+        'security/textcha': 'kjenrfiefbeiaosx5ianxouanamYrnfeorf',
+        'security/ticket': 'asdasdvarebtZertbaoihnownbrrergfqe3r',
+    }
+
+If you don't configure these secrets, moin will detect this and reuse Flask's
+SECRET_KEY for all secrets it needs.
+
 
 Groups and Dicts
 ================
