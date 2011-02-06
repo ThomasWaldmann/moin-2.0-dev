@@ -3,6 +3,7 @@ Server options
 ==============
 
 There are basically 2 things needing configuration:
+
 * the web server (IP address, port, hostname, ...)
 * the MoinMoin wiki engine (how the wiki behaves)
 
