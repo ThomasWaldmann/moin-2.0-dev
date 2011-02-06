@@ -261,6 +261,8 @@ stuff).
 
 Password security
 =================
+Password strength
+-----------------
 As you might know, many users are bad at choosing reasonable passwords and some
 are tempted to use passwords like 123456 everywhere.
 
@@ -272,6 +274,14 @@ If you don't like this and your site has rather low security requirements,
 feel free to DISABLE the checker by::
 
     password_checker = None # no password checking
+
+Note that the builtin password checker only does a few very fundamental
+checks, it e.g. won't forbid using a dictionary word as password.
+
+Password storage
+----------------
+Moin never stores passwords in cleartext, but always as cryptographic hash
+with random salt (currently ssha256 is the default).
 
 
 .. todo::
