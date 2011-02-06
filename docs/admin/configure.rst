@@ -284,6 +284,35 @@ Moin never stores passwords in cleartext, but always as cryptographic hash
 with random salt (currently ssha256 is the default).
 
 
+Mail configuration
+==================
+
+Sending E-Mail
+--------------
+Moin can optionally send E-Mail, e.g. to:
+
+* send out item change notifications.
+* enable users to reset forgotten passwords
+
+You need to configure some stuff before sending E-Mail can be supported::
+
+    # the "from:" address [Unicode]
+    mail_from = u"wiki <wiki@example.org>"
+
+    # a) using a SMTP server, e.g. "mail.provider.com" (None to disable mail)
+    mail_smarthost = "smtp.example.org"
+
+    # if you need to use SMTP AUTH at your mail_smarthost:
+    #mail_login = "smtp_username smtp_password"
+
+    # b) alternatively to using SMTP, you can use the sendmail commandline tool:
+    #mail_sendmail = "/usr/sbin/sendmail -t -i"
+
+.. todo::
+
+   mail_login is a bit ugly mixing username and password into one string
+
+
 .. todo::
 
    describe more moin configuration
