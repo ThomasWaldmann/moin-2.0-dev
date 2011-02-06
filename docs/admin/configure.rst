@@ -284,6 +284,81 @@ Moin never stores passwords in cleartext, but always as cryptographic hash
 with random salt (currently ssha256 is the default).
 
 
+Groups and Dicts
+================
+Moin can get group and dictionary information from some supported backends
+(like the wiki configuration or wiki items).
+
+A group is just a list of unicode names. It can be used for any application,
+one application is defining user groups for usage in ACLs.
+
+A dict is a mapping of unicode keys to unicode values. It can be used for any
+application, currently it is not used by moin itself.
+
+Group backend configuration
+---------------------------
+WikiGroups backend gets groups from wiki items and is used by default::
+
+    def groups(self, request):
+        from MoinMoin.datastruct import WikiGroups
+        return WikiGroups(request)
+
+ConfigGroups uses groups defined in the configuration file::
+
+    def groups(self, request):
+        from MoinMoin.datastruct import ConfigGroups
+        # Groups are defined here.
+        groups = {u'EditorGroup': [u'AdminGroup', u'John', u'JoeDoe', u'Editor1'],
+                  u'AdminGroup': [u'Admin1', u'Admin2', u'John']}
+        return ConfigGroups(request, groups)
+
+CompositeGroups to use both ConfigGroups and WikiGroups backends::
+
+    def groups(self, request):
+        from MoinMoin.datastruct import ConfigGroups, WikiGroups, CompositeGroups
+        groups = {u'EditorGroup': [u'AdminGroup', u'John', u'JoeDoe', u'Editor1'],
+                  u'AdminGroup': [u'Admin1', u'Admin2', u'John']}
+
+        # Here ConfigGroups and WikiGroups backends are used.
+        # Note that order matters! Since ConfigGroups backend is mentioned first
+        # EditorGroup will be retrieved from it, not from WikiGroups.
+        return CompositeGroups(request,
+                               ConfigGroups(request, groups),
+                               WikiGroups(request))
+
+
+Dict backend configuration
+--------------------------
+
+WikiDicts backend gets dicts from wiki items and is used by default::
+
+    def dicts(self, request):
+        from MoinMoin.datastruct import WikiDicts
+        return WikiDicts(request)
+
+ConfigDicts backend uses dicts defined in the configuration file::
+
+    def dicts(self, request):
+        from MoinMoin.datastruct import ConfigDicts
+        dicts = {u'OneDict': {u'first_key': u'first item',
+                              u'second_key': u'second item'},
+                 u'NumbersDict': {u'1': 'One',
+                                  u'2': 'Two'}}
+        return ConfigDicts(request, dicts)
+
+CompositeDicts to use both ConfigDicts and WikiDicts::
+
+    def dicts(self, request):
+        from MoinMoin.datastruct import ConfigDicts, WikiDicts, CompositeDicts
+        dicts = {u'OneDict': {u'first_key': u'first item',
+                              u'second_key': u'second item'},
+                 u'NumbersDict': {u'1': 'One',
+                                  u'2': 'Two'}}
+        return CompositeDicts(request,
+                              ConfigDicts(request, dicts),
+                              WikiDicts(request))
+
+
 Mail configuration
 ==================
 
