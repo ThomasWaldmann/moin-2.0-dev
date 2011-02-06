@@ -483,12 +483,40 @@ Setup of storage is rather complex and layered, involving:
 
 create_simple_mapping
 ---------------------
-This is a helper function to make storage setup easier - it helps you to
-create a simple setup that uses 3 storage backends internally for the content,
-trash and userprofiles parts of the namespace.
+This is a helper function to make storage setup easier - it helps you to:
 
-E.g. when given: `"fs2:/srv/mywiki/%(nsname)s"` as backend_uri pattern, it'll
-set up:
+* create a simple setup that uses 3 storage backends internally for
+  - the content,
+  - trash and
+  - userprofiles parts of the namespace
+* to configure ACLs protecting these parts of the namespace
+* to setup a router middleware that dispatches to these parts of the namespace
+* to setup a indexing mixin that maintains an index
+
+Call it like::
+
+    from MoinMoin.storage.backends import create_simple_mapping
+
+    namespace_mapping, router_index_uri = create_simple_mapping(
+        backend_uri=...,
+        content_acl=dict(before=...,
+                         default=...,
+                         after=..., ),
+        user_profile_acl=dict(before=...,
+                              default=...,
+                              after=..., ),
+    )
+
+The `backend_uri` depends on the kind of storage backend you want to use (see
+below). Usually it is a URL-like string that looks like::
+
+    fs2:/srv/mywiki/%(nsname)s
+    
+`fs2` is the name of the backend, followed by a colon, followed by a backend
+specific part that may include a `%(nsname)s` placeholder which gets replaced
+by 'content', 'trash' or 'userprofiles' for the respective backend.
+
+In this case, the mapping created will look like this:
 
 +----------------+-----------------------------+
 | Namespace part | Filesystem path for storage |
@@ -499,6 +527,37 @@ set up:
 +----------------+-----------------------------+
 | /UserProfiles/ | /srv/mywiki/userprofiles/   |
 +----------------+-----------------------------+
+
+`content_acl` is a dictionary specifying the ACLs for this part of the
+namespace (the normal content). See the docs about ACLs.
+
+acl middleware
+--------------
+Features:
+
+* protects access to lower storage layers by Access Control Lists
+* makes sure there won't be ACL security issues, even if upper layers have bugs
+
+...
+
+router middleware
+-----------------
+Features:
+
+* dispatches storage access to different backends depending on the item name
+* in POSIX terms: something fstab/mount-like
+
+...
+
+indexing mixin
+--------------
+Features:
+
+* maintains an index for important metadata values
+* speeds up looking up / selecting items
+* makes it possible that lower storage layers can be simpler
+
+...
 
 fs2 backend
 -----------
@@ -525,12 +584,96 @@ Configuration::
     )
 
 
+fs backend
+----------
+Features:
+
+* stores into the filesystem
+* stores meta and data of a revision into single file
+
+backend_uri for `create_simple_mapping` looks like::
+
+    fs:/srv/mywiki/data/%(nsname)s
+
+hg backend
+----------
+Features:
+
+* stores data into Mercurial DVCS (hg) - you need to have Mercurial installed
+
+backend_uri for `create_simple_mapping` looks like::
+
+    hg:/srv/mywiki/data/%(nsname)s
+
+sqla backend
+------------
+Features:
+
+* stores data into a (SQL) database
+* uses slqalchemy ORM as database abstraction
+* supports multiple types of databases, like sqlite (default, comes built-into
+  Python), postgresql, mysql and others.
+
+backend_uri for `create_simple_mapping` looks like e.g.::
+
+    sqla:sqlite:////srv/mywiki/data/mywiki_%(nsname)s.db
+    sqla:mysql://myuser:mypassword@localhost/mywiki_%(nsname)s
+    sqla:postgres://myuser:mypassword@localhost/mywiki_%(nsname)s
+
+Please see the sqlalchemy docs about the part after `sqla:`.
+
+In case you use some DBMS (like postgresql or mysql) that does not allow
+creation of new databases on an as-needed basis, you need to create the
+databases 'mywiki_content', 'mywiki_trash', 'mywiki_userprofiles' yourself
+manually.
+
+Grant 'myuser' (his password: 'mypassword') full access to these databases.
+
+.. todo::
+
+   The sqla backend needs more love, more tuning.
+
+fileserver backend
+------------------
+Features:
+
+* exposes a part of the filesystem as read-only wiki items
+  + files will show up as wiki items
+    - with 1 revision
+    - with as much metadata as can be made up from the filesystem metadata
+  + directories will show up as index items, listing links to their contents
+* might be useful together with SMBMount pseudo-authenticator
+
+flatfile backend
+----------------
+Features:
+
+* uses flat files for item storage
+* no revisioning
+* no separate metadata, just some stuff at top of the (text) data
+* thus, only suitable for text items
+
+memory backend
+--------------
+Features:
+
+* keeps everything in RAM
+* if your system or the moin process crashes, you'll lose everything
+* single process only
+* maybe not threadsafe
+* mostly intended for testing
+* definitely not for production use
+
 fs19 backend
 ------------
 Features:
 
-* reads moin 1.9 files from the filesystem
-* read-only, provided for data migration from moin 1.9.x
+* reads moin 1.9 content and users from the filesystem
+* read-only, only provided for data migration from moin 1.9.x
+* not optimized for speed or resource usage
+
+For more details please see the chapter about upgrading from moin 1.9.
+
 
 .. todo:
 
