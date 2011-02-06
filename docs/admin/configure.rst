@@ -1,30 +1,63 @@
-==================
-Wiki Configuration
-==================
-
+========================================
+Introduction into MoinMoin Configuration
+========================================
+Kinds of configuration files
+============================
 To change how moin behaves and looks like, you may customize it by editing
-its configuration file (often called wikiconfig.py).
+its misc. configuration files:
 
-When editing the config, please note that this is Python code, so be careful
-with indentation, only use multiples of 4 spaces to indent, no tabs!
+* Wiki Engine Configuration
 
+  - the file is often called wikiconfig.py, but it can have any name
+  - in that file, there is a Config class - this is the wiki engine's config
+  - this is Python code
+
+* Framework Configuration
+  
+  - this is also located in the same file as the Wiki Engine Configuration
+  - there are some UPPERCASE settings at the bottom - this is the framework's
+    config (for Flask and Flask extensions)
+  - this is Python code
+
+* Logging Configuration
+
+  - optional, if you don't configure this, it'll use builtin defaults
+  - this is a separate file, often called logging.conf or so
+  - .ini-like file format
+
+Do small steps and have backups
+-------------------------------
 It is a good idea to start from one of the sample configs provided with moin
 and only do small careful changes, then trying it, then doing next change.
-If you're not used to Python syntax, backup your last working config so you
-can revert to it in case you make some hard to find typo or other error.
 
-Python powered
-==============
+If you're not used to the config file format, backup your last working config
+so you can revert to it in case you make some hard to find typo or other error.
 
+Editing Python files
+--------------------
+When editing Python files, be careful with indentation, only use multiples of
+4 spaces to indent, no tabs!
+
+Also, be careful with syntax in general, it must be valid python code or else
+it'll crash with some error when trying to load the config. If that happens,
+read the error message, it'll usually tell the line number and what the problem
+is. If you can't fix it easily, just revert to your backup of your last working
+config.
+
+Why Python for configuration?
+-----------------------------
 At first, you might wonder why we use Python code for configuration. It is
 simply because it is powerful and we can make use of that power there.
+Using something else would usually mean much more work when developing new
+stuff and also would be much less flexible and powerful, dumbing down
+everything.
 
-One of Python's powerful features is class inheritance: you can inherit most
-settings from a DefaultConfig class (which is defined in the moin code) and
-just override the settings you want different from the defaults.
+wikiconfig.py Layout
+====================
 
-So, a typical wikiconfig.py works like this::
+A wikiconfig.py looks like this::
 
+ # -*- coding: utf-8 -*-
  from MoinMoin.config.default import DefaultConfig
 
  class Config(DefaultConfig):
@@ -32,12 +65,21 @@ So, a typical wikiconfig.py works like this::
      sometext = u'your value'
      somelist = [1, 2, 3]
 
+ MOINCFG = Config  # Flask only likes uppercase stuff
+ SOMETHING_FLASKY = 'foobar'
+
 Let's go through this line-by-line:
 
-1. this gets the DefaultConfig class from the moin code
+0. this declares the encoding of the config file. make sure your editor uses
+   the same encoding (character set), esp. if you intend to use non-ASCII
+   characters (e.g. non-english stuff).
+1. this gets the DefaultConfig class from the moin code - it has default
+   values for all settings (this will save you work, you only have to define
+   stuff you want different from the default).
 2. an empty line, for better readability
 3. now we define a new class `Config` that inherits most stuff from
-   `DefaultConfig`
+   `DefaultConfig` - this is the wiki engine configuration. If you define some
+   setting within this class, it'll overwrite the setting from DefaultConfig.
 4. with a `#` character you can write a comment into your config. This line (as
    well as all other following lines with Config settings) is indented by 4
    blanks, because Python defines blocks by indentation.
@@ -45,7 +87,15 @@ Let's go through this line-by-line:
    the `u'...'` means that this is a unicode string.
 6. define a Config attribute called `somelist` with value [1, 2, 3] - this is
    a list with the numbers 1, 2 and 3 as list elements.
+7. empty line, for better readability
+8. The special line "MOINCFG = Config" must stay there in exactly this form due to
+   technical reasons.
+9. UPPERCASE stuff at the bottom, outside the Config class - this is framework
+   configuration (usually something for Flask or some Flask extension).
 
+=========================
+Wiki Engine Configuration
+=========================
 
 Authentication
 ==============
@@ -485,10 +535,12 @@ create_simple_mapping
 ---------------------
 This is a helper function to make storage setup easier - it helps you to:
 
-* create a simple setup that uses 3 storage backends internally for
-  - the content,
-  - trash and
-  - userprofiles parts of the namespace
+* create a simple setup that uses 3 storage backends internally for these
+  parts of the namespace:
+
+  - content
+  - trash
+  - userprofiles
 * to configure ACLs protecting these parts of the namespace
 * to setup a router middleware that dispatches to these parts of the namespace
 * to setup a indexing mixin that maintains an index
@@ -565,9 +617,10 @@ Features:
 
 * stores into the filesystem
 * store metadata and data into separate files/directories
-* uses content-hash addressing for data files
+* uses content-hash addressing for revision data files
 
-  - this automatically de-duplicates files with same content
+  - this automatically de-duplicates revision data with same content within the
+    whole backend!
 
 Configuration::
 
@@ -592,7 +645,7 @@ Features:
 * stores into the filesystem
 * stores meta and data of a revision into single file
 
-backend_uri for `create_simple_mapping` looks like::
+`backend_uri` for `create_simple_mapping` looks like::
 
     fs:/srv/mywiki/data/%(nsname)s
 
@@ -602,7 +655,7 @@ Features:
 
 * stores data into Mercurial DVCS (hg) - you need to have Mercurial installed
 
-backend_uri for `create_simple_mapping` looks like::
+`backend_uri` for `create_simple_mapping` looks like::
 
     hg:/srv/mywiki/data/%(nsname)s
 
@@ -619,7 +672,7 @@ Features:
   - mysql
   - and others (see sqlalchemy docs).
 
-backend_uri for `create_simple_mapping` looks like e.g.::
+`backend_uri` for `create_simple_mapping` looks like e.g.::
 
     sqla:sqlite:////srv/mywiki/data/mywiki_%(nsname)s.db
     sqla:mysql://myuser:mypassword@localhost/mywiki_%(nsname)s
@@ -665,11 +718,11 @@ memory backend
 Features:
 
 * keeps everything in RAM
+* definitely not for production use
+* mostly intended for testing
 * if your system or the moin process crashes, you'll lose everything
 * single process only
 * maybe not threadsafe
-* mostly intended for testing
-* definitely not for production use
 
 fs19 backend
 ------------
@@ -719,6 +772,27 @@ You need to configure some stuff before sending E-Mail can be supported::
 .. todo::
 
    describe more moin configuration
+
+
+=======================
+Framework Configuration
+=======================
+
+Some stuff you may want to configure for Flask and its extensions (see
+their docs for details)::
+
+ # for Flask
+ SECRET_KEY = 'you need to change this so it is really secret'
+ DEBUG = False # use True for development only, not for public sites!
+ #TESTING = False
+ #SESSION_COOKIE_NAME = 'session'
+ #PERMANENT_SESSION_LIFETIME = timedelta(days=31)
+ #USE_X_SENDFILE = False
+ #LOGGER_NAME = 'MoinMoin'
+ 
+ # for Flask-Cache:
+ #CACHE_TYPE = 'filesystem'
+ #CACHE_DIR = '/path/to/flask-cache-dir'
 
 
 =====================
