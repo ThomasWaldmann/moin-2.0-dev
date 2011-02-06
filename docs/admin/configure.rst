@@ -537,8 +537,8 @@ Features:
 
 * protects access to lower storage layers by Access Control Lists
 * makes sure there won't be ACL security issues, even if upper layers have bugs
-
-...
+* if you use create_simple_mapping, you just give the ACL strings, the
+  middleware will be set up automatically by moin.
 
 router middleware
 -----------------
@@ -546,8 +546,8 @@ Features:
 
 * dispatches storage access to different backends depending on the item name
 * in POSIX terms: something fstab/mount-like
-
-...
+* if you use create_simple_mapping, the router middleware will be set up
+  automatically by moin.
 
 indexing mixin
 --------------
@@ -556,8 +556,8 @@ Features:
 * maintains an index for important metadata values
 * speeds up looking up / selecting items
 * makes it possible that lower storage layers can be simpler
-
-...
+* if you use create_simple_mapping, the indexing will be set up automatically
+  by moin.
 
 fs2 backend
 -----------
@@ -566,6 +566,7 @@ Features:
 * stores into the filesystem
 * store metadata and data into separate files/directories
 * uses content-hash addressing for data files
+
   - this automatically de-duplicates files with same content
 
 Configuration::
@@ -611,8 +612,12 @@ Features:
 
 * stores data into a (SQL) database
 * uses slqalchemy ORM as database abstraction
-* supports multiple types of databases, like sqlite (default, comes built-into
-  Python), postgresql, mysql and others.
+* supports multiple types of databases, like:
+ 
+  - sqlite (default, comes built-into Python)
+  - postgresql
+  - mysql
+  - and others (see sqlalchemy docs).
 
 backend_uri for `create_simple_mapping` looks like e.g.::
 
@@ -638,7 +643,9 @@ fileserver backend
 Features:
 
 * exposes a part of the filesystem as read-only wiki items
+
   + files will show up as wiki items
+
     - with 1 revision
     - with as much metadata as can be made up from the filesystem metadata
   + directories will show up as index items, listing links to their contents
