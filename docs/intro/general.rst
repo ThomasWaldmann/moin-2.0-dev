@@ -4,8 +4,8 @@ General
 
 About MoinMoin
 --------------
-MoinMoin is a wiki engine written in Python. It is Free Software under GNU GPL
-v2+ (for details please read the :ref:`license`).
+MoinMoin is a wiki engine written in Python. It is Free and Open Source
+Software under GNU GPL v2+ (for details please read the :ref:`license`).
 
 Project homepage: http://moinmo.in/
 
@@ -14,7 +14,7 @@ using a web browser.
 
 You can use it:
 
-* as an easy to maintain web site
+* as an easy maintainable web site
 * as a knowledge base
 * for taking notes
 * for creating documentation
