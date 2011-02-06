@@ -80,8 +80,34 @@ because we use Python, you may even *like* to read and modify moin's code.
 
 Who is using MoinMoin?
 ----------------------
-.. todo::
+This is just showing some more well-known users of MoinMoin and by no means
+a complete list.
 
-   add some well-known moin users
+Internet sites
+~~~~~~~~~~~~~~
+* KernelNewbies, Xen, LinuxWireless, GCC
+* Debian, Ubuntu, CentOS
+* Apache, Gnome, Wine, OpenOffice, Squid, Exim, Dovecot
+* Python, ScyPy, TurboGears
+* Mercurial, Darcs
+* FSFE, FFII, c-base, MusicBrainz
+* linuxwiki.de, jurawiki.de, ooowiki.de and ... moinmo.in :D
 
+For links and more sites, please see: http://moinmo.in/MoinMoinWikis
+
+You may also add missing moin-based sites there.
+
+
+Intranet installations
+~~~~~~~~~~~~~~~~~~~~~~
+We also know that there are a lot of non-public intranet installations of
+MoinMoin in:
+
+* enterprises, companies
+* government and administration
+* scientific research facilities, universities, schools
+* communities
+  
+But, we can't name them here due to legal reasons (we would need their explicit
+allowance to do so).
 
