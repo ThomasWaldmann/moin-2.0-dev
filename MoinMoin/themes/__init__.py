@@ -30,7 +30,7 @@ def get_current_theme():
     if u and u.theme_name is not None:
         theme_name = u.theme_name
     else:
-        theme_name = 'modernized' # XXX
+        theme_name = u'modernized' # XXX
     return get_theme(theme_name)
 
 

@@ -219,6 +219,7 @@ file. It should match the actual charset of the configuration file.
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
+            'timezone_default', 'locale_default',
         )
 
         for name in decode_names:
@@ -501,7 +502,7 @@ options_no_group_name = {
   'user': ('User Preferences related', None, (
     ('user_defaults',
       dict(
-        name='anonymous',
+        name=u'anonymous',
         aliasname=None,
         email=None,
         css_url=None,
@@ -519,7 +520,7 @@ options_no_group_name = {
             # XXX PageCopiedEvent.__name__
             # XXX PageRevertedEvent.__name__
         ],
-        theme_name='modernized',
+        theme_name=u'modernized',
         edit_rows=0,
         locale=None, # None -> do browser language detection, otherwise just use this locale
         timezone=None, # None -> use cfg.timezone_default
@@ -532,8 +533,8 @@ options_no_group_name = {
 
     ('config_check_enabled', False, "if True, check configuration for unknown settings."),
 
-    ('timezone_default', 'UTC', "Default time zone."),
-    ('locale_default', 'en_US', "Default locale for user interface and content."),
+    ('timezone_default', u'UTC', "Default time zone."),
+    ('locale_default', u'en_US', "Default locale for user interface and content."),
 
     ('log_remote_addr', True,
      "if True, log the remote IP address (and maybe hostname)."),

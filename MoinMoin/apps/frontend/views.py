@@ -1048,10 +1048,10 @@ def usersettings(part):
         aliasname = String.using(label=L_('Alias-Name'), optional=True)
         openid = String.using(label=L_('OpenID'), optional=True).validated_by(URLValidator())
         #timezones_keys = sorted(Locale('en').time_zones.keys())
-        timezones_keys = pytz.common_timezones
+        timezones_keys = [unicode(tz) for tz in pytz.common_timezones]
         timezone = Enum.using(label=L_('Timezone')).valued(*timezones_keys)
         supported_locales = [Locale('en')] + app.babel_instance.list_translations()
-        locales_available = sorted([(str(l), l.display_name) for l in supported_locales],
+        locales_available = sorted([(unicode(l), l.display_name) for l in supported_locales],
                                    key=lambda x: x[1])
         locales_keys = [l[0] for l in locales_available]
         locale = Enum.using(label=L_('Locale')).with_properties(labels=dict(locales_available)).valued(*locales_keys)
@@ -1059,7 +1059,7 @@ def usersettings(part):
 
     class UserSettingsUIForm(Form):
         name = 'usersettings_ui'
-        themes_available = sorted([(t.identifier, t.name) for t in get_themes_list()],
+        themes_available = sorted([(unicode(t.identifier), t.name) for t in get_themes_list()],
                                   key=lambda x: x[1])
         themes_keys = [t[0] for t in themes_available]
         theme_name = Enum.using(label=L_('Theme name')).with_properties(labels=dict(themes_available)).valued(*themes_keys)
