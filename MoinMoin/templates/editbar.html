@@ -1,15 +1,16 @@
+{% set exists = storage.has_item(item_name) %}
 <ul class="moin-editbar">
     {% if 'Show' in cfg.edit_bar and 'show' not in cfg.actions_excluded -%}
         <li>
         <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" rel="nofollow"> {{ _('Show') }}</a>
         </li>
     {%- endif %}
-    {% if 'Highlight' in cfg.edit_bar and 'highlight' not in cfg.actions_excluded -%}
+    {% if exists and 'Highlight' in cfg.edit_bar and 'highlight' not in cfg.actions_excluded -%}
         <li>
         <a href="{{ url_for('frontend.highlight_item', item_name=item_name) }}" rel="nofollow"> {{ _('Highlight') }}</a>
         </li>
     {%- endif %}
-    {% if 'Meta' in cfg.edit_bar and 'meta' not in cfg.actions_excluded -%}
+    {% if exists and 'Meta' in cfg.edit_bar and 'meta' not in cfg.actions_excluded -%}
         <li>
         <a href="{{ url_for('frontend.show_item_meta', item_name=item_name) }}" rel="nofollow"> {{ _('Meta') }}</a>
         </li>
@@ -23,12 +24,12 @@
         {% endif %}
         </li>
     {%- endif %}
-    {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded -%}
+    {% if exists and 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded -%}
         <li>
             <a href="{{ url_for('frontend.get_item', item_name=item_name) }}" rel="nofollow">{{ _('Download') }}</a>
         </li>
     {%- endif %}
-    {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded -%}
+    {% if exists and 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded -%}
         <li>
             <a href="{{ url_for('frontend.history', item_name=item_name) }}" rel="nofollow">{{ _('History') }}</a>
         </li>
