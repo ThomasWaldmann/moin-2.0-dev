@@ -110,7 +110,7 @@ class Config(DefaultConfig):
     ]
 
     # The default theme anonymous or new users get
-    theme_default = 'modernized'
+    theme_default = u'modernized'
 
 
     # Language options --------------------------------------------------
