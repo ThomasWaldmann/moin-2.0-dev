@@ -205,12 +205,58 @@ macros to show whatever you want::
     {{ end }}
     {% endmacro %}
 
-CSS customizations
-------------------
+Adding external scripts
+~~~~~~~~~~~~~~~~~~~~~~~
+You can add external scripts like this::
+
+    # (type, href)
+    # type : mimetype of the script ( http://www.w3.org/TR/REC-html40/interact/scripts.html )
+    # url: url of the script file
+    external_scripts =  [('text/javascript', 'http://example.org/cool.js'), ]
 
 .. todo::
 
-   Add more details about what's possible just with CSS
+   Check whether it is worth having this in configuration or if we just want
+   to do it the snippets.html way.
+
+CSS customizations
+------------------
+If you just want some style changes, you maybe can do them by just adding
+some custom css (and overwrite any style you don't like in the base theme).
+
+You can either just add some normal css stylesheet::
+
+    # (media, url, title, alternate_stylesheet)
+    # media : media that style will be presented
+    #         (more information in [[http://www.w3.org/TR/CSS2/media.html]])
+    # url: url of css file
+    # title: title for alternate stylesheet list in your browser
+    # alternate_stylesheet: boolean that indicates whether the stylesheet is alternate
+    # (more information in see http://www.alistapart.com/articles/alternate/ )
+    #
+    # this is just a normal, additional stylesheet:
+    stylesheets =  [('screen', 'http://wiki.example.org/static/company.css', 'Company CSS', False), ]
+
+Or, you could add a choice of stylesheets to choose from (some browsers have
+menu entry for this)::
+
+    # these are "alternate stylesheets":
+    stylesheets =  [('screen', 'http://wiki.example.org/static/red.css', 'Red Style', True),
+                    ('screen', 'http://wiki.example.org/static/green.css', 'Green Style', True), ]
+
+The CSS defined by `stylesheets` will be loaded after theme CSS, but before
+user CSS. A good way to test a stylesheet is to first use it as user CSS before
+you configure it for everybody.
+
+Please note that `stylesheets` will be loaded no matter what theme the wiki
+user has selected, so maybe either only do changes applying to all available
+themes or force all users to use same theme, so that your CSS applies
+correctly.
+
+.. todo::
+
+   Check whether it is worth having this in configuration or if we just want
+   to do it the snippets.html way.
 
 
 Custom Themes
