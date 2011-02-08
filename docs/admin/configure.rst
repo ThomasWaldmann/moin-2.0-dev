@@ -97,6 +97,140 @@ Let's go through this line-by-line:
 Wiki Engine Configuration
 =========================
 
+User Interface Customization
+============================
+
+Using a custom snippets.html template
+-------------------------------------
+Some user interface or html elements that often need customization are
+defined as macros in the template file `snippets.html`.
+
+If you'ld like to customize some stuff, you have to make a copy of the built-in
+`MoinMoin/templates/snippets.html` and configure moin so it will prefer your
+copy instead of the built-in one.
+
+This is done by just giving a list of template directories where moin will
+look first::
+
+    template_dirs = ['path/to/my/templates', ]
+
+To customize something, you usually have to insert your stuff between the
+`{% macro ... %}` and `{% endmacro %}` lines, see below for more details.
+
+Logo
+~~~~
+To replace the default MoinMoin logo with your own logo (which is **strongly**
+recommended, especially if your wiki has private or sensitive information),
+so your users will immediately recognize which wiki site they currently use.
+
+You can even use some simple text (or just nothing) for the logo, it is not
+required to be an image.
+
+Make sure the dimensions of your logo image or text fit into the layout of
+the theme(s) your wiki users are using.
+
+Example code::
+
+    {% macro logo() -%}
+    <img src="http://wiki.example.org/logos/my_logo.png" id="moin-img-logo" alt="Example Logo">
+    {%- endmacro %}
+
+Displaying license information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you need to display something like a license information for your content or
+some other legalese, use this macro to do it::
+
+    {# License information in the footer #}
+    {% macro license_info() -%}
+    All wiki content is licensed under the WTFPL.
+    {%- endmacro %}
+
+Inserting pieces of HTML
+~~~~~~~~~~~~~~~~~~~~~~~~
+At some specific places, you can just add a piece of own html into the
+head or body of the theme's html output::
+
+    {# Additional HTML tags inside <head> #}
+    {% macro user_head() -%}
+    {%- endmacro %}
+
+    {# Additional HTML before #moin-header #}
+    {% macro before_header() -%}
+    {%- endmacro %}
+
+    {# Additional HTML after #moin-header #}
+    {% macro after_header() -%}
+    {%- endmacro %}
+
+    {# Additional HTML before #moin-footer #}
+    {% macro before_footer() -%}
+    {%- endmacro %}
+
+    {# Additional HTML after #moin-footer #}
+    {% macro after_footer() -%}
+    {%- endmacro %}
+
+Credits and Credit Logos
+~~~~~~~~~~~~~~~~~~~~~~~~
+At the bottom, we usually show some text and image links pointing out that
+this wiki runs MoinMoin, uses Python, that MoinMoin is GPL licensed, etc.
+
+If you run a public site using MoinMoin, we would appreciate if you please
+*keep* those links (esp. the "MoinMoin powered" one).
+
+However, if you can't do that for some reason, feel free to modify these
+macros to show whatever you want::
+
+    {# Image links in the footer #}
+    {% macro creditlogos(start='<ul id="moin-creditlogos"><li>'|safe, end='</li></ul>'|safe, sep='</li><li>'|safe) %}
+    {{ start }}
+    {{ creditlogo('http://moinmo.in/', url_for('.static', filename='logos/moinmoin_powered.png'),
+       'MoinMoin powered', 'This site uses the MoinMoin Wiki software.') }}
+    {{ sep }}
+    {{ creditlogo('http://moinmo.in/Python', url_for('.static', filename='logos/python_powered.png'),
+       'Python powered', 'MoinMoin is written in Python.') }}
+    {{ end }}
+    {% endmacro %}
+
+    {# Text links in the footer #}
+    {% macro credits(start='<p id="moin-credits">'|safe, end='</p>'|safe, sep='<span>&bull;</span>'|safe) %}
+    {{ start }}
+    {{ credit('http://moinmo.in/', 'MoinMoin Powered', 'This site uses the MoinMoin Wiki software.') }}
+    {{ sep }}
+    {{ credit('http://moinmo.in/Python', 'Python Powered', 'MoinMoin is written in Python.') }}
+    {{ sep }}
+    {{ credit('http://moinmo.in/GPL', 'GPL licensed', 'MoinMoin is GPL licensed.') }}
+    {{ sep }}
+    {{ credit('http://validator.w3.org/check?uri=referer', 'Valid HTML 5', 'Click here to validate this page.') }}
+    {{ end }}
+    {% endmacro %}
+
+CSS customizations
+------------------
+
+.. todo::
+
+   Add more details about what's possible just with CSS
+
+
+Custom Themes
+-------------
+In case you want to do major changes to how MoinMoin looks like (so just
+changing snippets or CSS is not enough), you could also write your own theme.
+
+Be warned: doing this is a long-term thing, you don't just have to write it,
+but you'll also have to maintain and update it. Thus, we suggest you try
+living with the built-in themes or collaborate with the MoinMoin core and
+other interested developers on the internet.
+
+A few well-made, well-maintained and widespread themes are much better than
+lots of the opposite.
+
+.. todo::
+
+   Add more details about custom themes
+
+
 Authentication
 ==============
 MoinMoin uses a configurable `auth` list of authenticators, so the admin can
