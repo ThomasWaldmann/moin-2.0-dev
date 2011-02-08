@@ -89,6 +89,8 @@ class ConfigFunctionality(object):
 
         if self.user_defaults['timezone'] is None:
             self.user_defaults['timezone'] = self.timezone_default
+        if self.user_defaults['theme_name'] is None:
+            self.user_defaults['theme_name'] = self.theme_default
         # Note: do not assign user_defaults['locale'] = locale_default
         # to give browser language detection a chance.
         try:
@@ -219,7 +221,7 @@ file. It should match the actual charset of the configuration file.
             'item_root', 'item_license', 'mail_from',
             'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
             'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
-            'timezone_default', 'locale_default',
+            'theme_default', 'timezone_default', 'locale_default',
         )
 
         for name in decode_names:
@@ -413,6 +415,8 @@ options_no_group_name = {
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode]'),
 
+    ('theme_default', u'modernized', "Default theme."),
+
     ('stylesheets', [],
      """
      List of tuples (media, csshref, title, alternate_stylesheet)
@@ -521,7 +525,7 @@ options_no_group_name = {
             # XXX PageCopiedEvent.__name__
             # XXX PageRevertedEvent.__name__
         ],
-        theme_name=u'modernized',
+        theme_name=None, # None -> use cfg.theme_default
         edit_rows=0,
         locale=None, # None -> do browser language detection, otherwise just use this locale
         timezone=None, # None -> use cfg.timezone_default
