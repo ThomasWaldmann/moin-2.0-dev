@@ -38,13 +38,30 @@ different and has its own documentation (please read it). Also, in general,
 server administration requires advanced experience with the operating system,
 permissions management, dealing with security, the server software, etc.
 
-What you need to achieve is that your web server talks via WSGI to moin.
-General infos about WSGI can be found on http://wsgi.org/.
+What you need to achieve is that your web server can talk to a WSGI
+application. General infos about WSGI can be found on http://wsgi.org/.
 
 For example, for Apache2 there is mod_wsgi, which is a very good choice and
-has nice own documentation. See also the commented moin.wsgi file we provide.
+has nice own documentation.
 
 If your web server can't directly talk via WSGI to moin, you maybe want to use
 some middleware like flup translating fastcgi, ajp, scgi, cgi to WSGI. Flup
 also has its own docs. Avoid using cgi, if possible, it is SLOW.
+
+The first thing you should get working is the `test.wsgi` we provide. Make
+sure it works with your server setup (it will emit some infos about your
+server / setup).
+
+If `test.wsgi` does not work, you are *not* having a moin problem,
+but a problem with your web server (or flup middleware, in case
+you use it) or permissions issues or some generic server administration
+problem. Please read the appropriate documentation then and after `test.wsgi`
+works, please return to here.
+
+OK, so if you got `test.wsgi` working, you'll easily get `moin.wsgi` working,
+too. Please read its contents, there might be something you need to adapt to
+your setup (e.g. pathes to fix).
+
+If it starts doing something else than Serve Error 500, please proceed to
+MoinMoin configuration.
 
