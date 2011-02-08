@@ -48,6 +48,8 @@ If your web server can't directly talk via WSGI to moin, you maybe want to use
 some middleware like flup translating fastcgi, ajp, scgi, cgi to WSGI. Flup
 also has its own docs. Avoid using cgi, if possible, it is SLOW.
 
+test.wsgi first
+---------------
 The first thing you should get working is the `test.wsgi` we provide. Make
 sure it works with your server setup (it will emit some infos about your
 server / setup).
@@ -58,10 +60,23 @@ you use it) or permissions issues or some generic server administration
 problem. Please read the appropriate documentation then and after `test.wsgi`
 works, please return to here.
 
-OK, so if you got `test.wsgi` working, you'll easily get `moin.wsgi` working,
-too. Please read its contents, there might be something you need to adapt to
-your setup (e.g. pathes to fix).
+moin scripts next
+-----------------
+OK, so if you got `test.wsgi` working, you'll easily get the moin WSGI app
+working, too. Please read the contents of the moin script you want to use,
+there might be something you need to adapt to your setup (e.g. pathes to fix).
 
-If it starts doing something else than Serve Error 500, please proceed to
+For Apache2 + mod_wsgi, use `moin.wsgi` (you can also use it as a starting
+point for other servers maybe).
+
+If you want to use the `flup` approach, start from `moin.fcgi`.
+
+.. todo:
+
+   Likely moin.fcgi needs testing / fixing.
+
+If it starts doing something else than Server Error 500, please proceed to
 MoinMoin configuration.
+
+Otherwise, read your web server error log files.
 
