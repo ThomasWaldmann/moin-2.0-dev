@@ -733,7 +733,8 @@ Call it like::
         backend_uri=...,
         content_acl=dict(before=...,
                          default=...,
-                         after=..., ),
+                         after=...,
+                         hierarchic=..., ),
         user_profile_acl=dict(before=...,
                               default=...,
                               after=..., ),
@@ -769,7 +770,7 @@ Features:
 
 * protects access to lower storage layers by Access Control Lists
 * makes sure there won't be ACL security issues, even if upper layers have bugs
-* if you use create_simple_mapping, you just give the ACL strings, the
+* if you use create_simple_mapping, you just give the ACL parameters, the
   middleware will be set up automatically by moin.
 
 router middleware
