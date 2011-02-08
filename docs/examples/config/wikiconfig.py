@@ -54,10 +54,6 @@ class Config(DefaultConfig):
     # Site name, used by default for wiki name-logo [Unicode]
     sitename = u'Untitled Wiki'
 
-    # Wiki logo. You can use an image, text or both. [Unicode]
-    # For no logo or text, use '' - the default is to show the sitename.
-    logo = u'<img src="/static/common/moinmoin.png" alt="MoinMoin Logo">'
-
     # name of entry page / front page [Unicode], choose one of those:
 
     # a) if most wiki content is in a single language
