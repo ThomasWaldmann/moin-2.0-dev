@@ -505,6 +505,7 @@ options_no_group_name = {
         name=u'anonymous',
         aliasname=None,
         email=None,
+        openid=None,
         css_url=None,
         mailto_author=False,
         edit_on_doubleclick=True,
