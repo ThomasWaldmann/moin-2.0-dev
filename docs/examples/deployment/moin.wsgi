@@ -4,14 +4,14 @@
 
     To use this, add those statements to your Apache's VirtualHost definition:
     
-    # you will invoke your moin wiki at the root url, like http://servername/FrontPage:
+    # you will invoke your moin wiki at the root url, like http://servername/ItemName:
     WSGIScriptAlias / /some/path/moin.wsgi
 
     # create some wsgi daemons - use someuser.somegroup same as your data_dir:
-    WSGIDaemonProcess daemonname user=someuser group=somegroup processes=5 threads=10 maximum-requests=1000 umask=0007
+    WSGIDaemonProcess moin-wsgi user=someuser group=somegroup processes=5 threads=10 maximum-requests=1000 umask=0007
 
     # use the daemons we defined above to process requests!
-    WSGIProcessGroup daemonname
+    WSGIProcessGroup moin-wsgi
 
     @copyright: 2010 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.

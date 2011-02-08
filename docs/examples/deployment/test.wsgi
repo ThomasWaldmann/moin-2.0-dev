@@ -14,9 +14,20 @@ to what you see at the end of this script to use the application from that
 environment. For the special case of apache2/mod_wsgi, it shoud be possible
 to directly use this file.
 
-If you start this script from the commandline either with python2.5 or with
-and older python + wsgiref module installed, it will serve the content on
-http://localhost:8000/ - this is mainly for debugging THIS script.
+If you start this script from the commandline, it will serve the content on
+http://localhost:8080/ - this is mainly for debugging THIS script.
+    
+If you use this script with Apache2 and mod-wsgi, add those statements to your
+Apache's VirtualHost definition:
+    
+    # you will invoke this test script at the root url, like http://servername/:
+    WSGIScriptAlias / /some/path/test.wsgi
+
+    # create some wsgi daemons - use someuser.somegroup same as your data_dir:
+    WSGIDaemonProcess test-wsgi user=someuser group=somegroup processes=5 threads=10 maximum-requests=1000 umask=0007
+
+    # use the daemons we defined above to process requests!
+    WSGIProcessGroup test-wsgi
 
 @copyright: 2008 by MoinMoin:ThomasWaldmann
 @license: Python License, see LICENSE.Python for details.
@@ -78,8 +89,8 @@ if __name__ == '__main__':
     try:
         # create a simple WSGI server and run the application
         from wsgiref import simple_server
-        print "Running test application - point your browser at http://localhost:8000/ ..."
-        httpd = simple_server.WSGIServer(('', 8000), simple_server.WSGIRequestHandler)
+        print "Running test application - point your browser at http://localhost:8080/ ..."
+        httpd = simple_server.WSGIServer(('', 8080), simple_server.WSGIRequestHandler)
         httpd.set_app(application)
         httpd.serve_forever()
     except ImportError:
