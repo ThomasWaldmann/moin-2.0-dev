@@ -20,14 +20,14 @@ class ConverterMacro(object):
         return moin_page.line_break()
 
     def _FootNote_repl(self, args, text, context_block):
-        if args is None:
+        if not args:
             # TODO: footnote placing
             return
 
         text = self.macro_text(' '.join(args.positional))
-
         elem_body = moin_page.note_body(children=text)
         attrib = {moin_page.note_class: 'footnote'}
+
         elem = moin_page.note(attrib=attrib, children=[elem_body])
 
         if context_block:

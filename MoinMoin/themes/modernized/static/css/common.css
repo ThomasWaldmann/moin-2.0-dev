@@ -51,10 +51,6 @@ ins { background-color: #FFF; text-decoration: underline; }
 .moin-big { font-size: 1.17em; }
 .moin-small { font-size: .83em; }
 .moin-integer { text-align: right; padding-right: 1em; }
-/* replaced by <ins> and <del> respectively
-.u { text-decoration: underline; }
-.strike { text-decoration: line-through; }
-*/
 
 /* headings - from: http: //www.w3.org/TR/CSS2/sample.html */
 h1 { font-size: 2em; margin: .67em 0; }
@@ -96,13 +92,13 @@ dd p { margin: 0.25em 0; }
 dd + dd p { margin-top: .67em; }
 
 /* horizontal rule ---- and custom rules ----- to ---------- */
-hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .5em 0; }
-.hr1 { height: 2px; }
-.hr2 { height: 3px; }
-.hr3 { height: 4px; }
-.hr4 { height: 5px; }
-.hr5 { height: 6px; }
-.hr6 { height: 7px; }
+hr { height: 1px; background-color: #9C9C9C; border: 0; margin: .9em 0; }
+.moin-hr1 { height: 2px; }
+.moin-hr2 { height: 3px; }
+.moin-hr3 { height: 5px; }
+.moin-hr4 { height: 7px; }
+.moin-hr5 { height: 9px; }
+.moin-hr6 { height: 12px; }
 
 /* eye catchers */
 .warning,
@@ -123,35 +119,36 @@ th, td { padding: 0.25em 0.5em 0.25em 0.5em; border: 1pt solid #ADB9CC; vertical
 td p { margin: 0; padding: 0; }
 
 /* TableOfContents macro */
-div.table-of-contents { 
-background: -moz-linear-gradient(center top , #F9FFFF 1%, #EFEFFF 101%) repeat scroll 0 0 transparent;
-border: 1px solid #BBBBBB;
-color: black;
-display: inline-table;
-font-size: 80%;
-margin: 0.5em 0 0.5em 1em;
-max-width: 50%;
-padding: 0.5em 0.75em 0.5em 0.5em;
-text-align: left;
-box-shadow: 3px 3px 11px -7px;
-/* support for firefox 3.5/3.6 and safari */
--moz-box-shadow: 3px 3px 11px -7px;
--webkit-box-shadow: 3px 3px 11px -7px;
+div.moin-table-of-contents { 
+    background: -moz-linear-gradient(center top , #F9FFFF 1%, #EFEFFF 101%) repeat scroll 0 0 transparent;
+    border: 1px solid #BBBBBB;
+    color: black;
+    display: inline-table;
+    font-size: 80%;
+    margin: 0.5em 0 0.5em 1em;
+    max-width: 50%;
+    padding: 0.5em 0.75em 0.5em 0.5em;
+    text-align: left;
+    box-shadow: 3px 3px 11px -7px;
+    /* support for firefox 3.5/3.6 and safari */
+    -moz-box-shadow: 3px 3px 11px -7px;
+    -webkit-box-shadow: 3px 3px 11px -7px;
 }
-div.table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
-div.table-of-contents ul { margin: 0; list-style: none; }
-div.table-of-contents li { margin: 0; padding: 0; }
-div.table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
+.moin-table-of-contents ol { margin: 0; padding: 0 0 0 2em; }
+.moin-table-of-contents ul { margin: 0; list-style: none; }
+.moin-table-of-contents li { margin: 0; padding: 0; }
+.moin-table-of-contents-heading { font-weight: bold; padding: 0; margin: 0 0 0.5em 0; 
             letter-spacing: 0.075em; }
-.showhide { margin-left: 10px; }
+.moin-showhide { margin-left: 10px; }
 
 /* Navigation macro */
 table.navigation { background: #FFF; float: right; margin: 2px; }
 
 /* footnotes */
-.footnotes div { width: 5em; border-top: 1pt solid gray; }
-.footnotes ol { padding: 0 2em; margin: 0 0 1em; }
-.footnotes li { }
+.moin-footnote a,
+.moin-footnotes sup a {font-size: .87em; }
+.moin-footnotes {border-top: 1pt solid gray; margin: 0 1em; }
+.moin-footnotes p {margin: 0 0 .33em 1em; font-size: .92em; }
 
 /* revision navigation */
 #moin-rev-navigation { list-style: none; text-align: center; }
@@ -160,21 +157,6 @@ table.navigation { background: #FFF; float: right; margin: 2px; }
 .moin-rev-navigation-current { font-size: 1.5em; text-transform: uppercase; }
 .moin-rev-navigation-older,
 .moin-rev-navigation-newer { padding: 0 20px 0 20px; }
-
-/* wiki parser  */
-.comment { color: #555; background-color: #DDF; }
-.red { background-color: #FCC; }
-.green { background-color: #CFC; }
-.blue { background-color: #CCF; }
-.yellow { background-color: #FFF29F; }
-.orange { background-color: #FFD59B; }
-.solid { border: 2px solid #000; padding: 2px; }
-.dashed { border: 2px dashed #000; padding: 2px; }
-.dotted { border: 2px dotted #000; padding: 2px; }
-.left { text-align: left; }
-.center { text-align: center; }
-.right { text-align: right; }
-.justify { text-align: justify; }
 
 /* user settings pages -- also login, lost password, and register pages */
 .moin-form dd { margin-bottom: 1em; }
@@ -298,7 +280,22 @@ TABLE.tip { color: black; background-color: #F88; font-size: small; font-weight:
 TH.tip { background-color: #F44; font-weight: bold; text-align: center; }
 TD.tip { text-align: left; }
 
-/* admonitions */
+/* wiki parser  - no moin- prefix added here, these classes are used within pages: {{{#!wiki solid  */
+.comment { color: #555; background-color: #DDF; }
+.red { background-color: #FCC; }
+.green { background-color: #CFC; }
+.blue { background-color: #CCF; }
+.yellow { background-color: #FFF29F; }
+.orange { background-color: #FFD59B; }
+.solid { border: 2px solid #000; padding: 2px; }
+.dashed { border: 2px dashed #888; padding: 2px; }
+.dotted { border: 2px dotted #000; padding: 2px; }
+.left { text-align: left; }
+.center { text-align: center; }
+.right { text-align: right; }
+.justify { text-align: justify; }
+
+/* admonitions  - no moin- prefix added  here, these classes are used within pages: {{{#!wiki caution */
 #moin-content div.caution,
 #moin-content div.important,
 #moin-content div.note,
@@ -311,13 +308,11 @@ TD.tip { text-align: left; }
 #moin-content div.note p,
 #moin-content div.tip p,
 #moin-content div.warning p { margin-top: 8px; /*to align text with big graphic*/ }
-#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
-#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
-#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
 #moin-content div.caution { background-image: url("../img/admonitions/caution.png"); }
+#moin-content div.important { background-image: url("../img/admonitions/important.png"); }
+#moin-content div.note { background-image: url("../img/admonitions/note.png"); }
+#moin-content div.tip { background-image: url("../img/admonitions/tip.png"); }
 #moin-content div.warning { background-image: url("../img/admonitions/warning.png"); }
-/* remove borders of fieldset in copy/rename/delete/revert/modify actions */
-#moin-content form fieldset { border: none; padding: 0; }
 
 /* smileys -- <span class="moin-text-icon moin-smile">:-)</span> */
 .moin-text-icon { font-size: 0; color: transparent; }
@@ -347,23 +342,23 @@ TD.tip { text-align: left; }
 .moin-tired:before { content: url('../img/smileys/tired.png'); }
 .moin-tongue:before { content: url('../img/smileys/tongue.png'); }
 
-/* icons for external links */
-a.www:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.http:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.https:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
-a.file:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
-a.ftp:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
-a.nntp:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
-a.news:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
-a.telnet:before,
-a.ssh:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
-a.irc:before,
-a.ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
-a.mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
-a.attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
+/* icons for external links -- www, mailto, attachment, interwiki, and action are not working yet */
+a.moin-www:before,
+a.moin-http:before,
+a.moin-https:before { content: url(../img/moin-www.png); margin: 0 0.2em; }
+a.moin-file:before,
+a.moin-ftp:before { content: url(../img/moin-ftp.png); margin: 0 0.2em; }
+a.moin-nntp:before,
+a.moin-news:before { content: url(../img/moin-news.png); margin: 0 0.2em; }
+a.moin-telnet:before,
+a.moin-ssh:before,
+a.moin-irc:before,
+a.moin-ircs:before { content: url(../img/moin-telnet.png); margin: 0 0.2em; }
+a.moin-mailto:before { content: url(../img/moin-email.png); margin: 0 0.2em; }
+a.moin-attachment:before { content: url(../img/moin-attach.png); margin: 0 0.2em; }
 a.moin-badinterwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
-a.interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
-a.action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
+a.moin-interwiki:before { content: url(../img/moin-inter.png); margin: 0 0.2em; }
+a.moin-action:before { content: url(../img/moin-action.png); margin: 0 0.2em; }
 
 /* Flash messages used by Flask */
 .moin-flash { margin: 0; padding: 6px 6px 6px 38px; background-color: #f0f2f5;

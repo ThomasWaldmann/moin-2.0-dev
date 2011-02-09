@@ -138,4 +138,14 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_separator(self):
+        data = [
+            (u"<page:page><page:body><page:p>A</page:p><page:separator /></page:body></page:page>", "A\n----\n"),
+            (u"<page:page><page:body><page:p>A</page:p><page:separator page:class=\"moin-hr1\"/></page:body></page:page>", "A\n----\n"),
+            (u"<page:page><page:body><page:p>A</page:p><page:separator page:class=\"moin-hr3\"/></page:body></page:page>", "A\n------\n"),
+            (u"<page:page><page:body><page:p>A</page:p><page:separator page:class=\"moin-hr6\"/></page:body></page:page>", "A\n---------\n"),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
 coverage_modules = ['MoinMoin.converter.moinwiki_out']

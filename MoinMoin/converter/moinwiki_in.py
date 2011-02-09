@@ -24,7 +24,7 @@ from MoinMoin.util.tree import html, moin_page, xlink, xinclude
 from ._args import Arguments
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
-
+from MoinMoin import _
 
 class _Iter(object):
     """
@@ -114,11 +114,21 @@ class _Stack(object):
 class _TableArguments(object):
     rules = r'''
     (?:
-        -
-        (?P<number_columns_spanned> \d+)
+        - (?P<number_columns_spanned> \d+)
         |
-        \|
-        (?P<number_rows_spanned> \d+)
+        \| (?P<number_rows_spanned> \d+)
+        |
+        (?P<width_percent> \d+\%)
+        |
+        v (?P<vertical_align_bottom> )
+        |
+        \^ (?P<vertical_align_top> )
+        |
+        \( (?P<text_align_left> )
+        |
+        : (?P<text_align_center> )
+        |
+        \) (?P<text_align_right> )
         |
         (?P<arg>
             (?:
@@ -137,6 +147,10 @@ class _TableArguments(object):
                 (?<!\\)'
             )
         )
+        |
+        \# (?P<hex_color_code> ([A-Fa-f0-9]){3}(([A-Fa-f0-9]){3})?)
+        |
+        (?P<syntax_error> \S+?)
     )
     '''
     _re = re.compile(rules, re.X)
@@ -149,7 +163,6 @@ class _TableArguments(object):
     def arg_repl(self, args, arg, key=None, value_u=None, value_q1=None, value_q2=None):
         key = self.map_keys.get(key, key)
         value = (value_u or value_q1 or value_q2).decode('unicode-escape')
-
         if key:
             args.keyword[key] = value
         else:
@@ -160,6 +173,34 @@ class _TableArguments(object):
 
     def number_rows_spanned_repl(self, args, number_rows_spanned):
         args.keyword['number-rows-spanned'] = int(number_rows_spanned)
+        
+        
+    def add_attr_to_style(self, args, attr):
+        args.keyword['style'] = args.keyword.get('style', "") + attr + " "
+        
+    def hex_color_code_repl(self, args, hex_color_code):
+        self.add_attr_to_style(args, "background-color: #%s;" % hex_color_code)
+        
+    def vertical_align_top_repl(self, args, vertical_align_top):
+        self.add_attr_to_style(args, "vertical-align: top;")
+        
+    def vertical_align_bottom_repl(self, args, vertical_align_bottom):
+        self.add_attr_to_style(args, "vertical-align: bottom;")
+        
+    def text_align_left_repl(self, args, text_align_left):
+        self.add_attr_to_style(args, "text-align: left;")
+        
+    def text_align_center_repl(self, args, text_align_center):
+        self.add_attr_to_style(args, "text-align: center;")
+        
+    def text_align_right_repl(self, args, text_align_right):
+        self.add_attr_to_style(args, "text-align: right;")
+        
+    def width_percent_repl(self, args, width_percent):
+        self.add_attr_to_style(args, "width: %s;" % width_percent)
+        
+    def syntax_error_repl(self, args, syntax_error):
+        args.keyword['error'] = syntax_error
 
     def __call__(self, input):
         args = Arguments()
@@ -335,9 +376,13 @@ class Converter(ConverterMacro):
 
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
-    def block_separator_repl(self, _iter_content, stack, separator):
+    def block_separator_repl(self, _iter_content, stack, separator, hr_class=u'moin-hr%s'):
         stack.clear()
-        stack.top_append(moin_page.separator())
+        hr_height = min((len(separator) - 3), 6)
+        hr_height = max(hr_height, 1)
+        attrib = {moin_page('class'): hr_class % hr_height}
+        elem = moin_page.separator(attrib=attrib)
+        stack.top_append(elem)
 
     block_table = r"""
         ^
@@ -891,6 +936,16 @@ class Converter(ConverterMacro):
     """
 
     def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
+
+        def add_attr_to_style(attrib, attr):
+            attr = attr.strip().decode('unicode-escape')
+            if not attr.endswith(';'):
+                attr = attr + ';'
+            if attrib.get(moin_page('style'), ""):
+                attrib[moin_page('style')] =  attrib.get(moin_page('style'), "") + " " + attr
+            else:
+                attrib[moin_page('style')] =  attr
+        
         element = moin_page.table_cell()
         stack.push(element)
 
@@ -899,18 +954,58 @@ class Converter(ConverterMacro):
 
         if cell_args:
             cell_args = _TableArguments()(cell_args)
-
-            for key, value in cell_args.keyword.iteritems():
-                attrib = element.attrib
-                if key.startswith('table'):
-                    key = key[5:]
-                    attrib = table.attrib
-                elif key.startswith('row'):
-                    key = key[3:]
-                    attrib = row.attrib
-
-                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
-                    attrib[moin_page(key)] = value
+            no_errors = True
+            
+            # any positional parameters will be errors;  retrieved as (key=None, value="some-positional-param"); 
+            for key, value in cell_args.items():
+                if key == 'bgcolor':
+                    if no_errors:
+                        # avoid overriding error highlighting
+                        add_attr_to_style(element.attrib, 'background-color: %s;' % value)
+                elif key == 'rowbgcolor':
+                    add_attr_to_style(row.attrib, 'background-color: %s;' % value)
+                elif key == 'tablebgcolor':
+                    add_attr_to_style(table.attrib, 'background-color: %s;' % value)
+                elif key == 'width':
+                   add_attr_to_style(element.attrib, 'width: %s' % value)
+                elif key == 'tablewidth':
+                    add_attr_to_style(table.attrib, 'width: %s;' % value)
+                elif key == 'tableclass':
+                    table.attrib[moin_page('class')] = value
+                elif key == 'rowclass':
+                    row.attrib[moin_page('class')] = value
+                elif key == 'class':
+                    element.attrib[moin_page('class')] = value
+                elif key == 'tablestyle':
+                    add_attr_to_style(table.attrib, value)
+                elif key == 'rowstyle':
+                    add_attr_to_style(row.attrib, value)
+                elif key == 'style':
+                    if no_errors:
+                        add_attr_to_style(element.attrib, value)
+                elif key == 'tableid':
+                    table.attrib[moin_page('id')] = value
+                elif key == 'rowid':
+                    row.attrib[moin_page('id')] = value
+                elif key == 'id':
+                    element.attrib[moin_page('id')] = value
+                elif key == 'number-columns-spanned':
+                    element.attrib[moin_page(key)] = value
+                elif key == 'number-rows-spanned':
+                    element.attrib[moin_page(key)] = value
+                else:
+                    if key == 'error' or key == None:
+                        error = value
+                    else:
+                        error = key
+                    cell_markup = cell.split('>')[0]
+                    cell_markup = cell_markup.split('<')[1]
+                    msg1 = _('Error:')
+                    msg2 = _('is invalid within')
+                    cell_text = '[ %s "%s" %s <%s>&nbsp;]<<BR>>%s' % (msg1, error, msg2, cell_markup, cell_text)
+                    if no_errors:
+                        add_attr_to_style(element.attrib, 'background-color: pink; color: black;')
+                    no_errors = False
 
         self.parse_inline(cell_text, stack, self.inline_re)
 
