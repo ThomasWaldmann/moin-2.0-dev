@@ -44,7 +44,7 @@ class TestConverter(object):
             (u'{{http://moinmo.in/|MoinMoin}}',
                 '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>', None, 'unknown'),
             (u'----',
-                '<page><body><separator /></body></page>'),
+                '<page><body><separator class="moin-hr1" /></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -199,7 +199,27 @@ class TestConverter(object):
             (u'||<tableclass="table" rowclass="row" class="cell">Cell||\n',
                 '<page><body><table class="table"><table-body><table-row class="row"><table-cell class="cell">Cell</table-cell></table-row></table-body></table></body></page>'),
             (u'||<tablestyle="table" rowstyle="row" style="cell">Cell||\n',
-                '<page><body><table style="table"><table-body><table-row style="row"><table-cell style="cell">Cell</table-cell></table-row></table-body></table></body></page>'),
+                '<page><body><table style="table;"><table-body><table-row style="row;"><table-cell style="cell;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<tablestyle="background-color: yellow" rowstyle="background-color: red" tablewidth="99%" #0000FF>Cell||\n',
+                '<page><body><table style="background-color: yellow; width: 99%;"><table-body><table-row style="background-color: red;"><table-cell style="background-color: #0000FF;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u"||'''Cell'''||\n",
+                '<page><body><table><table-body><table-row><table-cell><strong>Cell</strong></table-cell></table-row></table-body></table></body></page>'),
+            (u'||<^>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="vertical-align: top;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<v>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="vertical-align: bottom;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<(>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="text-align: left;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<:>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="text-align: center;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<)>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="text-align: right;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<99%>Cell||\n',
+                '<page><body><table><table-body><table-row><table-cell style="width: 99%;">Cell</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<X>Cell||\n',
+                # u'\xa0' below is equal to &nbsp;
+                '<page><body><table><table-body><table-row><table-cell style="background-color: pink; color: black;">[ Error: "X" is invalid within &lt;X&gt;' + 
+                u'\xa0' + ']<line-break />Cell</table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
