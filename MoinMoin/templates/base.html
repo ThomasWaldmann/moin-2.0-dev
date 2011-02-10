@@ -1,6 +1,6 @@
 <!DOCTYPE html>{# this is html5, xmlish variant #}
 {%- import "snippets.html" as snippets with context %}
-{%- set user_head = snippets.user_head() %}
+{%- set head = snippets.head() %}
 <html>
 <head>
 {% block head %}
@@ -18,12 +18,7 @@
     {% endfor %}
     {% endblock %}
 
-    {% block head_misc %}
-    {{ user_head }}
-    {%- if html_head -%}
-        {{ html_head }}
-    {%- endif %}
-    {% endblock %}
+    {{ head }}
 
     {% block head_title %}
     <title>

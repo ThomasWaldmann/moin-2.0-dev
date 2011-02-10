@@ -151,7 +151,7 @@ At some specific places, you can just add a piece of own html into the
 head or body of the theme's html output::
 
     {# Additional HTML tags inside <head> #}
-    {% macro user_head() -%}
+    {% macro head() -%}
     {%- endmacro %}
 
     {# Additional HTML before #moin-header #}
