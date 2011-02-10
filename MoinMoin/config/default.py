@@ -424,12 +424,6 @@ options_no_group_name = {
      Usage: [('screen', 'http://moinmo.in/static/alternate.css', 'Moin Other Style', True)]
      """),
 
-     ('external_scripts', [],
-      """
-      List of tuples (type, href) to insert after Moin javascript.
-      Usage: [('text/javascript', 'http://moinmo.in/static/script.js')]
-      """),
-
     ('serve_files', {},
      """
      Dictionary of name: filesystem_path for static file resources to serve

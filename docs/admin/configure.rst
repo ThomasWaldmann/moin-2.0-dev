@@ -209,15 +209,10 @@ Adding external scripts
 ~~~~~~~~~~~~~~~~~~~~~~~
 You can add external scripts like this::
 
-    # (type, href)
-    # type : mimetype of the script ( http://www.w3.org/TR/REC-html40/interact/scripts.html )
-    # url: url of the script file
-    external_scripts =  [('text/javascript', 'http://example.org/cool.js'), ]
-
-.. todo::
-
-   Check whether it is worth having this in configuration or if we just want
-   to do it the snippets.html way.
+    {# Additional Javascript #}
+    {% macro scripts() -%}
+    <script type="text/javascript" src="http://example.org/cool.js"></script>
+    {% endmacro %}
 
 CSS customizations
 ------------------

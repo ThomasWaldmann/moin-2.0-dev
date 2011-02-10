@@ -1,6 +1,7 @@
 <!DOCTYPE html>{# this is html5, xmlish variant #}
 {%- import "snippets.html" as snippets with context %}
 {%- set head = snippets.head() %}
+{%- set scripts = snippets.scripts() %}
 <html>
 <head>
 {% block head %}
@@ -52,9 +53,7 @@
     <script src="{{ url_for('serve.files', name='jquery', filename='jquery.min.js') }}"></script>
     <script src="{{ url_for('serve.files', name='svgweb', filename='svg.js') }}"></script>
     <script src="{{ url_for('.static', filename='js/common.js') }}"></script>
-    {% for type, src in cfg.external_scripts -%}
-        <script type="{{ type }}" src="{{ src }}"></script>
-    {% endfor %}
+    {{ scripts }}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
