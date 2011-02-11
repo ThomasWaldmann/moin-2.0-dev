@@ -205,53 +205,42 @@ macros to show whatever you want::
     {{ end }}
     {% endmacro %}
 
-Adding external scripts
-~~~~~~~~~~~~~~~~~~~~~~~
-You can add external scripts like this::
+Adding scripts
+~~~~~~~~~~~~~~
+You can add scripts like this::
 
     {# Additional Javascript #}
     {% macro scripts() -%}
     <script type="text/javascript" src="http://example.org/cool.js"></script>
     {% endmacro %}
 
-CSS customizations
-------------------
+Adding CSS
+~~~~~~~~~~
 If you just want some style changes, you maybe can do them by just adding
-some custom css (and overwrite any style you don't like in the base theme).
+some custom css (and overwrite any style you don't like in the base theme)::
 
-You can either just add some normal css stylesheet::
+    {# Additional Stylesheets (after theme css, before user css #}
+    {% macro stylesheets() -%}
+        <link media="screen" href="http://wiki.example.org/static/company.css" title="Company CSS" rel="stylesheet" />
+        <link media="screen" href="http://wiki.example.org/static/red.css" title="Red Style" rel="alternate stylesheet" />
+        <link media="screen" href="http://wiki.example.org/static/green.css" title="Green Style" rel="alternate stylesheet" />
+    {%- endmacro %}
 
-    # (media, url, title, alternate_stylesheet)
-    # media : media that style will be presented
-    #         (more information in [[http://www.w3.org/TR/CSS2/media.html]])
-    # url: url of css file
-    # title: title for alternate stylesheet list in your browser
-    # alternate_stylesheet: boolean that indicates whether the stylesheet is alternate
-    # (more information in see http://www.alistapart.com/articles/alternate/ )
-    #
-    # this is just a normal, additional stylesheet:
-    stylesheets =  [('screen', 'http://wiki.example.org/static/company.css', 'Company CSS', False), ]
+You can either just add some normal css stylesheet or add a choice of alternate
+stylesheets.
 
-Or, you could add a choice of stylesheets to choose from (some browsers have
-menu entry for this)::
+See:
 
-    # these are "alternate stylesheets":
-    stylesheets =  [('screen', 'http://wiki.example.org/static/red.css', 'Red Style', True),
-                    ('screen', 'http://wiki.example.org/static/green.css', 'Green Style', True), ]
+* `CSS media types <http://www.w3.org/TR/CSS2/media.html>`_
+* `Alternate Stylesheets <http://www.alistapart.com/articles/alternate/>`_
 
-The CSS defined by `stylesheets` will be loaded after theme CSS, but before
-user CSS. A good way to test a stylesheet is to first use it as user CSS before
-you configure it for everybody.
+A good way to test a stylesheet is to first use it as user CSS before you
+configure it for everybody.
 
-Please note that `stylesheets` will be loaded no matter what theme the wiki
+Please note that `stylesheets` will be included no matter what theme the wiki
 user has selected, so maybe either only do changes applying to all available
 themes or force all users to use same theme, so that your CSS applies
 correctly.
-
-.. todo::
-
-   Check whether it is worth having this in configuration or if we just want
-   to do it the snippets.html way.
 
 
 Custom Themes

@@ -2,6 +2,7 @@
 {%- import "snippets.html" as snippets with context %}
 {%- set head = snippets.head() %}
 {%- set scripts = snippets.scripts() %}
+{%- set stylesheets = snippets.stylesheets() %}
 <html>
 <head>
 {% block head %}
@@ -38,12 +39,7 @@
     {% for media, name in theme_supp.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name) }}" />
     {% endfor %}
-    {% for media, url, title, alternate in cfg.stylesheets -%}
-        <link media="{{ media }}" href="{{ url }}"
-        {%- if title %} title="{{ title }}" {% endif -%}
-        rel={% if alternate -%}"alternate stylesheet"{% else%}"stylesheet"{%- endif -%}
-        />
-    {%- endfor %}
+    {% stylesheets %}
     {% if user.valid and user.css_url -%}
         <link media="all" rel="stylesheet" title="{{ user.name }}'s stylesheet" href="{{ user.css_url }}" />
     {%- endif %}
