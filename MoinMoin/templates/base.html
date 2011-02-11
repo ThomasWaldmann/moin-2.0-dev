@@ -39,7 +39,7 @@
     {% for media, name in theme_supp.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name) }}" />
     {% endfor %}
-    {% stylesheets %}
+    {{ stylesheets }}
     {% if user.valid and user.css_url -%}
         <link media="all" rel="stylesheet" title="{{ user.name }}'s stylesheet" href="{{ user.css_url }}" />
     {%- endif %}
