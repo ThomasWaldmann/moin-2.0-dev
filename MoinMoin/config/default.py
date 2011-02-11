@@ -417,13 +417,6 @@ options_no_group_name = {
 
     ('theme_default', u'modernized', "Default theme."),
 
-    ('stylesheets', [],
-     """
-     List of tuples (media, csshref, title, alternate_stylesheet)
-     to insert after theme css, before user css, see HelpOnThemes.
-     Usage: [('screen', 'http://moinmo.in/static/alternate.css', 'Moin Other Style', True)]
-     """),
-
     ('serve_files', {},
      """
      Dictionary of name: filesystem_path for static file resources to serve
