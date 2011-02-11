@@ -79,6 +79,7 @@ class Attributes(object):
     visit_number_rows_spanned = Attribute('rowspan')
     visit_style = Attribute('style')
     visit_title = Attribute('title')
+    visit_id = Attribute('id')
 
     def __init__(self, element):
         self.element = element
@@ -429,9 +430,9 @@ class Converter(object):
 
     def visit_moinpage_quote(self, elem):
         return self.new_copy(html.quote, elem)
-
+ 
     def visit_moinpage_separator(self, elem):
-        return self.new(html.hr)
+        return self.new_copy(html.hr, elem)    
 
     def visit_moinpage_span(self, elem):
         # TODO : Fix bug if a span has multiple attributes
@@ -582,20 +583,23 @@ class ConverterPage(Converter):
         special_root.root = ret
 
         for special in self._special:
-            for elem in special.footnotes():
-                special.root.append(elem)
+            if special._footnotes:
+                footnotes_div = html.div({html.class_: "moin-footnotes"})
+                special.root.append(footnotes_div)
+                for elem in special.footnotes():
+                    footnotes_div.append(elem)
 
             for elem, headings in special.tocs():
                 headings = list(headings)
                 maxlevel = max(h[1] for h in headings)
                 headtogglelink = html.a(attrib={
-                                         html.class_: 'showhide',
+                                         html.class_: 'moin-showhide',
                                          html.href_: '#',
                                          html.onclick_:
-                                            "$('.table-of-contents ol').toggle();return false;",
+                                            "$('.moin-table-of-contents ol').toggle();return false;",
                                      },
                                      children=[('[+]'), ])
-                elem_h = html.div(attrib={html.class_: 'table-of-contents-heading'},
+                elem_h = html.div(attrib={html.class_: 'moin-table-of-contents-heading'},
                                   children=[_('Contents'), headtogglelink])
                 elem.append(elem_h)
                 stack = [elem]
@@ -687,7 +691,7 @@ class ConverterPage(Converter):
         id = self._id.gen_id('note')
 
         elem_ref = ET.XML("""
-<html:sup xmlns:html="%s" html:id="note-%d-ref"><html:a html:href="#note-%d">%d</html:a></html:sup>
+<html:sup xmlns:html="%s" html:id="note-%d-ref" html:class="moin-footnote"><html:a html:href="#note-%d">%d</html:a></html:sup>
 """ % (html, id, id, id))
 
         elem_note = ET.XML("""
@@ -695,7 +699,6 @@ class ConverterPage(Converter):
 """ % (html, id, id, id))
 
         elem_note.extend(body)
-
         self._special_stack[-1].add_footnote(elem_note)
 
         return elem_ref
@@ -703,7 +706,7 @@ class ConverterPage(Converter):
     def visit_moinpage_table_of_content(self, elem):
         level = int(elem.get(moin_page.outline_level, 6))
 
-        attrib = {html.class_: 'table-of-contents'}
+        attrib = {html.class_: 'moin-table-of-contents'}
         elem = self.new(html.div, attrib)
 
         self._special_stack[-1].add_toc(elem, level)

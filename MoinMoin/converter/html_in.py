@@ -336,11 +336,14 @@ class Converter(object):
         attrib[key] = 'line-through'
         return self.new_copy(moin_page.span, element, attrib)
 
-    def visit_xhtml_hr(self, element):
+    def visit_xhtml_hr(self, element, min_class=u'moin-hr1', max_class=u'moin-hr6', default_class=u'moin-hr3'):
         """
         <hr /> --> <separator />
         """
-        return moin_page.separator()
+        hr_class = element.attrib.get(html('class'))
+        if not (min_class <= hr_class <= max_class):
+            element.attrib[html('class')] = default_class
+        return self.new_copy(moin_page.separator, element, {})
 
     def visit_xhtml_a(self, element):
         """

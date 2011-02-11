@@ -384,13 +384,24 @@ class Converter(object):
                 ret = u"%s\n%s\n}}}\n" % (ret, u' '.join(elem.itertext()))
                 return ret
         return unescape(elem.get(moin_page.alt, u'')) + u"\n"
+        
     def open_moinpage_inline_part(self, elem):
         ret = self.open_moinpage_part(elem)
         if ret[-1] == u'\n':
             ret = ret[:-1]
         return ret
-    def open_moinpage_separator(self, elem):
-        return Moinwiki.separator + u'\n'
+        
+    def open_moinpage_separator(self, elem, hr_class_prefix=u'moin-hr'):
+        hr_ending = u'\n'
+        hr_class = elem.attrib.get(moin_page('class'))
+        if hr_class:
+            try:
+                height = int(hr_class.split(hr_class_prefix)[1]) - 1
+                if (0 <= height <= 5):
+                    hr_ending = (u'-' * height) + hr_ending
+            except:
+                raise ElementException('page:separator has invalid class %s' % hr_class)
+        return Moinwiki.separator + hr_ending
 
     def open_moinpage_span(self, elem):
         text_decoration = elem.get(moin_page.text_decoration, u'')
