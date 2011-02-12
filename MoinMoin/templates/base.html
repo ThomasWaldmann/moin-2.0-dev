@@ -36,9 +36,13 @@
     {%- if parent_item -%}
         <link rel="up" href="{{ url_for('frontend.show_item', item_name=parent_item) }}" />
     {%- endif %}
-    {% for media, name in theme_supp.stylesheets -%}
-        <link media="{{ media }}" rel="stylesheet" href="{{ theme_static('css/%s.css' % name) }}" />
-    {% endfor %}
+
+    {% block theme_stylesheets %}
+    <link media="all" rel="stylesheet" href="{{ theme_static('css/common.css') }}" />
+    <link media="screen" rel="stylesheet" href="{{ theme_static('css/screen.css') }}" />
+    <link media="print" rel="stylesheet" href="{{ theme_static('css/print.css') }}" />
+    <link media="projection" rel="stylesheet" href="{{ theme_static('css/projection.css') }}" />
+    {% endblock %}
     {{ stylesheets }}
     {% if user.valid and user.css_url -%}
         <link media="all" rel="stylesheet" title="{{ user.name }}'s stylesheet" href="{{ user.css_url }}" />
