@@ -24,7 +24,8 @@ from MoinMoin.util.tree import html, moin_page, xlink, xinclude
 from ._args import Arguments
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
-from MoinMoin import _
+from MoinMoin.i18n import _
+
 
 class _Iter(object):
     """
@@ -173,32 +174,32 @@ class _TableArguments(object):
 
     def number_rows_spanned_repl(self, args, number_rows_spanned):
         args.keyword['number-rows-spanned'] = int(number_rows_spanned)
-        
-        
+
+
     def add_attr_to_style(self, args, attr):
         args.keyword['style'] = args.keyword.get('style', "") + attr + " "
-        
+
     def hex_color_code_repl(self, args, hex_color_code):
         self.add_attr_to_style(args, "background-color: #%s;" % hex_color_code)
-        
+
     def vertical_align_top_repl(self, args, vertical_align_top):
         self.add_attr_to_style(args, "vertical-align: top;")
-        
+
     def vertical_align_bottom_repl(self, args, vertical_align_bottom):
         self.add_attr_to_style(args, "vertical-align: bottom;")
-        
+
     def text_align_left_repl(self, args, text_align_left):
         self.add_attr_to_style(args, "text-align: left;")
-        
+
     def text_align_center_repl(self, args, text_align_center):
         self.add_attr_to_style(args, "text-align: center;")
-        
+
     def text_align_right_repl(self, args, text_align_right):
         self.add_attr_to_style(args, "text-align: right;")
-        
+
     def width_percent_repl(self, args, width_percent):
         self.add_attr_to_style(args, "width: %s;" % width_percent)
-        
+
     def syntax_error_repl(self, args, syntax_error):
         args.keyword['error'] = syntax_error
 
@@ -376,12 +377,12 @@ class Converter(ConverterMacro):
 
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
-    def block_separator_repl(self, _iter_content, stack, separator, hr_class=u'moin-hr%s'):
+    def block_separator_repl(self, _iter_content, stack, separator, hr_class = u'moin-hr%s'):
         stack.clear()
         hr_height = min((len(separator) - 3), 6)
         hr_height = max(hr_height, 1)
         attrib = {moin_page('class'): hr_class % hr_height}
-        elem = moin_page.separator(attrib=attrib)
+        elem = moin_page.separator(attrib = attrib)
         stack.top_append(elem)
 
     block_table = r"""
@@ -942,10 +943,10 @@ class Converter(ConverterMacro):
             if not attr.endswith(';'):
                 attr = attr + ';'
             if attrib.get(moin_page('style'), ""):
-                attrib[moin_page('style')] =  attrib.get(moin_page('style'), "") + " " + attr
+                attrib[moin_page('style')] = attrib.get(moin_page('style'), "") + " " + attr
             else:
-                attrib[moin_page('style')] =  attr
-        
+                attrib[moin_page('style')] = attr
+
         element = moin_page.table_cell()
         stack.push(element)
 
@@ -955,8 +956,8 @@ class Converter(ConverterMacro):
         if cell_args:
             cell_args = _TableArguments()(cell_args)
             no_errors = True
-            
-            # any positional parameters will be errors;  retrieved as (key=None, value="some-positional-param"); 
+
+            # any positional parameters will be errors;  retrieved as (key=None, value="some-positional-param");
             for key, value in cell_args.items():
                 if key == 'bgcolor':
                     if no_errors:
@@ -967,7 +968,7 @@ class Converter(ConverterMacro):
                 elif key == 'tablebgcolor':
                     add_attr_to_style(table.attrib, 'background-color: %s;' % value)
                 elif key == 'width':
-                   add_attr_to_style(element.attrib, 'width: %s' % value)
+                    add_attr_to_style(element.attrib, 'width: %s' % value)
                 elif key == 'tablewidth':
                     add_attr_to_style(table.attrib, 'width: %s;' % value)
                 elif key == 'tableclass':
@@ -994,7 +995,7 @@ class Converter(ConverterMacro):
                 elif key == 'number-rows-spanned':
                     element.attrib[moin_page(key)] = value
                 else:
-                    if key == 'error' or key == None:
+                    if key == 'error' or key is None:
                         error = value
                     else:
                         error = key

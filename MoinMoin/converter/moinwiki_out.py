@@ -309,7 +309,7 @@ class Converter(object):
         ret = u""
         if self.status[-2] == 'text':
             if self.last_closed == 'text':
-                ret =  Moinwiki.p * 2 + self.open_children(elem) + Moinwiki.p
+                ret = Moinwiki.p * 2 + self.open_children(elem) + Moinwiki.p
             elif self.last_closed:
                 ret = Moinwiki.p + self.open_children(elem) + Moinwiki.p
             else:
@@ -384,13 +384,13 @@ class Converter(object):
                 ret = u"%s\n%s\n}}}\n" % (ret, u' '.join(elem.itertext()))
                 return ret
         return unescape(elem.get(moin_page.alt, u'')) + u"\n"
-        
+
     def open_moinpage_inline_part(self, elem):
         ret = self.open_moinpage_part(elem)
         if ret[-1] == u'\n':
             ret = ret[:-1]
         return ret
-        
+
     def open_moinpage_separator(self, elem, hr_class_prefix=u'moin-hr'):
         hr_ending = u'\n'
         hr_class = elem.attrib.get(moin_page('class'))
