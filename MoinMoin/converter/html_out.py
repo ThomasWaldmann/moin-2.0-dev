@@ -54,6 +54,7 @@ def wrap_object_with_overlay(elem, href):
         html.class_: "page-object"
     }, children=(elem, owrapper))
 
+
 class ElementException(RuntimeError):
     pass
 
@@ -331,8 +332,8 @@ class Converter(object):
                                     ret_body = self.new_copy(html.dd, body)
                                 ret.append(ret_body)
                                 break
-
         return ret
+
     def eval_object_type(self, mimetype, href):
         """
         Returns the type of an object.
@@ -430,9 +431,9 @@ class Converter(object):
 
     def visit_moinpage_quote(self, elem):
         return self.new_copy(html.quote, elem)
- 
+
     def visit_moinpage_separator(self, elem):
-        return self.new_copy(html.hr, elem)    
+        return self.new_copy(html.hr, elem)
 
     def visit_moinpage_span(self, elem):
         # TODO : Fix bug if a span has multiple attributes
