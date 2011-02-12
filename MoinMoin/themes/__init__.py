@@ -58,15 +58,6 @@ class ThemeSupport(object):
     """
     Support code for template feeding.
     """
-    # Standard set of style sheets
-    stylesheets = (
-        # media         basename
-        ('all',         'common'),
-        ('screen',      'screen'),
-        ('print',       'print'),
-        ('projection',  'projection'),
-        )
-
     def __init__(self, cfg):
         self.cfg = cfg
         self.user = flaskg.user
