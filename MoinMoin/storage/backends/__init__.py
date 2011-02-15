@@ -13,8 +13,8 @@
 from flask import flaskg
 
 from MoinMoin.storage.serialization import unserialize
-from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError, \
-                                   ConfigurationError
+from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
+from MoinMoin.error import ConfigurationError
 from MoinMoin.storage.backends import router, fs, fs2, fs19, memory
 
 
