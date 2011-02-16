@@ -83,6 +83,7 @@ Configuration::
         )
 
     save_xml = '.../backup.xml'
+    load_xml = None
 
 If you start moin now, it will serialize everything it finds in its backend
 to an xml file.
@@ -97,7 +98,7 @@ Reconfigure moin2 to use the backend you like to use (e.g. fs2 backend)::
     # use same as you already have, but:
     backend_uri='fs2:/some/path/%%(nsname)s',
 
-    # remove save_xml and add:
+    save_xml = None
     load_xml = '.../backup.xml'
 
 If you start moin2 now, it will unserialize your xml file to fill the
@@ -108,6 +109,6 @@ Cleaning up the configuration
 -----------------------------
 You need to import the xml only once, so after doing that, clean up your config::
 
-    # remove load_xml, save_xml
-
+    save_xml = None
+    load_xml = None
 
