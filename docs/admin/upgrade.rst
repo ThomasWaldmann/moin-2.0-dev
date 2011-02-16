@@ -95,7 +95,7 @@ Writing the data to a moin2 backend
 Reconfigure moin2 to use the backend you like to use (e.g. fs2 backend)::
 
     # use same as you already have, but:
-    backend_uri='fs2:/some/path/%(nsname)s',
+    backend_uri='fs2:/some/path/%%(nsname)s',
 
     # remove save_xml and add:
     load_xml = '.../backup.xml'
