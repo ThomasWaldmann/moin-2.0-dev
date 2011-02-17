@@ -287,7 +287,8 @@ class ItemIndex(object):
         note: does not remove revisions, these should be removed first
         """
         item_table = self.item_table
-        uuid = metas[UUID] # item uuid (never changes)
+        name = metas.get(NAME, '') # item name (if revisioned: same as current revision's name) XXX not there yet
+        uuid = metas.get(UUID, name) # item uuid (never changes) XXX we use name as long we have no uuid
         item_id = self.get_item_id(uuid)
         if item_id is not None:
             self.item_kvstore.store_kv(item_id, {})

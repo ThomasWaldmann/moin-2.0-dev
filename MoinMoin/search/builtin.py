@@ -193,23 +193,8 @@ class BaseIndex(object):
 
         @param filename: name of the file
         """
-        request = self.request
         mt = wikiutil.MimeType(filename=filename)
-        for modulename in mt.module_name():
-            try:
-                execute = wikiutil.importPlugin(app.cfg, 'filter', modulename)
-                break
-            except wikiutil.PluginMissingError:
-                pass
-            else:
-                logging.info("Cannot load filter for mimetype %s" % modulename)
-        try:
-            data = execute(self, filename)
-            logging.debug("Filter %s returned %d characters for file %s" % (modulename, len(data), filename))
-        except (OSError, IOError), err:
-            data = ''
-            logging.warning("Filter %s threw error '%s' for file %s" % (modulename, str(err), filename))
-        return mt.mime_type(), data
+        return mt.mime_type(), u'not implemented' # XXX see moin 1.9 code about how it was done there
 
     def _indexingRequest(self, request):
         """ Return a new request that can be used for index building.
