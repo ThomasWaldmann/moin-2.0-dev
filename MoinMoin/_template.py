@@ -4,7 +4,7 @@
 
     <what this stuff does ... - verbose enough>
 
-    @copyright: 2010 MoinMoin:YourNameHere
+    @copyright: 2011 MoinMoin:YourNameHere
     @license: GNU GPL, see COPYING for details.
 """
 

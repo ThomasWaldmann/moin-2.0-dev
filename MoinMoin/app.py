@@ -2,10 +2,10 @@
 """
 MoinMoin - wsgi application setup and related code
 
-This creates the WSGI application (using Flask) as "app".
+Use create_app(config) to create the WSGI application (using Flask).
 
 @copyright: 2000-2006 by Juergen Hermann <jh@web.de>,
-            2002-2010 MoinMoin:ThomasWaldmann,
+            2002-2011 MoinMoin:ThomasWaldmann,
             2008 MoinMoin:FlorianKrupicka,
             2010 MoinMoin:DiogenesAugusto
 @license: GNU GPL, see COPYING for details.
@@ -16,13 +16,12 @@ import os
 # "import MoinMoin" from setup.py even before flask, werkzeug, ... is installed.
 from MoinMoin.util import monkeypatch
 
-from flask import Flask, request, url_for, flash, session, flaskg
+from flask import Flask, request, session, flaskg
 from flask import current_app as app
 
 from flaskext.cache import Cache
 from flaskext.themes import setup_themes
 
-from werkzeug import ImmutableDict
 from werkzeug.exceptions import HTTPException
 
 from jinja2 import ChoiceLoader, FileSystemLoader
