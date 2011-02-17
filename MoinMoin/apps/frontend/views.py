@@ -291,7 +291,7 @@ def revert_item(item_name, rev):
     except AccessDeniedError:
         abort(403)
     if request.method == 'GET':
-        return render_template(item.revert_template,
+        return render_template(item.revert_template, rev_no=rev,
                                item=item, item_name=item_name,
                               )
     elif request.method == 'POST':

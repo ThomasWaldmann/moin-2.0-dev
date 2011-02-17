@@ -55,7 +55,7 @@
 # This is the "last resort" fallback logging configuration for the case
 # that load_config() is either not called at all or with a non-working
 # logging configuration.
-# See http://www.python.org/doc/lib/logging-config-fileformat.html
+# See http://docs.python.org/library/logging.html#configuring-logging
 # We just use stderr output by default, if you want anything else,
 # you will have to configure logging.
 logging_defaults = {

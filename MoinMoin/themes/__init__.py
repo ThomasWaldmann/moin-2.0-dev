@@ -313,6 +313,7 @@ class ThemeSupport(object):
         @rtype: list
         @return: options of actions menu
         """
+        not_exists = not flaskg.storage.has_item(item_name)
         menu = [
             # title, internal name, endpoint, disabled
             (_('Global History'), 'global_history', 'frontend.global_history', False, ),
@@ -323,13 +324,13 @@ class ThemeSupport(object):
             # Translation may need longer or shorter separator:
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
             (_('What refers here?'), 'backrefs', 'frontend.backrefs', False, ),
-            (_('Local Site Map'), 'sitemap', 'frontend.sitemap', False, ),
+            (_('Local Site Map'), 'sitemap', 'frontend.sitemap', not_exists, ),
             (_('Items with similar names'), 'similar_names', 'frontend.similar_names', False, ),
             (_('-----------------------------------'), 'show', 'frontend.show_item', True),
-            (_('Copy Item'), 'copy', 'frontend.copy_item', False, ),
-            (_('Rename Item'), 'rename', 'frontend.rename_item', False, ),
-            (_('Delete Item'), 'delete', 'frontend.delete_item', False, ),
-            (_('Destroy Item'), 'destroy', 'frontend.destroy_item', False, ),
+            (_('Copy Item'), 'copy', 'frontend.copy_item', not_exists, ),
+            (_('Rename Item'), 'rename', 'frontend.rename_item', not_exists, ),
+            (_('Delete Item'), 'delete', 'frontend.delete_item', not_exists, ),
+            (_('Destroy Item'), 'destroy', 'frontend.destroy_item', not_exists, ),
         ]
         return [(title, disabled, endpoint)
                 for title, action, endpoint, disabled in menu
