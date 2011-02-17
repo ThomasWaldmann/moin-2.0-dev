@@ -53,7 +53,7 @@ except ImportError:
 try:
     import cdb
 except ImportError:
-    from MoinMoin.support import pycdb as cdb
+    from MoinMoin.util import pycdb as cdb
 
 from MoinMoin.items import USERID, COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision

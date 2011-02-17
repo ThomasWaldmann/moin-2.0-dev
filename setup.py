@@ -108,7 +108,6 @@ Topic :: Text Processing :: Markup""".splitlines(),
         '': [
             ('MoinMoin/templates/**.html', 'jinja2', None),
             ('MoinMoin/apps/**/templates/**.html', 'jinja2', None),
-            ('MoinMoin/support/**', 'ignore', None),
             ('MoinMoin/**/_tests/**', 'ignore', None),
             ('MoinMoin/script/old/**', 'ignore', None),
             ('MoinMoin/filter/EXIF.py', 'ignore', None),

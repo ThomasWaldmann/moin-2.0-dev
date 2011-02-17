@@ -16,8 +16,6 @@ import pep8
 moindir = py.path.local(__file__).pypkgpath()
 
 EXCLUDE = set([
-    #'/contrib/TWikiDrawPlugin', # 3rd party java stuff
-    moindir/'support', # 3rd party libs or non-broken stdlib stuff
     moindir/'static', # this is our dist static stuff
     moindir/'_tests/wiki', # this is our test wiki
 ])

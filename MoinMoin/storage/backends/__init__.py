@@ -88,7 +88,7 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         content, userprofile, trash, router_index_uri = _create_backends(hg.MercurialBackend, instance_uri, index_uri)
 
     elif backend_uri.startswith(SQLA_PREFIX):
-        # XXX Move this import to the module level once sqlalchemy is in MoinMoin.support
+        # XXX Move this import to the module level if we depend on sqlalchemy and it is in sys.path
         from MoinMoin.storage.backends import sqla
         instance_uri = backend_uri[len(SQLA_PREFIX):]
         index_uri = '%s_index' % instance_uri

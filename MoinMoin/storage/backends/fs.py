@@ -18,7 +18,7 @@ logging = log.getLogger(__name__)
 try:
     import cdb
 except ImportError:
-    from MoinMoin.support import pycdb as cdb
+    from MoinMoin.util import pycdb as cdb
 
 from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.util import filesys
