@@ -180,7 +180,7 @@ class IndexingRevisionMixin(object):
 
 from uuid import uuid4 as gen_uuid
 
-from kvstore import KVStoreMeta, KVStore
+from MoinMoin.util.kvstore import KVStoreMeta, KVStore
 
 from sqlalchemy import Table, Column, Integer, String, Unicode, DateTime, PickleType, MetaData, ForeignKey
 from sqlalchemy import create_engine, select

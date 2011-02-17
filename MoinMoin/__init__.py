@@ -16,12 +16,6 @@ if sys.hexversion < 0x2060000:
     sys.exit("%s requires Python 2.6 or greater.\n" % project)
 
 
-# XXX temporary sys.path hack for convenience:
-support_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'support'))
-if support_dir not in sys.path:
-    sys.path.insert(0, support_dir)
-
-
 from MoinMoin.util.version import Version
 
 version = Version(2, 0, 0, 'alpha')

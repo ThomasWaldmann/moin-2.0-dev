@@ -17,8 +17,7 @@ use a Config class to define the required configuration within the test class.
 """
 
 # exclude some directories from py.test test discovery, pathes relative to this file
-collect_ignore = ['support', # do not test 3rd party stuff
-                  'static',  # same
+collect_ignore = ['static',  # same
                   '../wiki', # no tests there
                   '../instance', # tw likes to use this for wiki data (non-revisioned)
                  ]

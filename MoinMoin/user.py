@@ -22,7 +22,7 @@ import copy
 import hashlib
 import hmac
 
-import md5crypt
+from MoinMoin.util import md5crypt
 
 try:
     import crypt
