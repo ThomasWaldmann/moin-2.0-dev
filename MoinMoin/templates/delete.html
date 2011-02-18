@@ -1,3 +1,4 @@
+{% import "forms.html" as forms %}
 {% extends theme("layout.html") %}
 {% block content %}
 <div class="moin-form">
@@ -9,6 +10,8 @@
     </dl>
     <input class="button" type="submit" name="button_ok" value="{{ _('Delete') }}" />
     <input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
+    <br />
+    {{ forms.render_textcha(gen, form) }}
 </form>
 </div>
 {% endblock %}
