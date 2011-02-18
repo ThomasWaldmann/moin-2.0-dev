@@ -18,7 +18,7 @@ logging = log.getLogger(__name__)
 from MoinMoin import config
 from MoinMoin.util.paramparser import parse_quoted_separated_ext, ParserPrefix, BracketError
 from MoinMoin.search.queryparser.expressions import AndExpression, OrExpression, TextSearch, TitleSearch, \
-    LinkSearch, CategorySearch, DomainSearch, MimetypeSearch, LanguageSearch
+    LinkSearch, DomainSearch, MimetypeSearch, LanguageSearch
 
 class QueryError(ValueError):
     """ error raised for problems when parsing the query """
@@ -91,7 +91,6 @@ class QueryParser(object):
                 case = self.case
                 linkto = False
                 lang = False
-                category = False
                 mimetype = False
                 domain = False
                 while len(item) > 1:
@@ -110,8 +109,6 @@ class QueryParser(object):
                         linkto = True
                     elif "language".startswith(m):
                         lang = True
-                    elif "category".startswith(m):
-                        category = True
                     elif "mimetype".startswith(m):
                         mimetype = True
                     elif "domain".startswith(m):
@@ -121,9 +118,7 @@ class QueryParser(object):
                     item = item[1:]
 
                 text = item[0]
-                if category:
-                    obj = CategorySearch(text, use_re=regex, case=case)
-                elif mimetype:
+                if mimetype:
                     obj = MimetypeSearch(text, use_re=regex, case=False)
                 elif lang:
                     obj = LanguageSearch(text, use_re=regex, case=False)

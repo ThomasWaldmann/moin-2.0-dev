@@ -502,50 +502,6 @@ class LanguageSearch(BaseFieldSearch):
             return []
 
 
-class CategorySearch(BaseFieldSearch):
-    """ Search the pages belonging to a category """
-
-    _tag = 'category:'
-    _field_to_search = 'category'
-    costs = 5000 # cheaper than a TextSearch
-
-    def _get_matches(self, page):
-        """ match categories like this:
-            ... some page text ...
-            ----
-            ## optionally some comments, e.g. about possible categories:
-            ## CategoryFoo
-            CategoryTheRealAndOnly
-
-            Note: there might be multiple comment lines, but all real categories
-                  must be on a single line either directly below the ---- or
-                  directly below some comment lines.
-        """
-        matches = []
-
-        pattern = r'(?m)(^-----*\s*\r?\n)(^##.*\r?\n)*^(?!##)(.*)\b%s\b' % self.pattern
-        search_re = self._build_re(pattern, use_re=self.use_re, case=self.case)[1] # we need only a regexp, but not a pattern
-
-        body = page.get_raw_body()
-        for match in search_re.finditer(body):
-            matches.append(TextMatch(re_match=match))
-
-        return matches
-
-    def highlight_re(self):
-        return u'(\\b%s\\b)' % self._pattern
-
-    def xapian_term(self, request, connection):
-        # XXX Probably, it is a good idea to inherit this class from
-        # BaseFieldSearch and get rid of this definition
-        if self.use_re:
-            return self._get_query_for_search_re(connection, 'category')
-        else:
-            pattern = self._pattern
-            # XXX UnicodeQuery was used
-            return connection.query_field('category', pattern)
-
-
 class MimetypeSearch(BaseFieldSearch):
     """ Search for files belonging to a specific mimetype """
 

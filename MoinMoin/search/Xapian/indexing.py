@@ -107,8 +107,6 @@ class MoinIndexerConnection(xappy.IndexerConnection):
         self.add_field_action('author', INDEX_EXACT)
         self.add_field_action('linkto', INDEX_EXACT)
         self.add_field_action('linkto', STORE_CONTENT)
-        self.add_field_action('category', INDEX_EXACT)
-        self.add_field_action('category', STORE_CONTENT)
 
 
 class StemmedField(xappy.Field):
@@ -289,25 +287,6 @@ class XapianIndex(BaseIndex):
         # return actual lang and lang to stem in
         return (lang, default_lang)
 
-    def _get_categories(self, page):
-        """ Get all categories the page belongs to through the old regular expression
-
-        @param page: the page instance
-        """
-        body = page.get_raw_body()
-
-        prev, next = (0, 1)
-        pos = 0
-        while next:
-            if next != 1:
-                pos += next.end()
-            prev, next = next, re.search(r'-----*\s*\r?\n', body[pos:])
-
-        if not prev or prev == 1:
-            return []
-        # for CategoryFoo, group 'all' matched CategoryFoo, group 'key' matched just Foo
-        return [m.group('all') for m in app.cfg.cache.item_category_regex.finditer(body[pos:])]
-
     def _get_domains(self, page):
         """ Returns a generator with all the domains the page belongs to
 
@@ -411,7 +390,6 @@ class XapianIndex(BaseIndex):
             multivalued_fields['mimetype'] = [mt for mt in [mimetype] + mimetype.split('/')]
             multivalued_fields['domain'] = self._get_domains(page)
             multivalued_fields['linkto'] = page.getPageLinks(request)
-            multivalued_fields['category'] = self._get_categories(page)
 
             self._add_fields_to_document(request, doc, fields, multivalued_fields)
 

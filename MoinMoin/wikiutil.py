@@ -164,16 +164,6 @@ def isGroupItem(itemname):
     return app.cfg.cache.item_group_regexact.search(itemname) is not None
 
 
-def isCategoryItem(itemname):
-    """ Is this a name of category item?
-
-    @param itemname: the item name
-    @rtype: bool
-    @return: True if item is a category item
-    """
-    return app.cfg.cache.item_category_regexact.search(itemname) is not None
-
-
 def AbsItemName(context, itemname):
     """
     Return the absolute item name for a (possibly) relative item name.
