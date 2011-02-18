@@ -69,13 +69,11 @@ class ConfigFunctionality(object):
         self._decode()
 
         # After that, pre-compile some regexes
-        self.cache.item_category_regex = re.compile(self.item_category_regex, re.UNICODE)
         self.cache.item_dict_regex = re.compile(self.item_dict_regex, re.UNICODE)
         self.cache.item_group_regex = re.compile(self.item_group_regex, re.UNICODE)
         self.cache.item_template_regex = re.compile(self.item_template_regex, re.UNICODE)
 
         # the ..._regexact versions only match if nothing is left (exact match)
-        self.cache.item_category_regexact = re.compile(u'^%s$' % self.item_category_regex, re.UNICODE)
         self.cache.item_dict_regexact = re.compile(u'^%s$' % self.item_dict_regex, re.UNICODE)
         self.cache.item_group_regexact = re.compile(u'^%s$' % self.item_group_regex, re.UNICODE)
         self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
@@ -220,7 +218,7 @@ file. It should match the actual charset of the configuration file.
             'sitename', 'interwikiname', 'user_homewiki', 'navi_bar',
             'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
-            'item_category_regex', 'item_dict_regex', 'item_group_regex', 'item_template_regex',
+            'item_dict_regex', 'item_group_regex', 'item_template_regex',
             'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
             'theme_default', 'timezone_default', 'locale_default',
         )
@@ -423,10 +421,8 @@ options_no_group_name = {
 
     # the following regexes should match the complete name when used in free text
     # the group 'all' shall match all, while the group 'key' shall match the key only
-    # e.g. CategoryFoo -> group 'all' ==  CategoryFoo, group 'key' == Foo
+    # e.g. FooGroup -> group 'all' ==  FooGroup, group 'key' == Foo
     # moin's code will add ^ / $ at beginning / end when needed
-    ('item_category_regex', ur'(?P<all>Category(?P<key>(?!Template)\S+))',
-     'Item names exactly matching this regex are regarded as Wiki categories [Unicode]'),
     ('item_dict_regex', ur'(?P<all>(?P<key>\S+)Dict)',
      'Item names exactly matching this regex are regarded as items containing variable dictionary definitions [Unicode]'),
     ('item_group_regex', ur'(?P<all>(?P<key>\S+)Group)',

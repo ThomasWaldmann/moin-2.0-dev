@@ -46,7 +46,6 @@ class TestQueryParsing(object):
             ("title:aaa title:bbb -title:ccc", '[title:"aaa" title:"bbb" -title:"ccc"]'),
             ("title:case:aaa title:re:bbb -title:re:case:ccc", '[title:case:"aaa" title:re:"bbb" -title:re:case:"ccc"]'),
             ("linkto:aaa", '[linkto:"aaa"]'),
-            ("category:aaa", '[category:"aaa"]'),
             ("domain:aaa", '[domain:"aaa"]'),
             ("re:case:title:aaa", '[title:re:case:"aaa"]'),
             ("(aaa or bbb) and (ccc or ddd)", '[[[["aaa"] or ["bbb"]]] [[["ccc"] or ["ddd"]]]]'),
@@ -97,13 +96,11 @@ class BaseSearchTest(object):
              u'SearchTestLinks': u'SearchTestPage',
              u'SearchTestLinksLowerCase': u'searchtestpage',
              u'SearchTestOtherLinks': u'SearchTestLinks',
-             u'MyHomePage': u'foo\n----\nCategoryHomepage\n',
              u'TestEdit': u'TestEdit',
              u'TestOnEditing': u'another test page',
              u'ContentSearchUpper': u'Find the NEEDLE in the haystack.',
              u'ContentSearchLower': u'Find the needle in the haystack.',
              u'LanguageSetup': None,
-             u'CategoryHomepage': None,
              u'HomePageWiki': None,
              u'FrontPage': None,
              u'RecentChanges': None,
@@ -229,46 +226,6 @@ class BaseSearchTest(object):
         found_pages = set([hit.page_name for hit in result.hits])
         assert not found_pages
 
-    def test_category_search_simple(self):
-        expected_pages = set([u'HomePageWiki', ])
-        result = self.search(u'category:CategoryHomepage')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert found_pages == expected_pages
-
-        result = self.search(u'category:CategorySearchTestNotExisting')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert not found_pages
-
-    def test_category_search_re(self):
-        expected_pages = set([u'HomePageWiki', ])
-        result = self.search(ur'category:re:\bCategoryHomepage\b')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert found_pages == expected_pages
-
-        result = self.search(ur'category:re:\bCategoryHomepa\b')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert not found_pages
-
-    def test_category_search_case(self):
-        expected_pages = set([u'HomePageWiki', ])
-        result = self.search(u'category:case:CategoryHomepage')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert found_pages == expected_pages
-
-        result = self.search(u'category:case:categoryhomepage')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert not found_pages
-
-    def test_category_search_case_re(self):
-        expected_pages = set([u'HomePageWiki', ])
-        result = self.search(ur'category:case:re:\bCategoryHomepage\b')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert found_pages == expected_pages
-
-        result = self.search(ur'category:case:re:\bcategoryhomepage\b')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert not found_pages
-
     def test_mimetype_search_simple(self):
         result = self.search(u'mimetype:text/wiki')
         test_result = len(result.hits)
@@ -278,10 +235,6 @@ class BaseSearchTest(object):
         result = self.search(ur'mimetype:re:\btext/wiki\b')
         test_result = len(result.hits)
         assert test_result == 14
-
-        result = self.search(ur'category:re:\bCategoryHomepa\b')
-        found_pages = set([hit.page_name for hit in result.hits])
-        assert not found_pages
 
     def test_language_search_simple(self):
         result = self.search(u'language:en')
@@ -456,7 +409,6 @@ class TestXapianSearch(BaseSearchTest):
         prefixes = {u'': ([u'', u're:', u'case:', u'case:re:'], u'SearchTestPage'),
                     u'title:': ([u'', u're:', u'case:', u'case:re:'], u'SearchTestPage'),
                     u'linkto:': ([u'', u're:', u'case:', u'case:re:'], u'FrontPage'),
-                    u'category:': ([u'', u're:', u'case:', u'case:re:'], u'CategoryHomepage'),
                     u'mimetype:': ([u'', u're:'], u'text/wiki'),
                     u'language:': ([u''], u'en'),
                     u'domain:': ([u''], u'system'),
