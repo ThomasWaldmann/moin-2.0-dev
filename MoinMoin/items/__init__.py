@@ -20,6 +20,8 @@ import tarfile
 import zipfile
 import tempfile
 from StringIO import StringIO
+from MoinMoin.security.textcha import TextCha, TextChaizedForm, TextChaValid
+from MoinMoin.util.forms import make_generator
 
 try:
     import PIL
@@ -599,6 +601,9 @@ class Binary(Item):
     modify_help = """\
 There is no help, you're doomed!
 """
+
+    template = "modify_binary.html"
+
     # XXX reads item rev data into memory!
     def get_data(self):
         if self.rev is not None:
@@ -625,12 +630,16 @@ There is no help, you're doomed!
         # XXX think about and add item template support
         #if template_name is None and isinstance(self.rev, DummyRev):
         #    return self._do_modify_show_templates()
-        return render_template('modify_binary.html',
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
+        return render_template(self.template,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
+                               form=form,
+                               gen=make_generator(),
                               )
 
     copy_template = 'copy.html'
@@ -991,6 +1000,8 @@ class Text(Binary):
     """ Any kind of text """
     supported_mimetypes = ['text/']
 
+    template = "modify_text.html"
+
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
         """ convert data from memory format to form format """
@@ -1035,6 +1046,8 @@ class Text(Binary):
         return '\n'.join(difflines)
 
     def do_modify(self, template_name):
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
@@ -1043,7 +1056,7 @@ class Text(Binary):
         else:
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
-        return render_template('modify_text.html',
+        return render_template(self.template,
                                item_name=self.name,
                                rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1051,6 +1064,8 @@ class Text(Binary):
                                meta_text=meta_text,
                                lang='en', direction='ltr',
                                help=self.modify_help,
+                               form=form,
+                               gen=make_generator(),
                               )
 
 
@@ -1115,7 +1130,11 @@ class HTML(Text):
     """
     supported_mimetypes = ['text/html']
 
+    template = "modify_text_html.html"
+
     def do_modify(self, template_name):
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
         if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
@@ -1124,7 +1143,7 @@ class HTML(Text):
         else:
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
-        return render_template('modify_text_html.html',
+        return render_template(self.template,
                                item_name=self.name,
                                rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1132,6 +1151,8 @@ class HTML(Text):
                                meta_text=meta_text,
                                lang='en', direction='ltr',
                                help=self.modify_help,
+                               form=form,
+                               gen=make_generator(),
                               )
 
 
@@ -1191,6 +1212,7 @@ class TWikiDraw(TarMixin, Image):
     """
     supported_mimetypes = ["application/x-twikidraw"]
     modify_help = ""
+    template = "modify_twikidraw.html"
 
     def modify(self):
         # called from modify UI/POST
@@ -1221,12 +1243,16 @@ class TWikiDraw(TarMixin, Image):
         Fills params into the template for initialzing of the the java applet.
         The applet is called for doing modifications.
         """
-        return render_template("modify_twikidraw.html",
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
+        return render_template(self.template,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
+                               form=form,
+                               gen=make_generator(),
                               )
 
     def _render_data(self):
@@ -1262,6 +1288,7 @@ class AnyWikiDraw(TarMixin, Image):
     """
     supported_mimetypes = ["application/x-anywikidraw"]
     modify_help = ""
+    template = "modify_anywikidraw.html"
 
     def modify(self):
         # called from modify UI/POST
@@ -1290,14 +1317,18 @@ class AnyWikiDraw(TarMixin, Image):
         Fills params into the template for initialzing of the the java applet.
         The applet is called for doing modifications.
         """
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
         drawing_exists = 'drawing.svg' in self.list_members()
-        return render_template("modify_anywikidraw.html",
+        return render_template(self.template,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
                                drawing_exists=drawing_exists,
+                               form=form,
+                               gen=make_generator(),
                               )
 
     def _render_data(self):
@@ -1333,6 +1364,7 @@ class SvgDraw(TarMixin, Image):
 
     supported_mimetypes = ['application/x-svgdraw']
     modify_help = ""
+    template = "modify_svg-edit.html"
 
     def modify(self):
         # called from modify UI/POST
@@ -1352,12 +1384,16 @@ class SvgDraw(TarMixin, Image):
         """
         Fills params into the template for initializing of the applet.
         """
-        return render_template("modify_svg-edit.html",
+        form = TextChaizedForm.from_defaults()
+        TextCha(form).amend_form()
+        return render_template(self.template,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
+                               form=form,
+                               gen=make_generator(),
                               )
 
     def _render_data(self):

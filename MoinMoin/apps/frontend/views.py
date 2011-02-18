@@ -35,6 +35,7 @@ from MoinMoin.i18n import _, L_, N_
 from MoinMoin.themes import render_template
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, NonExistent, MIMETYPE, ITEMLINKS, ITEMTRANSCLUSIONS
+from MoinMoin.items import ROWS_META, COLS, ROWS_DATA
 from MoinMoin import config, user, wikiutil
 from MoinMoin.util.forms import make_generator
 from MoinMoin.security.textcha import TextCha, TextChaizedForm, TextChaValid
@@ -272,6 +273,24 @@ def modify_item(item_name):
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
+            form = TextChaizedForm.from_flat(request.form)
+            TextCha(form).amend_form()
+            valid = form.validate()
+            if not valid:
+                data_text = request.values.get('data_text')
+                meta_text = item.meta_dict_to_text(item.meta)
+                comment = request.values.get('comment')
+                return render_template(item.template,
+                                       item_name=item_name,
+                                       gen=make_generator(),
+                                       form=form,
+                                       data_text=data_text,
+                                       meta_text=meta_text,
+                                       comment=comment,
+                                       cols=COLS,
+                                       rows_data=ROWS_DATA,
+                                       rows_meta=ROWS_META,
+                                      )
             try:
                 item.modify()
                 item_modified.send(app._get_current_object(),
@@ -290,12 +309,26 @@ def revert_item(item_name, rev):
         item = Item.create(item_name, rev_no=rev)
     except AccessDeniedError:
         abort(403)
+    form = TextChaizedForm.from_flat(request.form)
+    TextCha(form).amend_form()
     if request.method == 'GET':
         return render_template(item.revert_template, rev_no=rev,
                                item=item, item_name=item_name,
+                               form=form,
+                               gen=make_generator(),
                               )
     elif request.method == 'POST':
         if 'button_ok' in request.form:
+            valid = form.validate()
+            if not valid:
+                comment = request.values.get('comment')
+                return render_template(item.revert_template,
+                                       item=item, item_name=item_name,
+                                       rev_no=rev,
+                                       form=form,
+                                       gen=make_generator(),
+                                       comment=comment,
+                                      )
             item.revert()
         return redirect(url_for('frontend.show_item', item_name=item_name))
 
@@ -327,14 +360,26 @@ def rename_item(item_name):
         item = Item.create(item_name)
     except AccessDeniedError:
         abort(403)
+    form = TextChaizedForm.from_flat(request.form)
+    TextCha(form).amend_form()
     if request.method == 'GET':
         return render_template(item.rename_template,
                                item=item, item_name=item_name,
+                               form=form,
+                               gen=make_generator(),
                               )
     if request.method == 'POST':
         if 'button_ok' in request.form:
             target = request.form.get('target')
             comment = request.form.get('comment')
+            valid = form.validate()
+            if not valid:
+                return render_template(item.rename_template,
+                                       item=item, item_name=item_name,
+                                       form=form,
+                                       gen=make_generator(),
+                                       comment=comment,
+                                      )
             item.rename(target, comment)
             redirect_to = target
         else:
@@ -348,12 +393,25 @@ def delete_item(item_name):
         item = Item.create(item_name)
     except AccessDeniedError:
         abort(403)
+    form = TextChaizedForm.from_flat(request.form)
+    TextCha(form).amend_form()
     if request.method == 'GET':
         return render_template(item.delete_template,
                                item=item, item_name=item_name,
+                               form=form,
+                               gen=make_generator(),
                               )
     elif request.method == 'POST':
         if 'button_ok' in request.form:
+            valid = form.validate()
+            if not valid:
+                comment = request.values.get('comment')
+                return render_template(item.delete_template,
+                                       item=item, item_name=item_name,
+                                       form=form,
+                                       gen=make_generator(),
+                                       comment=comment,
+                                      )
             comment = request.form.get('comment')
             item.delete(comment)
         return redirect(url_for('frontend.show_item', item_name=item_name))
@@ -373,14 +431,27 @@ def destroy_item(item_name, rev):
         item = Item.create(item_name, rev_no=_rev)
     except AccessDeniedError:
         abort(403)
+    form = TextChaizedForm.from_flat(request.form)
+    TextCha(form).amend_form()
     if request.method == 'GET':
         return render_template(item.destroy_template,
                                item=item, item_name=item_name,
                                rev_no=rev,
+                               form=form,
+                               gen=make_generator(),
                               )
     if request.method == 'POST':
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
+            valid = form.validate()
+            if not valid:
+                return render_template(item.destroy_template,
+                                       item=item, item_name=item_name,
+                                       rev_no=rev,
+                                       form=form,
+                                       gen=make_generator(),
+                                       comment=comment,
+                                      )
             item.destroy(comment=comment, destroy_item=destroy_item)
         return redirect(url_for('frontend.show_item', item_name=item_name))
 

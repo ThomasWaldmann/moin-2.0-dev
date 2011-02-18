@@ -1,3 +1,4 @@
+{% import "forms.html" as forms %}
 {% extends theme("layout.html") %}
 {% block content %}
 <h1>{{ _("Rename '%(item_name)s'", item_name=item.name) }}</h1>
@@ -8,10 +9,12 @@
         <dd><input type="text" id="target" name="target" size="80" maxlength="200" value="{{ item.name }}" /></dd>
 
         <dt><label for="comment">{{ _("Comment") }}</label></dt>
-        <dd><input type="text" id="comment" name="comment" size="80" maxlength="200" value="" /></dd>
+        <dd><input type="text" id="comment" name="comment" size="80" maxlength="200" value="{{ comment }}" /></dd>
     </dl>
     <input class="button" type="submit" name="button_ok" value="{{ _('Rename') }}" />
     <input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
+    <br />
+    {{ forms.render_textcha(gen, form) }}
 </form>
 </div>
 {% endblock %}

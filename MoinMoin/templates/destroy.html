@@ -1,3 +1,4 @@
+{% import "forms.html" as forms %}
 {% extends theme("layout.html") %}
 {% block content %}
 {% if rev_no == None %}
@@ -11,8 +12,10 @@
 {% endif %}
     <dl>
         <dt><label for="comment">{{ _("Comment") }}</label></dt>
-        <dd><input type="text" id="comment" name="comment" size="80" maxlength="200" value="" /></dd>
+        <dd><input type="text" id="comment" name="comment" size="80" maxlength="200" value="{{ comment }}" /></dd>
     </dl>
+    <br/>
+    {{ forms.render_textcha(gen, form) }}
     <input class="button" type="submit" name="button_ok" value="{{ _('DESTROY') }}" />
     <input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
 </form>
