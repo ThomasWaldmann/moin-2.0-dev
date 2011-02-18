@@ -217,10 +217,10 @@ Specific options:
 """)
 
         cmd_module, cmd_name = args[:2]
-        from MoinMoin import wikiutil
+        from MoinMoin.util import plugins
         try:
-            plugin_class = wikiutil.importBuiltinPlugin('script.%s' % cmd_module, cmd_name, 'PluginScript')
-        except wikiutil.PluginMissingError:
+            plugin_class = plugins.importBuiltinPlugin('script.%s' % cmd_module, cmd_name, 'PluginScript')
+        except plugins.PluginMissingError:
             fatal("Command plugin %r, command %r was not found." % (cmd_module, cmd_name))
 
         # We have to use the args list here instead of optparse, as optparse only

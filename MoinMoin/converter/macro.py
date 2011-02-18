@@ -16,7 +16,7 @@ from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
 
-from MoinMoin import wikiutil
+from MoinMoin.util import plugins
 from MoinMoin.i18n import _, L_, N_
 from MoinMoin.converter._args import Arguments
 from MoinMoin.util import iri
@@ -63,7 +63,7 @@ class Converter(object):
         elem_body = context_block and moin_page.body() or moin_page.inline_body()
         elem_error = moin_page.error()
 
-        cls = wikiutil.importPlugin(app.cfg, 'macro', name, function='Macro')
+        cls = plugins.importPlugin(app.cfg, 'macro', name, function='Macro')
 
         try:
             macro = cls() # XXX refactor all macros so they are OK without "request"

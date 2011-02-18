@@ -24,6 +24,7 @@ from MoinMoin import datastruct
 from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
 from MoinMoin.security import AccessControlList
+from MoinMoin.util import plugins
 
 
 class CacheClass(object):
@@ -85,7 +86,7 @@ class ConfigFunctionality(object):
                     it in your wiki configuration and try again."""
             raise error.ConfigurationError(msg)
 
-        self._loadPluginModule()
+        plugins._loadPluginModule(self)
 
         if self.user_defaults['timezone'] is None:
             self.user_defaults['timezone'] = self.timezone_default
@@ -244,62 +245,6 @@ file. It should match the actual charset of the configuration file.
                             except UnicodeError:
                                 raise error.ConfigurationError(message %
                                                                {'name': name})
-
-    def _loadPluginModule(self):
-        """
-        import all plugin modules
-
-        To be able to import plugin from arbitrary path, we have to load
-        the base package once using imp.load_module. Later, we can use
-        standard __import__ call to load plugins in this package.
-
-        Since each configured plugin path has unique plugins, we load the
-        plugin packages as "moin_plugin_<sha1(path)>.plugin".
-        """
-        import imp
-        import hashlib
-
-        plugin_dirs = [self.plugin_dir] + self.plugin_dirs
-        self._plugin_modules = []
-
-        try:
-            # Lock other threads while we check and import
-            imp.acquire_lock()
-            try:
-                for pdir in plugin_dirs:
-                    csum = 'p_%s' % hashlib.new('sha1', pdir).hexdigest()
-                    modname = '%s.%s' % (self.siteid, csum)
-                    # If the module is not loaded, try to load it
-                    if not modname in sys.modules:
-                        # Find module on disk and try to load - slow!
-                        abspath = os.path.abspath(pdir)
-                        parent_dir, pname = os.path.split(abspath)
-                        fp, path, info = imp.find_module(pname, [parent_dir])
-                        try:
-                            # Load the module and set in sys.modules
-                            module = imp.load_module(modname, fp, path, info)
-                            # XXX for what was this good for?:
-                            #setattr(sys.modules[self.siteid], 'csum', module)
-                        finally:
-                            # Make sure fp is closed properly
-                            if fp:
-                                fp.close()
-                    if modname not in self._plugin_modules:
-                        self._plugin_modules.append(modname)
-            finally:
-                imp.release_lock()
-        except ImportError, err:
-            msg = """
-Could not import plugin package "%(path)s" because of ImportError:
-%(err)s.
-
-Make sure your data directory path is correct, check permissions, and
-that the data/plugin directory has an __init__.py file.
-""" % {
-    'path': pdir,
-    'err': str(err),
-}
-            raise error.ConfigurationError(msg)
 
     def __getitem__(self, item):
         """ Make it possible to access a config object like a dict """
