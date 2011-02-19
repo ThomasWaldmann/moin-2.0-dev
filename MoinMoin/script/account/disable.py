@@ -29,7 +29,7 @@ class Disable_User(Command):
         flags_given = name or uid
         if not flags_given:
             print 'incorrect number of arguments'
-            import sys            
+            import sys
             sys.exit()
 
         if uid:
@@ -53,3 +53,4 @@ class Disable_User(Command):
             print "- disabled."
         else:
             print "- is already disabled."
+

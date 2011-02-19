@@ -91,17 +91,17 @@ class KVStoreMeta(object):
         """
         self.name = name
         self.fact_table = self.create_fact_table(name, metadata, ref_type)
-        self.key_table =  self.create_key_table(name, metadata)
+        self.key_table = self.create_key_table(name, metadata)
         self.value_tables, self.supported_value_types = self.create_value_tables(name, metadata)
 
 
 class KVStore(object):
     """
     A flexible Key/Value store
-    
+
     It can store arbitrary key names (unicode), new key names are added
     automatically.
-    
+
     Each key name is associated with 1 value type, which is defined when first
     key/value pair is added to the store. See KVStoreMeta for details about
     value types.
