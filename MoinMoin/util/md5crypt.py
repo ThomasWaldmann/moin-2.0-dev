@@ -50,7 +50,7 @@ except ImportError:
     hash_md5 = md5.new
 
 
-def to64 (v, n):
+def to64(v, n):
     ret = ''
     while (n - 1 >= 0):
         n = n - 1
@@ -59,14 +59,14 @@ def to64 (v, n):
     return ret
 
 
-def apache_md5_crypt (pw, salt):
+def apache_md5_crypt(pw, salt):
     # change the Magic string to match the one used by Apache
     return unix_md5_crypt(pw, salt, '$apr1$')
 
 
 def unix_md5_crypt(pw, salt, magic=None):
 
-    if magic==None:
+    if magic is None:
         magic = MAGIC
 
     # Take care of the magic string if present
@@ -85,7 +85,7 @@ def unix_md5_crypt(pw, salt, magic=None):
     md5.update(pw + salt + pw)
     final = md5.digest()
 
-    for pl in range(len(pw),0,-16):
+    for pl in range(len(pw), 0, -16):
         if pl > 16:
             ctx = ctx + final[:16]
         else:
@@ -141,7 +141,7 @@ def unix_md5_crypt(pw, salt, magic=None):
 
     passwd = passwd + to64((int(ord(final[0])) << 16)
                            |(int(ord(final[6])) << 8)
-                           |(int(ord(final[12]))),4)
+                           |(int(ord(final[12]))), 4)
 
     passwd = passwd + to64((int(ord(final[1])) << 16)
                            |(int(ord(final[7])) << 8)

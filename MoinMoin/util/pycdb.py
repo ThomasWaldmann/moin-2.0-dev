@@ -5,6 +5,7 @@ pycdb.py - Python implementation of cdb
   * public domain *
 
   Coding style fixes (and tcdb removal) by Johannes Berg
+  PEP8 fixes by MoinMoin:ReimarBauer
 """
 
 import os
@@ -49,8 +50,8 @@ class CDBReader:
         self.name = cdbname
         self._fp = file(cdbname, 'rb')
         hash0 = decode(self._fp.read(2048))
-        self._hash0 = [ (hash0[i], hash0[i+1]) for i in xrange(0, 512, 2) ]
-        self._hash1 = [ None ] * 256
+        self._hash0 = [(hash0[i], hash0[i+1]) for i in xrange(0, 512, 2)]
+        self._hash1 = [None ] * 256
         self._eod = hash0[0]
         self._docache = docache
         self._cache = {}
@@ -73,7 +74,7 @@ class CDBReader:
         if ncells == 0:
             raise KeyError(k)
         hs = self._hash1[h1]
-        if hs == None:
+        if hs is None:
             self._fp.seek(pos_bucket)
             hs = decode(self._fp.read(ncells * 8))
             self._hash1[h1] = hs
@@ -113,10 +114,10 @@ class CDBReader:
     def firstkey(self):
         self._keyiter = None
         return self.nextkey()
-    
+
     def nextkey(self):
         if not self._keyiter:
-            self._keyiter = ( k for (k, v) in cdbiter(self._fp, self._eod) )
+            self._keyiter = (k for (k, v) in cdbiter(self._fp, self._eod))
         try:
             return self._keyiter.next()
         except StopIteration:
@@ -129,12 +130,12 @@ class CDBReader:
             return self._eachiter.next()
         except StopIteration:
             return None
-    
+
     def iterkeys(self):
-        return ( k for (k, v) in cdbiter(self._fp, self._eod) )
+        return (k for (k, v) in cdbiter(self._fp, self._eod))
 
     def itervalues(self):
-        return ( v for (k, v) in cdbiter(self._fp, self._eod) )
+        return (v for (k, v) in cdbiter(self._fp, self._eod))
 
     def iteritems(self):
         return cdbiter(self._fp, self._eod)
@@ -147,7 +148,7 @@ class CDBMaker:
         self.numentries = 0
         self._fp = file(tmpname, 'wb')
         self._pos = 2048
-        self._bucket = [ array('I') for _ in xrange(256) ]
+        self._bucket = [array('I') for _ in xrange(256)]
 
     def __len__(self):
         return self.numentries
@@ -170,10 +171,10 @@ class CDBMaker:
         b.append(h)
         b.append(self._pos)
         # sizeof(keylen)+sizeof(datalen)+sizeof(key)+sizeof(data)
-        self._pos += 8+klen+vlen
+        self._pos += 8 + klen + vlen
         self.numentries += 1
         return self
-    
+
     def finish(self):
         self._fp.seek(self._pos)
         pos_hash = self._pos
@@ -196,7 +197,7 @@ class CDBMaker:
         for b1 in self._bucket:
             a.append(pos_hash)
             a.append(len(b1))
-            pos_hash += len(b1)*8
+            pos_hash += len(b1) * 8
         self._fp.write(encode(a))
         self._fp.close()
         os.rename(self.fntmp, self.fn)
