@@ -2,69 +2,47 @@
 """
 MoinMoin - disable a user account
 
+TODO: Currently works on unprotected user backend
+
 @copyright: 2006 MoinMoin:ThomasWaldmann,
-            2008 MoinMoin:JohannesBerg
+            2008 MoinMoin:JohannesBerg,
+            2011 MoinMoin:ReimarBauer
 @license: GNU GPL, see COPYING for details.
 """
+from flask import flaskg
+from flaskext.script import Command, Manager, Option
+from MoinMoin import user
 
-from MoinMoin.script import MoinScript
-
-class PluginScript(MoinScript):
-    """\
-Purpose:
-========
-This tool allows you to change a user password via a command line interface.
-
-Detailed Instructions:
-======================
-General syntax: moin [options] account resetpw [newpw-options] newpassword
-
-[options] usually should be:
-    --config-dir=/path/to/my/cfg/ --wiki-url=http://wiki.example.org/
-
-[newpw-options] see below:
-    1. To change JohnSmith's password:
-       moin ... account resetpw --name JohnSmith new-password
-
-    2. To change the password for the UID '1198872910.78.56322':
-       moin ... account resetpw --uid 1198872910.78.56322 new-password
-"""
-
-    def __init__(self, argv, def_values):
-        MoinScript.__init__(self, argv, def_values)
-        self.parser.add_option(
-            "--uid", metavar="UID", dest="uid",
-            help="Reset password for the user with user id UID."
-        )
-        self.parser.add_option(
-            "--name", metavar="NAME", dest="uname",
-            help="Reset password for the user with user name NAME."
+class Reset_Users_Password(Command):
+    description = 'This command allows you to change a user password.'
+    option_list = (
+        Option('--name', '-n', required=False, dest='name',
+               help='Reset password for the user with user name NAME.'),
+        Option('--uid', '-u', required=False, dest='uid',
+               help='Reset password for the user with user id UID.' ),
+        Option('--password', '-p', required=True, dest='password',
+               help='New password for this account.')
         )
 
-    def mainloop(self):
-        # we don't expect non-option arguments
-        if len(self.args) != 1:
-            self.parser.error("no new password given")
-        newpass = self.args[0]
-
-        flags_given = self.options.uid or self.options.uname
+    def run(self, name, uid, password):
+        from MoinMoin.app import app
+        flaskg.unprotected_storage = app.unprotected_storage
+        flags_given = name or uid
         if not flags_given:
-            self.parser.print_help()
+            print 'incorrect number of arguments'
             import sys
-            sys.exit(1)
+            sys.exit()
 
-        self.init_request()
-        request = self.request
-
-        from MoinMoin import user
-        if self.options.uid:
-            u = user.User(self.options.uid)
-        elif self.options.uname:
-            u = user.User(None, self.options.uname)
+        if uid:
+            u = user.User(uid)
+        elif name:
+            uid = user.getUserId(name)
+            u = user.User(uid)
 
         if not u.exists():
             print 'This user "%s" does not exists!' % u.name
             return
 
-        u.enc_password = user.encodePassword(newpass)
+        u.enc_password = user.encodePassword(password)
         u.save()
+        print 'Password changed.'
