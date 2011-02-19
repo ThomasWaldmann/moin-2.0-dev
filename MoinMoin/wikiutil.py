@@ -141,17 +141,7 @@ def isSystemItem(itemname):
     except (NoSuchItemError, NoSuchRevisionError, KeyError):
         pass
 
-    return isTemplateItem(itemname)
-
-
-def isTemplateItem(itemname):
-    """ Is this a template item?
-
-    @param itemname: the item name
-    @rtype: bool
-    @return: True if item is a template item
-    """
-    return app.cfg.cache.item_template_regexact.search(itemname) is not None
+    return False
 
 
 def isGroupItem(itemname):
