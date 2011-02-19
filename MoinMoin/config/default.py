@@ -71,12 +71,10 @@ class ConfigFunctionality(object):
         # After that, pre-compile some regexes
         self.cache.item_dict_regex = re.compile(self.item_dict_regex, re.UNICODE)
         self.cache.item_group_regex = re.compile(self.item_group_regex, re.UNICODE)
-        self.cache.item_template_regex = re.compile(self.item_template_regex, re.UNICODE)
 
         # the ..._regexact versions only match if nothing is left (exact match)
         self.cache.item_dict_regexact = re.compile(u'^%s$' % self.item_dict_regex, re.UNICODE)
         self.cache.item_group_regexact = re.compile(u'^%s$' % self.item_group_regex, re.UNICODE)
-        self.cache.item_template_regexact = re.compile(u'^%s$' % self.item_template_regex, re.UNICODE)
 
         if not isinstance(self.superusers, list):
             msg = """The superusers setting in your wiki configuration is not
@@ -218,7 +216,7 @@ file. It should match the actual charset of the configuration file.
             'sitename', 'interwikiname', 'user_homewiki', 'navi_bar',
             'interwiki_preferred',
             'item_root', 'item_license', 'mail_from',
-            'item_dict_regex', 'item_group_regex', 'item_template_regex',
+            'item_dict_regex', 'item_group_regex',
             'superusers', 'textchas_disabled_group', 'supplementation_item_names', 'html_pagetitle',
             'theme_default', 'timezone_default', 'locale_default',
         )
@@ -427,8 +425,6 @@ options_no_group_name = {
      'Item names exactly matching this regex are regarded as items containing variable dictionary definitions [Unicode]'),
     ('item_group_regex', ur'(?P<all>(?P<key>\S+)Group)',
      'Item names exactly matching this regex are regarded as items containing group definitions [Unicode]'),
-    ('item_template_regex', ur'(?P<all>(?P<key>\S+)Template)',
-     'Item names exactly matching this regex are regarded as items containing templates for new items [Unicode]'),
   )),
   # ==========================================================================
   'user': ('User Preferences related', None, (

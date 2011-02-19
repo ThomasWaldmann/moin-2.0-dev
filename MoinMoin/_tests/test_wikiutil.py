@@ -48,27 +48,6 @@ class TestSystemItem(object):
             assert not wikiutil.isSystemItem(name)
 
 
-class TestTemplateItem(object):
-    good = (
-        'aTemplate',
-        'MyTemplate',
-    )
-    bad = (
-        'Template',
-        'I want a Template',
-        'TemplateInFront',
-        'xTemplateInFront',
-        'XTemplateInFront',
-    )
-
-    def testTemplateItem(self):
-        """wikiutil: good template names accepted, bad rejected"""
-        for name in self.good:
-            assert  wikiutil.isTemplateItem(name)
-        for name in self.bad:
-            assert not wikiutil.isTemplateItem(name)
-
-
 class TestAnchorNames(object):
     def test_anchor_name_encoding(self):
         tests = [
