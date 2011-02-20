@@ -9,6 +9,7 @@ TODO: Currently works on unprotected user backend
 @license: GNU GPL, see COPYING for details.
 """
 from flask import flaskg
+from flask import current_app as app
 from flaskext.script import Command, Option
 from MoinMoin import user
 
@@ -24,7 +25,6 @@ class Disable_User(Command):
         )
 
     def run(self, name, uid):
-        from MoinMoin.app import app
         flaskg.unprotected_storage = app.unprotected_storage
         flags_given = name or uid
         if not flags_given:
