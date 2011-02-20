@@ -17,11 +17,11 @@ from MoinMoin import user
 class Reset_Users_Password(Command):
     description = 'This command allows you to change a user password.'
     option_list = (
-        Option('--name', '-n', required=False, dest='name',
+        Option('--name', '-n', required=False, dest='name', type=unicode,
                help='Reset password for the user with user name NAME.'),
-        Option('--uid', '-u', required=False, dest='uid',
+        Option('--uid', '-u', required=False, dest='uid', type=unicode,
                help='Reset password for the user with user id UID.' ),
-        Option('--password', '-p', required=True, dest='password',
+        Option('--password', '-p', required=True, dest='password', type=unicode,
                help='New password for this account.')
         )
 

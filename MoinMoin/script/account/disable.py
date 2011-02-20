@@ -17,10 +17,10 @@ from MoinMoin import user
 class Disable_User(Command):
     description = 'This command allows you to disable user accounts.'
     option_list = (
-        Option('--name', '-n', required=False, dest='name',
+        Option('--name', '-n', required=False, dest='name', type=unicode,
                help='Disable the user with user name NAME.'
                ),
-        Option('--uid', '-u', required=False, dest='uid',
+        Option('--uid', '-u', required=False, dest='uid', type=unicode,
                help='Disable the user with user id UID.' )
         )
 
