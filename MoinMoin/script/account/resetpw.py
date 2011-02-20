@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-MoinMoin - disable a user account
+MoinMoin - change a user password
 
 TODO: Currently works on unprotected user backend
 
