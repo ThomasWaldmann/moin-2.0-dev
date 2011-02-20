@@ -10,7 +10,7 @@ TODO: Currently works on unprotected user backend
 @license: GNU GPL, see COPYING for details.
 """
 from flask import flaskg
-from flaskext.script import Command, Manager, Option
+from flaskext.script import Command, Option
 from MoinMoin import user
 
 class Reset_Users_Password(Command):
