@@ -87,6 +87,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         #'Werkzeug>=0.7dev', # wsgi toolkit, dev version (do not use ==0.7dev!)
         'Werkzeug==0.6.2', # use this if 0.7dev fails
         #'xappy>=0.5', # xapian python OO interface, not used (yet?)
+        'py==1.3.4', # py.test 1.3.4 is needed by unit tests
     ],
     # optional features and their list of requirements
     extras_require = {
